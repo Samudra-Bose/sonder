@@ -21,7 +21,6 @@ export const mockCommunities: ApiSchema<"MeContextDto">["communities"] = [
     membershipStatus: "ACTIVE",
     isCommunityAdmin: true,
     isDefaultCoordinator: false,
-    joinedAt: "2026-10-01T12:00:00Z",
   },
 ];
 
@@ -42,17 +41,22 @@ export const authHandlers = [
 
   // POST /api/v1/auth/login
   http.post("/api/v1/auth/login", async ({ request }) => {
-    const body = (await request.json()) as ApiSchema<"LoginRequest">;
+    const body = (await request.json()) as Partial<ApiSchema<"LoginRequest">>;
 
-    if (!body.email || !body.password) {
-      const problem: ApiSchema<"ProblemDetails"> = {
+    if (!body?.email || !body?.password) {
+      const problem: ApiSchema<"Problem"> = {
         type: "https://errors.sonder.platform/validation-error",
         title: "Validation Error",
         status: 400,
         detail: "Email and password are required.",
         code: "VALIDATION_FAILED",
       };
-      return HttpResponse.json(problem, { status: 400 });
+      return HttpResponse.json(problem, {
+        status: 400,
+        headers: {
+          "Content-Type": "application/problem+json",
+        },
+      });
     }
 
     const session: ApiSchema<"SessionDto"> = {
