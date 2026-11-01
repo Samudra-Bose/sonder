@@ -1,0 +1,28 @@
+{
+  "name": "@sonder/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typegen:openapi": "openapi-typescript ../../Community-Work-Management-v1.5/docs/contracts/openapi.yaml -o src/api-types.ts",
+    "typegen:openapi:check": "openapi-typescript ../../Community-Work-Management-v1.5/docs/contracts/openapi.yaml -o src/api-types.ts --check",
+    "typegen:ws": "json2ts -i ../../Community-Work-Management-v1.5/docs/contracts/ws-events.schema.json -o src/ws-events-types.ts --unknownAny && json2ts -i ../../Community-Work-Management-v1.5/docs/contracts/ws-protocol.schema.json -o src/ws-protocol-types.ts --unknownAny",
+    "typegen": "pnpm run typegen:openapi && pnpm run typegen:ws",
+    "typegen:check": "pnpm run typegen:openapi:check",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "json-schema-to-typescript": "^16.0.0",
+    "openapi-typescript": "^7.13.0",
+    "typescript": "^5.7.3"
+  }
+}

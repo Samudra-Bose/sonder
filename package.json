@@ -1,0 +1,24 @@
+{
+  "name": "sonder",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@12.13.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "build": "pnpm -r --filter=!sonder run build",
+    "test": "pnpm -r run test",
+    "typecheck": "pnpm -r run typecheck",
+    "typegen": "pnpm --filter @sonder/contracts typegen",
+    "typegen:check": "pnpm --filter @sonder/contracts typegen:check",
+    "validate:docs": "python3 Community-Work-Management-v1.5/validation/validate_v1_5.py"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "msw"
+    ]
+  }
+}
