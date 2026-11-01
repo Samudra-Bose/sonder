@@ -1,15 +1,25 @@
 import React, { useState } from "react";
 import { BrowserRouter, MemoryRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth, ProtectedRoute, LoginForm, RegisterForm } from "./modules/auth/index.js";
+import { ApiProblemError } from "./lib/api-client.js";
 
 export function AppShell(): React.JSX.Element {
-  const { user, communities, logout } = useAuth();
+  const { user, communities, logout, clearError } = useAuth();
+  const [logoutError, setLogoutError] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async (): Promise<void> => {
     setIsLoggingOut(true);
+    setLogoutError(null);
+    clearError();
     try {
       await logout();
+    } catch (err) {
+      const msg =
+        err instanceof ApiProblemError
+          ? err.detail || err.message
+          : (err as Error).message || "Failed to confirm sign out with server. Please try again.";
+      setLogoutError(msg);
     } finally {
       setIsLoggingOut(false);
     }
@@ -51,6 +61,38 @@ export function AppShell(): React.JSX.Element {
           )}
         </div>
       </header>
+
+      {/* Accessible Sign Out Error Alert with Retry Path */}
+      {logoutError && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="bg-red-50 border-b border-red-200 px-4 py-2 text-xs text-red-800 flex items-center justify-between"
+        >
+          <div className="flex items-center space-x-2">
+            <span className="font-semibold">Sign out failed: </span>
+            <span>{logoutError}</span>
+          </div>
+          <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="font-medium underline hover:text-red-950 focus:outline-none focus:ring-1 focus:ring-red-500 rounded"
+            >
+              Retry
+            </button>
+            <button
+              type="button"
+              onClick={() => setLogoutError(null)}
+              aria-label="Dismiss sign out error"
+              className="text-red-600 hover:text-red-900 focus:outline-none font-bold"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Content Area */}
       <main

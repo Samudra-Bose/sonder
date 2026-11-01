@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
               type: "https://errors.sonder.platform/csrf-initialization-error",
               title: "Security Initialization Failed",
               status: 500,
-              detail: "Failed to initialize security session. Please refresh or try again.",
+              detail: "Security initialization failed. Please refresh or try again.",
               code: "CSRF_INITIALIZATION_FAILED",
             });
       throw problemErr;
