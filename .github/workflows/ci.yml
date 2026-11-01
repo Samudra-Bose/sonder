@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "feat/**"
+      - "chore/**"
+      - "fix/**"
+      - "refactor/**"
+  pull_request:
+    branches:
+      - main
+      - develop
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-and-test:
+    name: Validate, Typecheck, Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Python validation dependencies
+        run: pip install ruamel.yaml jsonschema
+
+      - name: Validate baseline documentation and contracts
+        run: |
+          python3 Community-Work-Management-v1.5/validation/validate_v1_5.py
+          git diff --exit-code Community-Work-Management-v1.5/
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "12.13.0"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify REST and WebSocket type generation
+        run: pnpm run typegen:check
+
+      - name: Monorepo TypeScript verification
+        run: pnpm run typecheck
+
+      - name: Run unit and component tests
+        run: pnpm run test
+
+      - name: Frontend production build
+        run: pnpm --filter @sonder/web build
