@@ -16,18 +16,20 @@ function renderWithClient(ui: React.ReactElement) {
   );
 }
 
-describe("Sonder Application Shell (VS-00 Foundation)", () => {
-  it("renders brand heading and semantic landmarks", () => {
-    renderWithClient(<App />);
+describe("Sonder Application Shell (VS-00 & VS-01 Integration)", () => {
+  it("renders brand heading and semantic landmarks upon session resolution", async () => {
+    renderWithClient(<App initialEntries={["/"]} />);
 
-    expect(screen.getByRole("banner")).toBeInTheDocument();
-    expect(screen.getByRole("main")).toBeInTheDocument();
-    expect(screen.getByRole("contentinfo")).toBeInTheDocument();
-    expect(screen.getByText("Sonder")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole("banner")).toBeInTheDocument();
+      expect(screen.getByRole("main")).toBeInTheDocument();
+      expect(screen.getByRole("contentinfo")).toBeInTheDocument();
+      expect(screen.getByText("Sonder")).toBeInTheDocument();
+    });
   });
 
   it("fetches and renders active mock user context via MSW", async () => {
-    renderWithClient(<App />);
+    renderWithClient(<App initialEntries={["/"]} />);
 
     await waitFor(() => {
       expect(screen.getByText("Alex Morgan")).toBeInTheDocument();
@@ -35,5 +37,6 @@ describe("Sonder Application Shell (VS-00 Foundation)", () => {
 
     expect(screen.getByText("(alex.morgan@example.org)")).toBeInTheDocument();
     expect(screen.getByText("Sonder Community")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
   });
 });
