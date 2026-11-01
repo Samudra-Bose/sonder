@@ -21,7 +21,7 @@ describe("api-client hardening and security invariants", () => {
       });
 
       expect(fetchSpy).toHaveBeenCalledTimes(1);
-      const passedInit = fetchSpy.mock.calls[0][1];
+      const passedInit = fetchSpy.mock.calls[0]?.[1];
       expect(passedInit?.credentials).toBe("include");
     });
   });
@@ -93,7 +93,7 @@ describe("api-client hardening and security invariants", () => {
       });
 
       expect(fetchSpy).toHaveBeenCalledTimes(1);
-      const passedHeaders = new Headers(fetchSpy.mock.calls[0][1]?.headers);
+      const passedHeaders = new Headers(fetchSpy.mock.calls[0]?.[1]?.headers);
       expect(passedHeaders.get("X-CSRF-Token")).toBe("valid-session-csrf-token");
       expect(passedHeaders.get("X-Mutation-Id")).toBe("018f98a2-3f12-7890-a123-456789abcdef");
       expect(passedHeaders.get("Content-Type")).toBe("application/json");
