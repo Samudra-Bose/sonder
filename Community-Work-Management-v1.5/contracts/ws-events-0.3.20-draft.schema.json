@@ -1,0 +1,484 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.work-platform.invalid/ws-events.schema.json",
+  "title": "Work Management Realtime Event Envelopes",
+  "description": "Workspace-scoped server-to-client domain delta envelopes plus recipient-only community notification events. Intermediate-container lifecycle events are not part of the product because Workspaces are the primary work container. Control frames are defined separately in ws-protocol.schema.json.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/workspaceStreamEvent"
+    },
+    {
+      "$ref": "#/$defs/userCommunityStreamEvent"
+    }
+  ],
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+    },
+    "workspaceStreamEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "stream",
+        "communityId",
+        "workspaceId",
+        "workspaceSeq",
+        "eventId",
+        "eventType",
+        "occurredAt",
+        "actorId",
+        "entityId",
+        "mutationId",
+        "payload"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "stream": {
+          "const": "workspace"
+        },
+        "communityId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workspaceId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workspaceSeq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "eventId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "eventType": {
+          "type": "string",
+          "enum": [
+            "workspace.restored",
+            "task.created",
+            "task.updated",
+            "task.archived",
+            "task.restored",
+            "task.moved",
+            "task.linked",
+            "task.unlinked",
+            "comment.created",
+            "comment.updated",
+            "comment.deleted",
+            "watcher.changed",
+            "workspace.created",
+            "workspace.updated",
+            "workspace.archived",
+            "workspace.settings_updated",
+            "saved_view.created",
+            "saved_view.updated",
+            "saved_view.deleted",
+            "member.added",
+            "member.updated",
+            "member.removed",
+            "milestone.created",
+            "milestone.updated",
+            "milestone.deleted",
+            "task.bulk_updated",
+            "member.invitation_created",
+            "member.invitation_revoked",
+            "member.invitation_expired",
+            "custom_field.schema_changed",
+            "task.custom_fields_updated"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "actorId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "mutationId": {
+          "description": "Originating X-Mutation-Id; null for system work without a client-originated mutation.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "entityId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Permission-filtered event delta. Custom-field schema/value events contain only identifiers, version and changeType; never field values or option labels.",
+          "properties": {
+            "transferId": {
+              "$ref": "#/$defs/uuid"
+            },
+            "side": {
+              "type": "string",
+              "enum": [
+                "SOURCE",
+                "TARGET"
+              ]
+            },
+            "movedTaskCount": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "rootTaskId": {
+              "$ref": "#/$defs/uuid"
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "eventType": {
+                "const": "task.moved"
+              }
+            },
+            "required": [
+              "eventType"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "required": [
+                  "transferId",
+                  "side",
+                  "movedTaskCount",
+                  "rootTaskId"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "transferId": {
+                    "$ref": "#/$defs/uuid"
+                  },
+                  "side": {
+                    "type": "string",
+                    "enum": [
+                      "SOURCE",
+                      "TARGET"
+                    ]
+                  },
+                  "movedTaskCount": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "rootTaskId": {
+                    "$ref": "#/$defs/uuid"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "eventType": {
+                "enum": [
+                  "saved_view.created",
+                  "saved_view.updated",
+                  "saved_view.deleted"
+                ]
+              }
+            },
+            "required": [
+              "eventType"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "viewId",
+                  "version",
+                  "scope"
+                ],
+                "properties": {
+                  "viewId": {
+                    "$ref": "#/$defs/uuid"
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "scope": {
+                    "const": "SHARED"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "eventType": {
+                "const": "custom_field.schema_changed"
+              }
+            },
+            "required": [
+              "eventType"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "fieldId",
+                  "version",
+                  "changeType"
+                ],
+                "properties": {
+                  "fieldId": {
+                    "$ref": "#/$defs/uuid"
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "changeType": {
+                    "type": "string",
+                    "enum": [
+                      "FIELD_CREATED",
+                      "FIELD_UPDATED",
+                      "FIELD_ARCHIVED",
+                      "FIELD_RESTORED",
+                      "OPTION_CREATED",
+                      "OPTION_UPDATED",
+                      "OPTION_ARCHIVED",
+                      "OPTION_RESTORED",
+                      "OPTIONS_REORDERED"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "eventType": {
+                "const": "task.custom_fields_updated"
+              }
+            },
+            "required": [
+              "eventType"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "taskId",
+                  "taskVersion",
+                  "fieldDefinitionIds"
+                ],
+                "properties": {
+                  "taskId": {
+                    "$ref": "#/$defs/uuid"
+                  },
+                  "taskVersion": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "fieldDefinitionIds": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "uniqueItems": true,
+                    "items": {
+                      "$ref": "#/$defs/uuid"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "userCommunityStreamEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "stream",
+        "communityId",
+        "userNotificationSeq",
+        "eventId",
+        "eventType",
+        "occurredAt",
+        "payload"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "stream": {
+          "const": "user-community"
+        },
+        "communityId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "userNotificationSeq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "eventId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "eventType": {
+          "type": "string",
+          "enum": [
+            "notification.created",
+            "notification.read",
+            "notification.read_all",
+            "membership.changed",
+            "workspace.invitation.created",
+            "workspace.invitation.revoked",
+            "security.break_glass_invoked",
+            "community.invitation.created",
+            "community.invitation.revoked",
+            "community.invitation.expired",
+            "workspace.invitation.accepted",
+            "workspace.invitation.expired",
+            "community.invitation.accepted"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Recipient-only payload. notification.created/read/read_all use the closed CR-10 payload shapes; no userId, email, comment body, mention target list or inaccessible resource identifier is included."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "eventType": {
+                "const": "notification.created"
+              }
+            },
+            "required": [
+              "eventType"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "notificationId",
+                  "category",
+                  "reason",
+                  "unreadCount"
+                ],
+                "properties": {
+                  "notificationId": {
+                    "$ref": "#/$defs/uuid"
+                  },
+                  "category": {
+                    "$ref": "#/components/schemas/NotificationCategory"
+                  },
+                  "reason": {
+                    "$ref": "#/components/schemas/NotificationReason"
+                  },
+                  "unreadCount": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "eventType": {
+                "const": "notification.read"
+              }
+            },
+            "required": [
+              "eventType"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "notificationId",
+                  "unreadCount"
+                ],
+                "properties": {
+                  "notificationId": {
+                    "$ref": "#/$defs/uuid"
+                  },
+                  "unreadCount": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "eventType": {
+                "const": "notification.read_all"
+              }
+            },
+            "required": [
+              "eventType"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "unreadCount"
+                ],
+                "properties": {
+                  "unreadCount": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

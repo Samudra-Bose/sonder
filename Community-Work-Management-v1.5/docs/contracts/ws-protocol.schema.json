@@ -1,0 +1,476 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.work-platform.invalid/ws-protocol.schema.json",
+  "title": "Work Management Realtime Control Protocol",
+  "description": "Client/server control frames for subprotocol work-platform.v1. Domain deltas are raw envelopes defined in ws-events.schema.json.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/clientControlFrame"
+    },
+    {
+      "$ref": "#/$defs/serverControlFrame"
+    }
+  ],
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+    },
+    "clientControlFrame": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/authenticate"
+        },
+        {
+          "$ref": "#/$defs/subscribeWorkspace"
+        },
+        {
+          "$ref": "#/$defs/subscribeUserCommunity"
+        },
+        {
+          "$ref": "#/$defs/unsubscribeWorkspace"
+        },
+        {
+          "$ref": "#/$defs/unsubscribeUserCommunity"
+        },
+        {
+          "$ref": "#/$defs/pong"
+        }
+      ]
+    },
+    "serverControlFrame": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/connectionAck"
+        },
+        {
+          "$ref": "#/$defs/workspaceSubscriptionAck"
+        },
+        {
+          "$ref": "#/$defs/userCommunitySubscriptionAck"
+        },
+        {
+          "$ref": "#/$defs/workspaceUnsubscriptionAck"
+        },
+        {
+          "$ref": "#/$defs/userCommunityUnsubscriptionAck"
+        },
+        {
+          "$ref": "#/$defs/ping"
+        },
+        {
+          "$ref": "#/$defs/error"
+        },
+        {
+          "$ref": "#/$defs/workspaceAccessRevoked"
+        },
+        {
+          "$ref": "#/$defs/workspaceAuthorizationChanged"
+        },
+        {
+          "$ref": "#/$defs/communityAccessRevoked"
+        }
+      ]
+    },
+    "authenticate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "requestId",
+        "ticket"
+      ],
+      "properties": {
+        "type": {
+          "const": "AUTHENTICATE"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9._:-]+$"
+        },
+        "ticket": {
+          "type": "string",
+          "minLength": 43,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        }
+      },
+      "description": "First application frame for ticket-authenticated sockets; must be sent within five seconds of Upgrade."
+    },
+    "subscribeWorkspace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "requestId",
+        "communityId",
+        "workspaceId",
+        "sinceSeq"
+      ],
+      "properties": {
+        "type": {
+          "const": "SUBSCRIBE_WORKSPACE"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9._:-]+$"
+        },
+        "communityId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workspaceId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "sinceSeq": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "description": "Requests a workspace stream. sinceSeq is the last contiguous workspaceSeq already applied by this client."
+    },
+    "subscribeUserCommunity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "requestId",
+        "communityId",
+        "sinceSeq"
+      ],
+      "properties": {
+        "type": {
+          "const": "SUBSCRIBE_USER_COMMUNITY"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9._:-]+$"
+        },
+        "communityId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "sinceSeq": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "description": "Requests the authenticated user’s private event stream for one community; userId is never client-supplied."
+    },
+    "unsubscribeWorkspace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "requestId",
+        "communityId",
+        "workspaceId"
+      ],
+      "properties": {
+        "type": {
+          "const": "UNSUBSCRIBE_WORKSPACE"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9._:-]+$"
+        },
+        "communityId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workspaceId": {
+          "$ref": "#/$defs/uuid"
+        }
+      }
+    },
+    "unsubscribeUserCommunity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "requestId",
+        "communityId"
+      ],
+      "properties": {
+        "type": {
+          "const": "UNSUBSCRIBE_USER_COMMUNITY"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9._:-]+$"
+        },
+        "communityId": {
+          "$ref": "#/$defs/uuid"
+        }
+      }
+    },
+    "pong": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "PONG"
+        }
+      }
+    },
+    "connectionAck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "authMode"
+      ],
+      "properties": {
+        "type": {
+          "const": "CONNECTION_ACK"
+        },
+        "authMode": {
+          "enum": [
+            "SESSION_COOKIE",
+            "TICKET"
+          ]
+        },
+        "communityId": {
+          "$ref": "#/$defs/uuid"
+        }
+      },
+      "description": "Confirms authenticated socket setup. communityId is present for ticket mode and omitted for session-cookie mode."
+    },
+    "workspaceSubscriptionAck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "requestId",
+        "stream",
+        "communityId",
+        "workspaceId",
+        "currentSeq"
+      ],
+      "properties": {
+        "type": {
+          "const": "SUBSCRIPTION_ACK"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9._:-]+$"
+        },
+        "stream": {
+          "const": "workspace"
+        },
+        "communityId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workspaceId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "currentSeq": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "userCommunitySubscriptionAck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "requestId",
+        "stream",
+        "communityId",
+        "currentSeq"
+      ],
+      "properties": {
+        "type": {
+          "const": "SUBSCRIPTION_ACK"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9._:-]+$"
+        },
+        "stream": {
+          "const": "user-community"
+        },
+        "communityId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "currentSeq": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "workspaceUnsubscriptionAck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "requestId",
+        "stream",
+        "communityId",
+        "workspaceId"
+      ],
+      "properties": {
+        "type": {
+          "const": "UNSUBSCRIPTION_ACK"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9._:-]+$"
+        },
+        "stream": {
+          "const": "workspace"
+        },
+        "communityId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workspaceId": {
+          "$ref": "#/$defs/uuid"
+        }
+      }
+    },
+    "userCommunityUnsubscriptionAck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "requestId",
+        "stream",
+        "communityId"
+      ],
+      "properties": {
+        "type": {
+          "const": "UNSUBSCRIPTION_ACK"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9._:-]+$"
+        },
+        "stream": {
+          "const": "user-community"
+        },
+        "communityId": {
+          "$ref": "#/$defs/uuid"
+        }
+      }
+    },
+    "ping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "PING"
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "code"
+      ],
+      "properties": {
+        "type": {
+          "const": "ERROR"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9._:-]+$"
+        },
+        "code": {
+          "enum": [
+            "INVALID_FRAME",
+            "AUTHENTICATION_FAILED",
+            "TICKET_EXPIRED",
+            "TICKET_ALREADY_REDEEMED",
+            "SUBSCRIPTION_DENIED",
+            "RATE_LIMITED",
+            "SERVER_UNAVAILABLE"
+          ]
+        }
+      },
+      "description": "Generic error; does not disclose the existence of inaccessible resources or identities."
+    },
+    "workspaceAccessRevoked": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "communityId",
+        "workspaceId"
+      ],
+      "properties": {
+        "type": {
+          "const": "WORKSPACE_ACCESS_REVOKED"
+        },
+        "communityId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workspaceId": {
+          "$ref": "#/$defs/uuid"
+        }
+      }
+    },
+    "workspaceAuthorizationChanged": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "communityId",
+        "workspaceId"
+      ],
+      "properties": {
+        "type": {
+          "const": "WORKSPACE_AUTHORIZATION_CHANGED"
+        },
+        "communityId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workspaceId": {
+          "$ref": "#/$defs/uuid"
+        }
+      }
+    },
+    "communityAccessRevoked": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "communityId"
+      ],
+      "properties": {
+        "type": {
+          "const": "COMMUNITY_ACCESS_REVOKED"
+        },
+        "communityId": {
+          "$ref": "#/$defs/uuid"
+        }
+      }
+    }
+  }
+}
