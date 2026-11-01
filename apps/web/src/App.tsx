@@ -1,21 +1,29 @@
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import type { ApiSchema } from "@sonder/contracts";
+import React, { useState } from "react";
+import { BrowserRouter, MemoryRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth, ProtectedRoute, LoginForm, RegisterForm } from "./modules/auth/index.js";
+import { ApiProblemError } from "./lib/api-client.js";
 
-async function fetchMe(): Promise<ApiSchema<"MeContextDto">> {
-  const res = await fetch("/api/v1/me");
-  if (!res.ok) {
-    throw new Error(`Failed to fetch current user context: ${res.statusText}`);
-  }
-  return res.json() as Promise<ApiSchema<"MeContextDto">>;
-}
+export function AppShell(): React.JSX.Element {
+  const { user, communities, logout, clearError } = useAuth();
+  const [logoutError, setLogoutError] = useState<string | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-export function App(): React.JSX.Element {
-  const { data: me, isLoading, error } = useQuery({
-    queryKey: ["auth", "me"],
-    queryFn: fetchMe,
-    retry: false,
-  });
+  const handleLogout = async (): Promise<void> => {
+    setIsLoggingOut(true);
+    setLogoutError(null);
+    clearError();
+    try {
+      await logout();
+    } catch (err) {
+      const msg =
+        err instanceof ApiProblemError
+          ? err.detail || err.message
+          : (err as Error).message || "Failed to confirm sign out with server. Please try again.";
+      setLogoutError(msg);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
@@ -34,22 +42,57 @@ export function App(): React.JSX.Element {
         </div>
 
         <div className="flex items-center space-x-4 text-sm">
-          {isLoading && (
-            <span className="text-slate-400 animate-pulse">Loading context...</span>
-          )}
-          {error && (
-            <span className="text-amber-700 text-xs bg-amber-50 px-2 py-1 rounded">
-              Mock session offline
-            </span>
-          )}
-          {me && (
-            <div className="flex items-center space-x-2">
-              <span className="font-medium text-slate-700">{me.user.displayName}</span>
-              <span className="text-xs text-slate-500">({me.user.email})</span>
+          {user && (
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
+                <span className="font-medium text-slate-700">{user.displayName}</span>
+                <span className="text-xs text-slate-500">({user.email})</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                aria-label="Sign out"
+                className="text-xs text-slate-600 hover:text-slate-900 border border-slate-300 rounded px-2.5 py-1 font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+              >
+                {isLoggingOut ? "Signing out..." : "Sign out"}
+              </button>
             </div>
           )}
         </div>
       </header>
+
+      {/* Accessible Sign Out Error Alert with Retry Path */}
+      {logoutError && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="bg-red-50 border-b border-red-200 px-4 py-2 text-xs text-red-800 flex items-center justify-between"
+        >
+          <div className="flex items-center space-x-2">
+            <span className="font-semibold">Sign out failed: </span>
+            <span>{logoutError}</span>
+          </div>
+          <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="font-medium underline hover:text-red-950 focus:outline-none focus:ring-1 focus:ring-red-500 rounded"
+            >
+              Retry
+            </button>
+            <button
+              type="button"
+              onClick={() => setLogoutError(null)}
+              aria-label="Dismiss sign out error"
+              className="text-red-600 hover:text-red-900 focus:outline-none font-bold"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Content Area */}
       <main
@@ -64,17 +107,17 @@ export function App(): React.JSX.Element {
             Sonder application shell and contract type generation harness initialized.
           </p>
 
-          {me && (
+          {user && (
             <div className="text-left bg-slate-50 border border-slate-200 rounded p-3 text-xs text-slate-700 space-y-1">
               <p>
-                <strong>Active Community:</strong> {me.communities[0]?.name ?? "None"}
+                <strong>Active Community:</strong> {communities[0]?.name ?? "None"}
               </p>
               <p>
-                <strong>Status:</strong> {me.communities[0]?.membershipStatus ?? "UNKNOWN"}
+                <strong>Status:</strong> {communities[0]?.membershipStatus ?? "UNKNOWN"}
               </p>
               <p>
                 <strong>Admin Privileges:</strong>{" "}
-                {me.communities[0]?.isCommunityAdmin ? "Yes" : "No"}
+                {communities[0]?.isCommunityAdmin ? "Yes" : "No"}
               </p>
             </div>
           )}
@@ -90,5 +133,34 @@ export function App(): React.JSX.Element {
         <span>OpenAPI 0.3.20-draft (Unfrozen)</span>
       </footer>
     </div>
+  );
+}
+
+export interface AppProps {
+  initialEntries?: string[];
+}
+
+export function App({ initialEntries }: AppProps = {}): React.JSX.Element {
+  const Router = initialEntries ? MemoryRouter : BrowserRouter;
+  const routerProps = initialEntries ? { initialEntries } : {};
+
+  return (
+    <AuthProvider>
+      <Router {...routerProps}>
+        <Routes>
+          <Route path="/login" element={<LoginForm />} />
+          <Route path="/register" element={<RegisterForm />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <AppShell />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
