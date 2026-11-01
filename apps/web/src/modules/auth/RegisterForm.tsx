@@ -5,7 +5,7 @@ import { ApiProblemError } from "../../lib/api-client.js";
 import type { ApiSchema } from "@sonder/contracts";
 
 export function RegisterForm(): React.JSX.Element {
-  const { register } = useAuth();
+  const { register, error: contextError } = useAuth();
 
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
@@ -56,7 +56,11 @@ export function RegisterForm(): React.JSX.Element {
       setAcceptedResponse(res);
     } catch (err) {
       if (err instanceof ApiProblemError) {
-        setSubmitError(err.detail || err.message || "Registration failed. Please try again.");
+        if (err.code === "CSRF_INITIALIZATION_FAILED" || err.code === "CSRF_TOKEN_REQUIRED") {
+          setSubmitError(err.detail || "Security initialization failed. Please refresh the page and try again.");
+        } else {
+          setSubmitError(err.detail || err.message || "Registration failed. Please try again.");
+        }
       } else {
         setSubmitError((err as Error).message || "An unexpected error occurred.");
       }
@@ -64,6 +68,8 @@ export function RegisterForm(): React.JSX.Element {
       setIsSubmitting(false);
     }
   };
+
+  const displayError = submitError || contextError?.detail;
 
   // If successfully registered, show anti-enumeration confirmation screen
   if (acceptedResponse) {
@@ -113,14 +119,14 @@ export function RegisterForm(): React.JSX.Element {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
         <div className="bg-white py-8 px-6 shadow-sm border border-slate-200 rounded-lg sm:px-10">
-          {submitError && (
+          {displayError && (
             <div
               role="alert"
               aria-live="assertive"
               className="mb-6 p-4 rounded-md bg-red-50 border border-red-200 text-sm text-red-700"
             >
               <div className="flex">
-                <span className="font-medium">{submitError}</span>
+                <span className="font-medium">{displayError}</span>
               </div>
             </div>
           )}

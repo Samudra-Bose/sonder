@@ -26,15 +26,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
 
   const clearError = useCallback(() => setError(null), []);
 
-  // Fetch or refresh CSRF token (session-bound or pre-auth)
+  // Fetch or refresh CSRF token (session-bound or pre-auth). Fails closed on error.
   const fetchCsrfToken = useCallback(async (): Promise<string> => {
     try {
       const res = await apiRequest<ApiSchema<"CsrfTokenDto">>("/auth/csrf");
+      if (!res.csrfToken || !res.csrfToken.trim()) {
+        throw new ApiProblemError(500, {
+          type: "https://errors.sonder.platform/csrf-initialization-error",
+          title: "Invalid CSRF Token",
+          status: 500,
+          detail: "Server returned an empty CSRF token. Security session cannot be established.",
+          code: "CSRF_INITIALIZATION_FAILED",
+        });
+      }
       setCsrfToken(res.csrfToken);
       return res.csrfToken;
     } catch (err) {
-      console.warn("Failed to fetch CSRF token:", err);
-      return "";
+      setCsrfToken(null);
+      const problemErr =
+        err instanceof ApiProblemError
+          ? err
+          : new ApiProblemError(500, {
+              type: "https://errors.sonder.platform/csrf-initialization-error",
+              title: "Security Initialization Failed",
+              status: 500,
+              detail: "Failed to initialize security session. Please refresh or try again.",
+              code: "CSRF_INITIALIZATION_FAILED",
+            });
+      throw problemErr;
     }
   }, []);
 
@@ -59,7 +78,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
   useEffect(() => {
     let mounted = true;
     async function bootstrap() {
-      await fetchCsrfToken();
+      try {
+        await fetchCsrfToken();
+      } catch (err) {
+        if (mounted) {
+          const initError =
+            err instanceof ApiProblemError
+              ? err
+              : new ApiProblemError(500, {
+                  type: "https://errors.sonder.platform/csrf-initialization-error",
+                  title: "Security Initialization Failed",
+                  status: 500,
+                  detail: "Security initialization failed. State-changing operations are blocked until a secure token is established.",
+                  code: "CSRF_INITIALIZATION_FAILED",
+                });
+          setError(initError);
+        }
+      }
       if (mounted) {
         await refreshSession();
       }
@@ -75,7 +110,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
       setError(null);
       let token = csrfToken;
       if (!token) {
-        token = await fetchCsrfToken();
+        try {
+          token = await fetchCsrfToken();
+        } catch (err) {
+          const initErr =
+            err instanceof ApiProblemError
+              ? err
+              : new ApiProblemError(500, {
+                  type: "https://errors.sonder.platform/csrf-initialization-error",
+                  title: "Security Initialization Failed",
+                  status: 500,
+                  detail: "CSRF initialization failed. Cannot send login request.",
+                  code: "CSRF_INITIALIZATION_FAILED",
+                });
+          setError(initErr);
+          throw initErr;
+        }
+      }
+
+      if (!token || !token.trim()) {
+        const missingErr = new ApiProblemError(400, {
+          type: "https://errors.sonder.platform/csrf-error",
+          title: "CSRF Token Required",
+          status: 400,
+          detail: "A valid CSRF token is required for login.",
+          code: "CSRF_TOKEN_REQUIRED",
+        });
+        setError(missingErr);
+        throw missingErr;
       }
 
       try {
@@ -114,7 +176,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
       setError(null);
       let token = csrfToken;
       if (!token) {
-        token = await fetchCsrfToken();
+        try {
+          token = await fetchCsrfToken();
+        } catch (err) {
+          const initErr =
+            err instanceof ApiProblemError
+              ? err
+              : new ApiProblemError(500, {
+                  type: "https://errors.sonder.platform/csrf-initialization-error",
+                  title: "Security Initialization Failed",
+                  status: 500,
+                  detail: "CSRF initialization failed. Cannot send registration request.",
+                  code: "CSRF_INITIALIZATION_FAILED",
+                });
+          setError(initErr);
+          throw initErr;
+        }
+      }
+
+      if (!token || !token.trim()) {
+        const missingErr = new ApiProblemError(400, {
+          type: "https://errors.sonder.platform/csrf-error",
+          title: "CSRF Token Required",
+          status: 400,
+          detail: "A valid CSRF token is required for registration.",
+          code: "CSRF_TOKEN_REQUIRED",
+        });
+        setError(missingErr);
+        throw missingErr;
       }
 
       try {
@@ -145,19 +234,70 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
   const logout = useCallback(
     async (all: boolean = false): Promise<void> => {
       setError(null);
+      let token = csrfToken;
+      if (!token) {
+        try {
+          token = await fetchCsrfToken();
+        } catch (err) {
+          const initErr =
+            err instanceof ApiProblemError
+              ? err
+              : new ApiProblemError(500, {
+                  type: "https://errors.sonder.platform/csrf-initialization-error",
+                  title: "Security Initialization Failed",
+                  status: 500,
+                  detail: "CSRF initialization failed. Cannot safely send logout request.",
+                  code: "CSRF_INITIALIZATION_FAILED",
+                });
+          setError(initErr);
+          throw initErr;
+        }
+      }
+
+      if (!token || !token.trim()) {
+        const missingErr = new ApiProblemError(400, {
+          type: "https://errors.sonder.platform/csrf-error",
+          title: "CSRF Token Required",
+          status: 400,
+          detail: "A valid CSRF token is required for logout.",
+          code: "CSRF_TOKEN_REQUIRED",
+        });
+        setError(missingErr);
+        throw missingErr;
+      }
+
       try {
         await apiRequest<void>(`/auth/logout${all ? "?all=true" : ""}`, {
           method: "POST",
-          csrfToken,
+          csrfToken: token,
         });
-      } catch (err) {
-        console.warn("Logout request failed:", err);
-      } finally {
+
+        // ONLY clear local authentication state upon confirmed server invalidation
         setUser(null);
         setCommunities([]);
         setStatus("unauthenticated");
-        // Get fresh pre-auth CSRF token for next sign-in
-        await fetchCsrfToken();
+        setCsrfToken(null);
+
+        // Fetch fresh pre-auth CSRF token for subsequent sign-in (best effort)
+        try {
+          await fetchCsrfToken();
+        } catch {
+          // Re-attempted upon next authentication action
+        }
+      } catch (err) {
+        // DO NOT clear user/session state on server rejection or network failure
+        const logoutErr =
+          err instanceof ApiProblemError
+            ? err
+            : new ApiProblemError(500, {
+                type: "https://errors.sonder.platform/logout-error",
+                title: "Logout Failed",
+                status: 500,
+                detail: (err as Error).message || "Failed to confirm session termination with server.",
+                code: "LOGOUT_FAILED",
+              });
+        setError(logoutErr);
+        throw logoutErr;
       }
     },
     [csrfToken, fetchCsrfToken]

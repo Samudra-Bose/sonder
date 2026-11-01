@@ -59,6 +59,8 @@ export function LoginForm(): React.JSX.Element {
           setSubmitError("Email verification required. Please check your inbox before signing in.");
         } else if (err.code === "INVALID_CREDENTIALS" || err.status === 401) {
           setSubmitError("Invalid email or password. Please try again.");
+        } else if (err.code === "CSRF_INITIALIZATION_FAILED" || err.code === "CSRF_TOKEN_REQUIRED") {
+          setSubmitError(err.detail || "Security initialization failed. Please refresh the page and try again.");
         } else {
           setSubmitError(err.detail || err.message || "Sign in failed. Please try again.");
         }

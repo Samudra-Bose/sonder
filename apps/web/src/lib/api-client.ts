@@ -26,35 +26,51 @@ const API_BASE = "/api/v1";
 
 /**
  * Type-safe API client enforcing Sonder contract invariants:
- * - Credentials included on all requests (for __Host-session and __Host-auth-csrf)
+ * - Credentials included on all requests (for __Host-session and __Host-auth-csrf); callers cannot override this
  * - Required X-Mutation-Id (UUIDv7) on mutating methods (POST, PUT, PATCH, DELETE)
- * - Required X-CSRF-Token on mutating methods
+ * - Required X-CSRF-Token on mutating methods; fails closed if omitted or empty
  * - application/problem+json error decoding
  */
 export async function apiRequest<T>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { csrfToken, mutationId, headers: customHeaders, method = "GET", ...rest } = options;
+  const {
+    csrfToken,
+    mutationId,
+    headers: customHeaders,
+    method = "GET",
+    credentials: _ignoredCredentials,
+    ...rest
+  } = options;
   const isMutation = ["POST", "PUT", "PATCH", "DELETE"].includes(method.toUpperCase());
 
   const headers = new Headers(customHeaders);
 
   if (isMutation) {
+    if (!csrfToken || !csrfToken.trim()) {
+      throw new ApiProblemError(400, {
+        type: "https://errors.sonder.platform/csrf-error",
+        title: "CSRF Token Required",
+        status: 400,
+        detail: "A valid CSRF synchronizer token is required for mutating requests.",
+        code: "CSRF_TOKEN_REQUIRED",
+      });
+    }
+
     headers.set("Content-Type", "application/json");
     headers.set("X-Mutation-Id", mutationId ?? generateUuidV7());
-    if (csrfToken) {
-      headers.set("X-CSRF-Token", csrfToken);
-    }
+    headers.set("X-CSRF-Token", csrfToken.trim());
   }
 
   const url = endpoint.startsWith("http") ? endpoint : `${API_BASE}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
 
+  // Enforce credentials: "include" after ...rest so caller cannot override
   const response = await fetch(url, {
+    ...rest,
     method,
     headers,
     credentials: "include",
-    ...rest,
   });
 
   if (response.status === 204) {
