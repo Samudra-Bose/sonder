@@ -73,8 +73,8 @@ sonder/
 ## 5. Developer Quickstart
 
 ### Prerequisites
-- Node.js `>= 20.0.0` (LTS recommended)
-- `pnpm` `>= 9.0.0` (Pinned to `12.13.0`)
+- Node.js `26.11.1` (Pinned)
+- `pnpm` `12.13.0` (Pinned)
 - Python `3.12+` with `ruamel.yaml` and `jsonschema` (for static documentation verification)
 
 ### Setup & Development
