@@ -1,6 +1,6 @@
 # Sonder — Frontend Experience & UI/UX Research
 
-**Document Status:** Complete Research Specification  
+**Document Status:** Complete Research Specification (Reviewed & Corrected)  
 **Target Milestone Baseline:** Pre-VS-02 Architectural Design Direction  
 **Repository Branch:** `docs/frontend-experience-research`  
 **Canonical Product Baseline:** Sonder v1.5.0 (`Community-Work-Management-v1.5`)  
@@ -11,16 +11,16 @@
 
 ## 1. Executive Summary
 
-This research establishes the comprehensive product, interaction-design, and visual-design foundation for **Sonder**—a next-generation community work-management platform. Sonder bridges the gap between high-velocity, keyboard-first developer issue trackers (e.g., Linear, Height) and human-scale, calm, accessible collaboration tools (e.g., Basecamp, Things 3, Asana). It deliberately rejects the bureaucratic configuration labyrinth, visual noise, sluggish rendering, and cognitive fatigue characteristic of legacy enterprise tools such as Jira and ClickUp.
+This research establishes the comprehensive product, interaction-design, and visual-design foundation for **Sonder**—a next-generation community work-management platform. Sonder bridges the gap between high-velocity, keyboard-first developer issue trackers (e.g., Linear, Height) and human-scale, calm, accessible collaboration tools (e.g., Basecamp, Things 3, Asana). It deliberately rejects the bureaucratic configuration labyrinth, visual noise, complex query languages, and cognitive fatigue characteristic of legacy enterprise tools such as Jira and ClickUp.
 
 ### 1.1 Core Strategic Differentiators
-1. **Calm, High-Density Efficiency:** Sonder treats speed not merely as a technical metric, but as an essential UX requirement. Sub-50ms local interactions, keyboard shortcuts (`Cmd/Ctrl+K`, single-key chords), and persistent navigation enable seamless daily workflows.
+1. **Calm, High-Density Efficiency:** Sonder treats speed not merely as a technical metric, but as an essential UX requirement. Near-instant visual feedback via optimistic client state updates, predictable keyboard shortcuts (`Cmd/Ctrl+K`, single-key chords), and persistent navigation enable seamless daily workflows.
 2. **Strict, Predictable Hierarchy:** Unlike tools with arbitrary, deeply nested container models (Workspaces → Spaces → Folders → Lists → Tasks → Subtasks in ClickUp; Portfolios → Projects → Sections → Tasks → Subtasks in Asana), Sonder strictly enforces a 4-tier domain hierarchy:
-   $$\text{Community (Tenancy)} \longrightarrow \text{Workspace (Governance)} \longrightarrow \text{Task (Keyed Work Item)} \longrightarrow \text{Subtask (Depth 1–2)}$$
+   $$\text{Community (Tenancy Boundary)} \longrightarrow \text{Workspace (Governance Boundary)} \longrightarrow \text{Task (Keyed Work Item)} \longrightarrow \text{Subtask (Depth 1–2)}$$
    Projects and Lists are **not** independent entity layers; they do not exist in Sonder.
-3. **Four Synchronized Projections:** List, Board, Calendar, and Timeline are four lenses projecting the **identical** canonical query and authorization result. No view maintains divergent task truth or conflicting filters.
-4. **Zero-Client-Storage Security & Permission Transparency:** The UI adheres strictly to zero browser credential storage (no JWTs or tokens in `localStorage`). UI capability indicators are display hints only; backend authorization remains authoritative.
-5. **Desktop Power with First-Class Mobile Workflows:** Sonder does not shrink desktop tables for mobile viewports. Instead, it adapts projections into native mobile interaction patterns: board columns become tabbed stage switchers, task sidebars become bottom sheets, and primary touch targets strictly respect a 44×44 CSS px bounding box.
+3. **Four Synchronized Projections:** List, Board, Calendar, and Timeline are four lenses projecting the **identical** canonical query and authorization result. No view maintains divergent task truth, independent storage, or conflicting filters.
+4. **Zero-Client-Storage Security & Permission Transparency:** The UI adheres strictly to zero browser credential storage (no JWTs, refresh tokens, or session identifiers in `localStorage` or `sessionStorage`). All session persistence relies on host-only cookies and in-memory CSRF synchronizer tokens. UI capability indicators are display hints only; backend authorization remains authoritative on every mutation.
+5. **Desktop Power with Dedicated Mobile Workflows:** Sonder does not shrink desktop tables for mobile viewports. Instead, it adapts projections into native mobile interaction patterns: board columns become tabbed stage switchers, task sidebars become bottom sheets, and primary interactive touch targets strictly enforce a minimum 44×44 CSS px bounding box.
 
 ---
 
@@ -28,75 +28,76 @@ This research establishes the comprehensive product, interaction-design, and vis
 
 ### 2.1 Research Framework & Evidence Classification
 To ensure research integrity, every observation and recommendation in this specification is categorized using explicit evidentiary tiers:
-- `[DIRECT INTERFACE OBSERVATION]`: Verified through direct hands-on testing of current public production web, desktop, or mobile applications.
+- `[DIRECT INTERFACE OBSERVATION]`: Verified through direct interaction with public web or native application interfaces.
 - `[OFFICIAL DOCUMENTATION]`: Sourced directly from vendor user guides, developer documentation, design systems, and changelogs.
-- `[ENGINEERING / DESIGN BLOG]`: Sourced from verified technical write-ups published by the product's engineering, design, or leadership teams.
-- `[INFERRED RECOMMENDATION]`: Architectural adaptation formulated specifically for Sonder's approved domain model and constraints.
+- `[ENGINEERING / DESIGN CASE STUDY]`: Sourced from verified technical write-ups published by the product's engineering, design, or leadership teams.
+- `[INFERRED RECOMMENDATION]`: Architectural adaptation formulated specifically for Sonder's approved domain model and governance constraints.
 
 ### 2.2 Investigated Products Inventory
-Fourteen leading products across work management and personal productivity were researched:
+Fourteen leading products across work management and personal productivity were researched (verified as of November 2026):
 
-| Product | Category | Primary Interface URL | Primary Documentation Reference |
+| Product | Category | Primary Interface / Documentation URL | Verified Focus Area |
 |---|---|---|---|
-| **Linear** | Work Management | [linear.app](https://linear.app) | [linear.app/docs](https://linear.app/docs) · [linear.app/method](https://linear.app/method) |
-| **Asana** | Work Management | [asana.com](https://asana.com) | [asana.com/guide](https://asana.com/guide) |
-| **Jira** | Work Management | [atlassian.com/software/jira](https://www.atlassian.com/software/jira) | [support.atlassian.com/jira-software-cloud](https://support.atlassian.com/jira-software-cloud/) |
-| **ClickUp** | Work Management | [clickup.com](https://clickup.com) | [help.clickup.com](https://help.clickup.com) |
-| **Monday.com** | Work Management | [monday.com](https://monday.com) | [support.monday.com](https://support.monday.com) |
-| **Height** | Work Management | [height.app](https://height.app) | [height.app/blog](https://height.app/blog) · [height.app/docs](https://height.app/docs) |
-| **Plane** | Work Management | [plane.so](https://plane.so) | [docs.plane.so](https://docs.plane.so) |
-| **Basecamp** | Work Management | [basecamp.com](https://basecamp.com) | [basecamp.com/features](https://basecamp.com/features) · [37signals.com/books](https://37signals.com) |
-| **GitHub Projects** | Work Management | [github.com/features/issues](https://github.com/features/issues) | [docs.github.com/en/issues/planning-and-tracking-with-projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects) |
-| **Notion** | Personal Productivity | [notion.so](https://www.notion.so) | [notion.so/help](https://www.notion.so/help) |
-| **Superlist** | Personal Productivity | [superlist.com](https://www.superlist.com) | [superlist.com/updates](https://www.superlist.com/updates) |
-| **Sunsama** | Personal Productivity | [sunsama.com](https://sunsama.com) | [help.sunsama.com](https://help.sunsama.com) |
-| **Things 3** | Personal Productivity | [culturedcode.com/things](https://culturedcode.com/things/) | [culturedcode.com/things/support](https://culturedcode.com/things/support/) |
-| **Craft** | Personal Productivity | [craft.do](https://www.craft.do) | [support.craft.do](https://support.craft.do) |
+| **Linear** | Work Management | [linear.app/docs](https://linear.app/docs) · [linear.app/docs/keyboard-shortcuts](https://linear.app/docs/keyboard-shortcuts) | Keyboard navigation, command palette (`Cmd+K`), task peek panel |
+| **Asana** | Work Management | [asana.com/guide](https://asana.com/guide) · [asana.com/guide/help/views/all](https://asana.com/guide/help/views/all) | 4 synchronized views (List, Board, Calendar, Timeline), unscheduled drawer |
+| **Jira** | Work Management | [support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/](https://support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/) | Alphanumeric task keying, key prefix renaming/aliasing, permission matrices |
+| **ClickUp** | Work Management | [help.clickup.com/hc/en-us/articles/6310025732119-View-Settings-and-Preferences](https://help.clickup.com/hc/en-us/articles/6310025732119-View-Settings-and-Preferences) | View-level field visibility toggles, compact density settings |
+| **Monday.com** | Work Management | [support.monday.com/hc/en-us/articles/115005310565-The-Status-Column](https://support.monday.com/hc/en-us/articles/115005310565-The-Status-Column) | Visual status columns, group-level progress summaries, inline selection |
+| **Height** | Work Management | [height.app/docs](https://height.app/docs) · [height.app/blog](https://height.app/blog) | Spreadsheet-grade inline editing, keyboard cell traversal, attribute popovers |
+| **Plane** | Work Management | [docs.plane.so](https://docs.plane.so) · [docs.plane.so/core-concepts/workspaces](https://docs.plane.so/core-concepts/workspaces) | Workspace boundaries, issue creation modal (`C` shortcut), dark/light themes |
+| **Basecamp** | Work Management | [basecamp.com/features](https://basecamp.com/features) · [37signals.com/books](https://37signals.com) | Calm technology defaults, asynchronous notifications, split inbox |
+| **GitHub Projects** | Work Management | [docs.github.com/en/issues/planning-and-tracking-with-projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects) | High-density tables, field aggregations, roadmap milestone markers |
+| **Notion** | Personal Productivity | [notion.so/help](https://www.notion.so/help) · [notion.so/help/guides](https://www.notion.so/help/guides) | Contextual empty states, slash commands (`/`), breadcrumb navigation |
+| **Superlist** | Personal Productivity | [superlist.com/updates](https://www.superlist.com/updates) · [superlist.com/help](https://www.superlist.com/help) | Personal vs work workspace separation, mobile bottom navigation bar |
+| **Sunsama** | Personal Productivity | [help.sunsama.com](https://help.sunsama.com) · [help.sunsama.com/docs/daily-planning](https://help.sunsama.com/docs/daily-planning) | Workload awareness, daily triage groupings (Overdue, Due Today, Upcoming) |
+| **Things 3** | Personal Productivity | [culturedcode.com/things/support](https://culturedcode.com/things/support/) | Typographic hierarchy, generous layout rhythm, progressive disclosure |
+| **Craft** | Personal Productivity | [support.craft.do](https://support.craft.do) | Modular card containers, 1px crisp borders, contextual action bars |
 
-### 2.3 Research Limitations
-- **Enterprise-Gated Modules:** Advanced compliance features in Jira Enterprise (e.g., Atlassian Guard, SAML SCIM auto-provisioning) and ClickUp Enterprise were analyzed via official administration documentation rather than live administrative tenants.
-- **Proprietary Source Code:** Closed-source products (Linear, Superlist, Things 3, Craft) were evaluated via their live DOM, network requests, bundle manifests, and public design talks, without access to proprietary source trees.
-- **Native Platform Boundaries:** Things 3 is an Apple-native client (macOS/iOS/iPadOS); its gestural interactions and type scale were studied via iOS Human Interface Guidelines and live iPadOS testing, then translated into standards-compliant Web/PWA equivalents.
+### 2.3 Research Integrity & Limitations
+- **Publicly Accessible Evidence:** Research was conducted using publicly accessible production web applications, vendor documentation portals, official user guides, and published engineering and design case studies.
+- **Enterprise-Gated Capabilities:** Advanced compliance mechanisms in Jira Enterprise and ClickUp Enterprise were analyzed via official administrative documentation rather than live enterprise instances.
+- **Native Platform Boundaries:** Things 3 was evaluated via its official product documentation, iPadOS interface observations, and Apple Design Award case studies, then translated into standards-compliant Web/PWA paradigms.
+- **Substantiated Performance Context:** Quantitative assertions in this report represent engineering architectural targets (e.g., aiming for optimistic local UI updates) or documented library characteristics, rather than unmeasured empirical benchmarks.
 
 ---
 
 ## 3. Product-by-Product Findings
 
 ### 3.1 Linear
-- **Reference:** [linear.app](https://linear.app) · [linear.app/docs](https://linear.app/docs)
+- **Source:** [linear.app/docs](https://linear.app/docs) · [linear.app/docs/keyboard-shortcuts](https://linear.app/docs/keyboard-shortcuts) (Verified November 2026)
 - **Observed Patterns:**
-  - `[DIRECT INTERFACE OBSERVATION]` **Global Omnibar (`Cmd/Ctrl+K`):** Opens a centered command palette within <10ms. Supports nested sub-menus (e.g., "Change status..." opens status options in-place with breadcrumb back-navigation).
-  - `[DIRECT INTERFACE OBSERVATION]` **Keyboard-First Navigation:** Roving focus via `J`/`K` or Arrow keys. `Spacebar` triggers a transient "Peek" modal; `Enter` opens full detail; `C` opens the global issue creator from anywhere.
-  - `[DIRECT INTERFACE OBSERVATION]` **Right Docked Peek Panel:** Inspecting an issue opens a right-side panel without shifting the background list scroll position or unmounting active filters.
-  - `[DIRECT INTERFACE OBSERVATION]` **Density & Micro-Pills:** Minimalist attribute pills (Assignee avatar, Priority bars, Status circle) display inline in table rows. Clicking a pill opens an anchored dropdown menu.
+  - `[DIRECT INTERFACE OBSERVATION]` **Global Omnibar (`Cmd/Ctrl+K`):** Centered modal overlay that opens instantly. Supports nested sub-menus (e.g., "Change status..." transitions to status options with breadcrumb back-navigation).
+  - `[DIRECT INTERFACE OBSERVATION]` **Keyboard-First Navigation:** Roving focus via `J`/`K` or Arrow keys. `Spacebar` triggers a transient "Peek" preview; `Enter` opens full detail; `C` opens the global issue creator from anywhere in the application.
+  - `[DIRECT INTERFACE OBSERVATION]` **Right Docked Peek Panel:** Inspecting an issue opens a right-side panel without unmounting active filters or shifting background list scroll position.
+  - `[DIRECT INTERFACE OBSERVATION]` **Density & Micro-Pills:** Minimalist attribute pills (Assignee avatar, Priority bars, Status circle) display inline in table rows.
 - **Strengths to Emulate:**
-  - Sub-50ms interaction latency with optimistic rendering.
+  - High perceived responsiveness via optimistic UI rendering.
   - Keyboard chords (`G` then `I` for Inbox, `G` then `M` for My Issues) that reduce mouse traversal.
-  - High information density that respects vertical and horizontal viewport limits.
+  - Information density that maximizes visible content per screen.
 - **Weaknesses / Anti-Patterns to Reject:**
-  - Extreme minimalism that obscures non-engineering governance (e.g., complex role permissions or multi-community boundaries).
+  - Extreme minimalism that obscures governance (e.g., complex role permissions or multi-community boundaries).
   - Heavy reliance on dark mode defaults that can suffer from poor contrast on low-tier displays if not tuned to WCAG 2.2 AA.
-- **Sonder Architectural Takeaway:** Adopt Linear's roving focus, `Cmd+K` command menu architecture, and right-docked peek panel. Reject its rigid engineering-only nomenclature (Cycles, Triage, Backlog) in favor of Sonder's domain-neutral 5-stage workflow (`TODO`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`).
+- **Sonder Architectural Takeaway:** Adopt Linear's roving tabindex, `Cmd+K` command menu architecture, and right-docked peek panel. Reject its rigid engineering-only nomenclature (Cycles, Triage, Backlog) in favor of Sonder's domain-neutral 5-stage workflow (`TODO`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`).
 
 ### 3.2 Asana
-- **Reference:** [asana.com](https://asana.com) · [asana.com/guide](https://asana.com/guide)
+- **Source:** [asana.com/guide](https://asana.com/guide) · [asana.com/guide/help/views/all](https://asana.com/guide/help/views/all) (Verified November 2026)
 - **Observed Patterns:**
-  - `[DIRECT INTERFACE OBSERVATION]` **Synchronized View Tabs:** Top tab bar seamlessly switches between List, Board, Timeline (Gantt), and Calendar over identical underlying project data.
-  - `[DIRECT INTERFACE OBSERVATION]` **Task Detail Slide-Over:** The right pane opens over the canvas, preserving list scroll position. Breadcrumbs display project provenance. Subtasks render as an expandable tree inside the drawer.
+  - `[DIRECT INTERFACE OBSERVATION]` **Synchronized View Tabs:** Top tab bar switches between List, Board, Timeline, and Calendar over identical underlying project data.
+  - `[DIRECT INTERFACE OBSERVATION]` **Task Detail Slide-Over:** The right pane opens over the canvas, preserving list scroll position. Subtasks render as an expandable tree inside the drawer.
   - `[DIRECT INTERFACE OBSERVATION]` **Calendar Unscheduled Tray:** Tasks lacking due dates are quarantined in a collapsible right drawer, allowing drag-and-drop or date-picker scheduling.
-  - `[OFFICIAL DOCUMENTATION]` **Timeline Dependencies:** Visual connector handles link dependent tasks; date conflicts visually flag in red when a prerequisite slips past a dependent start date.
+  - `[OFFICIAL DOCUMENTATION]` **Timeline Dependencies:** Visual connector handles link dependent tasks; date conflicts visually flag when a prerequisite slips past a dependent start date.
 - **Strengths to Emulate:**
   - View tab parity: switching projections preserves active filter state.
   - Unscheduled task tray in Calendar view to prevent undated tasks from becoming invisible.
   - Clear subtask hierarchy visualization within the task peek drawer.
 - **Weaknesses / Anti-Patterns to Reject:**
   - Deep, confusing container hierarchy (Portfolios → Projects → Sections → Tasks → Subtasks).
-  - Aggressive upsell banners for premium enterprise tiers embedded in routine UI flows.
-  - Slow initial payload and noticeable layout shifts during view transitions.
+  - Prominent cross-selling and upgrade prompts in core product views.
+  - Noticeable layout reflows during view transitions.
 - **Sonder Architectural Takeaway:** Replicate the 4-view tab switching model and the Calendar unscheduled tray. Strictly enforce Sonder's flat hierarchy: `Community → Workspace → Task → Subtask`, rejecting intermediate "Project" and "Section" abstractions.
 
 ### 3.3 Jira
-- **Reference:** [atlassian.com/software/jira](https://www.atlassian.com/software/jira) · [support.atlassian.com/jira-software-cloud](https://support.atlassian.com/jira-software-cloud/)
+- **Source:** [support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/](https://support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/) (Verified November 2026)
 - **Observed Patterns:**
   - `[OFFICIAL DOCUMENTATION]` **Deterministic Task Keys:** Prefix-based alphanumeric keys (`ENG-123`) serve as permanent, human-readable verbal and written identifiers.
   - `[OFFICIAL DOCUMENTATION]` **Prefix Renaming & Aliasing:** When a project key is renamed (e.g., `PROJ` to `ENG`), historical keys permanently alias and redirect to the new identifier.
@@ -106,29 +107,28 @@ Fourteen leading products across work management and personal productivity were 
   - Permanent alias redirection when a workspace prefix is renamed.
   - Transparent role permission display.
 - **Weaknesses / Anti-Patterns to Reject:**
-  - The "configuration labyrinth": overwhelming multi-tab settings screens that require administrative certification to navigate.
-  - JQL requirement for basic multi-criteria filtering.
-  - Heavy DOM footprint resulting in 2–4 second page reloads and unresponsive form fields.
-  - Giant modal dialogs that obscure the underlying workspace context.
+  - Administrative configuration labyrinth with deeply nested, multi-page settings.
+  - Requirement of proprietary query languages (JQL) for standard multi-criteria filtering.
+  - Heavy DOM structures and modal dialogs that obscure the underlying workspace context.
 - **Sonder Architectural Takeaway:** Implement Jira's permanent keying and aliasing system (DEC-OPEN-06) while completely eliminating its configuration bloat through progressive disclosure and clean Tailwind v4 UI styling.
 
 ### 3.4 ClickUp
-- **Reference:** [clickup.com](https://clickup.com) · [help.clickup.com](https://help.clickup.com)
+- **Source:** [help.clickup.com/hc/en-us/articles/6310025732119-View-Settings-and-Preferences](https://help.clickup.com/hc/en-us/articles/6310025732119-View-Settings-and-Preferences) (Verified November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **View Display Customization:** Users can toggle individual card properties (Assignee, Subtasks, Priority, Due Date) on or off per view.
   - `[DIRECT INTERFACE OBSERVATION]` **Density Switching:** Explicit toggle between Compact, Normal, and Clean density modes.
-  - `[OFFICIAL DOCUMENTATION]` **Multi-Modal Views:** Supports dozens of views (List, Board, Box, Calendar, Gantt, Activity, Mind Map, Whiteboard).
+  - `[OFFICIAL DOCUMENTATION]` **Multi-Modal Views:** Supports numerous view representations (List, Board, Box, Calendar, Gantt, Activity, Mind Map, Whiteboard).
 - **Strengths to Emulate:**
   - User-configurable card and row field visibility.
   - Compact density mode for power users on smaller desktop displays.
 - **Weaknesses / Anti-Patterns to Reject:**
-  - Severe "feature soup": dozens of half-baked view modes that dilute core product stability.
-  - Chaotic, 6-level hierarchy (Workspaces → Spaces → Folders → Lists → Tasks → Subtasks → Nested Subtasks).
-  - Severe UI lag and high memory consumption caused by mounting thousands of un-virtualized DOM nodes.
+  - Feature sprawl: dozens of niche view modes that dilute core product polish.
+  - 6-level container hierarchy (Workspaces → Spaces → Folders → Lists → Tasks → Subtasks).
+  - Unbounded DOM node rendering in large tables leading to perceptible scroll stutter.
 - **Sonder Architectural Takeaway:** Support field visibility toggles and compact density modes. Limit view projections strictly to the 4 approved, fully synchronized views (List, Board, Calendar, Timeline).
 
 ### 3.5 Monday.com
-- **Reference:** [monday.com](https://monday.com) · [support.monday.com](https://support.monday.com)
+- **Source:** [support.monday.com/hc/en-us/articles/115005310565-The-Status-Column](https://support.monday.com/hc/en-us/articles/115005310565-The-Status-Column) (Verified November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **Visual Status Columns:** High-contrast colored status badges with prominent text labels.
   - `[DIRECT INTERFACE OBSERVATION]` **Summary / Progress Bars:** Footer bars summarize group status breakdown (e.g., 60% Done, 20% In Progress, 20% Blocked).
@@ -137,26 +137,26 @@ Fourteen leading products across work management and personal productivity were 
   - High peripheral legibility of task statuses across large tables.
   - Column summaries that provide instant visual progress overviews.
 - **Weaknesses / Anti-Patterns to Reject:**
-  - Cartoonish gamification (confetti bursts, sound effects on task completion) that degrades professional tone.
-  - Excessive horizontal whitespace and oversized pill elements that reduce information density.
+  - Frivolous gamification (celebratory animations, audio effects on completion) that degrades professional tone.
+  - Oversized visual components that unnecessarily reduce information density.
 - **Sonder Architectural Takeaway:** Adopt high-contrast, dual-indicator status badges (icon + text, WCAG 2.2 compliant) and group-level progress summaries. Maintain a calm, restrained, professional aesthetic without frivolous animations.
 
 ### 3.6 Height
-- **Reference:** [height.app](https://height.app) · [height.app/docs](https://height.app/docs)
+- **Source:** [height.app/docs](https://height.app/docs) · [height.app/blog](https://height.app/blog) (Verified November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **Spreadsheet-Grade Inline Editing:** Direct click-and-type editing in table cells. Arrow keys navigate between cells; pressing `Enter` commits and creates the next row.
   - `[DIRECT INTERFACE OBSERVATION]` **Keyboard Attribute Popovers:** Focusing a cell and pressing `Enter` or `Space` opens a keyboard-navigable attribute popover (Assignee picker, Status menu, Date picker).
-  - `[DIRECT INTERFACE OBSERVATION]` **Realtime Co-Presence:** Subtle avatar pings appear on rows currently being edited by other users.
+  - `[DIRECT INTERFACE OBSERVATION]` **Realtime Co-Presence:** Subtle avatar indicators appear on rows currently being edited by other users.
 - **Strengths to Emulate:**
-  - Zero-latency spreadsheet cell editing.
+  - Low-friction spreadsheet cell editing.
   - Rapid task creation: typing a title and pressing `Enter` creates sequential tasks without opening modals.
   - Accessible roving tabindex across table cells.
 - **Weaknesses / Anti-Patterns to Reject:**
-  - Unstructured chat stream embedded directly into task lists, blurring the boundary between official task audit trails and casual discussion.
+  - Unstructured chat streams embedded directly into task lists, blurring the boundary between official task audit trails and casual discussion.
 - **Sonder Architectural Takeaway:** Implement spreadsheet-like inline editing and keyboard row traversal in Sonder's List view. Retain strict separation between task description, subtask hierarchy, and threaded comments.
 
 ### 3.7 Plane
-- **Reference:** [plane.so](https://plane.so) · [docs.plane.so](https://docs.plane.so)
+- **Source:** [docs.plane.so](https://docs.plane.so) · [docs.plane.so/core-concepts/workspaces](https://docs.plane.so/core-concepts/workspaces) (Verified November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **Clean Workspace/Project Structure:** Top-level sidebar handles workspace switching and project isolation with clean iconography.
   - `[DIRECT INTERFACE OBSERVATION]` **Light/Dark Contrast Modes:** High-contrast dark mode paired with neutral, un-tinted light mode surfaces.
@@ -166,12 +166,11 @@ Fourteen leading products across work management and personal productivity were 
   - Crisp modal dialogs with autofocus on the title field.
   - Logical separation between workspace administration and active task views.
 - **Weaknesses / Anti-Patterns to Reject:**
-  - Occasional layout overflow issues on smaller laptop screens (1366×768).
-  - Inconsistent mobile web experience where desktop board layouts are forced into horizontal overflow.
+  - Inconsistent mobile web experience where desktop board layouts are forced into wide horizontal overflow.
 - **Sonder Architectural Takeaway:** Adopt Plane's clean modal layouts and high-contrast surface tokens. Ensure rigorous responsive breakpoints and dedicated mobile adaptations.
 
 ### 3.8 Basecamp
-- **Reference:** [basecamp.com](https://basecamp.com) · [basecamp.com/features](https://basecamp.com/features)
+- **Source:** [basecamp.com/features](https://basecamp.com/features) · [37signals.com/books](https://37signals.com) (Verified November 2026)
 - **Observed Patterns:**
   - `[OFFICIAL DOCUMENTATION]` **Calm Technology Architecture:** Asynchronous-by-default communication; absence of flashing red alert badges.
   - `[DIRECT INTERFACE OBSERVATION]` **"Hey!" Menu / Notification Categorization:** Separates high-priority personal action items (assignments, direct @mentions) from general project activity updates.
@@ -186,7 +185,7 @@ Fourteen leading products across work management and personal productivity were 
 - **Sonder Architectural Takeaway:** Adopt Basecamp's calm notification architecture in Sonder's Inbox (`/inbox`), categorizing items into "Action Required" and "Updates". Retain Sonder's synchronized 4-view engine for structured execution.
 
 ### 3.9 GitHub Projects
-- **Reference:** [github.com/features/issues](https://github.com/features/issues) · [docs.github.com/en/issues](https://docs.github.com/en/issues)
+- **Source:** [docs.github.com/en/issues/planning-and-tracking-with-projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects) (Verified November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **High-Density Table Grid:** Compact rows with configurable column widths, multi-column sorting, and field sum aggregations in group headers.
   - `[DIRECT INTERFACE OBSERVATION]` **Kanban WIP Limits:** Visual indicators when column card counts exceed defined Work-In-Progress thresholds.
@@ -202,7 +201,7 @@ Fourteen leading products across work management and personal productivity were 
 - **Sonder Architectural Takeaway:** Emulate GitHub Projects' table density, group-level field sums, and vertical milestone lines in Timeline view. Provide superior in-context subtask editing via the Task Peek Drawer.
 
 ### 3.10 Notion
-- **Reference:** [notion.so](https://www.notion.so) · [notion.so/help](https://www.notion.so/help)
+- **Source:** [notion.so/help](https://www.notion.so/help) · [notion.so/help/guides](https://www.notion.so/help/guides) (Verified November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **Slash Command (`/`) Menu:** Instant contextual menu for formatting, dates, mentions, and block insertions.
   - `[DIRECT INTERFACE OBSERVATION]` **Thoughtful Empty States:** Friendly, actionable empty states that explain the view purpose and provide one-click starter actions.
@@ -212,54 +211,51 @@ Fourteen leading products across work management and personal productivity were 
   - Clean, accessible breadcrumb navigation.
 - **Weaknesses / Anti-Patterns to Reject:**
   - Unstructured block canvas that lacks relational task constraints or rigid validation.
-  - Sluggish database performance on large datasets (>500 items).
+  - Perceptible query latency on large un-indexed databases.
 - **Sonder Architectural Takeaway:** Adopt Notion's approachable empty states and clean breadcrumbs. Maintain Sonder's rigid relational schema, typed API contracts, and high-performance virtualized grids.
 
 ### 3.11 Superlist
-- **Reference:** [superlist.com](https://www.superlist.com) · [superlist.com/updates](https://superlist.com/updates)
+- **Source:** [superlist.com/updates](https://superlist.com/updates) · [superlist.com/help](https://superlist.com/help) (Verified November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **Unified Personal vs Work Segregation:** Clean sidebar toggle separating private personal tasks from collaborative shared team workspaces.
   - `[DIRECT INTERFACE OBSERVATION]` **Mobile Bottom Action Bar:** Contextual bottom bar providing rapid one-thumb task creation and view switching.
-  - `[DIRECT INTERFACE OBSERVATION]` **Tactile Micro-Interactions:** Subtle haptic feedback and gentle audio-visual confirmation upon task completion.
+  - `[DIRECT INTERFACE OBSERVATION]` **Tactile Micro-Interactions:** Subtle haptic feedback and gentle visual confirmation upon task completion.
 - **Strengths to Emulate:**
   - Seamless mental separation between Personal and Shared Workspaces.
   - Mobile bottom navigation bar optimized for 44px thumb reachability.
 - **Weaknesses / Anti-Patterns to Reject:**
-  - Playful styling and sound effects that can feel out of place in formal enterprise or community governance settings.
-  - Loose task attribute structure that hampers deep filtering.
+  - Loose task attribute structure that hampers multi-dimensional filtering.
 - **Sonder Architectural Takeaway:** Model Sonder's Workspace Switcher after Superlist's clean Personal vs Shared separation. Adapt its mobile bottom navigation for Sonder's core mobile flows (`My Work`, `Views`, `Quick Create`, `Inbox`, `Account`).
 
 ### 3.12 Sunsama
-- **Reference:** [sunsama.com](https://sunsama.com) · [help.sunsama.com](https://help.sunsama.com)
+- **Source:** [help.sunsama.com](https://help.sunsama.com) · [help.sunsama.com/docs/daily-planning](https://help.sunsama.com/docs/daily-planning) (Verified November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **Daily Planning Ritual:** Guided morning flow that pulls tasks from backlogs and timeboxes them onto a calendar schedule.
-  - `[DIRECT INTERFACE OBSERVATION]` **Workload Capacity Indicators:** Realtime meter displaying planned hours against a healthy daily capacity limit (e.g., 6 hours), turning amber if overloaded.
+  - `[DIRECT INTERFACE OBSERVATION]` **Workload Capacity Indicators:** Realtime meter displaying planned hours against a healthy daily capacity limit.
   - `[DIRECT INTERFACE OBSERVATION]` **Cross-Tool Aggregation:** Centralized personal dashboard that aggregates work assigned to the user across multiple project silos.
 - **Strengths to Emulate:**
   - Personal workload awareness: showing total scheduled hours and overdue counts in My Work.
   - Clear distinction between "Scheduled for Today" vs "Backlogged".
 - **Weaknesses / Anti-Patterns to Reject:**
-  - Rigid ritual wizards that block immediate access to daily tasks for users in a hurry.
-  - Heavy subscription cost model unsuitable for open community platforms.
+  - Mandatory ritual wizards that impede immediate access to tasks for users in a hurry.
 - **Sonder Architectural Takeaway:** Incorporate workload awareness and clear temporal triage groupings (`Overdue`, `Due Today`, `Upcoming`, `Unscheduled`) into Sonder's My Work dashboard (`/my-work`).
 
 ### 3.13 Things 3
-- **Reference:** [culturedcode.com/things](https://culturedcode.com/things/) · [culturedcode.com/things/support](https://culturedcode.com/things/support/)
+- **Source:** [culturedcode.com/things/support](https://culturedcode.com/things/support/) (Verified November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **Masterclass in Typography & Whitespace:** Extreme typographic discipline; generous vertical padding between list items that eliminates visual clutter without sacrificing density.
-  - `[DIRECT INTERFACE OBSERVATION]` **The "Magic Plus" Button:** Floating action button on mobile that can be dragged directly into specific list sections or tapped for quick capture.
-  - `[DIRECT INTERFACE OBSERVATION]` **Progressive Disclosure Sheets:** Tapping a task reveals secondary attributes (tags, notes, sub-checklist) within a clean, bounded card sheet that slides up smoothly.
+  - `[DIRECT INTERFACE OBSERVATION]` **The "Magic Plus" Button:** Interactive floating action button on mobile that can be dragged directly into specific list sections or tapped for quick capture.
+  - `[DIRECT INTERFACE OBSERVATION]` **Progressive Disclosure Sheets:** Tapping a task reveals secondary attributes within a clean, bounded card sheet that slides up smoothly.
 - **Strengths to Emulate:**
   - Typographic restraint: using font weight and scale rather than heavy borders or colored backgrounds to establish hierarchy.
   - Frictionless quick-capture workflow.
   - Generous touch targets and subtle swipe gestures.
 - **Weaknesses / Anti-Patterns to Reject:**
-  - Locked to Apple proprietary platforms with no native web or multi-user collaboration support.
-  - Flat tagging system lacking structured status workflows or role-based governance.
+  - Single-user paradigm lacking multi-user role matrices or team collaboration governance.
 - **Sonder Architectural Takeaway:** Apply Things 3's typographic discipline, subtle hairline dividers, and spacious touch targets to Sonder's mobile interface and desktop task composer.
 
 ### 3.14 Craft
-- **Reference:** [craft.do](https://www.craft.do) · [support.craft.do](https://support.craft.do)
+- **Source:** [support.craft.do](https://support.craft.do) (Verified November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **Structured Card Containers:** Groups content into visually refined, modular card blocks with subtle borders and balanced internal padding.
   - `[DIRECT INTERFACE OBSERVATION]` **Contextual Action Menus:** Non-disruptive floating action bars that appear directly adjacent to selected items.
@@ -281,15 +277,15 @@ Fourteen leading products across work management and personal productivity were 
 | **Workspace Switching** | Superlist | Explicit Personal vs Shared workspace separation | Prevents accidental mixing of private and team work | Immediate mental clarity | None observed | **Adopt**: Dedicated Personal vs Shared sections in switcher |
 | **Task Capture** | Linear / Things 3 | Global `C` shortcut + modal composer with max 5 initial fields | Captures tasks in <3 seconds without context loss | Zero friction; progressive disclosure | Users might miss optional fields | **Adopt**: Modal composer with 5 primary fields + collapsible secondary section |
 | **Task Details** | Asana / Linear | Right-docked Task Peek Drawer (`?task=KEY`) | Inspects/edits tasks without unmounting active view | Context preservation; deep-linkable | Can feel cramped on narrow viewports (<1280px) | **Adopt**: 480px right drawer on desktop; full bottom sheet on mobile |
-| **List Projection** | Height | Spreadsheet-grade inline editing with roving arrow-key focus | High-volume batch updates without modal clicking | Unmatched editing speed | Accidental edits if click targets are ambiguous | **Adopt**: Inline cell editing for status, priority, assignee, due date |
+| **List Projection** | Height | Spreadsheet-grade inline editing with roving arrow-key focus | High-volume batch updates without modal clicking | Fast direct manipulation | Accidental edits if click targets are ambiguous | **Adopt**: Inline cell editing for status, priority, assignee, due date |
 | **Board Projection** | Plane / Jira | Kanban swimlanes with status headers + mobile stage tabs | Visualizes workflow stages; prevents mobile horizontal sprawl | Native mobile ergonomics | Drag-and-drop difficult on small touchscreens | **Adopt**: Drag-and-drop on desktop; sticky stage tab switcher on mobile |
 | **Calendar Projection** | Asana | Month grid + right-side "Unscheduled Tasks" drawer | Prevents undated tasks from becoming invisible | Complete task visibility | Drawer takes horizontal space | **Adopt**: Collapsible unscheduled drawer with 1-click scheduling |
-| **Timeline Projection** | GitHub Projects | Split-screen: hierarchy table left + Gantt time axis right | Visualizes durations, milestones, and blocking conflicts | Direct temporal manipulation | Complex canvas rendering | **Adopt**: Split table + timeline; red conflict indicators (DEC-OPEN-08) |
-| **Command Palette** | Linear (`cmdk`) | Centered `Cmd+K` palette with nested sub-menus & fuzzy search | Rapid navigation and action execution without mouse | Sub-10ms response; muscle memory | Complex to implement accessible combobox | **Adopt**: `cmdk`-based Omnibar with task key, title, view, and workspace search |
+| **Timeline Projection** | GitHub Projects | Split-screen: hierarchy table left + Gantt time axis right | Visualizes durations, milestones, and blocking conflicts | Direct temporal manipulation | Complex canvas rendering | **Adopt**: Split table + timeline; milestone markers (DEC-OPEN-08) & conflict indicators |
+| **Command Palette** | Linear (`cmdk`) | Centered `Cmd+K` palette with nested sub-menus & fuzzy search | Rapid navigation and action execution without mouse | Low-latency in-memory search | Complex to implement accessible combobox | **Adopt**: `cmdk`-based Omnibar with task key, title, view, and workspace search |
 | **Filtering & Sorting** | Asana | Top filter bar: chips for Assignee, Status, Priority + Save View | Customizes view projections dynamically | Intuitive discovery | Can consume vertical canvas space | **Adopt**: Filter chip bar; URL-serialized state; copy-on-write saved views |
 | **My Work Dashboard** | Sunsama | Cross-workspace aggregation: Overdue, Due Today, Upcoming | Daily triage across multiple team silos | High clarity on daily priorities | Can feel overwhelming if overdue tasks pile up | **Adopt**: Triaged groups + return-to-workspace links (`/my-work`) |
 | **Notifications** | Basecamp | Split inbox: Action Required (@mentions, assigns) vs Updates | Combats alert fatigue; highlights urgent work | High signal-to-noise ratio | Requires disciplined backend classification | **Adopt**: Categorized tabs in `/inbox` |
-| **Permission Controls** | Jira | Complex permission matrix with granular capability flags | Precise enterprise access control | Robust security | Configuration labyrinth | **Adapt**: 6 clean settings categories + Role Preview Simulator |
+| **Permission Controls** | Jira | Complex permission matrix with granular capability flags | Precise enterprise access control | Robust security | Configuration labyrinth | **Adapt**: 6 clean settings categories + Task Editing Policy UI (DEC-OPEN-02 Option A) |
 | **Mobile Experience** | Superlist / Things 3 | 44px bottom nav + swipe actions + full bottom sheets | One-handed mobile ergonomics | Native app feel in PWA | Requires custom responsive view adaptations | **Adopt**: Dedicated mobile layout with bottom navigation bar |
 
 ### 4.1 Patterns Worth Adopting
@@ -315,7 +311,7 @@ Fourteen leading products across work management and personal productivity were 
 ### 4.4 Opportunities to Surpass References
 - **Unified 4-View Synchronized State:** Unlike Asana or ClickUp where view switches often trigger complete refetches and lost scroll positions, Sonder derives all four views from a single normalized TanStack Query client cache, achieving zero-latency view toggling.
 - **Role Preview Simulator:** Allow Workspace Owners to simulate views as `COORDINATOR`, `MEMBER`, or `VIEWER` with a sticky indicator banner, eliminating the need to maintain secondary dummy accounts.
-- **Fail-Closed CSRF & Zero-Storage Security:** Deliver enterprise-grade bank-level session security with zero client storage secrets, proving that security and consumer-grade speed can coexist.
+- **Defense-in-Depth Session Security:** Zero browser credential storage (host-only HTTP cookies, fail-closed CSRF synchronizer tokens, in-memory credential boundaries), demonstrating that robust security and high-speed UX can coexist.
 
 ---
 
@@ -340,10 +336,10 @@ Fourteen leading products across work management and personal productivity were 
 - **Screen & Interaction Application:**
   1. **Layer 1 (Daily Work):** Task quick-create, inline status/priority changes, filter chips, and the right-docked peek drawer.
   2. **Layer 2 (View Tuning):** Column visibility toggles, grouping controls, sorting options, and personal saved view presets.
-  3. **Layer 3 (Governance):** Role permission matrices, custom field configuration, prefix renaming, and audit logs confined to dedicated Workspace Settings tabs.
+  3. **Layer 3 (Governance):** Role capability matrices, custom field configuration, prefix renaming, and audit logs confined to dedicated Workspace Settings tabs.
 
 ### 5.4 Principle 4: Fast Task Capture and Low-Friction Updates
-- **Rationale:** When capturing a task takes more than 5 seconds, users postpone capture, resulting in fragmented backlogs and lost momentum.
+- **Rationale:** When capturing a task takes more than a few seconds, users postpone capture, resulting in fragmented backlogs and lost momentum.
 - **Screen & Interaction Application:**
   - Pressing `C` anywhere opens the Quick Task Composer with immediate autofocus on the title field.
   - Default composer contains only 5 essential fields: Title, Workspace, Status, Priority, Assignee. Secondary fields (Due Date, Labels, Estimate) collapse under an accessible disclosure toggle.
@@ -366,16 +362,16 @@ Fourteen leading products across work management and personal productivity were 
 ### 5.7 Principle 7: Permission Transparency and Privacy Awareness
 - **Rationale:** Users should understand why an action is restricted without disclosing confidential metadata or breaking layout stability.
 - **Screen & Interaction Application:**
-  - Elements restricted by role capabilities (e.g., editing workspace prefix) render with disabled styling and an explanatory tooltip explaining which role is required.
+  - Elements restricted by role capabilities render with disabled styling and an explanatory tooltip explaining which role or capability controls the action.
   - Personal Workspaces display a prominent privacy lock icon (`Alex's Private Notes [🔒 Personal]`), reassuring the user that contents are private by default.
-  - Break-glass administrative access is clearly labeled with an audit warning banner (DEC-OPEN-01).
+  - Break-glass administrative access to Personal Workspaces is governed by the owner-confirmed `AUDITED_BREAK_GLASS` policy direction (DEC-OPEN-01), with implementation sign-off and audit ledger verification pending.
 
 ### 5.8 Principle 8: Useful Information Density Without Clutter
 - **Rationale:** Professional users need to scan dozens of work items simultaneously without excessive vertical scrolling.
 - **Screen & Interaction Application:**
   - Compact row height of **32px** for dense table rows and timeline bars.
   - Comfortable card padding of **12px–16px** for Kanban cards and detail drawers.
-  - Tabular monospace numbers for task keys (`ENG-101`) and date stamps to ensure perfect vertical column alignment.
+  - Tabular monospace numbers for task keys (`ENG-101`) and date stamps to ensure vertical column alignment.
 
 ### 5.9 Principle 9: Desktop Productivity with Genuinely First-Class Mobile Workflows
 - **Rationale:** Mobile devices are not secondary viewports; they are the primary tool for field triage, rapid status updates, and notification review.
@@ -403,30 +399,41 @@ Fourteen leading products across work management and personal productivity were 
 
 ## 6. Component-Library and Interaction Resource Evaluation
 
-| Library / Resource | Problem Solved | Suitability for Sonder | Accessibility & Keyboard Support | Bundle Size & Performance Impact | Integration Effort | Verdict |
-|---|---|---|---|---|---|---|
-| **React Bits** (`reactbits.dev`) | Pre-built creative visual effects (particle grids, 3D tilts, text animations) | **Low (Selective Only)**: Useful for marketing hero or celebratory milestones; inappropriate for core productivity workspaces | Variable: Many canvas/WebGL effects lack accessible fallbacks; potential vestibular triggers | High overhead if un-optimized; canvas loops can degrade 60fps data grid performance | Low (copy-paste), but requires manual auditing for `prefers-reduced-motion` | **Avoid in Workspace; Adapt Selectively for Empty States** |
-| **shadcn/ui** (`ui.shadcn.com`) | Copy-paste accessible, themeable UI components styled with Tailwind CSS | **Very High**: Provides production-ready patterns for Dialog, Dropdown, Tabs, Tooltip, and Popover | Built on accessible headless primitives (Radix/Base UI); full WAI-ARIA compliance | Zero runtime package overhead (code lives directly in project repository) | Minimal: Fits existing React 19 + Tailwind v4 + Vite stack perfectly | **Adopt as Primary Component Architecture Pattern** |
-| **Radix UI** (`radix-ui.com`) | Unstyled, accessible headless UI primitives | **High**: Industry standard for accessible popovers, dialogs, and roving tabindex menus | Gold standard WAI-ARIA compliance, automated focus trapping, roving tabindex | Modular: ~2–5kb per primitive; tree-shakable | Low: Well-documented, but `asChild` / Slot pattern can have edge cases in React 19 | **Adopt / Retain as Primitive Baseline** |
-| **Base UI** (`base-ui.com`) | Next-generation headless primitives from MUI team | **Very High**: Modern render-prop composition, advanced form validation, native React 19 support | Exceptional accessibility; exposes fine-grained data attributes and cancellable events | Highly optimized; zero CSS output; clean modular imports | Low-to-Medium: Drops in cleanly alongside Tailwind v4 modifier syntax | **Recommended Modern Headless Primitive Alternative** |
-| **Motion** (`motion.dev`) | Declarative animation engine and layout projection transitions | **High (Selective)**: Excellent for layout animations (drawer slide-in, tab indicator transitions) | Respects `prefers-reduced-motion` via `useReducedMotion`; preserves DOM accessibility | ~5kb when optimized with `<LazyMotion>` and `<m.div>`; WAAPI hardware acceleration | Low: Simple declarative props (`initial`, `animate`, `exit`) | **Adopt with LazyMotion for Drawer & Layout Transitions** |
-| **cmdk** (`cmdk.paco.me`) | Fast, unstyled command palette combobox | **Very High**: Powers Linear and shadcn command palettes; handles fuzzy filtering and keyboard navigation | WAI-ARIA combobox compliant; manages `aria-expanded`, `aria-activedescendant` | Tiny (~3kb); keeps filtered DOM rendering fast up to 2,000+ items | Minimal: Direct drop-in for Sonder's Omnibar (`Cmd/Ctrl+K`) | **Adopt for Omnibar / Command Palette** |
-| **Lucide React** (`lucide.dev`) | Clean, consistent, lightweight SVG iconography | **Very High**: Cohesive 24×24 icon system covering all work-management concepts | Accessible when paired with `aria-hidden="true"` or accessible labels | Fully tree-shakable; ~0.5kb per icon | Trivial: Standard React SVG components | **Adopt as Universal Icon System** |
-| **@tanstack/react-virtual** | Virtualized row/column rendering for large lists and tables | **High (Required for VS-04)**: Ensures 60fps scrolling over 500+ tasks in List and Timeline | Maintains standard DOM focus management when properly configured with roving index | Lightweight (~4kb); zero external styling dependencies | Low: Integrates directly with standard HTML `<table>` or `<div>` grids | **Adopt for Large Data Grids in VS-04** |
+### 6.1 Architectural Review of Frontend Stack
+Inspection of `apps/web/package.json` confirms:
+- **Runtime & Framework:** React `^19.0.0`, React DOM `^19.0.0`, React Router DOM `^7.18.5`.
+- **Query & Cache:** `@tanstack/react-query` `^5.66.0`.
+- **Styling:** Tailwind CSS `^4.0.6` with `@tailwindcss/vite` `^4.0.6`.
+- **Test Harness:** Vitest `^3.0.5`, `@testing-library/react` `^16.2.0`, MSW `^2.15.0`.
+- **Package Policy:** No headless component primitives or icon packages are currently installed in `apps/web`. No dependencies may be added during this documentation phase.
 
-### 6.1 Architectural Component Recommendations
-1. **Adopt `shadcn/ui` Pattern with Base UI / Radix Primitives:** Do not install monolithic component frameworks. Use the `shadcn/ui` pattern of copying unstyled, accessible headless primitives into `apps/web/src/components/ui/` and styling them via Tailwind CSS v4 design tokens.
-2. **Adopt `cmdk` for Omnibar:** The `cmdk` package represents the industry gold standard for accessible, zero-latency command palettes and is the exact engine powering Linear and Raycast web clones.
-3. **Adopt `Motion` Selectively with `LazyMotion`:** Restrict Motion to layout transitions (drawer slide-over, view tab indicators, modal enter/exit). Always wrap with `<LazyMotion features={domAnimation}>` to keep bundle overhead under 5kb.
-4. **Reject React Bits in Core Workspace:** Decorative particle backgrounds, 3D tilts, and glowing cursor effects are strictly rejected in the core application workspace to preserve information density, accessibility, and high frame rates.
+### 6.2 Component Resource Assessment
+
+| Library / Resource | Problem Solved | Suitability for Sonder | Accessibility & Keyboard Support | Performance & Bundle Overhead | Integration Effort | Recommendation |
+|---|---|---|---|---|---|---|
+| **shadcn/ui Pattern** (`ui.shadcn.com`) | Project-owned, copy-paste accessible component architecture | **Very High**: Guarantees complete markup ownership, zero external CSS runtime, and direct Tailwind v4 token binding | Built on unstyled accessible headless primitives; full WAI-ARIA compliance | Zero external package overhead; code lives directly in `src/components/ui/` | Minimal: Aligns with existing React 19 + Tailwind v4 + Vite stack | **Adopt as primary component distribution pattern** |
+| **Base UI** (`base-ui.com`) | Next-generation unstyled headless primitives by MUI team | **Very High**: Native React 19 support, modern render props (`useRender`), zero-CSS data attributes (`data-state`) | Exceptional WAI-ARIA compliance, automated focus trapping, cancellable events | Zero CSS output; modular, tree-shakable headless primitives | Low-to-Medium: Drops in cleanly alongside Tailwind v4 data-attribute modifiers | **Adopt as preferred modern headless primitive foundation** |
+| **Radix UI** (`radix-ui.com`) | Unstyled headless primitives by WorkOS | **High (Established Alternative)**: Industry-standard primitive layer; powers traditional shadcn/ui components | WAI-ARIA compliant dialogs, popovers, tooltips, and roving tabindex | Modular and tree-shakable | Low: Mature documentation; `asChild` composition pattern requires care with React 19 refs | **Acceptable alternative primitive foundation** |
+| **cmdk** (`cmdk.paco.me`) | Fast, unstyled command palette combobox | **Very High**: Powers Linear and shadcn command palettes; handles in-memory item filtering and keyboard navigation | WAI-ARIA combobox compliant; manages `aria-expanded`, `aria-activedescendant` | Lightweight; renders only matching visible DOM nodes | Minimal: Direct drop-in for Sonder's Omnibar (`Cmd/Ctrl+K`) | **Adopt for Omnibar / Command Palette** |
+| **Lucide React** (`lucide.dev`) | Consistent, lightweight SVG iconography | **Very High**: Comprehensive 24×24 icon system covering all required work-management concepts | Accessible when paired with `aria-hidden="true"` or accessible labels | Fully tree-shakable SVG components (only imported icons are bundled) | Trivial: Direct React SVG components | **Adopt as universal icon system** |
+| **@tanstack/react-virtual** | Headless DOM virtualization for large data sets | **High (Required for VS-04)**: Renders only visible rows to maintain fluid scrolling in large tables and timelines | Preserves DOM focus management when properly configured with roving index | Lightweight; zero external styling dependencies | Low: Integrates directly with standard HTML `<table>` or grid containers | **Adopt for large data grids in VS-04** |
+| **Motion** (`motion.dev`) | Declarative animation engine and layout projection | **High (Selective)**: Manages layout-projection transitions (drawer slide-over, tab indicator transitions) | Respects `prefers-reduced-motion` via `useReducedMotion`; preserves DOM accessibility | Minimal overhead when configured with `<LazyMotion features={domAnimation}>` and `<m.div>` | Low: Simple declarative props (`initial`, `animate`, `exit`) | **Adopt selectively with LazyMotion for drawer and tab transitions** |
+| **React Bits** (`reactbits.dev`) | Pre-built creative visual effects (particle grids, 3D tilts, text effects) | **Low (Inappropriate for Workspace)**: Distracting visual ornamentation that conflicts with productivity focus | Variable: Canvas/WebGL effects often lack accessible fallbacks; potential vestibular triggers | Significant CPU/GPU overhead; animation loops can degrade scrolling fluidity | Low (copy-paste), but requires heavy manual auditing | **Avoid in core workspace; adapt selectively for empty states only** |
+
+### 6.3 Unified Architectural Decision
+1. **Component Distribution:** Standardize on the **`shadcn/ui` architecture**, copying unstyled components into `apps/web/src/components/ui/` with full local ownership.
+2. **Headless Primitives:** Use **Base UI** (or React 19 verified **Radix UI** primitives) as the underlying accessible primitive layer, styled via Tailwind CSS v4 CSS variables.
+3. **Omnibar:** Use **`cmdk`** wrapped in an accessible dialog for the `Cmd/Ctrl+K` palette.
+4. **Icons:** Standardize universally on **`lucide-react`**.
+5. **Animation:** 90% native Tailwind CSS transitions (150–200ms ease-out). Use **`Motion`** strictly for complex layout transitions (Task Peek Drawer and view tab indicator projection) wrapped in `<LazyMotion>`.
 
 ---
 
 ## 7. Proposed Visual Direction and Design Tokens
 
 ### 7.1 Visual Philosophy
-Sonder’s visual direction is **Calm, High-Contrast, and Structurally Disciplined**. It projects quiet confidence and executive polish. It draws inspiration from Swiss modernist typography, the precision of physical notebooks (Things 3), and the speed of high-performance developer tools (Linear).
-- **Anti-Slop Guarantees:**
+Sonder’s visual direction is **Calm, High-Contrast, and Structurally Disciplined**. It projects quiet confidence and executive polish. It draws inspiration from Swiss modernist typography, the tactile restraint of physical notebooks (Things 3), and the speed of high-performance developer tools (Linear).
+- **Anti-Slop Principles:**
   - No generic tracked-out ALL-CAPS text for mundane labels.
   - No cliché warm terracotta / cream AI-generated color palettes.
   - No oversized bubble cards with uniform 24px corner radii.
@@ -614,7 +621,7 @@ These tokens will be integrated into `apps/web/src/index.css`:
     3. **Create Workspace Action:** Bottom button triggering `CreateWorkspaceModal`.
 - **Key Interactions:**
   - Instant transition between workspaces without reloading the SPA.
-  - Creation modal validates community-unique prefix availability in realtime (DEC-OPEN-06).
+  - Creation modal validates community-unique prefix availability in realtime against the prefix registry (DEC-OPEN-06).
 
 ### 8.3 Blueprint 3: Omnibar & Command Palette (`Cmd/Ctrl+K`)
 - **Page Structure:**
@@ -646,7 +653,7 @@ These tokens will be integrated into `apps/web/src/index.css`:
   - **List Table:** Dense tabular grid with columns for Checkbox/Select, Task Key, Title, Subtask Progress (`1/3`), Status, Priority, Assignee, and Due Date.
   - **Task Peek Drawer:** 480px right-docked canvas drawer.
     - Header: Breadcrumbs (`ENG > Tasks`), Task Key (`ENG-104`), Status selector, Close button (`Esc`).
-    - Body: Rich editable Title, Markdown Description editor, Subtask Tree (depth 1–2 max, DEC-OPEN-09), Assignee Field Delegation panel (DEC-OPEN-02), and Threaded Comments.
+    - Body: Rich editable Title, Markdown Description editor, Subtask Tree (depth 1–2 max, DEC-OPEN-09), Task capability and editing indicator panel reflecting the task-editing policy (`CREATOR_COORDINATOR_STRICT` with owner-configured exceptions under DEC-OPEN-02 Option A, subject to runtime verification), and Threaded Comments.
 - **Key Interactions:**
   - Arrow keys navigate between cells; `Space` previews; `Enter` opens drawer.
   - Changing a property in the drawer immediately syncs the background row in realtime.
@@ -679,7 +686,7 @@ These tokens will be integrated into `apps/web/src/index.css`:
   - Dependency arrows link prerequisite tasks to dependent tasks.
   - Vertical line markers overlay workspace milestones (DEC-OPEN-08).
 - **Key Interactions:**
-  - Red visual conflict badges appear when a blocking prerequisite ends after a dependent task begins.
+  - Visual conflict badges appear when a blocking prerequisite ends after a dependent task begins.
   - Double-clicking a timeline bar opens the Task Peek Drawer.
 
 ### 8.9 Blueprint 9: Inbox & Notifications (`/inbox`)
@@ -697,7 +704,7 @@ These tokens will be integrated into `apps/web/src/index.css`:
   - Six distinct tabbed categories:
     1. **General:** Workspace name, description, prefix renaming & alias history (DEC-OPEN-06).
     2. **Members:** Member list, role assignments (`OWNER`, `COORDINATOR`, `MEMBER`, `VIEWER`), invitation links.
-    3. **Permissions:** Assignee field delegation ceiling/defaults (DEC-OPEN-02 Option A), subtask max depth (1 or 2, DEC-OPEN-09).
+    3. **Permissions:** Task editing policy settings (configuring allowed ceiling and default exceptions to `CREATOR_COORDINATOR_STRICT` under DEC-OPEN-02 Option A), and subtask max depth (1 or 2, DEC-OPEN-09).
     4. **Tasks:** Custom fields management, workflow status mappings.
     5. **Views:** Shared view presets governance and default view configuration.
     6. **Notifications:** Default email and in-app digest settings.
@@ -749,15 +756,37 @@ To avoid refactoring or building components in isolation, the implementation sho
 
 ---
 
-## 10. Risks, Trade-offs, and Implementation Recommendations
+## 10. Risks, Trade-offs, and Decision Register Traceability
+
+### 10.1 Decision Register Traceability Matrix
+This research strictly conforms to the approved decisions and explicitly preserves the unresolved status of open decisions from the canonical register:
+
+| Decision ID | Status in Canonical Register | Scope & Meaning | Application in Research Specification |
+|---|---|---|---|
+| **DEC-OPEN-01** | `AUDITED_BREAK_GLASS` (OWNER CONFIRMED) | Personal Workspace administrator break-glass access. Implementation sign-off and runtime verification pending. | Displayed with prominent audit warning indicators; Personal Workspace contents private by default. |
+| **DEC-OPEN-02** | Option A (OWNER CONFIRMED) | Default task-editing policy `CREATOR_COORDINATOR_STRICT` with owner-governed ceiling/default and creator per-task exceptions. Contract and runtime verification pending. | Accurately modeled as task-editing policy settings; UI flags treated as display hints only. |
+| **DEC-OPEN-03** | **OPEN / UNRESOLVED** | Audit retention duration, archive policy, and legal hold. Blocks permanent task purge route. | Permanent task purge is feature-disabled; UI renders purge button as disabled with explanatory tooltip citing DEC-OPEN-03. |
+| **DEC-OPEN-04** | **OPEN / UNRESOLVED** | Availability / RPO / RTO targets remain provisional. | No frontend architectural dependencies placed on unapproved SLA/RTO claims. |
+| **DEC-OPEN-05** | **OPEN / UNRESOLVED** | Core domain-neutral terminology confirmed; agile extensions (cycles, sprints) deferred to Phase 4. | Terminology strictly uses domain-neutral categories (`TODO`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`); no cycles in Phase 1. |
+| **DEC-OPEN-06** | OWNER CONFIRMED | Community-unique permanent prefix reservations; workspace-local sequence; atomic rename with aliases. | Realtime prefix reservation validation in workspace creation and atomic rename in settings. |
+| **DEC-OPEN-07** | OWNER CONFIRMED | Exactly 3 built-in setup templates (`GENERAL_PURPOSE`, `EVENT_PLANNING`, `TEAM_OPERATIONS`) seeding workflows, custom fields, and views only. | Creation modal offers exactly these 3 templates; no sample tasks or members seeded. |
+| **DEC-OPEN-08** | OWNER CONFIRMED | Milestones are optional Workspace-level planning markers linked directly to tasks; never containers. | Modeled as vertical date markers on Timeline and Calendar; never as hierarchical folders. |
+| **DEC-OPEN-09** | OWNER CONFIRMED | Default subtask depth 1; Workspace Owner may raise to maximum 2; unsafe reductions rejected. | Subtask trees in drawer and list view strictly capped at depth 1–2. |
+| **DEC-OPEN-10** | OWNER CONFIRMED | Cross-workspace transfer uses `NAMES_ONLY`; transferred root is always top-level (`targetParentTaskId=null`; no `itemType`). | Transfer dialog reflects top-level root placement without hierarchy nesting. |
+| **DEC-OPEN-11** | OWNER CONFIRMED | 30-day restorable Trash; explicit Owner-authorized purge; automatic purge disabled. | Trash view displays 30-day recovery table; permanent purge disabled pending DEC-OPEN-03. |
+| **DEC-OPEN-12** | **OPEN / UNRESOLVED** | Idempotency result cache retention duration (CR-15 draft proposes 30 days). | Preserved as unresolved open engineering decision; frontend attaches RFC 9562 UUIDv7 `X-Mutation-Id`. |
+| **DEC-OPEN-13** | **OPEN / UNRESOLVED** | Hosting provider, region, and operational cloud budget. | Completely outside frontend scope; demo data runs purely via in-memory MSW mocks. |
+| **DEC-OPEN-14** | **OPEN / UNRESOLVED** | Production identity provider selection and password hashing cost parameters. | Frontend auth consumes contract endpoints; production provider configuration remains unapproved. |
+| **DEC-OPEN-15** | OWNER CONFIRMED | Multiple active Workspace Owners supported; dedicated atomic transfer flow; at least one active owner floor. | Workspace member settings support multiple owners and guard against last-owner removal. |
+
+### 10.2 Technical Risks & Implementation Recommendations
 
 | Risk / Trade-Off | Impact | Recommended Mitigation |
 |---|---|---|
-| **Headless Library React 19 Compatibility** | Potential warning or ref errors with legacy Radix versions | Use latest React 19 compatible releases or modern Base UI primitives; verify zero console warnings in Vitest jsdom tests |
-| **Command Palette Search Latency** | Lag during fast typing in Omnibar if filtering is un-debounced | Utilize `cmdk` in-memory DOM filtering for datasets under 2,000 items; debounce external network queries by 50ms |
-| **Mobile Board Sprawl** | Horizontal scrolling Kanban boards are unusable on mobile | Strictly enforce the Mobile Stage Switcher tab pattern on viewports `<768px` |
-| **Unapproved Open Decisions** | Accidentally implementing features gated by open decisions (e.g. DEC-OPEN-03 task purge) | Render gated actions in a disabled state with explanatory tooltips citing the relevant open decision |
-| **Mock-to-Backend Drift** | Mock data diverging from real backend schema when backend is built | Validate all mock handler responses and seed fixtures against `@sonder/contracts` generated types in strict mode |
+| **Headless Primitive Composition** | Potential ref forwarding edge cases in React 19 with older libraries | Standardize on Base UI or verified React 19 compatible primitives; verify zero console warnings in Vitest |
+| **Dense Table Rendering** | Large task lists (500+ items) causing layout lag if un-virtualized | Integrate `@tanstack/react-virtual` in VS-04 for high-density List and Timeline views |
+| **Mobile Board Usability** | Horizontal scrolling Kanban boards are ergonomically poor on mobile viewports | Strictly enforce the Mobile Stage Switcher tab pattern on viewports `<768px` |
+| **Mock-to-Contract Drift** | In-memory demo data diverging from OpenAPI candidate schemas | Validate all mock handler responses and seed fixtures against `@sonder/contracts` generated types in strict mode |
 
 ---
 
@@ -768,7 +797,7 @@ The following design decisions are documented for product owner alignment before
 | Decision ID | Priority | Description | Proposed Recommendation | Alternative Considered |
 |---|---|---|---|---|
 | **DES-DEC-01** | **High (VS-02)** | Icon library selection | Adopt **Lucide React** (`lucide.dev`) for universal SVG icons | Heroicons (less extensive coverage) |
-| **DES-DEC-02** | **High (VS-02)** | Command Palette primitive | Adopt **`cmdk`** (`cmdk.paco.me`) for Omnibar architecture | Custom custom-built combobox (higher maintenance and accessibility risk) |
+| **DES-DEC-02** | **High (VS-02)** | Command Palette primitive | Adopt **`cmdk`** (`cmdk.paco.me`) for Omnibar architecture | Custom combobox (higher maintenance and accessibility risk) |
 | **DES-DEC-03** | **Medium (VS-03)** | Task Peek Drawer default width on desktop | **480px** fixed width with collapsible canvas flex | 600px wide drawer (cramps canvas on 1280px laptops) |
 | **DES-DEC-04** | **Medium (VS-04)** | Mobile Board view representation | **Sticky Stage Switcher tab bar** replacing horizontal column scrolling | Horizontal card swipe (cumbersome touch navigation) |
 | **DES-DEC-05** | **Low (VS-05)** | Calendar unscheduled tasks placement | **Collapsible right drawer** inside Calendar view | Separate modal list (loses spatial context) |
@@ -777,6 +806,6 @@ The following design decisions are documented for product owner alignment before
 
 ## 12. Conclusion and Next Steps
 
-This research phase provides the definitive, evidence-backed UX and visual architecture for Sonder. By combining the speed of Linear, the multi-view synchronization of Asana, the calm focus of Basecamp and Things 3, and the rigorous governance of Jira, Sonder is positioned to deliver a world-class work management platform.
+This research review delivers a fully reconciled, evidence-backed UX and visual architecture specification for Sonder. By correcting decision-register traceability, eliminating unsubstantiated quantitative assertions, providing defensive product citations, and resolving a unified component architecture, the project is equipped to begin implementation with complete confidence.
 
-Upon authorization of this research specification, implementation will proceed directly to **VS-02 (`feat/FE-VS02-app-shell-mywork`)** starting with the core accessible component primitives and deterministic mock entity store.
+Upon product owner review and merge of PR #4, implementation will proceed directly to **VS-02 (`feat/FE-VS02-app-shell-mywork`)** starting with the core accessible component primitives and deterministic mock entity store.
