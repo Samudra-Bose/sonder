@@ -93,7 +93,7 @@ Fourteen leading products across work management and personal productivity were 
 - **Weaknesses / Anti-Patterns to Reject:**
   - Deep, confusing container hierarchy (Portfolios → Projects → Sections → Tasks → Subtasks).
   - Prominent cross-selling and upgrade prompts in core product views.
-  - Noticeable layout reflows during view transitions.
+  - `[INFERRED DESIGN CONSIDERATION]` Full-page layout transitions across complex view representations risk visual reflow unless parent container scaffolds maintain rigid dimension boundaries.
 - **Sonder Architectural Takeaway:** Replicate the 4-view tab switching model and the Calendar unscheduled tray. Strictly enforce Sonder's flat hierarchy: `Community → Workspace → Task → Subtask`, rejecting intermediate "Project" and "Section" abstractions.
 
 ### 3.3 Jira
@@ -109,7 +109,7 @@ Fourteen leading products across work management and personal productivity were 
 - **Weaknesses / Anti-Patterns to Reject:**
   - Administrative configuration labyrinth with deeply nested, multi-page settings.
   - Requirement of proprietary query languages (JQL) for standard multi-criteria filtering.
-  - Complex multi-pane layouts and heavy DOM footprint that can produce noticeable navigation latency in dense enterprise tenants.
+  - `[INFERRED ARCHITECTURAL RISK]` Highly configurable multi-pane layouts and deep DOM container nesting present an inherent engineering risk of navigation latency and rendering overhead in dense enterprise tenants unless DOM hierarchy is kept flat and strictly bounded.
 - **Sonder Architectural Takeaway:** Implement Jira's permanent keying and aliasing system (DEC-OPEN-06) while completely eliminating its configuration bloat through progressive disclosure and clean Tailwind v4 UI styling.
 
 ### 3.4 ClickUp
@@ -124,7 +124,7 @@ Fourteen leading products across work management and personal productivity were 
 - **Weaknesses / Anti-Patterns to Reject:**
   - Feature sprawl: dozens of niche view modes that dilute core product polish.
   - 6-level container hierarchy (Workspaces → Spaces → Folders → Lists → Tasks → Subtasks).
-  - Without virtualization enabled on extensive task lists, mounting thousands of un-windowed DOM nodes can cause perceptible scrolling stutter.
+  - `[INFERRED ENGINEERING RISK]` Rendering large task collections without DOM row virtualization creates an inherent risk of main-thread scrolling frame drops as list lengths scale, underscoring the necessity of virtualized table rows.
 - **Sonder Architectural Takeaway:** Support field visibility toggles and compact density modes. Limit view projections strictly to the 4 approved, fully synchronized views (List, Board, Calendar, Timeline).
 
 ### 3.5 Monday.com
@@ -211,7 +211,7 @@ Fourteen leading products across work management and personal productivity were 
   - Clean, accessible breadcrumb navigation.
 - **Weaknesses / Anti-Patterns to Reject:**
   - Unstructured block canvas that lacks relational task constraints or rigid validation.
-  - Database views with complex multi-property rollups and formula relations can exhibit visible loading states when filtering large collections.
+  - `[INFERRED DESIGN CONSIDERATION]` Dynamic client-side calculation of multi-property rollups and formula relations across large collections presents an architectural risk of visible filtering delays unless underlying data schemas remain strictly typed, indexed, and server-aggregated.
 - **Sonder Architectural Takeaway:** Adopt Notion's approachable empty states and clean breadcrumbs. Maintain Sonder's rigid relational schema, typed API contracts, and high-performance virtualized grids.
 
 ### 3.11 Superlist
@@ -238,7 +238,7 @@ Fourteen leading products across work management and personal productivity were 
   - Clear distinction between "Scheduled for Today" vs "Backlogged".
 - **Weaknesses / Anti-Patterns to Reject:**
   - Mandatory ritual wizards that impede immediate access to tasks for users in a hurry.
-- **Sonder Architectural Takeaway:** Incorporate workload awareness and clear temporal triage groupings (`Overdue`, `Due Today`, `Upcoming`, `Later`, `Unscheduled`) into Sonder's My Work dashboard (`/my-work`).
+- **Sonder Architectural Takeaway:** Incorporate workload awareness and temporal triage groupings into Sonder's My Work dashboard (`/my-work`), supporting the approved PRD baseline groups (`Overdue`, `Due Today`, `Upcoming`, `Unscheduled`) along with the proposed `Later` group (`PROPOSED — requires Product Owner approval`).
 
 ### 3.13 Things 3
 - **Source:** [culturedcode.com/things/support](https://culturedcode.com/things/support/) (Verified: 1 November 2026)
@@ -273,7 +273,7 @@ Fourteen leading products across work management and personal productivity were 
 
 | Area | Reference Product | Observed Pattern | User Problem Solved | Strength | Weakness | Recommendation for Sonder |
 |---|---|---|---|---|---|---|
-| **Global Nav & Shell** | Linear | Collapsible left rail + G-chord shortcuts | Eliminates navigation latency | Instant keyboard switching | Can be intimidating for new users | **Adopt**: Left rail + G-chords + persistent breadcrumbs |
+| **Global Nav & Shell** | Linear | Collapsible left rail + G-chord shortcuts | Reduces multi-step navigation friction | Instant keyboard switching | Can be intimidating for new users | **Adopt**: Left rail + G-chords + persistent breadcrumbs |
 | **Workspace Switching** | Superlist | Explicit Personal vs Shared workspace separation | Prevents accidental mixing of private and team work | Immediate mental clarity | None observed | **Adopt**: Dedicated Personal vs Shared sections in switcher |
 | **Task Capture** | Linear / Things 3 | Global `C` shortcut + modal composer with max 5 initial fields | Captures tasks in <3 seconds without context loss | Zero friction; progressive disclosure | Users might miss optional fields | **Adopt**: Modal composer with 5 primary fields + collapsible secondary section |
 | **Task Details** | Asana / Linear | Right-docked Task Peek Drawer (`?task=KEY`) | Inspects/edits tasks without unmounting active view | Context preservation; deep-linkable | Can feel cramped on narrow viewports (<1280px) | **Adopt**: 480px right drawer on desktop; full bottom sheet on mobile |
@@ -283,7 +283,7 @@ Fourteen leading products across work management and personal productivity were 
 | **Timeline Projection** | GitHub Projects | Split-screen: hierarchy table left + Gantt time axis right | Visualizes durations, milestones, and blocking conflicts | Direct temporal manipulation | Complex canvas rendering | **Adopt**: Split table + timeline; milestone markers (DEC-OPEN-08) & conflict indicators |
 | **Command Palette** | Linear (`cmdk`) | Centered `Cmd+K` palette with nested sub-menus & fuzzy search | Rapid navigation and action execution without mouse | Low-latency in-memory search | Complex to implement accessible combobox | **Adopt**: `cmdk`-based Omnibar with task key, title, view, and workspace search |
 | **Filtering & Sorting** | Asana | Top filter bar: chips for Assignee, Status, Priority + Save View | Customizes view projections dynamically | Intuitive discovery | Can consume vertical canvas space | **Adopt**: Filter chip bar; URL-serialized state; copy-on-write saved views |
-| **My Work Dashboard** | Sunsama | Cross-workspace aggregation: Overdue, Due Today, Upcoming, Later, Unscheduled | Daily triage across multiple team silos | High clarity on daily priorities | Can feel overwhelming if overdue tasks pile up | **Adopt**: Triaged groups + return-to-workspace links (`/my-work`) |
+| **My Work Dashboard** | Sunsama | Cross-workspace aggregation: approved groups (Overdue, Due Today, Upcoming, Unscheduled) plus proposed Later group | Daily triage across multiple team silos | High clarity on daily priorities | Can feel overwhelming if overdue tasks pile up | **Adopt**: Triaged groups + return-to-workspace links (`/my-work`); Later group subject to Product Owner approval |
 | **Notifications** | Basecamp | Split inbox: Action Required (@mentions, assigns) vs Updates | Combats alert fatigue; highlights urgent work | High signal-to-noise ratio | Requires disciplined backend classification | **Adopt**: Categorized tabs in `/inbox` |
 | **Permission Controls** | Jira | Complex permission matrix with granular capability flags | Precise enterprise access control | Robust security | Configuration labyrinth | **Adapt**: 6 clean settings categories + Task Editing Policy UI (DEC-OPEN-02 Option A) |
 | **Mobile Experience** | Superlist / Things 3 | 44px bottom nav + swipe actions + full bottom sheets | One-handed mobile ergonomics | Native app feel in PWA | Requires custom responsive view adaptations | **Adopt**: Dedicated mobile layout with bottom navigation bar |
@@ -742,12 +742,23 @@ These tokens will be integrated into `apps/web/src/index.css`:
   - Cross-workspace personal triage aggregation view consuming the `/communities/{communityId}/my-work/query` endpoint.
   - Header displays greeting, summary metric badges, and relationship filter control:
     - Segmented control: `All Work` (default) | `Assigned to Me` | `Created by Me` | `Watching`.
-  - Five collapsible temporal groups:
-    1. **Overdue:** Red alert indicator; active tasks where `dueDate < todayStart` (in user's active timezone) and status is not in `DONE` or `CANCELLED`.
-    2. **Due Today:** Amber indicator; active tasks where `todayStart <= dueDate <= todayEnd` (in user's active timezone).
-    3. **Upcoming:** Green indicator; active tasks where `todayEnd < dueDate <= todayEnd + 7 days` (excluding `DONE` and `CANCELLED`).
-    4. **Later:** Neutral indigo indicator; active tasks with future due dates beyond the 7-day window (`dueDate > todayEnd + 7 days`, excluding `DONE` and `CANCELLED`).
-    5. **Unscheduled:** Neutral slate indicator; active backlog tasks lacking a due date (`dueDate == null`, excluding `DONE` and `CANCELLED`).
+  - **Temporal Groups:**
+    - **Approved Canonical Baseline Groups (Master PRD §6.5):**
+      1. **Overdue:** Red alert indicator; active non-terminal tasks where calendar `dueDate < referenceDate` (date-only comparison in `YYYY-MM-DD` format; excluding terminal `DONE` and `CANCELLED`).
+      2. **Due Today:** Amber indicator; active non-terminal tasks where calendar `dueDate == referenceDate` (date-only comparison in `YYYY-MM-DD` format).
+      3. **Upcoming:** Green indicator; active non-terminal tasks where calendar `referenceDate < dueDate <= referenceDate + 6 calendar days` (matching the API `$NEXT_7_DAYS` 7-day rolling window of today plus six local dates; excluding terminal `DONE` and `CANCELLED`).
+      4. **Unscheduled:** Neutral slate indicator; active backlog tasks lacking a due date (`dueDate == null`, excluding `DONE` and `CANCELLED`).
+    - **Proposed Additional Group:**
+      5. **Later [PROPOSED — requires Product Owner approval]:** Neutral indigo indicator; active non-terminal tasks with calendar due dates beyond the 7-day upcoming horizon (`dueDate > referenceDate + 6 calendar days`, excluding `DONE` and `CANCELLED`). This UX proposal provides a dedicated triage bucket for long-horizon work without cluttering the immediate 7-day focus window, but is not part of the approved PRD baseline and requires explicit product approval.
+- **Date Semantics & Cross-Workspace Timezone Reconciliation [UNRESOLVED]:**
+  - **Date-Only Field Contract:** In canonical OpenAPI `0.3.20-draft`, `TaskDto.dueDate` is a nullable calendar date-only value (`type: string, format: date`, `YYYY-MM-DD`), not an RFC 3339 timestamp instant. Date evaluations must strictly compare calendar dates, never comparing date-only strings against timestamp boundaries (`todayStart` / `todayEnd`).
+  - **Workspace IANA Timezone Semantics:** The backend query tokens (`$TODAY`, `$NEXT_7_DAYS`) resolve using the source workspace's configured IANA timezone (`workspace.timezone`) and snapshot-local date (`YYYY-MM-DD`). The browser's local timezone must not silently override canonical workspace timezone semantics.
+  - **Cross-Workspace Discrepancy:** `MyWorkQuerySpec` extends `ViewQuerySpec` and aggregates tasks across explicitly selected workspaces in a community. Because source workspaces within the same community can reside in different IANA timezones (e.g. `America/New_York` vs `Europe/London` vs `Asia/Tokyo`), calendar "today" (`YYYY-MM-DD`) may differ between source workspaces at any given instant.
+  - **Governance Invariant:** The canonical PRD mandates cross-workspace My Work aggregation, but neither the PRD nor OpenAPI defines whether client-side cross-workspace grouping evaluates `referenceDate` against:
+    1. Each task's originating workspace IANA timezone,
+    2. The authenticated user's profile/browser calendar date, or
+    3. A community-level reference calendar date.
+    Consequently, client-side date-boundary grouping across disparate workspace timezones is documented as **provisional** and formally marked as **`[UNRESOLVED: Cross-workspace temporal grouping timezone reconciliation — awaiting Product/API contract freeze]`**. The frontend will not invent an unapproved universal timezone rule.
 - **Terminal State Handling (`DONE` and `CANCELLED`):**
   - **Active Triage Invariant:** My Work functions strictly as an action-oriented personal triage dashboard for active responsibilities.
   - **Exclusion from Future & Overdue Horizons:** Tasks in terminal statuses (`DONE`, `CANCELLED`) are strictly excluded from `Overdue`, `Upcoming`, `Later`, and `Unscheduled`. Completed tasks never trigger overdue warnings or clutter future scheduling horizons.
@@ -884,7 +895,7 @@ $$\text{UI Components} \longrightarrow \text{TanStack Query} \longrightarrow \te
   1. Persistent application shell (`AppShell`) with collapsible left rail and global header.
   2. Workspace switcher supporting Personal vs Shared workspaces and creation modal.
   3. Command Palette Omnibar (`Cmd/Ctrl+K`) with permission-aware search.
-  4. My Work personal dashboard (`/my-work`) with temporal triage groupings (`Overdue`, `Due Today`, `Upcoming`, `Later`, `Unscheduled`).
+  4. My Work personal dashboard (`/my-work`) with approved temporal triage groupings (`Overdue`, `Due Today`, `Upcoming`, `Unscheduled`) and proposed `Later` grouping (`PROPOSED — requires Product Owner approval`).
   5. In-memory reactive mock entity store and seed data fixtures (Alex, Jordan, Casey, Riley; 3 workspaces; 15 tasks).
   6. Comprehensive Vitest suite validating navigation, search, and triage workflows.
 - **Recommended Implementation Sequence:**
@@ -893,7 +904,7 @@ $$\text{UI Components} \longrightarrow \text{TanStack Query} \longrightarrow \te
   3. *Application Shell (`src/modules/app-shell/`):* Build `AppShell`, `LeftRail`, `GlobalHeader`, and `PersonaSwitcher`.
   4. *Workspace Switcher (`src/modules/workspace/`):* Implement `WorkspaceSwitcher` and `CreateWorkspaceModal` with prefix collision validation.
   5. *Omnibar (`src/modules/search/`):* Integrate `cmdk`-based `OmnibarModal` supporting task key, title, and workspace navigation with alias privacy safeguards.
-  6. *My Work Dashboard (`src/modules/my-work/`):* Implement `/my-work` with 5 temporal triage sections and de-duplication rules.
+  6. *My Work Dashboard (`src/modules/my-work/`):* Implement `/my-work` with approved canonical temporal triage sections (plus proposed `Later` group pending Product Owner approval) and de-duplication rules.
   7. *Automated Testing Suite:* Write Vitest unit and integration tests covering navigation, keyboard shortcuts, workspace switching, and persona simulation.
 - **Milestone Scope Boundary Enforcement:**
   - **Backend & Server Infrastructure:** Completely out of scope.
@@ -949,11 +960,12 @@ The following design decisions are documented for product owner alignment before
 | **DES-DEC-04** | **Medium (VS-03)** | Task Peek Drawer default width on desktop | **480px** fixed width with collapsible canvas flex | 600px wide drawer (cramps canvas on 1280px laptops) |
 | **DES-DEC-05** | **Medium (VS-04)** | Mobile Board view representation | **Sticky Stage Switcher tab bar** supporting all 5 canonical statuses (`TODO`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`) | Horizontal card swipe (cumbersome touch navigation) |
 | **DES-DEC-06** | **Low (VS-05)** | Calendar unscheduled tasks placement & scheduling | **Collapsible right drawer** with keyboard/touch date-picker and optional drag-and-drop | Separate modal list (loses spatial context) |
+| **DES-DEC-07** | **High (VS-02)** | My Work "Later" temporal grouping (`PROPOSED — requires Product Owner approval`) | Add 5th temporal group `Later` for active tasks scheduled beyond 7 calendar days (`dueDate > referenceDate + 6 days`) | Restrict strictly to PRD default 4 groups (`Overdue`, `Due Today`, `Upcoming`, `Unscheduled`) |
 
 ---
 
 ## 12. Conclusion and Next Steps
 
-This final research review delivers an internally consistent, evidence-backed UX and visual architecture specification for Sonder. By accurately decoupling the base editing policy from the Option A delegation model, completing the My Work 5-tier triage blueprint, establishing full mobile status parity, providing non-drag calendar scheduling, resolving workspace governance access by category, hardening omnibar alias privacy, defining the single-source mock pipeline, and auditing WCAG 2.2 contrast ratios, the project is equipped to begin implementation with complete confidence.
+This final research review delivers an internally consistent, evidence-backed UX and visual architecture specification for Sonder. By accurately decoupling the base editing policy from the Option A delegation model, structuring the My Work triage blueprint with date-only semantics and explicit cross-workspace timezone governance, establishing full mobile status parity, providing non-drag calendar scheduling, resolving workspace governance access by category, hardening omnibar alias privacy, defining the single-source mock pipeline, and auditing WCAG 2.2 contrast ratios, the project is equipped to begin implementation with complete confidence.
 
 Upon product owner review and merge of PR #4, implementation will proceed directly to **VS-02 (`feat/FE-VS02-app-shell-mywork`)** starting with the core accessible component primitives and deterministic mock entity store.
