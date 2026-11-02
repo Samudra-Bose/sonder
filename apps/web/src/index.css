@@ -2,22 +2,206 @@
 
 @layer base {
   :root {
-    --background: #f8fafc;
-    --foreground: #0f172a;
-    --card: #ffffff;
-    --card-foreground: #0f172a;
-    --border: #e2e8f0;
-    --primary: #2563eb;
-    --primary-foreground: #ffffff;
-    --muted: #64748b;
-    --muted-foreground: #94a3b8;
+    /* Surface Layers */
+    --surface-canvas: #f8fafc;
+    --surface-card: #ffffff;
+    --surface-drawer: #ffffff;
+    --surface-modal: #ffffff;
+    --surface-muted: #f1f5f9;
+
+    /* Text & Content */
+    --text-primary: #0f172a;
+    --text-secondary: #334155;
+    --text-muted: #475569;
+    --text-inverted: #ffffff;
+
+    /* Borders & Hairlines */
+    --border-control: #64748b;
+    --border-subtle: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --border-focus: #0284c7;
+
+    /* Brand Accent & Buttons */
+    --brand-primary: #0f172a;
+    --brand-accent: #0284c7;
+    --brand-accent-text: #0369a1;
+    --brand-accent-btn-bg: #0369a1;
+    --brand-accent-btn-text: #ffffff;
+    --brand-accent-hover: #075985;
+
+    /* Semantic Status - Light */
+    --status-todo-bg: #f1f5f9;
+    --status-todo-text: #334155;
+    --status-progress-bg: #eff6ff;
+    --status-progress-text: #1d4ed8;
+    --status-review-bg: #faf5ff;
+    --status-review-text: #6b21a8;
+    --status-done-bg: #f0fdf4;
+    --status-done-text: #15803d;
+    --status-cancelled-bg: #fef2f2;
+    --status-cancelled-text: #b91c1c;
+
+    /* Priority Colors - Light */
+    --priority-urgent: #b91c1c;
+    --priority-high: #b45309;
+    --priority-medium: #1d4ed8;
+    --priority-low: #475569;
+    --priority-none: #64748b;
+
+    /* Feedback Colors - Light */
+    --feedback-success-bg: #f0fdf4;
+    --feedback-success-text: #15803d;
+    --feedback-success-border: #bbf7d0;
+    --feedback-warning-bg: #fffbeb;
+    --feedback-warning-text: #b45309;
+    --feedback-warning-border: #fde68a;
+    --feedback-danger-bg: #fef2f2;
+    --feedback-danger-text: #b91c1c;
+    --feedback-danger-border: #fecaca;
+    --feedback-info-bg: #eff6ff;
+    --feedback-info-text: #1d4ed8;
+    --feedback-info-border: #bfdbfe;
+
+    /* Legacy Compatibility Variables */
+    --background: var(--surface-canvas);
+    --foreground: var(--text-primary);
+    --card: var(--surface-card);
+    --card-foreground: var(--text-primary);
+    --border: var(--border-subtle);
+    --primary: var(--brand-accent-btn-bg);
+    --primary-foreground: var(--brand-accent-btn-text);
+    --muted: var(--border-control);
+    --muted-foreground: var(--text-muted);
+  }
+
+  .dark {
+    /* Surface Layers */
+    --surface-canvas: #090d16;
+    --surface-card: #0f172a;
+    --surface-drawer: #1e293b;
+    --surface-modal: #1e293b;
+    --surface-muted: #1e293b;
+
+    /* Text & Content */
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --text-inverted: #0f172a;
+
+    /* Borders & Hairlines */
+    --border-control: #94a3b8;
+    --border-subtle: #1e293b;
+    --border-strong: #334155;
+    --border-focus: #38bdf8;
+
+    /* Brand Accent & Buttons */
+    --brand-primary: #f8fafc;
+    --brand-accent: #38bdf8;
+    --brand-accent-text: #38bdf8;
+    --brand-accent-btn-bg: #38bdf8;
+    --brand-accent-btn-text: #0f172a;
+    --brand-accent-hover: #0ea5e9;
+
+    /* Semantic Status - Dark */
+    --status-todo-bg: #1e293b;
+    --status-todo-text: #e2e8f0;
+    --status-progress-bg: #172554;
+    --status-progress-text: #93c5fd;
+    --status-review-bg: #3b0764;
+    --status-review-text: #e9d5ff;
+    --status-done-bg: #052e16;
+    --status-done-text: #86efac;
+    --status-cancelled-bg: #450a0a;
+    --status-cancelled-text: #fca5a5;
+
+    /* Priority Colors - Dark */
+    --priority-urgent: #f87171;
+    --priority-high: #fbbf24;
+    --priority-medium: #60a5fa;
+    --priority-low: #94a3b8;
+    --priority-none: #64748b;
+
+    /* Feedback Colors - Dark */
+    --feedback-success-bg: #052e16;
+    --feedback-success-text: #86efac;
+    --feedback-success-border: #166534;
+    --feedback-warning-bg: #451a03;
+    --feedback-warning-text: #fcd34d;
+    --feedback-warning-border: #78350f;
+    --feedback-danger-bg: #450a0a;
+    --feedback-danger-text: #fca5a5;
+    --feedback-danger-border: #7f1d1d;
+    --feedback-info-bg: #172554;
+    --feedback-info-text: #93c5fd;
+    --feedback-info-border: #1e40af;
+
+    /* Legacy Compatibility Variables */
+    --background: var(--surface-canvas);
+    --foreground: var(--text-primary);
+    --card: var(--surface-card);
+    --card-foreground: var(--text-primary);
+    --border: var(--border-subtle);
+    --primary: var(--brand-accent-btn-bg);
+    --primary-foreground: var(--brand-accent-btn-text);
+    --muted: var(--border-control);
+    --muted-foreground: var(--text-muted);
   }
 
   body {
-    background-color: var(--background);
-    color: var(--foreground);
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background-color: var(--surface-canvas);
+    color: var(--text-primary);
+    font-family: "Plus Jakarta Sans", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     margin: 0;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@theme {
+  --color-canvas: var(--surface-canvas);
+  --color-card: var(--surface-card);
+  --color-drawer: var(--surface-drawer);
+  --color-modal: var(--surface-modal);
+  --color-surface-muted: var(--surface-muted);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-inverted: var(--text-inverted);
+
+  --color-border-control: var(--border-control);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  --color-border-focus: var(--border-focus);
+
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-accent-text: var(--brand-accent-text);
+  --color-brand-accent-btn-bg: var(--brand-accent-btn-bg);
+  --color-brand-accent-btn-text: var(--brand-accent-btn-text);
+  --color-brand-accent-hover: var(--brand-accent-hover);
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+@layer utilities {
+  .focus-ring {
+    @apply outline-none ring-2 ring-sky-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-900;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
