@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./useAuth.js";
 import { ApiProblemError } from "../../lib/api-client.js";
+import { Button } from "../../components/ui/Button.js";
+import { Feedback } from "../../components/ui/Feedback.js";
 
 export function LoginForm(): React.JSX.Element {
   const { login, status, error: contextError, clearError } = useAuth();
@@ -75,15 +77,15 @@ export function LoginForm(): React.JSX.Element {
   const displayError = submitError || contextError?.detail;
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-50 text-slate-900">
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-[var(--surface-canvas)] text-[var(--text-primary)] transition-colors">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <span className="font-bold text-2xl tracking-tight text-blue-600">Sonder</span>
-        <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">Sign in to your account</h2>
-        <p className="mt-2 text-sm text-slate-600">
+        <span className="font-bold text-2xl tracking-tight text-[var(--brand-accent-text)]">Sonder</span>
+        <h2 className="mt-2 text-2xl font-bold tracking-tight text-[var(--text-primary)]">Sign in to your account</h2>
+        <p className="mt-2 text-sm text-[var(--text-secondary)]">
           Or{" "}
           <Link
             to="/register"
-            className="font-medium text-blue-600 hover:text-blue-500 underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+            className="font-medium text-[var(--brand-accent-text)] hover:underline focus:outline-none focus-ring rounded"
           >
             create a new account
           </Link>
@@ -91,22 +93,18 @@ export function LoginForm(): React.JSX.Element {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
-        <div className="bg-white py-8 px-6 shadow-sm border border-slate-200 rounded-lg sm:px-10">
+        <div className="bg-[var(--surface-card)] py-8 px-6 shadow-sm border border-[var(--border-subtle)] rounded-lg sm:px-10">
           {displayError && (
-            <div
-              role="alert"
-              aria-live="assertive"
-              className="mb-6 p-4 rounded-md bg-red-50 border border-red-200 text-sm text-red-700"
-            >
-              <div className="flex">
-                <span className="font-medium">{displayError}</span>
-              </div>
+            <div className="mb-6">
+              <Feedback variant="danger">
+                <span>{displayError}</span>
+              </Feedback>
             </div>
           )}
 
           <form onSubmit={handleSubmit} noValidate className="space-y-6">
             <div>
-              <label htmlFor="login-email" className="block text-sm font-medium text-slate-700">
+              <label htmlFor="login-email" className="block text-sm font-medium text-[var(--text-secondary)]">
                 Email address
               </label>
               <div className="mt-1">
@@ -125,22 +123,22 @@ export function LoginForm(): React.JSX.Element {
                       setFieldErrors((prev) => ({ ...prev, email: undefined }));
                     }
                   }}
-                  className={`block w-full px-3 py-2 border rounded-md shadow-xs text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    fieldErrors.email ? "border-red-300 focus:border-red-500" : "border-slate-300"
+                  className={`block w-full px-3 py-2 border rounded-md shadow-xs text-sm bg-[var(--surface-card)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus-ring transition-colors ${
+                    fieldErrors.email ? "border-[var(--feedback-danger-text)]" : "border-[var(--border-control)]"
                   }`}
                   placeholder="name@example.org"
                   disabled={isSubmitting}
                 />
               </div>
               {fieldErrors.email && (
-                <p id="email-error" className="mt-1.5 text-xs text-red-600">
+                <p id="email-error" className="mt-1.5 text-xs text-[var(--feedback-danger-text)] font-medium">
                   {fieldErrors.email}
                 </p>
               )}
             </div>
 
             <div>
-              <label htmlFor="login-password" className="block text-sm font-medium text-slate-700">
+              <label htmlFor="login-password" className="block text-sm font-medium text-[var(--text-secondary)]">
                 Password
               </label>
               <div className="mt-1">
@@ -159,52 +157,49 @@ export function LoginForm(): React.JSX.Element {
                       setFieldErrors((prev) => ({ ...prev, password: undefined }));
                     }
                   }}
-                  className={`block w-full px-3 py-2 border rounded-md shadow-xs text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    fieldErrors.password ? "border-red-300 focus:border-red-500" : "border-slate-300"
+                  className={`block w-full px-3 py-2 border rounded-md shadow-xs text-sm bg-[var(--surface-card)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus-ring transition-colors ${
+                    fieldErrors.password ? "border-[var(--feedback-danger-text)]" : "border-[var(--border-control)]"
                   }`}
                   placeholder="••••••••"
                   disabled={isSubmitting}
                 />
               </div>
               {fieldErrors.password && (
-                <p id="password-error" className="mt-1.5 text-xs text-red-600">
+                <p id="password-error" className="mt-1.5 text-xs text-[var(--feedback-danger-text)] font-medium">
                   {fieldErrors.password}
                 </p>
               )}
             </div>
 
             <div>
-              <button
+              <Button
                 type="submit"
+                variant="accent"
+                fullWidth
+                size="md"
+                isLoading={isSubmitting}
                 disabled={isSubmitting}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full"
               >
-                {isSubmitting ? (
-                  <span className="flex items-center space-x-2">
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Signing in...</span>
-                  </span>
-                ) : (
-                  "Sign in"
-                )}
-              </button>
+                Sign in
+              </Button>
             </div>
           </form>
 
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
+                <div className="w-full border-t border-[var(--border-subtle)]" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-slate-500">Or continue with</span>
+                <span className="bg-[var(--surface-card)] px-2 text-[var(--text-muted)]">Or continue with</span>
               </div>
             </div>
 
             <div className="mt-6">
               <a
                 href="/api/v1/auth/oauth/google/start?returnTo=/"
-                className="w-full flex justify-center items-center py-2 px-4 border border-slate-300 rounded-md shadow-xs text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="w-full flex justify-center items-center py-2 px-4 border border-[var(--border-control)] rounded-md shadow-xs text-sm font-medium text-[var(--text-primary)] bg-[var(--surface-card)] hover:bg-[var(--surface-muted)] focus:outline-none focus-ring transition-colors"
               >
                 <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" aria-hidden="true">
                   <path

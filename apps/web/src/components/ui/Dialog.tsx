@@ -7,6 +7,7 @@ export const Dialog = BaseDialog.Root;
 export const DialogTrigger = BaseDialog.Trigger;
 export const DialogPortal = BaseDialog.Portal;
 export const DialogClose = BaseDialog.Close;
+export const DialogPopup = BaseDialog.Popup;
 
 export interface DialogBackdropProps
   extends React.ComponentPropsWithoutRef<typeof BaseDialog.Backdrop> {
@@ -20,6 +21,7 @@ export const DialogBackdrop = React.forwardRef<
   return (
     <BaseDialog.Backdrop
       ref={ref}
+      data-testid="dialog-backdrop"
       className={cn(
         "fixed inset-0 z-50 bg-black/50 backdrop-blur-xs transition-opacity duration-150",
         className
@@ -76,6 +78,54 @@ export const DialogContent = React.forwardRef<
   );
 });
 DialogContent.displayName = "DialogContent";
+
+export interface DrawerContentProps
+  extends React.ComponentPropsWithoutRef<typeof BaseDialog.Popup> {
+  className?: string;
+  side?: "left" | "right";
+  showCloseButton?: boolean;
+}
+
+export const DrawerContent = React.forwardRef<
+  HTMLDivElement,
+  DrawerContentProps
+>(function DrawerContent(
+  { className, children, side = "left", showCloseButton = false, ...props },
+  ref
+) {
+  return (
+    <BaseDialog.Portal>
+      <DialogBackdrop />
+      <BaseDialog.Popup
+        ref={ref}
+        className={cn(
+          "fixed top-0 bottom-0 z-50 h-full w-72 max-w-[85vw]",
+          side === "left" ? "left-0 border-r" : "right-0 border-l",
+          "border-[var(--border-subtle)] bg-[var(--surface-drawer)] text-[var(--text-primary)] shadow-2xl transition-transform duration-200",
+          "focus:outline-none flex flex-col",
+          className
+        )}
+        {...props}
+      >
+        {children}
+        {showCloseButton && (
+          <BaseDialog.Close
+            aria-label="Close drawer"
+            className={cn(
+              "absolute right-4 top-4 rounded-sm p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-focus)]",
+              // 44x44px mobile touch bounding box
+              "relative touch-manipulation after:content-[''] after:absolute after:top-1/2 after:left-1/2 after:-translate-x-1/2 after:-translate-y-1/2 after:w-11 after:h-11 sm:after:hidden"
+            )}
+          >
+            <X className="h-4 w-4" />
+          </BaseDialog.Close>
+        )}
+      </BaseDialog.Popup>
+    </BaseDialog.Portal>
+  );
+});
+DrawerContent.displayName = "DrawerContent";
 
 export function DialogHeader({
   className,
