@@ -64,7 +64,7 @@ export function MyWorkPlaceholderView(): React.JSX.Element {
         <CardHeader>
           <CardTitle className="text-base">Stage Extension Boundary</CardTitle>
           <CardDescription>
-            Live cross-workspace aggregation query (`/communities/:id/my-work/query`) will be activated in stage VS-02C. Navigation routing, layout boundaries, and responsive landmarks are fully operational.
+            Live cross-workspace aggregation query (`/communities/:id/my-work/query`) will be activated in stage VS-02E. Navigation routing, layout boundaries, and responsive landmarks are fully operational.
           </CardDescription>
         </CardHeader>
       </Card>

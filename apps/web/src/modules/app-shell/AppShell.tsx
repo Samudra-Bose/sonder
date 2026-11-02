@@ -15,10 +15,11 @@ export interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps): React.JSX.Element {
-  const { user, communities, logout, clearError } = useAuth();
+  const { user, logout, clearError } = useAuth();
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  const [openTriggerEl, setOpenTriggerEl] = useState<HTMLElement | null>(null);
 
   // Responsive sidebar collapse state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
@@ -32,6 +33,11 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
 
   // Mobile navigation drawer state
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  const handleOpenMobileNav = useCallback((trigger?: HTMLElement) => {
+    setOpenTriggerEl(trigger || null);
+    setIsMobileNavOpen(true);
+  }, []);
 
   const toggleSidebar = useCallback(() => {
     setIsSidebarCollapsed((prev) => {
@@ -79,10 +85,9 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
       {/* Top Application Header */}
       <AppHeader
         user={user}
-        communityName={communityName}
         isSidebarCollapsed={isSidebarCollapsed}
         onToggleSidebar={toggleSidebar}
-        onOpenMobileNav={() => setIsMobileNavOpen(true)}
+        onOpenMobileNav={handleOpenMobileNav}
         onLogout={handleLogout}
         isLoggingOut={isLoggingOut}
         menuTriggerRef={menuTriggerRef}
@@ -138,12 +143,11 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
       <MobileNavigation
         isOpen={isMobileNavOpen}
         onClose={() => setIsMobileNavOpen(false)}
-        onOpen={() => setIsMobileNavOpen(true)}
+        onOpen={handleOpenMobileNav}
         user={user}
-        communityName={communityName}
         onLogout={handleLogout}
         isLoggingOut={isLoggingOut}
-        triggerRef={menuTriggerRef}
+        triggerEl={openTriggerEl}
       />
 
       {/* Semantic Footer (Visible on desktop/tablet) */}

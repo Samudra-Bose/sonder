@@ -1,11 +1,10 @@
 import React from "react";
 import { useAuth } from "@/modules/auth";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
-import { Shield, Users, Layers, CheckCircle2 } from "lucide-react";
+import { Users, Layers, CheckCircle2 } from "lucide-react";
 
 export function DashboardView(): React.JSX.Element {
   const { user, communities } = useAuth();
-  const activeCommunity = communities[0];
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto py-2">
@@ -13,7 +12,7 @@ export function DashboardView(): React.JSX.Element {
       <div className="bg-[var(--surface-card)] border border-[var(--border-subtle)] rounded-xl p-6 shadow-xs">
         <div className="space-y-2">
           <span className="font-bold text-xs uppercase tracking-wider text-[var(--brand-accent-text)]">
-            Workspace Overview
+            Overview
           </span>
           <h1 className="text-xl md:text-2xl font-bold text-[var(--text-primary)]">
             Community Work Management
@@ -23,37 +22,32 @@ export function DashboardView(): React.JSX.Element {
           </p>
         </div>
 
-        {/* Authenticated Community Context Details */}
-        {user && (
-          <div className="mt-6 pt-5 border-t border-[var(--border-subtle)] grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-3 rounded-lg bg-[var(--surface-muted)] border border-[var(--border-subtle)] space-y-1">
-              <span className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5" />
-                Active Community
-              </span>
-              <p className="text-sm font-medium text-[var(--text-primary)]">
-                {activeCommunity?.name ?? "Sonder Community"}
-              </p>
+        {/* Community Memberships Collection */}
+        {user && communities.length > 0 && (
+          <div className="mt-6 pt-5 border-t border-[var(--border-subtle)] space-y-3">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+              <Users className="h-3.5 w-3.5" />
+              <span>Community Memberships</span>
             </div>
-
-            <div className="p-3 rounded-lg bg-[var(--surface-muted)] border border-[var(--border-subtle)] space-y-1">
-              <span className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Membership Status
-              </span>
-              <p className="text-sm font-medium text-[var(--text-primary)]">
-                {activeCommunity?.membershipStatus ?? "ACTIVE"}
-              </p>
-            </div>
-
-            <div className="p-3 rounded-lg bg-[var(--surface-muted)] border border-[var(--border-subtle)] space-y-1">
-              <span className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5">
-                <Shield className="h-3.5 w-3.5" />
-                Admin Privileges
-              </span>
-              <p className="text-sm font-medium text-[var(--text-primary)]">
-                {activeCommunity?.isCommunityAdmin ? "Yes" : "No"}
-              </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {communities.map((comm) => (
+                <div
+                  key={comm.communityId}
+                  className="p-3 rounded-lg bg-[var(--surface-muted)] border border-[var(--border-subtle)] space-y-1 text-left"
+                >
+                  <p className="text-sm font-semibold text-[var(--text-primary)]">
+                    {comm.name}
+                  </p>
+                  <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+                    <span>Status: {comm.membershipStatus}</span>
+                    {comm.isCommunityAdmin && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--surface-card)] border border-[var(--border-subtle)] font-medium text-[var(--brand-accent-text)]">
+                        Admin
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

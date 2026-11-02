@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   X,
@@ -25,12 +25,11 @@ import type { AuthUser } from "./AppHeader";
 export interface MobileNavigationProps {
   isOpen: boolean;
   onClose: () => void;
-  onOpen: () => void;
+  onOpen: (triggerEl?: HTMLElement) => void;
   user: AuthUser | null;
-  communityName: string;
   onLogout: () => void;
   isLoggingOut: boolean;
-  triggerRef?: React.RefObject<HTMLButtonElement | null>;
+  triggerEl?: HTMLElement | null;
 }
 
 export function MobileNavigation({
@@ -38,20 +37,63 @@ export function MobileNavigation({
   onClose,
   onOpen,
   user,
-  communityName,
   onLogout,
   isLoggingOut,
-  triggerRef,
+  triggerEl,
 }: MobileNavigationProps): React.JSX.Element {
   const { theme, resolvedTheme, toggleTheme } = useTheme();
   const location = useLocation();
+  const [isNavigating, setIsNavigating] = useState(false);
+  const isNavigatingRef = useRef(false);
 
-  // Close drawer automatically on route navigation
+  // Close drawer automatically on route navigation and move focus to destination page
   useEffect(() => {
     if (isOpen) {
       onClose();
     }
+    if (isNavigatingRef.current) {
+      isNavigatingRef.current = false;
+      setIsNavigating(false);
+
+      const focusDestination = () => {
+        const main = document.getElementById("main-content");
+        main?.focus();
+      };
+
+      if (typeof requestAnimationFrame !== "undefined") {
+        requestAnimationFrame(focusDestination);
+      } else {
+        setTimeout(focusDestination, 0);
+      }
+    }
   }, [location.pathname]);
+
+  const handleNavLinkClick = (href: string) => {
+    isNavigatingRef.current = true;
+    setIsNavigating(true);
+    onClose();
+
+    if (location.pathname === href) {
+      const focusDestination = () => {
+        const main = document.getElementById("main-content");
+        main?.focus();
+        isNavigatingRef.current = false;
+        setIsNavigating(false);
+      };
+
+      if (typeof requestAnimationFrame !== "undefined") {
+        requestAnimationFrame(focusDestination);
+      } else {
+        setTimeout(focusDestination, 0);
+      }
+    }
+  };
+
+  const finalFocusConfig = isNavigating
+    ? false
+    : triggerEl
+    ? { current: triggerEl }
+    : true;
 
   return (
     <>
@@ -67,7 +109,7 @@ export function MobileNavigation({
         <DrawerContent
           aria-label="Navigation drawer"
           side="left"
-          finalFocus={triggerRef}
+          finalFocus={finalFocusConfig}
           className="md:hidden"
         >
           {/* Drawer Header */}
@@ -111,7 +153,7 @@ export function MobileNavigation({
                     <NavLink
                       key={item.id}
                       to={item.href}
-                      onClick={onClose}
+                      onClick={() => handleNavLinkClick(item.href)}
                       className={({ isActive }) =>
                         cn(
                           "flex items-center gap-3 px-3 rounded-lg text-sm font-medium min-h-[44px] transition-colors focus-ring",
@@ -155,11 +197,6 @@ export function MobileNavigation({
                   <p className="text-[11px] text-[var(--text-muted)] truncate">
                     {user.email}
                   </p>
-                  {communityName && (
-                    <p className="text-[10px] text-[var(--brand-accent-text)] font-medium">
-                      Community: {communityName}
-                    </p>
-                  )}
                 </div>
               </div>
 
@@ -248,7 +285,7 @@ export function MobileNavigation({
 
         <button
           type="button"
-          onClick={onOpen}
+          onClick={(e) => onOpen(e.currentTarget)}
           className="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] px-2 rounded-md transition-colors text-[var(--text-muted)] hover:text-[var(--text-primary)] focus-ring"
           aria-label="Open menu drawer"
         >

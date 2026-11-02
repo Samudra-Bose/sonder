@@ -27,10 +27,9 @@ export type AuthUser = ApiSchema<"MeContextDto">["user"];
 
 export interface AppHeaderProps {
   user: AuthUser | null;
-  communityName: string;
   isSidebarCollapsed: boolean;
   onToggleSidebar: () => void;
-  onOpenMobileNav: () => void;
+  onOpenMobileNav: (triggerEl?: HTMLElement) => void;
   onLogout: () => void;
   isLoggingOut: boolean;
   menuTriggerRef?: React.RefObject<HTMLButtonElement | null>;
@@ -38,7 +37,6 @@ export interface AppHeaderProps {
 
 export function AppHeader({
   user,
-  communityName,
   isSidebarCollapsed,
   onToggleSidebar,
   onOpenMobileNav,
@@ -62,7 +60,7 @@ export function AppHeader({
           aria-label="Open navigation menu"
           size="sm"
           variant="ghost"
-          onClick={onOpenMobileNav}
+          onClick={(e) => onOpenMobileNav(e.currentTarget)}
           className="md:hidden min-w-[44px] min-h-[44px]"
         />
 
@@ -181,9 +179,6 @@ export function AppHeader({
                   </p>
                   <p className="text-[11px] text-[var(--text-muted)] truncate">
                     {user.email}
-                  </p>
-                  <p className="text-[10px] text-[var(--brand-accent-text)] mt-1 font-medium">
-                    Community: {communityName || "Sonder Community"}
                   </p>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />

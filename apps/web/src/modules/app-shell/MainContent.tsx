@@ -12,6 +12,7 @@ export function MainContent({
 }: MainContentProps): React.JSX.Element {
   return (
     <main
+      id="main-content"
       role="main"
       className={cn(
         "flex-1 overflow-y-auto p-4 md:p-6 bg-[var(--surface-canvas)] text-[var(--text-primary)] focus:outline-none transition-colors duration-150",
