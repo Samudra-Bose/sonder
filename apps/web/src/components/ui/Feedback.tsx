@@ -17,22 +17,22 @@ const variantConfig: Record<
 > = {
   success: {
     container:
-      "bg-[#F0FDF4] text-[#15803D] border-[#BBF7D0] dark:bg-[#052E16] dark:text-[#86EFAC] dark:border-[#166534]",
+      "bg-[var(--feedback-success-bg)] text-[var(--feedback-success-text)] border-[var(--feedback-success-border)]",
     icon: <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />,
   },
   warning: {
     container:
-      "bg-[#FFFBEB] text-[#B45309] border-[#FDE68A] dark:bg-[#451A03] dark:text-[#FCD34D] dark:border-[#78350F]",
+      "bg-[var(--feedback-warning-bg)] text-[var(--feedback-warning-text)] border-[var(--feedback-warning-border)]",
     icon: <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />,
   },
   danger: {
     container:
-      "bg-[#FEF2F2] text-[#B91C1C] border-[#FECACA] dark:bg-[#450A0A] dark:text-[#FCA5A5] dark:border-[#7F1D1D]",
+      "bg-[var(--feedback-danger-bg)] text-[var(--feedback-danger-text)] border-[var(--feedback-danger-border)]",
     icon: <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />,
   },
   info: {
     container:
-      "bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE] dark:bg-[#172554] dark:text-[#93C5FD] dark:border-[#1E40AF]",
+      "bg-[var(--feedback-info-bg)] text-[var(--feedback-info-text)] border-[var(--feedback-info-border)]",
     icon: <Info className="h-4 w-4 shrink-0" aria-hidden="true" />,
   },
 };
@@ -77,9 +77,9 @@ export const Feedback = React.forwardRef<HTMLDivElement, FeedbackProps>(
             aria-label="Dismiss alert"
             className={cn(
               "rounded-sm p-1 opacity-70 hover:opacity-100 transition-opacity",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current",
-              // Mobile touch target
-              "relative touch-manipulation after:content-[''] after:absolute after:-inset-2 sm:after:hidden"
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-focus)]",
+              // 44x44px mobile touch bounding box
+              "relative touch-manipulation after:content-[''] after:absolute after:top-1/2 after:left-1/2 after:-translate-x-1/2 after:-translate-y-1/2 after:w-11 after:h-11 sm:after:hidden"
             )}
           >
             <X className="h-3.5 w-3.5" />

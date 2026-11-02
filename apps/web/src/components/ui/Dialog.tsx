@@ -50,8 +50,8 @@ export const DialogContent = React.forwardRef<
         ref={ref}
         className={cn(
           "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50",
-          "w-full max-w-lg rounded-xl border border-slate-200 dark:border-slate-800",
-          "bg-white dark:bg-slate-900 p-6 shadow-2xl transition-all duration-150",
+          "w-full max-w-lg rounded-xl border border-[var(--border-strong)]",
+          "bg-[var(--surface-modal)] p-6 text-[var(--text-primary)] shadow-2xl transition-all duration-150",
           "focus:outline-none",
           className
         )}
@@ -62,10 +62,10 @@ export const DialogContent = React.forwardRef<
           <BaseDialog.Close
             aria-label="Close dialog"
             className={cn(
-              "absolute right-4 top-4 rounded-sm p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500",
-              // Mobile touch target
-              "relative touch-manipulation after:content-[''] after:absolute after:-inset-2 sm:after:hidden"
+              "absolute right-4 top-4 rounded-sm p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-focus)]",
+              // 44x44px mobile touch bounding box
+              "relative touch-manipulation after:content-[''] after:absolute after:top-1/2 after:left-1/2 after:-translate-x-1/2 after:-translate-y-1/2 after:w-11 after:h-11 sm:after:hidden"
             )}
           >
             <X className="h-4 w-4" />
@@ -114,7 +114,7 @@ export const DialogTitle = React.forwardRef<
     <BaseDialog.Title
       ref={ref}
       className={cn(
-        "text-lg font-semibold leading-none tracking-tight text-slate-900 dark:text-slate-100",
+        "text-lg font-semibold leading-none tracking-tight text-[var(--text-primary)]",
         className
       )}
       {...props}
@@ -130,7 +130,7 @@ export const DialogDescription = React.forwardRef<
   return (
     <BaseDialog.Description
       ref={ref}
-      className={cn("text-sm text-slate-500 dark:text-slate-400 mt-1", className)}
+      className={cn("text-sm text-[var(--text-muted)] mt-1", className)}
       {...props}
     />
   );

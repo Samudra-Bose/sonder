@@ -49,8 +49,8 @@ export const DropdownMenuContent = React.forwardRef<
         <BaseMenu.Popup
           ref={ref}
           className={cn(
-            "z-50 min-w-[8rem] overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800",
-            "bg-white dark:bg-slate-900 p-1 text-slate-900 dark:text-slate-100 shadow-md",
+            "z-50 min-w-[8rem] overflow-hidden rounded-lg border border-[var(--border-strong)]",
+            "bg-[var(--surface-drawer)] p-1 text-[var(--text-primary)] shadow-md",
             "focus-visible:outline-none",
             className
           )}
@@ -82,11 +82,11 @@ export const DropdownMenuItem = React.forwardRef<
       ref={ref}
       className={cn(
         "relative flex cursor-pointer select-none items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium outline-none transition-colors",
-        "data-[highlighted]:bg-slate-100 dark:data-[highlighted]:bg-slate-800 data-[highlighted]:text-slate-900 dark:data-[highlighted]:text-slate-100",
+        "text-[var(--text-secondary)] data-[highlighted]:bg-[var(--surface-muted)] data-[highlighted]:text-[var(--text-primary)]",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         inset && "pl-8",
         destructive &&
-          "text-red-600 dark:text-red-400 data-[highlighted]:bg-red-50 dark:data-[highlighted]:bg-red-950/50 data-[highlighted]:text-red-700 dark:data-[highlighted]:text-red-300",
+          "text-[var(--feedback-danger-text)] data-[highlighted]:bg-[var(--feedback-danger-bg)] data-[highlighted]:text-[var(--feedback-danger-text)]",
         className
       )}
       {...props}
@@ -108,7 +108,7 @@ export const DropdownMenuLabel = React.forwardRef<
     <BaseMenu.GroupLabel
       ref={ref}
       className={cn(
-        "px-2 py-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400 select-none",
+        "px-2 py-1.5 text-[11px] font-semibold text-[var(--text-muted)] select-none",
         inset && "pl-8",
         className
       )}
@@ -125,7 +125,7 @@ export const DropdownMenuSeparator = React.forwardRef<
   return (
     <BaseMenu.Separator
       ref={ref}
-      className={cn("-mx-1 my-1 h-px bg-slate-200 dark:bg-slate-800", className)}
+      className={cn("-mx-1 my-1 h-px bg-[var(--border-subtle)]", className)}
       {...props}
     />
   );
@@ -145,7 +145,7 @@ export const DropdownMenuCheckboxItem = React.forwardRef<
       checked={checked}
       className={cn(
         "relative flex cursor-pointer select-none items-center rounded-md py-1.5 pl-8 pr-2 text-xs font-medium outline-none transition-colors",
-        "data-[highlighted]:bg-slate-100 dark:data-[highlighted]:bg-slate-800",
+        "text-[var(--text-secondary)] data-[highlighted]:bg-[var(--surface-muted)] data-[highlighted]:text-[var(--text-primary)]",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className
       )}
@@ -153,7 +153,7 @@ export const DropdownMenuCheckboxItem = React.forwardRef<
     >
       <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
         <BaseMenu.CheckboxItemIndicator>
-          <Check className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" />
+          <Check className="h-3.5 w-3.5 text-[var(--brand-accent-text)]" />
         </BaseMenu.CheckboxItemIndicator>
       </span>
       {children}
@@ -173,14 +173,14 @@ export const DropdownMenuSubTrigger = React.forwardRef<
       ref={ref}
       className={cn(
         "flex cursor-pointer select-none items-center rounded-md px-2 py-1.5 text-xs font-medium outline-none",
-        "data-[highlighted]:bg-slate-100 dark:data-[highlighted]:bg-slate-800",
+        "text-[var(--text-secondary)] data-[highlighted]:bg-[var(--surface-muted)] data-[highlighted]:text-[var(--text-primary)]",
         inset && "pl-8",
         className
       )}
       {...props}
     >
       {children}
-      <ChevronRight className="ml-auto h-3.5 w-3.5 text-slate-400" />
+      <ChevronRight className="ml-auto h-3.5 w-3.5 text-[var(--text-muted)]" />
     </BaseMenu.SubmenuTrigger>
   );
 });

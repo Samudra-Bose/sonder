@@ -27,8 +27,8 @@ export function KeyboardShortcut({
       className={cn(
         "inline-flex items-center gap-1 font-mono text-[11px] font-medium select-none",
         "px-1.5 py-0.5 rounded",
-        "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300",
-        "border border-slate-200 dark:border-slate-700 shadow-2xs",
+        "bg-[var(--surface-muted)] text-[var(--text-secondary)]",
+        "border border-[var(--border-strong)] shadow-2xs",
         className
       )}
       {...props}
@@ -36,7 +36,7 @@ export function KeyboardShortcut({
       {displayKeys.length > 0
         ? displayKeys.map((key, index) => (
             <React.Fragment key={index}>
-              {index > 0 && <span className="text-slate-400 dark:text-slate-500 text-[10px]">+</span>}
+              {index > 0 && <span className="text-[var(--text-muted)] text-[10px]">+</span>}
               <span>{key}</span>
             </React.Fragment>
           ))

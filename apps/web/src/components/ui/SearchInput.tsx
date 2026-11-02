@@ -34,7 +34,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(functi
         value={value}
         onChange={onChange}
         disabled={disabled}
-        leftIcon={<Search className="w-4 h-4 text-slate-400 dark:text-slate-500" aria-hidden="true" />}
+        leftIcon={<Search className="w-4 h-4 text-[var(--text-muted)]" aria-hidden="true" />}
         rightIcon={
           <div className="flex items-center gap-1.5 pointer-events-auto">
             {hasValue && onClear && !disabled && (
@@ -43,17 +43,17 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(functi
                 onClick={handleClear}
                 aria-label="Clear search query"
                 className={cn(
-                  "p-0.5 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500",
-                  // touch bounding box
-                  "relative after:content-[''] after:absolute after:-inset-2 sm:after:hidden"
+                  "p-0.5 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-focus)]",
+                  // 44x44px mobile touch bounding box
+                  "relative touch-manipulation after:content-[''] after:absolute after:top-1/2 after:left-1/2 after:-translate-x-1/2 after:-translate-y-1/2 after:w-11 after:h-11 sm:after:hidden"
                 )}
               >
                 <X className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             )}
             {shortcut && !hasValue && (
-              <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded select-none pointer-events-none">
+              <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-medium text-[var(--text-muted)] bg-[var(--surface-muted)] border border-[var(--border-subtle)] rounded select-none pointer-events-none">
                 {shortcut}
               </kbd>
             )}

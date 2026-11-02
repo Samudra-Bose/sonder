@@ -68,14 +68,14 @@ describe("Button component", () => {
     expect(screen.getByTestId("right-icon")).toBeInTheDocument();
   });
 
-  it("applies variant classes accurately", () => {
+  it("applies variant classes accurately with semantic tokens", () => {
     const { rerender } = render(<Button variant="primary">Primary</Button>);
-    expect(screen.getByRole("button")).toHaveClass("bg-slate-900");
+    expect(screen.getByRole("button")).toHaveClass("bg-[var(--brand-primary)]");
 
     rerender(<Button variant="accent">Accent</Button>);
-    expect(screen.getByRole("button")).toHaveClass("bg-sky-700");
+    expect(screen.getByRole("button")).toHaveClass("bg-[var(--brand-accent-btn-bg)]");
 
     rerender(<Button variant="danger">Danger</Button>);
-    expect(screen.getByRole("button")).toHaveClass("bg-red-600");
+    expect(screen.getByRole("button")).toHaveClass("bg-[var(--feedback-danger-text)]");
   });
 });

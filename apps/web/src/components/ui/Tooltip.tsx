@@ -14,7 +14,7 @@ export interface TooltipProps {
   content: React.ReactNode;
   children: React.ReactElement;
   side?: "top" | "bottom" | "left" | "right";
-  align?: "start" | "center" | "end";
+  align?: "center" | "start" | "end";
   sideOffset?: number;
   delay?: number;
   closeDelay?: number;
@@ -47,8 +47,8 @@ export function Tooltip({
           <BaseTooltip.Popup
             className={cn(
               "z-50 px-2 py-1 text-xs font-medium rounded-md shadow-md select-none",
-              "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900",
-              "border border-slate-800 dark:border-slate-200",
+              "bg-[var(--brand-primary)] text-[var(--text-inverted)]",
+              "border border-[var(--border-strong)]",
               "transition-opacity duration-150 data-[state=delayed-open]:opacity-100 data-[state=closed]:opacity-0"
             )}
           >

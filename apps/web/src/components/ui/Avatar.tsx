@@ -49,7 +49,8 @@ export const Avatar: React.FC<AvatarProps> = ({
   return (
     <BaseAvatar.Root
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-full overflow-hidden select-none bg-slate-200 dark:bg-slate-700",
+        "inline-flex shrink-0 items-center justify-center rounded-full overflow-hidden select-none",
+        "bg-[var(--surface-muted)] border border-[var(--border-subtle)]",
         currentSize.container,
         className
       )}
@@ -63,13 +64,13 @@ export const Avatar: React.FC<AvatarProps> = ({
       )}
       <BaseAvatar.Fallback
         className={cn(
-          "flex h-full w-full items-center justify-center font-medium text-slate-700 dark:text-slate-200 uppercase",
+          "flex h-full w-full items-center justify-center font-medium text-[var(--text-secondary)] uppercase",
           currentSize.text,
           fallbackClassName
         )}
       >
         {initials || (
-          <span className="text-slate-400 dark:text-slate-500" aria-hidden="true">
+          <span className="text-[var(--text-muted)]" aria-hidden="true">
             ?
           </span>
         )}

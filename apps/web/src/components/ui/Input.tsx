@@ -50,7 +50,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       {label && (
         <label
           htmlFor={inputId}
-          className="text-xs font-medium text-slate-700 dark:text-slate-300 select-none"
+          className="text-xs font-medium text-[var(--text-secondary)] select-none"
         >
           {label}
         </label>
@@ -60,7 +60,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         {leftIcon && (
           <span
             className={cn(
-              "absolute left-3 flex items-center pointer-events-none text-slate-500 dark:text-slate-400",
+              "absolute left-3 flex items-center pointer-events-none text-[var(--text-muted)]",
               currentSize.icon
             )}
             aria-hidden="true"
@@ -77,15 +77,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           aria-invalid={error ? "true" : undefined}
           aria-describedby={describedBy}
           className={cn(
-            "w-full rounded-md border bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100",
-            "placeholder:text-slate-400 dark:placeholder:text-slate-500",
+            "w-full rounded-md border bg-[var(--surface-card)] text-[var(--text-primary)]",
+            "placeholder:text-[var(--text-muted)]",
             "transition-colors",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900",
-            // 3.0:1 component boundary contrast per SC 1.4.11
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--surface-canvas)]",
+            // Semantic boundary contrast per SC 1.4.11
             error
-              ? "border-red-600 focus:border-red-600 focus-visible:ring-red-500"
-              : "border-slate-500 dark:border-slate-400 focus:border-sky-600 dark:focus:border-sky-400",
-            "disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-100 dark:disabled:bg-slate-800",
+              ? "border-[var(--feedback-danger-text)] focus:border-[var(--feedback-danger-text)] focus-visible:ring-[var(--feedback-danger-text)]"
+              : "border-[var(--border-control)] focus:border-[var(--brand-accent-text)] focus-visible:ring-[var(--border-focus)]",
+            "disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-[var(--surface-muted)]",
             leftIcon ? "pl-9" : "",
             rightIcon ? "pr-9" : "",
             currentSize.input,
@@ -96,7 +96,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
 
         {rightIcon && (
           <div
-            className="absolute right-3 flex items-center text-slate-500 dark:text-slate-400"
+            className="absolute right-3 flex items-center text-[var(--text-muted)]"
           >
             {rightIcon}
           </div>
@@ -104,11 +104,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       </div>
 
       {error ? (
-        <p id={errorId} role="alert" className="text-xs text-red-600 dark:text-red-400">
+        <p id={errorId} role="alert" className="text-xs text-[var(--feedback-danger-text)]">
           {error}
         </p>
       ) : helperText ? (
-        <p id={helperId} className="text-xs text-slate-500 dark:text-slate-400">
+        <p id={helperId} className="text-xs text-[var(--text-muted)]">
           {helperText}
         </p>
       ) : null}

@@ -37,8 +37,8 @@ export const PopoverContent = React.forwardRef<
         <BasePopover.Popup
           ref={ref}
           className={cn(
-            "z-50 w-72 rounded-lg border border-slate-200 dark:border-slate-800",
-            "bg-white dark:bg-slate-900 p-4 text-slate-900 dark:text-slate-100 shadow-lg outline-none",
+            "z-50 w-72 rounded-lg border border-[var(--border-strong)]",
+            "bg-[var(--surface-drawer)] p-4 text-[var(--text-primary)] shadow-lg outline-none",
             "transition-all duration-150",
             className
           )}

@@ -15,18 +15,19 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
+  // Uses authoritative semantic tokens from research §7.3 & §7.6
   primary:
-    "bg-slate-900 text-white hover:bg-slate-800 active:bg-slate-950 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200 dark:active:bg-slate-300 shadow-xs",
+    "bg-[var(--brand-primary)] text-[var(--text-inverted)] hover:opacity-90 active:opacity-100 shadow-xs",
   accent:
-    "bg-sky-700 text-white hover:bg-sky-800 active:bg-sky-900 dark:bg-sky-400 dark:text-slate-900 dark:hover:bg-sky-300 dark:active:bg-sky-200 shadow-xs",
+    "bg-[var(--brand-accent-btn-bg)] text-[var(--brand-accent-btn-text)] hover:bg-[var(--brand-accent-hover)] shadow-xs",
   secondary:
-    "bg-slate-100 text-slate-800 hover:bg-slate-200 active:bg-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:active:bg-slate-600",
+    "bg-[var(--surface-muted)] text-[var(--text-secondary)] hover:bg-[var(--border-strong)]/30 active:bg-[var(--border-strong)]/50",
   outline:
-    "border border-slate-300 text-slate-700 hover:bg-slate-50 active:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-700 bg-transparent",
+    "border border-[var(--border-strong)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)] active:bg-[var(--surface-muted)]/80 bg-transparent",
   ghost:
-    "text-slate-700 hover:bg-slate-100 active:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800 dark:active:bg-slate-700 bg-transparent",
+    "text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)] active:bg-[var(--surface-muted)]/80 bg-transparent",
   danger:
-    "bg-red-600 text-white hover:bg-red-700 active:bg-red-800 dark:bg-red-600 dark:text-white dark:hover:bg-red-500 dark:active:bg-red-700 shadow-xs",
+    "bg-[var(--feedback-danger-text)] text-white hover:opacity-90 active:opacity-100 shadow-xs",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -61,11 +62,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       aria-busy={isLoading ? "true" : undefined}
       className={cn(
         "inline-flex items-center justify-center font-medium rounded-md transition-colors select-none",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-canvas)]",
         "active:scale-[0.98] transition-transform duration-75",
         "disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none disabled:active:scale-100",
-        // 44x44px touch bounding box target standard on mobile
-        "relative touch-manipulation after:content-[''] after:absolute after:inset-y-0 after:left-1/2 after:-translate-x-1/2 after:min-w-[44px] after:min-h-[44px] sm:after:hidden",
+        // 44x44px touch bounding box target standard on mobile via centered hit area expansion
+        "relative touch-manipulation after:content-[''] after:absolute after:top-1/2 after:left-1/2 after:-translate-x-1/2 after:-translate-y-1/2 after:min-w-[44px] after:min-h-[44px] after:w-full after:h-full sm:after:hidden",
         variantStyles[variant],
         sizeStyles[size],
         fullWidth && "w-full",

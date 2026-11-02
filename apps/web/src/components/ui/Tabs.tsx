@@ -16,7 +16,7 @@ export const TabsList = React.forwardRef<HTMLDivElement, TabsListProps>(
       <BaseTabs.List
         ref={ref}
         className={cn(
-          "inline-flex h-9 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800/80 p-1 text-slate-500 dark:text-slate-400 gap-1 select-none",
+          "inline-flex h-9 items-center justify-center rounded-lg bg-[var(--surface-muted)] border border-[var(--border-subtle)] p-1 text-[var(--text-muted)] gap-1 select-none",
           className
         )}
         {...props}
@@ -38,12 +38,12 @@ export const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>
         ref={ref}
         className={cn(
           "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium transition-all select-none",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1",
+          "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-focus)] focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--surface-canvas)]",
           "disabled:pointer-events-none disabled:opacity-50",
-          "hover:text-slate-900 dark:hover:text-slate-100",
-          "data-[active]:bg-white dark:data-[active]:bg-slate-900 data-[active]:text-slate-900 dark:data-[active]:text-slate-100 data-[active]:shadow-xs",
-          // Mobile touch target
-          "relative touch-manipulation after:content-[''] after:absolute after:inset-y-0 after:left-1/2 after:-translate-x-1/2 after:min-w-[44px] after:min-h-[44px] sm:after:hidden",
+          "data-[active]:bg-[var(--surface-card)] data-[active]:text-[var(--text-primary)] data-[active]:shadow-xs",
+          // 44x44px mobile touch bounding box
+          "relative touch-manipulation after:content-[''] after:absolute after:top-1/2 after:left-1/2 after:-translate-x-1/2 after:-translate-y-1/2 after:min-w-[44px] after:min-h-[44px] after:w-full after:h-full sm:after:hidden",
           className
         )}
         {...props}
@@ -64,7 +64,7 @@ export const TabsContent = React.forwardRef<HTMLDivElement, TabsContentProps>(
       <BaseTabs.Panel
         ref={ref}
         className={cn(
-          "mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-md",
+          "mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-focus)] rounded-md",
           className
         )}
         {...props}

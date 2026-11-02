@@ -1,4 +1,16 @@
 import React from "react";
+import {
+  Circle,
+  Clock,
+  Eye,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  ChevronUp,
+  Minus,
+  ChevronDown,
+  CircleDashed,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type TaskStatus = "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE" | "CANCELLED";
@@ -16,32 +28,82 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   status?: TaskStatus;
   priority?: TaskPriority;
   size?: "sm" | "md";
+  /** Optional icon override; if not provided, status & priority badges automatically render their required dual-indicator icon */
   icon?: React.ReactNode;
 }
 
-const statusStyles: Record<TaskStatus, string> = {
-  // Evaluated WCAG 2.2 AA Contrast Pairs (Section 7.6):
-  TODO: "bg-[#F1F5F9] text-[#334155] dark:bg-[#1E293B] dark:text-[#E2E8F0] border-transparent",
-  IN_PROGRESS: "bg-[#EFF6FF] text-[#1D4ED8] dark:bg-[#172554] dark:text-[#93C5FD] border-transparent",
-  IN_REVIEW: "bg-[#FAF5FF] text-[#6B21A8] dark:bg-[#3B0764] dark:text-[#E9D5FF] border-transparent",
-  DONE: "bg-[#F0FDF4] text-[#15803D] dark:bg-[#052E16] dark:text-[#86EFAC] border-transparent",
-  CANCELLED: "bg-[#FEF2F2] text-[#B91C1C] dark:bg-[#450A0A] dark:text-[#FCA5A5] border-transparent",
+const statusConfig: Record<
+  TaskStatus,
+  { styles: string; icon: React.ReactElement }
+> = {
+  TODO: {
+    // #F1F5F9 / #CBD5E1 / #334155 (Light) | #1E293B / #334155 / #E2E8F0 (Dark)
+    styles:
+      "bg-[var(--status-todo-bg)] border-[var(--status-todo-border)] text-[var(--status-todo-text)]",
+    icon: <Circle className="h-3 w-3 shrink-0" aria-hidden="true" data-testid="status-icon-TODO" />,
+  },
+  IN_PROGRESS: {
+    // #EFF6FF / #BFDBFE / #1D4ED8 (Light) | #172554 / #1E40AF / #93C5FD (Dark)
+    styles:
+      "bg-[var(--status-progress-bg)] border-[var(--status-progress-border)] text-[var(--status-progress-text)]",
+    icon: <Clock className="h-3 w-3 shrink-0" aria-hidden="true" data-testid="status-icon-IN_PROGRESS" />,
+  },
+  IN_REVIEW: {
+    // #FAF5FF / #E9D5FF / #6B21A8 (Light) | #3B0764 / #581C87 / #E9D5FF (Dark)
+    styles:
+      "bg-[var(--status-review-bg)] border-[var(--status-review-border)] text-[var(--status-review-text)]",
+    icon: <Eye className="h-3 w-3 shrink-0" aria-hidden="true" data-testid="status-icon-IN_REVIEW" />,
+  },
+  DONE: {
+    // #F0FDF4 / #BBF7D0 / #15803D (Light) | #052E16 / #166534 / #86EFAC (Dark)
+    styles:
+      "bg-[var(--status-done-bg)] border-[var(--status-done-border)] text-[var(--status-done-text)]",
+    icon: <CheckCircle2 className="h-3 w-3 shrink-0" aria-hidden="true" data-testid="status-icon-DONE" />,
+  },
+  CANCELLED: {
+    // #FEF2F2 / #FECACA / #B91C1C (Light) | #450A0A / #991B1B / #FCA5A5 (Dark)
+    styles:
+      "bg-[var(--status-cancelled-bg)] border-[var(--status-cancelled-border)] text-[var(--status-cancelled-text)]",
+    icon: <XCircle className="h-3 w-3 shrink-0" aria-hidden="true" data-testid="status-icon-CANCELLED" />,
+  },
 };
 
-const priorityStyles: Record<TaskPriority, string> = {
-  // Evaluated WCAG 2.2 AA Contrast Pairs (Section 7.6):
-  URGENT: "bg-[#FEF2F2] text-[#B91C1C] dark:bg-[#450A0A] dark:text-[#F87171] border-transparent",
-  HIGH: "bg-[#FFFBEB] text-[#B45309] dark:bg-[#451A03] dark:text-[#FBBF24] border-transparent",
-  MEDIUM: "bg-[#EFF6FF] text-[#1D4ED8] dark:bg-[#172554] dark:text-[#60A5FA] border-transparent",
-  LOW: "bg-[#F1F5F9] text-[#475569] dark:bg-[#1E293B] dark:text-[#94A3B8] border-transparent",
-  NONE: "bg-[#F8FAFC] text-[#64748B] dark:bg-[#0F172A] dark:text-[#64748B] border border-slate-200 dark:border-slate-800",
+const priorityConfig: Record<
+  TaskPriority,
+  { styles: string; icon: React.ReactElement }
+> = {
+  URGENT: {
+    styles:
+      "bg-[var(--surface-muted)] border-[var(--border-subtle)] text-[var(--priority-urgent)]",
+    icon: <AlertCircle className="h-3 w-3 shrink-0" aria-hidden="true" data-testid="priority-icon-URGENT" />,
+  },
+  HIGH: {
+    styles:
+      "bg-[var(--surface-muted)] border-[var(--border-subtle)] text-[var(--priority-high)]",
+    icon: <ChevronUp className="h-3 w-3 shrink-0" aria-hidden="true" data-testid="priority-icon-HIGH" />,
+  },
+  MEDIUM: {
+    styles:
+      "bg-[var(--surface-muted)] border-[var(--border-subtle)] text-[var(--priority-medium)]",
+    icon: <Minus className="h-3 w-3 shrink-0" aria-hidden="true" data-testid="priority-icon-MEDIUM" />,
+  },
+  LOW: {
+    styles:
+      "bg-[var(--surface-muted)] border-[var(--border-subtle)] text-[var(--priority-low)]",
+    icon: <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" data-testid="priority-icon-LOW" />,
+  },
+  NONE: {
+    styles:
+      "bg-transparent border-[var(--border-control)] text-[var(--priority-none)]",
+    icon: <CircleDashed className="h-3 w-3 shrink-0" aria-hidden="true" data-testid="priority-icon-NONE" />,
+  },
 };
 
 const genericStyles: Record<string, string> = {
-  default: "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-transparent",
-  secondary: "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border-transparent",
-  outline: "border border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300 bg-transparent",
-  accent: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 border-transparent",
+  default: "bg-[var(--brand-primary)] text-[var(--text-inverted)] border-transparent",
+  secondary: "bg-[var(--surface-muted)] text-[var(--text-secondary)] border-transparent",
+  outline: "border-[var(--border-strong)] text-[var(--text-secondary)] bg-transparent",
+  accent: "bg-[var(--brand-accent-text)]/10 text-[var(--brand-accent-text)] border-[var(--brand-accent-text)]/20",
 };
 
 export const Badge: React.FC<BadgeProps> = ({
@@ -55,21 +117,34 @@ export const Badge: React.FC<BadgeProps> = ({
   ...props
 }) => {
   let styleClasses = genericStyles.default;
+  let resolvedIcon: React.ReactNode = icon;
 
-  if (status) {
-    styleClasses = statusStyles[status];
-  } else if (priority) {
-    styleClasses = priorityStyles[priority];
-  } else if (variant) {
-    if (variant.startsWith("status-")) {
-      const st = variant.replace("status-", "") as TaskStatus;
-      styleClasses = statusStyles[st] || genericStyles.default;
-    } else if (variant.startsWith("priority-")) {
-      const pr = variant.replace("priority-", "") as TaskPriority;
-      styleClasses = priorityStyles[pr] || genericStyles.default;
-    } else {
-      styleClasses = genericStyles[variant] || genericStyles.default;
+  // Resolve status config
+  let activeStatus: TaskStatus | undefined = status;
+  if (!activeStatus && variant?.startsWith("status-")) {
+    activeStatus = variant.replace("status-", "") as TaskStatus;
+  }
+
+  // Resolve priority config
+  let activePriority: TaskPriority | undefined = priority;
+  if (!activePriority && variant?.startsWith("priority-")) {
+    activePriority = variant.replace("priority-", "") as TaskPriority;
+  }
+
+  if (activeStatus && statusConfig[activeStatus]) {
+    styleClasses = statusConfig[activeStatus].styles;
+    // Dual indicator requirement: status must always include an icon
+    if (!resolvedIcon) {
+      resolvedIcon = statusConfig[activeStatus].icon;
     }
+  } else if (activePriority && priorityConfig[activePriority]) {
+    styleClasses = priorityConfig[activePriority].styles;
+    // Dual indicator requirement: priority must always include an icon
+    if (!resolvedIcon) {
+      resolvedIcon = priorityConfig[activePriority].icon;
+    }
+  } else if (variant) {
+    styleClasses = genericStyles[variant] || genericStyles.default;
   }
 
   const sizeClass = size === "sm" ? "px-1.5 py-0.5 text-[11px]" : "px-2 py-0.5 text-xs";
@@ -77,14 +152,18 @@ export const Badge: React.FC<BadgeProps> = ({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 font-medium rounded-md select-none",
+        "inline-flex items-center gap-1.5 font-medium rounded-md border select-none",
         sizeClass,
         styleClasses,
         className
       )}
       {...props}
     >
-      {icon && <span className="shrink-0 flex items-center" aria-hidden="true">{icon}</span>}
+      {resolvedIcon && (
+        <span className="shrink-0 flex items-center" aria-hidden="true">
+          {resolvedIcon}
+        </span>
+      )}
       <span>{children}</span>
     </span>
   );

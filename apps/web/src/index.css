@@ -31,14 +31,19 @@
 
     /* Semantic Status - Light */
     --status-todo-bg: #f1f5f9;
+    --status-todo-border: #cbd5e1;
     --status-todo-text: #334155;
     --status-progress-bg: #eff6ff;
+    --status-progress-border: #bfdbfe;
     --status-progress-text: #1d4ed8;
     --status-review-bg: #faf5ff;
+    --status-review-border: #e9d5ff;
     --status-review-text: #6b21a8;
     --status-done-bg: #f0fdf4;
+    --status-done-border: #bbf7d0;
     --status-done-text: #15803d;
     --status-cancelled-bg: #fef2f2;
+    --status-cancelled-border: #fecaca;
     --status-cancelled-text: #b91c1c;
 
     /* Priority Colors - Light */
@@ -104,14 +109,19 @@
 
     /* Semantic Status - Dark */
     --status-todo-bg: #1e293b;
+    --status-todo-border: #334155;
     --status-todo-text: #e2e8f0;
     --status-progress-bg: #172554;
+    --status-progress-border: #1e40af;
     --status-progress-text: #93c5fd;
     --status-review-bg: #3b0764;
+    --status-review-border: #581c87;
     --status-review-text: #e9d5ff;
     --status-done-bg: #052e16;
+    --status-done-border: #166534;
     --status-done-text: #86efac;
     --status-cancelled-bg: #450a0a;
+    --status-cancelled-border: #991b1b;
     --status-cancelled-text: #fca5a5;
 
     /* Priority Colors - Dark */
@@ -182,10 +192,12 @@
   --color-brand-accent-btn-text: var(--brand-accent-btn-text);
   --color-brand-accent-hover: var(--brand-accent-hover);
 
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
   --radius-full: 9999px;
 
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
