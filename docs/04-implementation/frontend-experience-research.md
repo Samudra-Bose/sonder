@@ -28,13 +28,13 @@ This research establishes the comprehensive product, interaction-design, and vis
 
 ### 2.1 Research Framework & Evidence Classification
 To ensure research integrity, every observation and recommendation in this specification is categorized using explicit evidentiary tiers:
-- `[DIRECT INTERFACE OBSERVATION]`: Verified through direct interaction with public web or native application interfaces as of 2 November 2026.
-- `[OFFICIAL DOCUMENTATION]`: Sourced directly from vendor user guides, developer documentation, design systems, and changelogs as of 2 November 2026.
+- `[DIRECT INTERFACE OBSERVATION]`: Verified through direct interaction with public web or native application interfaces as of 1 November 2026.
+- `[OFFICIAL DOCUMENTATION]`: Sourced directly from vendor user guides, developer documentation, design systems, and changelogs as of 1 November 2026.
 - `[ENGINEERING / DESIGN CASE STUDY]`: Sourced from verified technical write-ups published by the product's engineering, design, or leadership teams.
 - `[INFERRED RECOMMENDATION]`: Architectural adaptation formulated specifically for Sonder's approved domain model and governance constraints.
 
 ### 2.2 Investigated Products Inventory
-Fourteen leading products across work management and personal productivity were researched (verified as of 2 November 2026):
+Fourteen leading products across work management and personal productivity were researched (verified as of 1 November 2026):
 
 | Product | Category | Primary Interface / Documentation URL | Verified Focus Area |
 |---|---|---|---|
@@ -64,7 +64,7 @@ Fourteen leading products across work management and personal productivity were 
 ## 3. Product-by-Product Findings
 
 ### 3.1 Linear
-- **Source:** [linear.app/docs](https://linear.app/docs) · [linear.app/docs/keyboard-shortcuts](https://linear.app/docs/keyboard-shortcuts) (Verified: 2 November 2026)
+- **Source:** [linear.app/docs](https://linear.app/docs) · [linear.app/docs/keyboard-shortcuts](https://linear.app/docs/keyboard-shortcuts) (Verified: 1 November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **Global Omnibar (`Cmd/Ctrl+K`):** Centered modal overlay that opens with high visual responsiveness. Supports nested sub-menus (e.g., "Change status..." transitions to status options with breadcrumb back-navigation).
   - `[DIRECT INTERFACE OBSERVATION]` **Keyboard-First Navigation:** Roving focus via `J`/`K` or Arrow keys. `Spacebar` triggers a transient "Peek" preview; `Enter` opens full detail; `C` opens the global issue creator from anywhere in the application.
@@ -80,7 +80,7 @@ Fourteen leading products across work management and personal productivity were 
 - **Sonder Architectural Takeaway:** Adopt Linear's roving tabindex, `Cmd+K` command menu architecture, and right-docked peek panel. Reject its rigid engineering-only nomenclature (Cycles, Triage, Backlog) in favor of Sonder's domain-neutral 5-stage workflow (`TODO`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`).
 
 ### 3.2 Asana
-- **Source:** [asana.com/guide](https://asana.com/guide) · [asana.com/guide/help/views/all](https://asana.com/guide/help/views/all) (Verified: 2 November 2026)
+- **Source:** [asana.com/guide](https://asana.com/guide) · [asana.com/guide/help/views/all](https://asana.com/guide/help/views/all) (Verified: 1 November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **Synchronized View Tabs:** Top tab bar switches between List, Board, Timeline, and Calendar over identical underlying project data.
   - `[DIRECT INTERFACE OBSERVATION]` **Task Detail Slide-Over:** The right pane opens over the canvas, preserving list scroll position. Subtasks render as an expandable tree inside the drawer.
@@ -97,7 +97,7 @@ Fourteen leading products across work management and personal productivity were 
 - **Sonder Architectural Takeaway:** Replicate the 4-view tab switching model and the Calendar unscheduled tray. Strictly enforce Sonder's flat hierarchy: `Community → Workspace → Task → Subtask`, rejecting intermediate "Project" and "Section" abstractions.
 
 ### 3.3 Jira
-- **Source:** [support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/](https://support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/) (Verified: 2 November 2026)
+- **Source:** [support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/](https://support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/) (Verified: 1 November 2026)
 - **Observed Patterns:**
   - `[OFFICIAL DOCUMENTATION]` **Deterministic Task Keys:** Prefix-based alphanumeric keys (`ENG-123`) serve as permanent, human-readable verbal and written identifiers.
   - `[OFFICIAL DOCUMENTATION]` **Prefix Renaming & Aliasing:** When a project key is renamed (e.g., `PROJ` to `ENG`), historical keys permanently alias and redirect to the new identifier.
@@ -113,7 +113,7 @@ Fourteen leading products across work management and personal productivity were 
 - **Sonder Architectural Takeaway:** Implement Jira's permanent keying and aliasing system (DEC-OPEN-06) while completely eliminating its configuration bloat through progressive disclosure and clean Tailwind v4 UI styling.
 
 ### 3.4 ClickUp
-- **Source:** [help.clickup.com/hc/en-us/articles/6310025732119-View-Settings-and-Preferences](https://help.clickup.com/hc/en-us/articles/6310025732119-View-Settings-and-Preferences) (Verified: 2 November 2026)
+- **Source:** [help.clickup.com/hc/en-us/articles/6310025732119-View-Settings-and-Preferences](https://help.clickup.com/hc/en-us/articles/6310025732119-View-Settings-and-Preferences) (Verified: 1 November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **View Display Customization:** Users can toggle individual card properties (Assignee, Subtasks, Priority, Due Date) on or off per view.
   - `[DIRECT INTERFACE OBSERVATION]` **Density Switching:** Explicit toggle between Compact, Normal, and Clean density modes.
@@ -128,7 +128,7 @@ Fourteen leading products across work management and personal productivity were 
 - **Sonder Architectural Takeaway:** Support field visibility toggles and compact density modes. Limit view projections strictly to the 4 approved, fully synchronized views (List, Board, Calendar, Timeline).
 
 ### 3.5 Monday.com
-- **Source:** [support.monday.com/hc/en-us/articles/115005310565-The-Status-Column](https://support.monday.com/hc/en-us/articles/115005310565-The-Status-Column) (Verified: 2 November 2026)
+- **Source:** [support.monday.com/hc/en-us/articles/115005310565-The-Status-Column](https://support.monday.com/hc/en-us/articles/115005310565-The-Status-Column) (Verified: 1 November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **Visual Status Columns:** High-contrast colored status badges with prominent text labels.
   - `[DIRECT INTERFACE OBSERVATION]` **Summary / Progress Bars:** Footer bars summarize group status breakdown (e.g., 60% Done, 20% In Progress, 20% Blocked).
@@ -142,7 +142,7 @@ Fourteen leading products across work management and personal productivity were 
 - **Sonder Architectural Takeaway:** Adopt high-contrast, dual-indicator status badges (icon + text, WCAG 2.2 compliant) and group-level progress summaries. Maintain a calm, restrained, professional aesthetic without frivolous animations.
 
 ### 3.6 Height
-- **Source:** [height.app/docs](https://height.app/docs) · [height.app/blog](https://height.app/blog) (Verified: 2 November 2026)
+- **Source:** [height.app/docs](https://height.app/docs) · [height.app/blog](https://height.app/blog) (Verified: 1 November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **Spreadsheet-Grade Inline Editing:** Direct click-and-type editing in table cells. Arrow keys navigate between cells; pressing `Enter` commits and creates the next row.
   - `[DIRECT INTERFACE OBSERVATION]` **Keyboard Attribute Popovers:** Focusing a cell and pressing `Enter` or `Space` opens a keyboard-navigable attribute popover (Assignee picker, Status menu, Date picker).
@@ -156,7 +156,7 @@ Fourteen leading products across work management and personal productivity were 
 - **Sonder Architectural Takeaway:** Implement spreadsheet-like inline editing and keyboard row traversal in Sonder's List view. Retain strict separation between task description, subtask hierarchy, and threaded comments.
 
 ### 3.7 Plane
-- **Source:** [docs.plane.so](https://docs.plane.so) · [docs.plane.so/core-concepts/workspaces](https://docs.plane.so/core-concepts/workspaces) (Verified: 2 November 2026)
+- **Source:** [docs.plane.so](https://docs.plane.so) · [docs.plane.so/core-concepts/workspaces](https://docs.plane.so/core-concepts/workspaces) (Verified: 1 November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **Clean Workspace/Project Structure:** Top-level sidebar handles workspace switching and project isolation with clean iconography.
   - `[DIRECT INTERFACE OBSERVATION]` **Light/Dark Contrast Modes:** High-contrast dark mode paired with neutral, un-tinted light mode surfaces.
@@ -170,7 +170,7 @@ Fourteen leading products across work management and personal productivity were 
 - **Sonder Architectural Takeaway:** Adopt Plane's clean modal layouts and high-contrast surface tokens. Ensure rigorous responsive breakpoints and dedicated mobile adaptations.
 
 ### 3.8 Basecamp
-- **Source:** [basecamp.com/features](https://basecamp.com/features) · [37signals.com/books](https://37signals.com) (Verified: 2 November 2026)
+- **Source:** [basecamp.com/features](https://basecamp.com/features) · [37signals.com/books](https://37signals.com) (Verified: 1 November 2026)
 - **Observed Patterns:**
   - `[OFFICIAL DOCUMENTATION]` **Calm Technology Architecture:** Asynchronous-by-default communication; absence of flashing red alert badges.
   - `[DIRECT INTERFACE OBSERVATION]` **"Hey!" Menu / Notification Categorization:** Separates high-priority personal action items (assignments, direct @mentions) from general project activity updates.
@@ -185,7 +185,7 @@ Fourteen leading products across work management and personal productivity were 
 - **Sonder Architectural Takeaway:** Adopt Basecamp's calm notification architecture in Sonder's Inbox (`/inbox`), categorizing items into "Action Required" and "Updates". Retain Sonder's synchronized 4-view engine for structured execution.
 
 ### 3.9 GitHub Projects
-- **Source:** [docs.github.com/en/issues/planning-and-tracking-with-projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects) (Verified: 2 November 2026)
+- **Source:** [docs.github.com/en/issues/planning-and-tracking-with-projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects) (Verified: 1 November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **High-Density Table Grid:** Compact rows with configurable column widths, multi-column sorting, and field sum aggregations in group headers.
   - `[DIRECT INTERFACE OBSERVATION]` **Kanban WIP Limits:** Visual indicators when column card counts exceed defined Work-In-Progress thresholds.
@@ -201,7 +201,7 @@ Fourteen leading products across work management and personal productivity were 
 - **Sonder Architectural Takeaway:** Emulate GitHub Projects' table density, group-level field sums, and vertical milestone lines in Timeline view. Provide superior in-context subtask editing via the Task Peek Drawer.
 
 ### 3.10 Notion
-- **Source:** [notion.so/help](https://www.notion.so/help) · [notion.so/help/guides](https://www.notion.so/help/guides) (Verified: 2 November 2026)
+- **Source:** [notion.so/help](https://www.notion.so/help) · [notion.so/help/guides](https://www.notion.so/help/guides) (Verified: 1 November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **Slash Command (`/`) Menu:** Instant contextual menu for formatting, dates, mentions, and block insertions.
   - `[DIRECT INTERFACE OBSERVATION]` **Thoughtful Empty States:** Friendly, actionable empty states that explain the view purpose and provide one-click starter actions.
@@ -215,7 +215,7 @@ Fourteen leading products across work management and personal productivity were 
 - **Sonder Architectural Takeaway:** Adopt Notion's approachable empty states and clean breadcrumbs. Maintain Sonder's rigid relational schema, typed API contracts, and high-performance virtualized grids.
 
 ### 3.11 Superlist
-- **Source:** [superlist.com/updates](https://superlist.com/updates) · [superlist.com/help](https://superlist.com/help) (Verified: 2 November 2026)
+- **Source:** [superlist.com/updates](https://superlist.com/updates) · [superlist.com/help](https://superlist.com/help) (Verified: 1 November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **Unified Personal vs Work Segregation:** Clean sidebar toggle separating private personal tasks from collaborative shared team workspaces.
   - `[DIRECT INTERFACE OBSERVATION]` **Mobile Bottom Action Bar:** Contextual bottom bar providing rapid one-thumb task creation and view switching.
@@ -228,7 +228,7 @@ Fourteen leading products across work management and personal productivity were 
 - **Sonder Architectural Takeaway:** Model Sonder's Workspace Switcher after Superlist's clean Personal vs Shared separation. Adapt its mobile bottom navigation for Sonder's core mobile flows (`My Work`, `Views`, `Quick Create`, `Inbox`, `Account`).
 
 ### 3.12 Sunsama
-- **Source:** [help.sunsama.com](https://help.sunsama.com) · [help.sunsama.com/docs/daily-planning](https://help.sunsama.com/docs/daily-planning) (Verified: 2 November 2026)
+- **Source:** [help.sunsama.com](https://help.sunsama.com) · [help.sunsama.com/docs/daily-planning](https://help.sunsama.com/docs/daily-planning) (Verified: 1 November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **Daily Planning Ritual:** Guided morning flow that pulls tasks from backlogs and timeboxes them onto a calendar schedule.
   - `[DIRECT INTERFACE OBSERVATION]` **Workload Capacity Indicators:** Realtime meter displaying planned hours against a healthy daily capacity limit.
@@ -241,7 +241,7 @@ Fourteen leading products across work management and personal productivity were 
 - **Sonder Architectural Takeaway:** Incorporate workload awareness and clear temporal triage groupings (`Overdue`, `Due Today`, `Upcoming`, `Later`, `Unscheduled`) into Sonder's My Work dashboard (`/my-work`).
 
 ### 3.13 Things 3
-- **Source:** [culturedcode.com/things/support](https://culturedcode.com/things/support/) (Verified: 2 November 2026)
+- **Source:** [culturedcode.com/things/support](https://culturedcode.com/things/support/) (Verified: 1 November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **Masterclass in Typography & Whitespace:** Extreme typographic discipline; generous vertical padding between list items that eliminates visual clutter without sacrificing density.
   - `[DIRECT INTERFACE OBSERVATION]` **The "Magic Plus" Button:** Interactive floating action button on mobile that can be dragged directly into specific list sections or tapped for quick capture.
@@ -255,7 +255,7 @@ Fourteen leading products across work management and personal productivity were 
 - **Sonder Architectural Takeaway:** Apply Things 3's typographic discipline, subtle hairline dividers, and spacious touch targets to Sonder's mobile interface and desktop task composer.
 
 ### 3.14 Craft
-- **Source:** [support.craft.do](https://support.craft.do) (Verified: 2 November 2026)
+- **Source:** [support.craft.do](https://support.craft.do) (Verified: 1 November 2026)
 - **Observed Patterns:**
   - `[DIRECT INTERFACE OBSERVATION]` **Structured Card Containers:** Groups content into visually refined, modular card blocks with subtle borders and balanced internal padding.
   - `[DIRECT INTERFACE OBSERVATION]` **Contextual Action Menus:** Non-disruptive floating action bars that appear directly adjacent to selected items.
@@ -422,8 +422,8 @@ Inspection of `apps/web/package.json` confirms:
 
 ### 6.3 Single Coherent Component Recommendation
 1. **Component Architecture:** Adopt the **`shadcn/ui` pattern** of copying unstyled, accessible components directly into `apps/web/src/components/ui/` with full local code ownership. Note that `shadcn/ui` is an architectural distribution approach, not a guarantee of zero external runtime dependencies; the copied components depend on headless primitives.
-2. **Single Headless Primitive Foundation:** Standardize exclusively on **Base UI** (`@base-ui-components/react`) as the project's single headless primitive layer. Do not mix or combine Base UI with Radix UI. Base UI was engineered with native React 19 support, modern render props (`useRender`) that eliminate `asChild` prop-merging edge cases, and zero-CSS data attributes (`data-state`, `data-side`) designed for Tailwind CSS v4.
-3. **Omnibar:** Use **`cmdk`** as the unstyled, accessible combobox primitive inside a Base UI Dialog wrapper.
+2. **Single Headless Primitive Foundation:** Standardize exclusively on **Base UI** (`@base-ui/react`) as the project's single headless primitive layer. Do not mix or combine Base UI with Radix UI. Base UI was engineered with native React 19 support, modern render props (`useRender`) that eliminate `asChild` prop-merging edge cases, and zero-CSS data attributes (`data-state`, `data-side`) designed for Tailwind CSS v4.
+3. **Omnibar & cmdk Integration Requirement:** Use **`cmdk`** as the unstyled, accessible combobox primitive. Note that cmdk's packaged `Command.Dialog` composes Radix UI Dialog internally. To preserve Sonder's single-primitive architecture and prevent introducing Radix Dialog transitively, the frontend must compose cmdk's unstyled `Command` component inside a Base UI Dialog (`<Dialog.Root>`, `<Dialog.Portal>`, `<Dialog.Backdrop>`, `<Dialog.Popup>`). Do **not** use `Command.Dialog`.
 4. **Icons:** Standardize universally on **`lucide-react`**.
 5. **Animation:** 90% native Tailwind CSS transitions (150–200ms ease-out). Use **`Motion`** strictly for complex layout transitions (Task Peek Drawer slide-over and view tab indicator projection) wrapped in `<LazyMotion features={domAnimation}>`.
 6. **Virtualization:** Adopt **`@tanstack/react-virtual`** in VS-04 for large table and timeline rendering.
@@ -505,42 +505,77 @@ Every status chip combines an SVG icon and text label (never color alone) to ens
   - **Disabled Controls:** Inactive UI elements render at `opacity-50 cursor-not-allowed` with `aria-disabled="true"` and explanatory tooltips. (WCAG 2.2 SC 1.4.3 explicitly exempts inactive controls from color contrast minimums).
 
 ### 7.6 WCAG 2.2 AA Contrast Audit Table
-The proposed color token pairings were evaluated using standard relative luminance contrast calculations:
+The proposed color token pairings were evaluated using standard relative luminance contrast calculations ($(\text{L}_1 + 0.05) / (\text{L}_2 + 0.05)$).
+
+#### WCAG 2.2 Standards Applied:
+- **Normal Text ($\ge 4.5:1$, SC 1.4.3):** Body text, labels, status chips, table cells, links, and normal button text.
+- **Large Text ($\ge 3.0:1$, SC 1.4.3):** Text at least 18pt (24px) or 14pt bold (18.66px bold).
+- **UI Component Boundaries ($\ge 3.0:1$, SC 1.4.11 Non-text Contrast):** Input borders and control boundaries required to identify component states.
+- **Focus Indicators ($\ge 3.0:1$, SC 1.4.11 Focus Appearance):** Focus ring outlines against adjacent surfaces.
+- **Inactive / Disabled Controls (Exempt, SC 1.4.3 & SC 1.4.11):** Inactive UI elements are explicitly exempt from minimum contrast ratios.
+
+#### Critical Brand Accent & Button Contrast Resolution:
+- `#0284C7` (Sky 600) against `#FFFFFF` measures **4.10:1**. While passing the 3.0:1 threshold for non-text focus rings and large text, it fails the 4.5:1 normal text standard and cannot be used with white text on normal-sized buttons while claiming a 4.5:1 pass.
+- To resolve this, **`#0369A1` (Sky 700)** is established as the light-mode accent button background (`--brand-accent-btn-bg`) with white text (`#FFFFFF`), achieving **5.93:1** (PASS for normal text). `#0369A1` is also used for text links and inline brand accents (`--brand-accent-text`).
+- `#0284C7` is strictly reserved for non-text focus indicators (`--border-focus`, 4.10:1 $\ge 3.0:1$ under SC 1.4.11).
+
+#### Audit Table (51 Evaluated Pairings: 49 Passed, 2 Exempt, 0 Failed):
 
 | UI Element / Surface Pair | Foreground Token | Background Token | Calculated Ratio | WCAG 2.2 AA Standard | Result |
 |---|---|---|---|---|---|
 | **Primary Text on Light Canvas** | `#0F172A` | `#F8FAFC` | **17.06:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **Primary Text on Light Card** | `#0F172A` | `#FFFFFF` | **17.85:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **Secondary Text on Light Card** | `#334155` | `#FFFFFF` | **10.35:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **Muted Text on Light Card** | `#475569` | `#FFFFFF` | **7.58:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Primary Text on Light Card / Modal / Drawer** | `#0F172A` | `#FFFFFF` | **17.85:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Secondary Text on Light Canvas** | `#334155` | `#F8FAFC` | **9.90:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Secondary Text on Light Card / Modal / Drawer** | `#334155` | `#FFFFFF` | **10.35:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Muted Text on Light Canvas** | `#475569` | `#F8FAFC` | **7.24:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Muted Text on Light Card / Modal / Drawer** | `#475569` | `#FFFFFF` | **7.58:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
 | **Primary Text on Dark Canvas** | `#F8FAFC` | `#090D16` | **18.57:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
 | **Primary Text on Dark Card** | `#F8FAFC` | `#0F172A` | **17.06:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Primary Text on Dark Modal / Drawer** | `#F8FAFC` | `#1E293B` | **13.98:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Secondary Text on Dark Canvas** | `#CBD5E1` | `#090D16` | **13.09:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
 | **Secondary Text on Dark Card** | `#CBD5E1` | `#0F172A` | **12.02:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Secondary Text on Dark Modal / Drawer** | `#CBD5E1` | `#1E293B` | **9.85:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Muted Text on Dark Canvas** | `#94A3B8` | `#090D16` | **7.58:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
 | **Muted Text on Dark Card** | `#94A3B8` | `#0F172A` | **6.96:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **Brand Accent Text (Light Mode)** | `#0369A1` | `#FFFFFF` | **5.93:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **Brand Accent UI Component (Light)** | `#0284C7` | `#FFFFFF` | **4.10:1** | $\ge 3.0:1$ (Non-Text Component) | **PASS** |
-| **Brand Accent on Dark Card** | `#38BDF8` | `#0F172A` | **8.33:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **TODO Status Chip (Light)** | `#334155` | `#F1F5F9` | **9.45:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **IN_PROGRESS Status Chip (Light)**| `#1D4ED8` | `#EFF6FF` | **6.16:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **IN_REVIEW Status Chip (Light)** | `#6B21A8` | `#FAF5FF` | **8.13:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **DONE Status Chip (Light)** | `#15803D` | `#F0FDF4` | **4.79:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **CANCELLED Status Chip (Light)** | `#B91C1C` | `#FEF2F2` | **5.91:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **TODO Status Chip (Dark)** | `#E2E8F0` | `#1E293B` | **11.87:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **IN_PROGRESS Status Chip (Dark)** | `#93C5FD` | `#172554` | **8.15:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **IN_REVIEW Status Chip (Dark)** | `#E9D5FF` | `#3B0764` | **11.02:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **DONE Status Chip (Dark)** | `#86EFAC` | `#052E16` | **10.62:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **CANCELLED Status Chip (Dark)** | `#FCA5A5` | `#450A0A` | **8.51:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **Priority URGENT (Light)** | `#B91C1C` | `#FFFFFF` | **6.47:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **Priority HIGH (Light)** | `#B45309` | `#FFFFFF` | **5.02:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **Priority MEDIUM (Light)** | `#1D4ED8` | `#FFFFFF` | **6.70:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **Priority LOW (Light)** | `#475569` | `#FFFFFF` | **7.58:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **Priority URGENT (Dark)** | `#F87171` | `#0F172A` | **6.45:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **Priority HIGH (Dark)** | `#FBBF24` | `#0F172A` | **10.69:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **Priority MEDIUM (Dark)** | `#60A5FA` | `#0F172A` | **7.02:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **Priority LOW (Dark)** | `#94A3B8` | `#0F172A` | **6.96:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
-| **Focus Ring Indicator (Light)** | `#0284C7` | `#FFFFFF` | **4.10:1** | $\ge 3.0:1$ (Focus Indicator SC 1.4.11) | **PASS** |
-| **Focus Ring Indicator (Dark)** | `#38BDF8` | `#0F172A` | **8.33:1** | $\ge 3.0:1$ (Focus Indicator SC 1.4.11) | **PASS** |
-| **Disabled Control (Light)** | `#94A3B8` | `#FFFFFF` | **2.56:1** | Exempt under SC 1.4.3 (Inactive) | **EXEMPT** |
+| **Muted Text on Dark Modal / Drawer** | `#94A3B8` | `#1E293B` | **5.71:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Primary Brand Button (Light: White on Slate 900)** | `#FFFFFF` | `#0F172A` | **17.85:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Primary Brand Button (Dark: Slate 900 on Slate 50)** | `#0F172A` | `#F8FAFC` | **17.06:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Accent Brand Button (Light: White on Sky 700)** | `#FFFFFF` | `#0369A1` | **5.93:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Accent Brand Button (Dark: Slate 900 on Sky 400)** | `#0F172A` | `#38BDF8` | **8.33:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Brand Accent Text / Link on Light Card** | `#0369A1` | `#FFFFFF` | **5.93:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Brand Accent Text / Link on Light Canvas** | `#0369A1` | `#F8FAFC` | **5.67:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Brand Accent Text / Link on Dark Card** | `#38BDF8` | `#0F172A` | **8.33:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Brand Accent Text / Link on Dark Modal / Drawer** | `#38BDF8` | `#1E293B` | **6.83:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **TODO Status Chip Text on Bg (Light)** | `#334155` | `#F1F5F9` | **9.45:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **IN_PROGRESS Status Chip Text on Bg (Light)** | `#1D4ED8` | `#EFF6FF` | **6.16:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **IN_REVIEW Status Chip Text on Bg (Light)** | `#6B21A8` | `#FAF5FF` | **8.13:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **DONE Status Chip Text on Bg (Light)** | `#15803D` | `#F0FDF4` | **4.79:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **CANCELLED Status Chip Text on Bg (Light)** | `#B91C1C` | `#FEF2F2` | **5.91:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **TODO Status Chip Text on Bg (Dark)** | `#E2E8F0` | `#1E293B` | **11.87:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **IN_PROGRESS Status Chip Text on Bg (Dark)** | `#93C5FD` | `#172554` | **8.15:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **IN_REVIEW Status Chip Text on Bg (Dark)** | `#E9D5FF` | `#3B0764` | **11.02:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **DONE Status Chip Text on Bg (Dark)** | `#86EFAC` | `#052E16` | **10.62:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **CANCELLED Status Chip Text on Bg (Dark)** | `#FCA5A5` | `#450A0A` | **8.51:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Priority URGENT on Light Card** | `#B91C1C` | `#FFFFFF` | **6.47:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Priority HIGH on Light Card** | `#B45309` | `#FFFFFF` | **5.02:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Priority MEDIUM on Light Card** | `#1D4ED8` | `#FFFFFF` | **6.70:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Priority LOW on Light Card** | `#475569` | `#FFFFFF` | **7.58:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Priority URGENT on Dark Card** | `#F87171` | `#0F172A` | **6.45:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Priority HIGH on Dark Card** | `#FBBF24` | `#0F172A` | **10.69:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Priority MEDIUM on Dark Card** | `#60A5FA` | `#0F172A` | **7.02:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Priority LOW on Dark Card** | `#94A3B8` | `#0F172A` | **6.96:1** | $\ge 4.5:1$ (Normal Text) | **PASS** |
+| **Input Control Border on Light Card** | `#64748B` | `#FFFFFF` | **4.76:1** | $\ge 3.0:1$ (UI Component Boundary) | **PASS** |
+| **Input Control Border on Light Canvas** | `#64748B` | `#F8FAFC` | **4.55:1** | $\ge 3.0:1$ (UI Component Boundary) | **PASS** |
+| **Input Control Border on Dark Card** | `#94A3B8` | `#0F172A` | **6.96:1** | $\ge 3.0:1$ (UI Component Boundary) | **PASS** |
+| **Input Control Border on Dark Modal / Drawer** | `#94A3B8` | `#1E293B` | **5.71:1** | $\ge 3.0:1$ (UI Component Boundary) | **PASS** |
+| **Focus Ring Indicator on Light Card** | `#0284C7` | `#FFFFFF` | **4.10:1** | $\ge 3.0:1$ (Focus Indicator) | **PASS** |
+| **Focus Ring Indicator on Light Canvas** | `#0284C7` | `#F8FAFC` | **3.91:1** | $\ge 3.0:1$ (Focus Indicator) | **PASS** |
+| **Focus Ring Indicator on Dark Card** | `#38BDF8` | `#0F172A` | **8.33:1** | $\ge 3.0:1$ (Focus Indicator) | **PASS** |
+| **Focus Ring Indicator on Dark Modal / Drawer** | `#38BDF8` | `#1E293B` | **6.83:1** | $\ge 3.0:1$ (Focus Indicator) | **PASS** |
+| **Disabled Control Text on Light Card** | `#94A3B8` | `#FFFFFF` | **2.56:1** | Exempt under SC 1.4.3 / 1.4.11 (Inactive) | **EXEMPT** |
+| **Disabled Control Text on Dark Card** | `#475569` | `#0F172A` | **2.36:1** | Exempt under SC 1.4.3 / 1.4.11 (Inactive) | **EXEMPT** |
+
+*Scope Note on Accessibility:* This token contrast audit verifies color contrast parameters. It must not be equated with a completed application accessibility audit, which will verify complete keyboard navigation, focus trap management, screen reader semantics, 400% zoom reflow, and motion preferences during vertical slice implementation.
 
 *Note on Mobile Touch Targets:* Sonder enforces a **44×44 CSS px** touch target bounding box across all mobile interactive controls as a product usability standard, which comfortably exceeds the WCAG 2.2 AA SC 2.5.8 minimum requirement of 24×24 CSS px.
 
@@ -566,15 +601,18 @@ These tokens will be integrated into `apps/web/src/index.css`:
     --text-inverted: #ffffff;
 
     /* Borders & Hairlines */
+    --border-control: #64748b;
     --border-subtle: #e2e8f0;
     --border-strong: #cbd5e1;
     --border-focus: #0284c7;
 
-    /* Brand Accent */
+    /* Brand Accent & Buttons */
     --brand-primary: #0f172a;
     --brand-accent: #0284c7;
     --brand-accent-text: #0369a1;
-    --brand-accent-hover: #0369a1;
+    --brand-accent-btn-bg: #0369a1;
+    --brand-accent-btn-text: #ffffff;
+    --brand-accent-hover: #075985;
 
     /* Semantic Status - Light */
     --status-todo-bg: #f1f5f9;
@@ -608,6 +646,20 @@ These tokens will be integrated into `apps/web/src/index.css`:
     --text-secondary: #cbd5e1;
     --text-muted: #94a3b8;
     --text-inverted: #0f172a;
+
+    /* Borders & Hairlines */
+    --border-control: #94a3b8;
+    --border-subtle: #1e293b;
+    --border-strong: #334155;
+    --border-focus: #38bdf8;
+
+    /* Brand Accent & Buttons */
+    --brand-primary: #f8fafc;
+    --brand-accent: #38bdf8;
+    --brand-accent-text: #38bdf8;
+    --brand-accent-btn-bg: #38bdf8;
+    --brand-accent-btn-text: #0f172a;
+    --brand-accent-hover: #0ea5e9;
 
     /* Borders & Hairlines */
     --border-subtle: #1e293b;
@@ -668,7 +720,7 @@ These tokens will be integrated into `apps/web/src/index.css`:
 
 ### 8.3 Blueprint 3: Omnibar & Command Palette (`Cmd/Ctrl+K`)
 - **Page Structure:**
-  - Centered modal dialog (`w-full max-w-2xl`) rendered via `cmdk` inside a Base UI Dialog with backdrop blur.
+  - Centered modal dialog (`w-full max-w-2xl`) rendered by composing unstyled `cmdk` `Command` directly inside a Base UI Dialog (`<Dialog.Root>`, `<Dialog.Popup>`) with backdrop blur (avoiding `Command.Dialog` to prevent transitively introducing Radix UI Dialog).
   - Top search input with autofocus and query debouncing (50ms).
   - Categorized results list:
     - **Tasks:** Displays Key (`ENG-101`), Title, Status Badge, and Workspace provenance.
@@ -691,11 +743,19 @@ These tokens will be integrated into `apps/web/src/index.css`:
   - Header displays greeting, summary metric badges, and relationship filter control:
     - Segmented control: `All Work` (default) | `Assigned to Me` | `Created by Me` | `Watching`.
   - Five collapsible temporal groups:
-    1. **Overdue:** Red alert indicator; tasks where `dueDate < todayStart` (in user's active timezone) and status is not in `DONE` or `CANCELLED`.
-    2. **Due Today:** Amber indicator; tasks where `todayStart <= dueDate <= todayEnd` (in user's active timezone).
-    3. **Upcoming:** Green indicator; tasks where `todayEnd < dueDate <= todayEnd + 7 days`.
-    4. **Later:** Neutral indigo indicator; tasks with future due dates beyond the 7-day window (`dueDate > todayEnd + 7 days`).
-    5. **Unscheduled:** Neutral slate indicator; backlog tasks lacking a due date (`dueDate == null`).
+    1. **Overdue:** Red alert indicator; active tasks where `dueDate < todayStart` (in user's active timezone) and status is not in `DONE` or `CANCELLED`.
+    2. **Due Today:** Amber indicator; active tasks where `todayStart <= dueDate <= todayEnd` (in user's active timezone).
+    3. **Upcoming:** Green indicator; active tasks where `todayEnd < dueDate <= todayEnd + 7 days` (excluding `DONE` and `CANCELLED`).
+    4. **Later:** Neutral indigo indicator; active tasks with future due dates beyond the 7-day window (`dueDate > todayEnd + 7 days`, excluding `DONE` and `CANCELLED`).
+    5. **Unscheduled:** Neutral slate indicator; active backlog tasks lacking a due date (`dueDate == null`, excluding `DONE` and `CANCELLED`).
+- **Terminal State Handling (`DONE` and `CANCELLED`):**
+  - **Active Triage Invariant:** My Work functions strictly as an action-oriented personal triage dashboard for active responsibilities.
+  - **Exclusion from Future & Overdue Horizons:** Tasks in terminal statuses (`DONE`, `CANCELLED`) are strictly excluded from `Overdue`, `Upcoming`, `Later`, and `Unscheduled`. Completed tasks never trigger overdue warnings or clutter future scheduling horizons.
+  - **Relationship Totals & Headline Counter:** The headline total and relationship-filtered counts (`Assigned`, `Created`, `Watching`) count only active non-terminal tasks matching the triage query.
+  - **Due Today Intra-Day Completion Semantics [UNRESOLVED]:** When an assignee marks a task as `DONE` within "Due Today", two UI paradigms exist:
+    1. *Immediate Eviction:* The completed task is filtered out immediately upon status change.
+    2. *In-Session Completion Feedback:* The task remains visible in "Due Today" with a muted, strikethrough styling until page refresh/session exit, confirming completion.
+    Because the canonical OpenAPI specification (`/communities/{communityId}/my-work/query`) and Master Specification do not define a separate completion-history view or intra-day retention parameter, this UI behavior is formally marked as **`[UNRESOLVED: Awaiting UX/Product decision on intra-day completed task retention in My Work]`**. The frontend will not invent unapproved endpoints or separate completion history tabs.
 - **De-duplication & Non-Double-Counting Rules:**
   - A task appearing under multiple user relationships (e.g., user is both Creator and Assignee) is rendered as a **single unique row/card** in its applicable temporal section.
   - The card displays composite relationship chips (`[Assignee]` `[Creator]`).
@@ -711,15 +771,16 @@ These tokens will be integrated into `apps/web/src/index.css`:
     - Header: Breadcrumbs (`ENG > Tasks`), Task Key (`ENG-104`), Status selector, Close button (`Esc`).
     - Body: Rich editable Title, Markdown Description editor, Subtask Tree (depth 1–2 max, DEC-OPEN-09), Task capability and editing indicator panel reflecting the task-editing policy, and Threaded Comments.
 - **Task Editing Policy & Delegation Mechanics:**
-  - **Base Editing Model (`CREATOR_COORDINATOR_STRICT`):** Active assignees receive baseline execution rights (updating status, managing permitted subtasks, posting comments, and editing estimates).
+  - **Base Editing Model (`CREATOR_COORDINATOR_STRICT`):** The underlying authorization model is `CREATOR_COORDINATOR_STRICT`. Active assignees retain baseline execution rights, which include transitioning status (`task:transition_status`, `canUpdateStatus`), managing permitted subtasks, posting comments, and editing estimates (`estimatePoints`, `canEditEstimate`). Active assignees do not lack execution rights; rather, editing task-definition fields (title, description, dates, priority, custom fields) requires explicit delegation or broader independent role authority.
   - **DEC-OPEN-02 Option A Delegation Model (OWNER CONFIRMED):**
-    - The Workspace Owner sets the maximum delegation ceiling (`assigneeEditableFieldGroupsAllowed`) and default (`assigneeEditableFieldGroupsDefault`).
+    - The Workspace Owner configures the workspace allowed ceiling (`assigneeEditableFieldGroupsAllowed`) and default (`assigneeEditableFieldGroupsDefault`).
     - The Task Creator configures the additional grant subset (`assigneeEditableFieldGroups`) on an individual task (constrained to the workspace ceiling).
-    - An active Workspace Owner may override task-level grants for continuity.
-    - Coordinators or Task Assigners do **not** receive grant-management authority solely from that role (`canManageAssigneeFieldGrants` is true only for Task Creator and active Workspace Owners).
-    - Three field groups: `TITLE_DESCRIPTION` (`canEditTitleDescription`), `DATES_PRIORITY` (`canEditDatesPriority`), `CUSTOM_FIELDS_LINKS` (`canEditCustomFieldsLinks`).
-    - Personal Workspaces keep workspace delegation arrays empty and reject task-level assignee grants.
-    - Frontend permission flags are display hints only; backend authorization recomputes rights on every request.
+    - An active Workspace Owner may override task-level grants for governance and continuity.
+    - Coordinators or Task Assigners do **not** receive grant-management authority solely from that role (`TaskPermissions.canManageAssigneeFieldGrants` is true only for the active Task Creator and active Workspace Owners).
+    - Three discrete field groups: `TITLE_DESCRIPTION` (`canEditTitleDescription`), `DATES_PRIORITY` (`canEditDatesPriority`), `CUSTOM_FIELDS_LINKS` (`canEditCustomFieldsLinks`).
+    - Personal Workspaces must keep both workspace arrays empty and reject any task-level assignee grants with `422 PERSONAL_WORKSPACE_ASSIGNEE_GRANTS_NOT_SUPPORTED`.
+    - Updates violating the ceiling return `422 ASSIGNEE_FIELD_GRANT_EXCEEDS_WORKSPACE_CEILING`; an unauthorized editor receives `403 ASSIGNEE_FIELD_GRANT_FORBIDDEN`.
+    - Backend authorization remains authoritative and is recomputed on every request; client-side permission flags are display hints only.
     - Status: Product decision owner-confirmed; contract review and runtime verification remain pending.
 
 ### 8.6 Blueprint 6: Board Experience & Mobile Status Parity
@@ -778,8 +839,8 @@ These tokens will be integrated into `apps/web/src/index.css`:
 |---|---|---|---|---|
 | **1. General** | Workspace name, description, prefix renaming & alias history | Any active member with `workspace:read_metadata` | `workspace:update_settings` (Reserved to built-in `OWNER`) | Atomic prefix renaming preserves numeric suffixes and generates permanent aliases (DEC-OPEN-06). |
 | **2. Members** | Member roster, role assignment, invitations, ownership transfer | Any active member with `workspace:read_metadata` | `workspace:invite_members` (`OWNER`, and `COORDINATOR` if enabled); `workspace:manage_members` (`OWNER`); `workspace:transfer_ownership` (`OWNER`) | Ownership transfer enforces minimum one active Owner invariant (DEC-OPEN-15). |
-| **3. Permissions & Roles** | Role capability matrix, custom roles, assignee delegation ceilings/defaults (DEC-OPEN-02 Option A), subtask max depth (DEC-OPEN-09) | Any active member with `workspace:read_metadata` | `workspace:update_settings` (Owner controls delegation ceilings/defaults and subtask depth); `workspace:administer_roles` (Owner creates/edits custom roles) | Task-level grants are NOT managed here; they are managed per-task by Creator/Owner via `canManageAssigneeFieldGrants`. |
-| **4. Tasks & Workflows** | Custom field definitions, workflow status mappings | Any active member with `workspace:read_metadata` | `workspace:manage_custom_fields` (`OWNER`); `workspace:configure_workflow` (`OWNER`) | Custom fields are workspace-local; cannot be queried across multiple workspaces on `/my-work/query`. |
+| **3. Permissions** | Role capability matrix, custom roles, assignee delegation ceilings/defaults (DEC-OPEN-02 Option A), subtask max depth (DEC-OPEN-09) | Any active member with `workspace:read_metadata` | `workspace:update_settings` (Owner controls delegation ceilings/defaults and subtask depth); `workspace:administer_roles` (Owner creates/edits custom roles) | Task-level grants are NOT managed here; they are managed per-task by Creator/Owner via `canManageAssigneeFieldGrants`. |
+| **4. Tasks** | Custom field definitions, workflow status mappings | Any active member with `workspace:read_metadata` | `workspace:manage_custom_fields` (`OWNER`); `workspace:configure_workflow` (`OWNER`) | Custom fields are workspace-local; cannot be queried across multiple workspaces on `/my-work/query`. |
 | **5. Views** | Shared saved view presets, default workspace view | Any active member with `task:read` | `saved_view:manage_shared` (`OWNER` and `COORDINATOR`) | Personal saved views are managed independently by each member for their own account. |
 | **6. Notifications** | Workspace-level notification defaults and digest policies | Any active member with `workspace:read_metadata` | `[UNRESOLVED: Awaiting joint FE/BE/Security contract freeze]` | Individual notification preferences are managed in personal user profile settings. |
 
@@ -884,7 +945,7 @@ The following design decisions are documented for product owner alignment before
 |---|---|---|---|---|
 | **DES-DEC-01** | **High (VS-02)** | Icon library selection | Adopt **Lucide React** (`lucide.dev`) for universal SVG icons | Heroicons (less extensive coverage) |
 | **DES-DEC-02** | **High (VS-02)** | Command Palette primitive | Adopt **`cmdk`** (`cmdk.paco.me`) inside Base UI Dialog for Omnibar architecture | Custom combobox (higher maintenance and accessibility risk) |
-| **DES-DEC-03** | **High (VS-02)** | Single Headless Primitive Foundation | Standardize exclusively on **Base UI** (`@base-ui-components/react`); do not mix with Radix UI | Radix UI (slot/asChild edge cases in React 19) |
+| **DES-DEC-03** | **High (VS-02)** | Single Headless Primitive Foundation | Standardize exclusively on **Base UI** (`@base-ui/react`); do not mix with Radix UI | Radix UI (slot/asChild edge cases in React 19) |
 | **DES-DEC-04** | **Medium (VS-03)** | Task Peek Drawer default width on desktop | **480px** fixed width with collapsible canvas flex | 600px wide drawer (cramps canvas on 1280px laptops) |
 | **DES-DEC-05** | **Medium (VS-04)** | Mobile Board view representation | **Sticky Stage Switcher tab bar** supporting all 5 canonical statuses (`TODO`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`) | Horizontal card swipe (cumbersome touch navigation) |
 | **DES-DEC-06** | **Low (VS-05)** | Calendar unscheduled tasks placement & scheduling | **Collapsible right drawer** with keyboard/touch date-picker and optional drag-and-drop | Separate modal list (loses spatial context) |
