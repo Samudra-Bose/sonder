@@ -92,6 +92,7 @@ export function MobileNavigation({
                   size="sm"
                   variant="ghost"
                   onClick={onClose}
+                  className="min-w-[44px] min-h-[44px]"
                 />
               }
             />

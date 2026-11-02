@@ -58,12 +58,12 @@ export function AppHeader({
         {/* Mobile Hamburger Button */}
         <IconButton
           ref={menuTriggerRef}
-          icon={<Menu className="h-4 w-4" />}
+          icon={<Menu className="h-5 w-5" />}
           aria-label="Open navigation menu"
           size="sm"
           variant="ghost"
           onClick={onOpenMobileNav}
-          className="md:hidden"
+          className="md:hidden min-w-[44px] min-h-[44px]"
         />
 
         {/* Desktop Sidebar Toggle */}
