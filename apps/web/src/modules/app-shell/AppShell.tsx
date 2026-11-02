@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { Outlet } from "react-router-dom";
 import { useAuth } from "@/modules/auth";
 import { ApiProblemError } from "@/lib/api-client";
@@ -18,6 +18,7 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
   const { user, communities, logout, clearError } = useAuth();
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
 
   // Responsive sidebar collapse state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
@@ -84,6 +85,7 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
         onOpenMobileNav={() => setIsMobileNavOpen(true)}
         onLogout={handleLogout}
         isLoggingOut={isLoggingOut}
+        menuTriggerRef={menuTriggerRef}
       />
 
       {/* Accessible Sign Out Error Alert with Retry Path */}
@@ -141,6 +143,7 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
         communityName={communityName}
         onLogout={handleLogout}
         isLoggingOut={isLoggingOut}
+        triggerRef={menuTriggerRef}
       />
 
       {/* Semantic Footer (Visible on desktop/tablet) */}
@@ -149,7 +152,7 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
         className="h-8 border-t border-[var(--border-subtle)] bg-[var(--surface-card)] px-4 hidden md:flex items-center justify-between text-xs text-[var(--text-muted)] select-none"
       >
         <span>Sonder Platform &copy; 2026</span>
-        <span>OpenAPI 0.3.20-draft (Unfrozen)</span>
+        <span>Community Edition</span>
       </footer>
     </div>
   );

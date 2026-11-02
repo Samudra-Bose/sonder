@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { CheckCircle2 } from "lucide-react";
 import { useAuth } from "./useAuth.js";
 import { ApiProblemError } from "../../lib/api-client.js";
+import { Button } from "../../components/ui/Button.js";
+import { Feedback } from "../../components/ui/Feedback.js";
 import type { ApiSchema } from "@sonder/contracts";
 
 export function RegisterForm(): React.JSX.Element {
@@ -74,24 +77,22 @@ export function RegisterForm(): React.JSX.Element {
   // If successfully registered, show anti-enumeration confirmation screen
   if (acceptedResponse) {
     return (
-      <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-50 text-slate-900">
+      <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-[var(--surface-canvas)] text-[var(--text-primary)] transition-colors">
         <div className="sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
-          <div className="bg-white py-8 px-6 shadow-sm border border-slate-200 rounded-lg sm:px-10 text-center">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
-              <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-              </svg>
+          <div className="bg-[var(--surface-card)] py-8 px-6 shadow-sm border border-[var(--border-subtle)] rounded-lg sm:px-10 text-center text-[var(--text-primary)]">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-[var(--feedback-success-bg)] border border-[var(--feedback-success-border)] text-[var(--feedback-success-text)] mb-4">
+              <CheckCircle2 className="h-6 w-6" aria-hidden="true" />
             </div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-900 mb-2">Registration Request Received</h2>
-            <p className="text-sm text-slate-600 mb-4" role="status">
+            <h2 className="text-xl font-bold tracking-tight text-[var(--text-primary)] mb-2">Registration Request Received</h2>
+            <p className="text-sm text-[var(--text-secondary)] mb-4" role="status">
               {acceptedResponse.message}
             </p>
-            <p className="text-xs text-slate-500 mb-6">
+            <p className="text-xs text-[var(--text-muted)] mb-6">
               Please check your email inbox to verify your account before signing in.
             </p>
             <Link
               to="/login"
-              className="inline-flex justify-center w-full py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="inline-flex justify-center items-center w-full py-2 px-4 rounded-md shadow-xs text-sm font-medium text-[var(--brand-accent-btn-text)] bg-[var(--brand-accent-btn-bg)] hover:bg-[var(--brand-accent-hover)] focus:outline-none focus-ring transition-colors"
             >
               Back to Sign in
             </Link>
@@ -102,15 +103,15 @@ export function RegisterForm(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-50 text-slate-900">
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-[var(--surface-canvas)] text-[var(--text-primary)] transition-colors">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <span className="font-bold text-2xl tracking-tight text-blue-600">Sonder</span>
-        <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">Create your account</h2>
-        <p className="mt-2 text-sm text-slate-600">
+        <span className="font-bold text-2xl tracking-tight text-[var(--brand-accent-text)]">Sonder</span>
+        <h2 className="mt-2 text-2xl font-bold tracking-tight text-[var(--text-primary)]">Create your account</h2>
+        <p className="mt-2 text-sm text-[var(--text-secondary)]">
           Already have an account?{" "}
           <Link
             to="/login"
-            className="font-medium text-blue-600 hover:text-blue-500 underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+            className="font-medium text-[var(--brand-accent-text)] hover:underline focus:outline-none focus-ring rounded"
           >
             Sign in
           </Link>
@@ -118,22 +119,18 @@ export function RegisterForm(): React.JSX.Element {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
-        <div className="bg-white py-8 px-6 shadow-sm border border-slate-200 rounded-lg sm:px-10">
+        <div className="bg-[var(--surface-card)] py-8 px-6 shadow-sm border border-[var(--border-subtle)] rounded-lg sm:px-10">
           {displayError && (
-            <div
-              role="alert"
-              aria-live="assertive"
-              className="mb-6 p-4 rounded-md bg-red-50 border border-red-200 text-sm text-red-700"
-            >
-              <div className="flex">
-                <span className="font-medium">{displayError}</span>
-              </div>
+            <div className="mb-6">
+              <Feedback variant="danger">
+                <span>{displayError}</span>
+              </Feedback>
             </div>
           )}
 
           <form onSubmit={handleSubmit} noValidate className="space-y-6">
             <div>
-              <label htmlFor="register-displayName" className="block text-sm font-medium text-slate-700">
+              <label htmlFor="register-displayName" className="block text-sm font-medium text-[var(--text-secondary)]">
                 Display Name
               </label>
               <div className="mt-1">
@@ -152,22 +149,22 @@ export function RegisterForm(): React.JSX.Element {
                       setFieldErrors((prev) => ({ ...prev, displayName: undefined }));
                     }
                   }}
-                  className={`block w-full px-3 py-2 border rounded-md shadow-xs text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    fieldErrors.displayName ? "border-red-300 focus:border-red-500" : "border-slate-300"
+                  className={`block w-full px-3 py-2 border rounded-md shadow-xs text-sm bg-[var(--surface-card)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus-ring transition-colors ${
+                    fieldErrors.displayName ? "border-[var(--feedback-danger-text)]" : "border-[var(--border-control)]"
                   }`}
                   placeholder="Alex Morgan"
                   disabled={isSubmitting}
                 />
               </div>
               {fieldErrors.displayName && (
-                <p id="displayName-error" className="mt-1.5 text-xs text-red-600">
+                <p id="displayName-error" className="mt-1.5 text-xs text-[var(--feedback-danger-text)] font-medium">
                   {fieldErrors.displayName}
                 </p>
               )}
             </div>
 
             <div>
-              <label htmlFor="register-email" className="block text-sm font-medium text-slate-700">
+              <label htmlFor="register-email" className="block text-sm font-medium text-[var(--text-secondary)]">
                 Email address
               </label>
               <div className="mt-1">
@@ -186,22 +183,22 @@ export function RegisterForm(): React.JSX.Element {
                       setFieldErrors((prev) => ({ ...prev, email: undefined }));
                     }
                   }}
-                  className={`block w-full px-3 py-2 border rounded-md shadow-xs text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    fieldErrors.email ? "border-red-300 focus:border-red-500" : "border-slate-300"
+                  className={`block w-full px-3 py-2 border rounded-md shadow-xs text-sm bg-[var(--surface-card)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus-ring transition-colors ${
+                    fieldErrors.email ? "border-[var(--feedback-danger-text)]" : "border-[var(--border-control)]"
                   }`}
                   placeholder="name@example.org"
                   disabled={isSubmitting}
                 />
               </div>
               {fieldErrors.email && (
-                <p id="email-error" className="mt-1.5 text-xs text-red-600">
+                <p id="email-error" className="mt-1.5 text-xs text-[var(--feedback-danger-text)] font-medium">
                   {fieldErrors.email}
                 </p>
               )}
             </div>
 
             <div>
-              <label htmlFor="register-password" className="block text-sm font-medium text-slate-700">
+              <label htmlFor="register-password" className="block text-sm font-medium text-[var(--text-secondary)]">
                 Password
               </label>
               <div className="mt-1">
@@ -220,35 +217,32 @@ export function RegisterForm(): React.JSX.Element {
                       setFieldErrors((prev) => ({ ...prev, password: undefined }));
                     }
                   }}
-                  className={`block w-full px-3 py-2 border rounded-md shadow-xs text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    fieldErrors.password ? "border-red-300 focus:border-red-500" : "border-slate-300"
+                  className={`block w-full px-3 py-2 border rounded-md shadow-xs text-sm bg-[var(--surface-card)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus-ring transition-colors ${
+                    fieldErrors.password ? "border-[var(--feedback-danger-text)]" : "border-[var(--border-control)]"
                   }`}
                   placeholder="At least 8 characters"
                   disabled={isSubmitting}
                 />
               </div>
               {fieldErrors.password && (
-                <p id="password-error" className="mt-1.5 text-xs text-red-600">
+                <p id="password-error" className="mt-1.5 text-xs text-[var(--feedback-danger-text)] font-medium">
                   {fieldErrors.password}
                 </p>
               )}
             </div>
 
             <div>
-              <button
+              <Button
                 type="submit"
+                variant="accent"
+                fullWidth
+                size="md"
+                isLoading={isSubmitting}
                 disabled={isSubmitting}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full"
               >
-                {isSubmitting ? (
-                  <span className="flex items-center space-x-2">
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Creating account...</span>
-                  </span>
-                ) : (
-                  "Create account"
-                )}
-              </button>
+                Create account
+              </Button>
             </div>
           </form>
         </div>

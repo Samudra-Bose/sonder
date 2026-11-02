@@ -1,7 +1,6 @@
 import React from "react";
 import { CheckCircle2, Clock, Calendar, AlertCircle } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 
 export function MyWorkPlaceholderView(): React.JSX.Element {
   return (
@@ -14,12 +13,9 @@ export function MyWorkPlaceholderView(): React.JSX.Element {
               <h1 className="text-xl md:text-2xl font-bold text-[var(--text-primary)]">
                 My Work
               </h1>
-              <Badge status="IN_PROGRESS" size="sm">
-                VS-02C Planned
-              </Badge>
             </div>
             <p className="text-sm text-[var(--text-secondary)]">
-              Cross-workspace personal triage aggregation view.
+              Personal triage and cross-workspace assigned tasks dashboard (scheduled for VS-02E).
             </p>
           </div>
         </div>

@@ -1,7 +1,6 @@
 import React from "react";
 import { Inbox } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Badge } from "@/components/ui/Badge";
 
 export function InboxPlaceholderView(): React.JSX.Element {
   return (
@@ -12,9 +11,6 @@ export function InboxPlaceholderView(): React.JSX.Element {
           <h1 className="text-xl md:text-2xl font-bold text-[var(--text-primary)]">
             Notification Inbox
           </h1>
-          <Badge status="TODO" size="sm">
-            Upcoming Slice
-          </Badge>
         </div>
         <p className="text-sm text-[var(--text-secondary)] mt-1">
           Direct mentions, task assignments, and workspace activity stream.

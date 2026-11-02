@@ -3,7 +3,6 @@ import {
   PanelLeft,
   Menu,
   Search,
-  Plus,
   Sun,
   Moon,
   Laptop,
@@ -12,7 +11,6 @@ import {
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Avatar } from "@/components/ui/Avatar";
-import { Kbd } from "@/components/ui/KeyboardShortcut";
 import { Tooltip } from "@/components/ui/Tooltip";
 import {
   DropdownMenu,
@@ -35,6 +33,7 @@ export interface AppHeaderProps {
   onOpenMobileNav: () => void;
   onLogout: () => void;
   isLoggingOut: boolean;
+  menuTriggerRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
 export function AppHeader({
@@ -45,6 +44,7 @@ export function AppHeader({
   onOpenMobileNav,
   onLogout,
   isLoggingOut,
+  menuTriggerRef,
 }: AppHeaderProps): React.JSX.Element {
   const { theme, resolvedTheme, setTheme, toggleTheme } = useTheme();
 
@@ -57,6 +57,7 @@ export function AppHeader({
       <div className="flex items-center space-x-2 md:space-x-3">
         {/* Mobile Hamburger Button */}
         <IconButton
+          ref={menuTriggerRef}
           icon={<Menu className="h-4 w-4" />}
           aria-label="Open navigation menu"
           size="sm"
@@ -80,50 +81,40 @@ export function AppHeader({
           />
         </Tooltip>
 
-        {/* Mobile Brand Title */}
+        {/* Mobile View Title */}
         <div className="flex items-center space-x-2 md:hidden">
           <span className="text-xs font-semibold text-[var(--text-primary)] truncate max-w-[180px]">
-            {communityName ? `${communityName} Overview` : "Workspace Overview"}
+            Overview
           </span>
         </div>
 
-        {/* Desktop Community Breadcrumb */}
+        {/* Desktop Breadcrumb Context */}
         <nav aria-label="Breadcrumbs" className="hidden md:flex items-center space-x-1.5 text-xs">
-          <span className="font-medium text-[var(--text-muted)]">Workspace</span>
-          <span className="text-[var(--text-muted)]">/</span>
           <span className="font-semibold text-[var(--text-primary)]">
             Overview
           </span>
         </nav>
       </div>
 
-      {/* Center: Omnibar Trigger Extension Point */}
+      {/* Center: Omnibar Planned Extension Point */}
       <div className="flex-1 max-w-xs md:max-w-sm mx-2 md:mx-4 hidden sm:flex justify-center">
         <button
           type="button"
-          aria-label="Search or jump to... (Cmd+K)"
-          className="w-full flex items-center justify-between h-8 px-2.5 rounded-md border border-[var(--border-subtle)] bg-[var(--surface-muted)] text-xs text-[var(--text-muted)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] transition-colors focus-ring cursor-pointer"
+          disabled
+          aria-disabled="true"
+          aria-label="Search (Omnibar — planned for VS-02D)"
+          className="w-full flex items-center justify-between h-8 px-2.5 rounded-md border border-[var(--border-subtle)] bg-[var(--surface-muted)]/60 text-xs text-[var(--text-muted)] cursor-not-allowed select-none opacity-80"
+          title="Omnibar search will be available in VS-02D"
         >
           <span className="flex items-center gap-1.5 truncate">
-            <Search className="h-3.5 w-3.5 text-[var(--text-muted)] flex-shrink-0" />
-            <span className="truncate">Search tasks or jump to...</span>
+            <Search className="h-3.5 w-3.5 text-[var(--text-muted)] flex-shrink-0" aria-hidden="true" />
+            <span className="truncate">Search (Coming in VS-02D)</span>
           </span>
-          <Kbd className="text-[10px] py-0 px-1 ml-2">⌘K</Kbd>
         </button>
       </div>
 
       {/* Right: Actions, Theme Toggle, User Profile & Sign Out */}
       <div className="flex items-center space-x-2 md:space-x-3">
-        {/* Quick Task Create Extension Point */}
-        <Tooltip content="Quick Create Task (C)" side="bottom">
-          <IconButton
-            icon={<Plus className="h-4 w-4" />}
-            aria-label="Create task (C)"
-            size="sm"
-            variant="accent"
-            className="hidden sm:inline-flex"
-          />
-        </Tooltip>
 
         {/* Theme Toggle Button */}
         <Tooltip

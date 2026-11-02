@@ -4,7 +4,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Layers,
-  Lock,
   Sparkles,
 } from "lucide-react";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -12,7 +11,6 @@ import { Kbd } from "@/components/ui/KeyboardShortcut";
 import { cn } from "@/lib/utils";
 import {
   PRIMARY_NAV_ITEMS,
-  CANONICAL_WORKSPACE_PREVIEWS,
   type NavItem,
 } from "./navigation";
 
@@ -93,14 +91,7 @@ export function AppSidebar({
                 >
                   <Icon className="h-4 w-4 flex-shrink-0" />
                   {!isCollapsed && (
-                    <>
-                      <span className="flex-1 truncate text-left">{item.label}</span>
-                      {item.badge && (
-                        <span className="px-1.5 py-0.2 rounded-full text-[10px] font-semibold bg-[var(--surface-muted)] text-[var(--text-muted)] border border-[var(--border-subtle)]">
-                          {item.badge}
-                        </span>
-                      )}
-                    </>
+                    <span className="flex-1 truncate text-left">{item.label}</span>
                   )}
                 </NavLink>
               );
@@ -120,59 +111,21 @@ export function AppSidebar({
 
         {/* Workspaces Section (Extension Point for VS-02C) */}
         <div className="space-y-1 pt-2 border-t border-[var(--border-subtle)]">
-          {!isCollapsed && (
-            <div className="px-2 flex items-center justify-between">
+          {!isCollapsed ? (
+            <div className="px-2 space-y-1">
               <h2 className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
                 Workspaces
               </h2>
-              <span className="text-[9px] text-[var(--text-muted)]">VS-02C</span>
+              <p className="text-xs text-[var(--text-muted)] py-1 italic">
+                Workspace Switcher — coming in VS-02C
+              </p>
             </div>
-          )}
-
-          <div className="space-y-0.5">
-            {CANONICAL_WORKSPACE_PREVIEWS.map((ws) => {
-              const itemContent = (
-                <div
-                  key={ws.id}
-                  className={cn(
-                    "flex items-center rounded-md text-xs transition-colors cursor-default text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]",
-                    isCollapsed
-                      ? "h-9 w-9 mx-auto justify-center p-0"
-                      : "h-7 px-2.5 w-full justify-start gap-2"
-                  )}
-                >
-                  {ws.isPersonal ? (
-                    <Lock className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
-                  ) : (
-                    <Layers className="h-3.5 w-3.5 text-[var(--brand-accent-text)] flex-shrink-0" />
-                  )}
-                  {!isCollapsed && (
-                    <>
-                      <span className="flex-1 truncate text-left font-normal">{ws.name}</span>
-                      <span className="text-[10px] text-[var(--text-muted)] font-mono">
-                        {ws.prefix}
-                      </span>
-                    </>
-                  )}
-                </div>
-              );
-
-              if (isCollapsed) {
-                return (
-                  <Tooltip key={ws.id} content={`${ws.name} (${ws.prefix})`} side="right">
-                    {itemContent}
-                  </Tooltip>
-                );
-              }
-
-              return itemContent;
-            })}
-          </div>
-
-          {!isCollapsed && (
-            <p className="px-2 pt-1 text-[10px] text-[var(--text-muted)] italic">
-              Workspace switcher extension point
-            </p>
+          ) : (
+            <Tooltip content="Workspace Switcher (Coming in VS-02C)" side="right">
+              <div className="h-9 w-9 mx-auto flex items-center justify-center rounded-md text-[var(--text-muted)] opacity-60">
+                <Layers className="h-4 w-4" />
+              </div>
+            </Tooltip>
           )}
         </div>
       </div>
