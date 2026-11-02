@@ -75,15 +75,15 @@ export function LoginForm(): React.JSX.Element {
   const displayError = submitError || contextError?.detail;
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-50 text-slate-900">
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <span className="font-bold text-2xl tracking-tight text-blue-600">Sonder</span>
-        <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">Sign in to your account</h2>
-        <p className="mt-2 text-sm text-slate-600">
+        <span className="font-bold text-2xl tracking-tight text-blue-600 dark:text-blue-400">Sonder</span>
+        <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Sign in to your account</h2>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
           Or{" "}
           <Link
             to="/register"
-            className="font-medium text-blue-600 hover:text-blue-500 underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+            className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
           >
             create a new account
           </Link>
@@ -91,7 +91,7 @@ export function LoginForm(): React.JSX.Element {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
-        <div className="bg-white py-8 px-6 shadow-sm border border-slate-200 rounded-lg sm:px-10">
+        <div className="bg-white dark:bg-slate-800 py-8 px-6 shadow-sm border border-slate-200 dark:border-slate-700 rounded-lg sm:px-10">
           {displayError && (
             <div
               role="alert"
