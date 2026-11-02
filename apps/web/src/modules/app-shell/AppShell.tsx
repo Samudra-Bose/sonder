@@ -78,8 +78,6 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
     }
   };
 
-  const communityName = communities[0]?.name ?? "Sonder Community";
-
   return (
     <div className="min-h-screen flex flex-col bg-[var(--surface-canvas)] text-[var(--text-primary)] transition-colors duration-150 pb-14 md:pb-0">
       {/* Top Application Header */}

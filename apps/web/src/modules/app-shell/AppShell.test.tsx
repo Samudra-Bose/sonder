@@ -68,7 +68,11 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       expect(screen.getByText("Sonder Community")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
 
-      // Ensure internal developer milestone labels are NOT exposed to users
+      // Ensure no active community assumption or internal milestone labels in user dashboard
+      expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument();
+      expect(screen.getByText("Community Memberships")).toBeInTheDocument();
+      expect(screen.queryByText(/Active Community/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Workspace Overview/i)).not.toBeInTheDocument();
       expect(screen.queryByText(/VS-02B Shell Active/i)).not.toBeInTheDocument();
       expect(screen.queryByText(/OpenAPI 0.3.20-draft/i)).not.toBeInTheDocument();
     });
@@ -175,6 +179,7 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
         expect(screen.getByRole("heading", { name: "My Work" })).toBeInTheDocument();
       });
 
+      expect(screen.getByText(/planned for vs-02e/i)).toBeInTheDocument();
       expect(myWorkLink).toHaveClass("text-[var(--brand-accent-text)]");
     });
 
@@ -249,6 +254,67 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
 
       // Focus restored to trigger button
       expect(document.activeElement).toBe(openBtn);
+    });
+
+    it("opens mobile drawer from bottom nav Menu button and restores focus to that trigger on Escape", async () => {
+      const user = userEvent.setup();
+      renderApp(["/"]);
+
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: "Open menu drawer" })).toBeInTheDocument();
+      });
+
+      const menuBtn = screen.getByRole("button", { name: "Open menu drawer" });
+      await user.click(menuBtn);
+
+      expect(await screen.findByRole("dialog", { name: "Navigation drawer" })).toBeInTheDocument();
+
+      // Press Escape
+      await user.keyboard("{Escape}");
+
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog", { name: "Navigation drawer" })).not.toBeInTheDocument();
+      });
+
+      // Focus restored to the bottom nav menu trigger button
+      expect(document.activeElement).toBe(menuBtn);
+    });
+
+    it("navigating via route link inside drawer closes drawer and transfers focus to main content without restoring trigger focus", async () => {
+      const user = userEvent.setup();
+      renderApp(["/"]);
+
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: "Open navigation menu" })).toBeInTheDocument();
+      });
+
+      const openBtn = screen.getByRole("button", { name: "Open navigation menu" });
+      await user.click(openBtn);
+
+      const drawer = await screen.findByRole("dialog", { name: "Navigation drawer" });
+      expect(drawer).toBeInTheDocument();
+
+      // Find My Work link inside drawer
+      const myWorkDrawerLink = within(drawer).getByRole("link", { name: /^my work$/i });
+      await user.click(myWorkDrawerLink);
+
+      // Drawer closes
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog", { name: "Navigation drawer" })).not.toBeInTheDocument();
+      });
+
+      // Destination page heading renders
+      await waitFor(() => {
+        expect(screen.getByRole("heading", { name: "My Work" })).toBeInTheDocument();
+      });
+
+      // Main content landmark receives focus rather than the trigger button
+      await waitFor(() => {
+        const mainContent = document.getElementById("main-content");
+        expect(mainContent).not.toBeNull();
+        expect(document.activeElement).toBe(mainContent);
+      });
+      expect(document.activeElement).not.toBe(openBtn);
     });
 
     it("renders mobile bottom navigation bar with accessible touch targets and without hardcoded count", async () => {
