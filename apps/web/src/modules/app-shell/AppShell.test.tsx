@@ -67,9 +67,13 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       expect(screen.getByText("(alex.morgan@example.org)")).toBeInTheDocument();
       expect(screen.getByText("Sonder Community")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
+
+      // Ensure internal developer milestone labels are NOT exposed to users
+      expect(screen.queryByText(/VS-02B Shell Active/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/OpenAPI 0.3.20-draft/i)).not.toBeInTheDocument();
     });
 
-    it("renders centralized primary navigation items and workspace extension previews", async () => {
+    it("renders centralized primary navigation items and workspace extension point without fake previews", async () => {
       renderApp(["/"]);
 
       await waitFor(() => {
@@ -77,14 +81,33 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       });
 
       const sidebarNav = screen.getByRole("navigation", { name: "Main navigation" });
-      expect(within(sidebarNav).getByRole("link", { name: /my work/i })).toBeInTheDocument();
-      expect(within(sidebarNav).getByRole("link", { name: /inbox/i })).toBeInTheDocument();
+      expect(within(sidebarNav).getByRole("link", { name: /^my work$/i })).toBeInTheDocument();
+      expect(within(sidebarNav).getByRole("link", { name: /^inbox$/i })).toBeInTheDocument();
 
-      // Workspace extension points
-      expect(screen.getByText("Engineering Platform")).toBeInTheDocument();
-      expect(screen.getByText("Spring Community Gala 2027")).toBeInTheDocument();
-      expect(screen.getByText("Alex's Personal")).toBeInTheDocument();
-      expect(screen.getByText(/workspace switcher extension point/i)).toBeInTheDocument();
+      // Workspace extension point (neutral notice, no static sample workspaces)
+      expect(screen.getByText(/workspace switcher — coming in vs-02c/i)).toBeInTheDocument();
+      expect(screen.queryByText("Engineering Platform")).not.toBeInTheDocument();
+      expect(screen.queryByText("Spring Community Gala 2027")).not.toBeInTheDocument();
+      expect(screen.queryByText("Alex's Personal")).not.toBeInTheDocument();
+    });
+
+    it("renders planned Omnibar extension point as disabled and omits unready Quick Create", async () => {
+      renderApp(["/"]);
+
+      await waitFor(() => {
+        expect(screen.getByRole("banner")).toBeInTheDocument();
+      });
+
+      // Omnibar is clearly disabled and non-functional
+      const omnibarButton = screen.getByRole("button", {
+        name: /search \(omnibar — planned for vs-02d\)/i,
+      });
+      expect(omnibarButton).toBeInTheDocument();
+      expect(omnibarButton).toBeDisabled();
+      expect(omnibarButton).toHaveAttribute("aria-disabled", "true");
+
+      // Quick Create is removed until task creation flow is ready
+      expect(screen.queryByRole("button", { name: /create task/i })).not.toBeInTheDocument();
     });
   });
 
@@ -145,7 +168,7 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       });
 
       const sidebarNav = screen.getByRole("navigation", { name: "Main navigation" });
-      const myWorkLink = within(sidebarNav).getByRole("link", { name: /my work/i });
+      const myWorkLink = within(sidebarNav).getByRole("link", { name: /^my work$/i });
       await user.click(myWorkLink);
 
       await waitFor(() => {
@@ -164,7 +187,7 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       });
 
       const sidebarNav = screen.getByRole("navigation", { name: "Main navigation" });
-      const inboxLink = within(sidebarNav).getByRole("link", { name: /inbox/i });
+      const inboxLink = within(sidebarNav).getByRole("link", { name: /^inbox$/i });
       await user.click(inboxLink);
 
       await waitFor(() => {
@@ -176,8 +199,8 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
     });
   });
 
-  describe("Mobile Navigation & Drawer Dismissal", () => {
-    it("opens mobile navigation drawer and dismisses via close button", async () => {
+  describe("Mobile Navigation & Base UI Drawer Focus Management", () => {
+    it("opens mobile navigation drawer and dismisses via close button with focus restoration", async () => {
       const user = userEvent.setup();
       renderApp(["/"]);
 
@@ -188,20 +211,23 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       const openBtn = screen.getByRole("button", { name: "Open navigation menu" });
       await user.click(openBtn);
 
-      // Drawer is open
-      const drawer = screen.getByRole("dialog", { name: "Navigation drawer" });
+      // Drawer is open using Base UI Dialog modal
+      const drawer = await screen.findByRole("dialog", { name: "Navigation drawer" });
       expect(drawer).toBeInTheDocument();
 
-      // Close button
+      // Close button inside drawer
       const closeBtn = screen.getByRole("button", { name: "Close navigation menu" });
       await user.click(closeBtn);
 
       await waitFor(() => {
         expect(screen.queryByRole("dialog", { name: "Navigation drawer" })).not.toBeInTheDocument();
       });
+
+      // Focus should be restored to open button
+      expect(document.activeElement).toBe(openBtn);
     });
 
-    it("dismisses mobile drawer upon Escape key press", async () => {
+    it("dismisses mobile drawer upon Escape key press with focus restoration", async () => {
       const user = userEvent.setup();
       renderApp(["/"]);
 
@@ -209,8 +235,10 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
         expect(screen.getByRole("button", { name: "Open navigation menu" })).toBeInTheDocument();
       });
 
-      await user.click(screen.getByRole("button", { name: "Open navigation menu" }));
-      expect(screen.getByRole("dialog", { name: "Navigation drawer" })).toBeInTheDocument();
+      const openBtn = screen.getByRole("button", { name: "Open navigation menu" });
+      await user.click(openBtn);
+
+      expect(await screen.findByRole("dialog", { name: "Navigation drawer" })).toBeInTheDocument();
 
       // Press Escape
       await user.keyboard("{Escape}");
@@ -218,9 +246,12 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       await waitFor(() => {
         expect(screen.queryByRole("dialog", { name: "Navigation drawer" })).not.toBeInTheDocument();
       });
+
+      // Focus restored to trigger button
+      expect(document.activeElement).toBe(openBtn);
     });
 
-    it("renders mobile bottom navigation bar with accessible touch targets", async () => {
+    it("renders mobile bottom navigation bar with accessible touch targets and without hardcoded count", async () => {
       renderApp(["/"]);
 
       await waitFor(() => {
@@ -236,6 +267,9 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
         expect(element).toHaveClass("min-w-[44px]");
         expect(element).toHaveClass("min-h-[44px]");
       });
+
+      // Confirm no hardcoded "1" badge inside bottomNav
+      expect(within(bottomNav).queryByText("1")).not.toBeInTheDocument();
     });
   });
 
