@@ -40,4 +40,17 @@ describe("IconButton component", () => {
     expect(button).toBeDisabled();
     expect(button).toHaveAttribute("aria-busy", "true");
   });
+
+  it("renders danger variant with semantic background and inverted text tokens", () => {
+    render(
+      <IconButton
+        aria-label="Delete item"
+        icon={<Plus />}
+        variant="danger"
+      />
+    );
+    const button = screen.getByRole("button", { name: "Delete item" });
+    expect(button).toHaveClass("bg-[var(--feedback-danger-text)]");
+    expect(button).toHaveClass("text-[var(--text-inverted)]");
+  });
 });

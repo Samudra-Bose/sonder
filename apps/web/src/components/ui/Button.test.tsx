@@ -76,6 +76,8 @@ describe("Button component", () => {
     expect(screen.getByRole("button")).toHaveClass("bg-[var(--brand-accent-btn-bg)]");
 
     rerender(<Button variant="danger">Danger</Button>);
-    expect(screen.getByRole("button")).toHaveClass("bg-[var(--feedback-danger-text)]");
+    const dangerBtn = screen.getByRole("button");
+    expect(dangerBtn).toHaveClass("bg-[var(--feedback-danger-text)]");
+    expect(dangerBtn).toHaveClass("text-[var(--text-inverted)]");
   });
 });

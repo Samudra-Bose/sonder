@@ -205,7 +205,8 @@
 
 @layer utilities {
   .focus-ring {
-    @apply outline-none ring-2 ring-sky-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-900;
+    outline: none;
+    box-shadow: 0 0 0 2px var(--surface-canvas), 0 0 0 4px var(--border-focus);
   }
 }
 
