@@ -69,7 +69,7 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
 
       // Ensure no active community assumption or internal milestone labels in user dashboard
-      expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Community Work Management" })).toBeInTheDocument();
       expect(screen.getByText("Community Memberships")).toBeInTheDocument();
       expect(screen.queryByText(/Active Community/i)).not.toBeInTheDocument();
       expect(screen.queryByText(/Workspace Overview/i)).not.toBeInTheDocument();
@@ -179,7 +179,7 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
         expect(screen.getByRole("heading", { name: "My Work" })).toBeInTheDocument();
       });
 
-      expect(screen.getByText(/planned for vs-02e/i)).toBeInTheDocument();
+      expect(screen.getByText(/activated in stage vs-02e/i)).toBeInTheDocument();
       expect(myWorkLink).toHaveClass("text-[var(--brand-accent-text)]");
     });
 
