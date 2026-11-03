@@ -19,12 +19,7 @@ export interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
-  let queryClient: ReturnType<typeof useQueryClient> | null = null;
-  try {
-    queryClient = useQueryClient();
-  } catch {
-    queryClient = null;
-  }
+  const queryClient = useQueryClient();
 
   const [user, setUser] = useState<ApiSchema<"MeContextDto">["user"] | null>(null);
   const [communities, setCommunities] = useState<ApiSchema<"MeContextDto">["communities"]>([]);
@@ -292,9 +287,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
         } catch {
           // Ignore storage sandbox restriction
         }
-        if (queryClient) {
-          queryClient.clear();
-        }
+        queryClient.clear();
 
         // Fetch fresh pre-auth CSRF token for subsequent sign-in (best effort)
         try {

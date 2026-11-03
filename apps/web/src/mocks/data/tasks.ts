@@ -1,0 +1,404 @@
+import type { ApiSchema } from "@sonder/contracts";
+import {
+  MOCK_USER_ID,
+  OTHER_USER_ID,
+  MOCK_COMMUNITY_1_ID,
+  MOCK_COMMUNITY_2_ID,
+  WS_PERSONAL_ALEX_ID,
+  WS_SHARED_ENG_ID,
+  WS_SHARED_GALA_ID,
+} from "./my-work.js";
+
+export type TaskDto = ApiSchema<"TaskDto">;
+export type TaskKeyResolutionDto = ApiSchema<"TaskKeyResolutionDto">;
+export type CreateTaskRequest = ApiSchema<"CreateTaskRequest">;
+export type UpdateTaskRequest = ApiSchema<"UpdateTaskRequest">;
+
+export function makeTaskPermissions(canEdit = true): TaskDto["effectivePermissions"] {
+  return {
+    canEditTitleDescription: canEdit,
+    canEditDatesPriority: canEdit,
+    canEditCustomFieldsLinks: canEdit,
+    canEditEstimate: canEdit,
+    canUpdateStatus: canEdit,
+    canRequestSignoff: false,
+    canApproveSignoff: false,
+    canAssign: canEdit,
+    canManageSubtasks: canEdit,
+    canCreateSubtask: canEdit,
+    canMove: canEdit,
+    canComment: true,
+    canWatch: true,
+    canArchive: canEdit,
+    canRestore: canEdit,
+    canDeletePermanent: false,
+    restrictedActions: [],
+    canManageAssigneeFieldGrants: false,
+  };
+}
+
+export function makeTaskAssignments(
+  userIds: string[],
+  assignedBy = OTHER_USER_ID,
+  assignedAt = "2026-10-20T09:00:00Z"
+): TaskDto["assigneeAssignments"] {
+  return userIds.map((uid) => ({
+    user: {
+      id: uid,
+      displayName: uid === MOCK_USER_ID ? "Alex Morgan" : "Jordan Lee",
+      avatarUrl: null,
+    },
+    userId: uid,
+    assignedByUserId: assignedBy,
+    assignedAt,
+  }));
+}
+
+/**
+ * Initial deterministic seed tasks for Community 1 & 2.
+ * Covers:
+ * - Backlog, in-progress, completed (DONE), canceled (CANCELED) tasks
+ * - Various priorities: URGENT, HIGH, MEDIUM, LOW, NONE
+ * - Assigned vs Unassigned
+ * - With vs without due dates
+ * - With labels and estimates
+ * - Parent tasks and subtasks (depth 1 and depth 2)
+ * - Personal vs Shared workspaces
+ */
+export const initialMockTasks: TaskDto[] = [
+  // --- ROOT TASK 1: ENG-101 (Assigned to Alex, Overdue, in-progress) ---
+  {
+    id: "018f98a2-task-001-overdue-assigned",
+    workspaceId: WS_SHARED_ENG_ID,
+    parentTaskId: null,
+    taskKey: "ENG-101",
+    title: "Fix critical auth token refresh race condition",
+    description: "Session token renewal intermittent failure on parallel requests. Needs mutex lock around token exchange.",
+    itemType: "TASK",
+    statusCategory: "IN_PROGRESS",
+    priority: "URGENT",
+    assigneeIds: [MOCK_USER_ID],
+    creatorId: OTHER_USER_ID,
+    startDate: "2026-10-20",
+    dueDate: "2026-10-28",
+    estimatePoints: 5,
+    labelIds: ["018f98a2-lbl-security", "018f98a2-lbl-backend"],
+    milestoneId: null,
+    rankKey: "0|hzzzzz:",
+    version: 3,
+    fieldRevisions: {
+      title: 1,
+      description: 1,
+      statusCategory: 2,
+      priority: 2,
+      assigneeIds: 1,
+      dueDate: 1,
+      estimatePoints: 1,
+      labelIds: 1,
+    },
+    effectivePermissions: makeTaskPermissions(true),
+    createdAt: "2026-10-20T09:00:00Z",
+    updatedAt: "2026-10-28T14:30:00Z",
+    archivedAt: null,
+    assigneeAssignments: makeTaskAssignments([MOCK_USER_ID], OTHER_USER_ID),
+    assigneeEditableFieldGroups: [],
+  },
+
+  // --- SUBTASK 1.1: ENG-105 (Subtask of ENG-101, depth 1) ---
+  {
+    id: "018f98a2-task-001-subtask-1",
+    workspaceId: WS_SHARED_ENG_ID,
+    parentTaskId: "018f98a2-task-001-overdue-assigned",
+    taskKey: "ENG-105",
+    title: "Write concurrent refresh token unit tests",
+    description: "Verify parallel refresh calls coalesce into a single token rotation.",
+    itemType: "TASK",
+    statusCategory: "TODO",
+    priority: "HIGH",
+    assigneeIds: [MOCK_USER_ID],
+    creatorId: MOCK_USER_ID,
+    startDate: "2026-10-25",
+    dueDate: "2026-11-04",
+    estimatePoints: 2,
+    labelIds: ["018f98a2-lbl-testing"],
+    milestoneId: null,
+    rankKey: "0|hzzzzz:0|1:",
+    version: 1,
+    fieldRevisions: {
+      title: 1,
+      description: 1,
+      statusCategory: 1,
+      priority: 1,
+      assigneeIds: 1,
+      dueDate: 1,
+      estimatePoints: 1,
+    },
+    effectivePermissions: makeTaskPermissions(true),
+    createdAt: "2026-10-25T10:00:00Z",
+    updatedAt: "2026-10-25T10:00:00Z",
+    archivedAt: null,
+    assigneeAssignments: makeTaskAssignments([MOCK_USER_ID], MOCK_USER_ID),
+    assigneeEditableFieldGroups: [],
+  },
+
+  // --- NESTED SUBTASK 1.1.1: ENG-106 (Subtask of ENG-105, depth 2 - max depth for ENG) ---
+  {
+    id: "018f98a2-task-001-subtask-1-nested",
+    workspaceId: WS_SHARED_ENG_ID,
+    parentTaskId: "018f98a2-task-001-subtask-1",
+    taskKey: "ENG-106",
+    title: "Mock OAuth provider latency simulation",
+    description: "Simulate 500ms network jitter during token refresh callback.",
+    itemType: "TASK",
+    statusCategory: "BACKLOG",
+    priority: "MEDIUM",
+    assigneeIds: [],
+    creatorId: MOCK_USER_ID,
+    startDate: null,
+    dueDate: null,
+    estimatePoints: 1,
+    labelIds: [],
+    milestoneId: null,
+    rankKey: "0|hzzzzz:0|1:0|1:",
+    version: 1,
+    fieldRevisions: {
+      title: 1,
+      statusCategory: 1,
+      priority: 1,
+    },
+    effectivePermissions: makeTaskPermissions(true),
+    createdAt: "2026-10-26T11:00:00Z",
+    updatedAt: "2026-10-26T11:00:00Z",
+    archivedAt: null,
+    assigneeAssignments: [],
+    assigneeEditableFieldGroups: [],
+  },
+
+  // --- ROOT TASK 2: ENG-102 (Due Today, High priority) ---
+  {
+    id: "018f98a2-task-003-today-assigned-created",
+    workspaceId: WS_SHARED_ENG_ID,
+    parentTaskId: null,
+    taskKey: "ENG-102",
+    title: "Ship VS-02E My Work cross-workspace dashboard",
+    description: "Personal triage experience covering overdue, today, upcoming, and unscheduled.",
+    itemType: "TASK",
+    statusCategory: "IN_PROGRESS",
+    priority: "HIGH",
+    assigneeIds: [MOCK_USER_ID],
+    creatorId: MOCK_USER_ID,
+    startDate: "2026-11-01",
+    dueDate: "2026-11-03",
+    estimatePoints: 8,
+    labelIds: ["018f98a2-lbl-frontend"],
+    milestoneId: null,
+    rankKey: "0|hzzzzz0:",
+    version: 2,
+    fieldRevisions: {
+      title: 1,
+      description: 1,
+      statusCategory: 2,
+      priority: 1,
+      assigneeIds: 1,
+      dueDate: 1,
+    },
+    effectivePermissions: makeTaskPermissions(true),
+    createdAt: "2026-11-01T10:00:00Z",
+    updatedAt: "2026-11-03T08:00:00Z",
+    archivedAt: null,
+    assigneeAssignments: makeTaskAssignments([MOCK_USER_ID], MOCK_USER_ID),
+    assigneeEditableFieldGroups: [],
+  },
+
+  // --- ROOT TASK 3: ALEX-1 (Personal Workspace task, Due Today) ---
+  {
+    id: "018f98a2-task-004-today-personal",
+    workspaceId: WS_PERSONAL_ALEX_ID,
+    parentTaskId: null,
+    taskKey: "ALEX-1",
+    title: "Review quarter 4 personal development goals",
+    description: "Personal note and self-reflection metrics. Strictly confidential to Alex.",
+    itemType: "TASK",
+    statusCategory: "TODO",
+    priority: "MEDIUM",
+    assigneeIds: [MOCK_USER_ID],
+    creatorId: MOCK_USER_ID,
+    startDate: null,
+    dueDate: "2026-11-03",
+    estimatePoints: null,
+    labelIds: [],
+    milestoneId: null,
+    rankKey: "0|hzzzzz1:",
+    version: 1,
+    fieldRevisions: {
+      title: 1,
+      statusCategory: 1,
+      priority: 1,
+      dueDate: 1,
+    },
+    effectivePermissions: makeTaskPermissions(true),
+    createdAt: "2026-10-30T16:00:00Z",
+    updatedAt: "2026-10-30T16:00:00Z",
+    archivedAt: null,
+    assigneeAssignments: makeTaskAssignments([MOCK_USER_ID], MOCK_USER_ID),
+    assigneeEditableFieldGroups: [],
+  },
+
+  // --- ROOT TASK 4: GALA-201 (Overdue created by Alex, Coordinator permissions) ---
+  {
+    id: "018f98a2-task-002-overdue-created",
+    workspaceId: WS_SHARED_GALA_ID,
+    parentTaskId: null,
+    taskKey: "GALA-201",
+    title: "Approve final catering vendor contract",
+    description: "Review contract terms for spring gala banquet services.",
+    itemType: "TASK",
+    statusCategory: "TODO",
+    priority: "HIGH",
+    assigneeIds: [OTHER_USER_ID],
+    creatorId: MOCK_USER_ID,
+    startDate: "2026-10-22",
+    dueDate: "2026-11-01",
+    estimatePoints: 3,
+    labelIds: ["018f98a2-lbl-ops"],
+    milestoneId: null,
+    rankKey: "0|hzzzzz2:",
+    version: 1,
+    fieldRevisions: {
+      title: 1,
+      statusCategory: 1,
+      priority: 1,
+      dueDate: 1,
+    },
+    effectivePermissions: makeTaskPermissions(true),
+    createdAt: "2026-10-22T11:00:00Z",
+    updatedAt: "2026-10-22T11:00:00Z",
+    archivedAt: null,
+    assigneeAssignments: makeTaskAssignments([OTHER_USER_ID], MOCK_USER_ID),
+    assigneeEditableFieldGroups: [],
+  },
+
+  // --- ROOT TASK 5: ENG-099 (Terminal DONE task) ---
+  {
+    id: "018f98a2-task-009-completed-done",
+    workspaceId: WS_SHARED_ENG_ID,
+    parentTaskId: null,
+    taskKey: "ENG-099",
+    title: "Implement VS-02D Omnibar palette",
+    description: "Completed slice merged into develop.",
+    itemType: "TASK",
+    statusCategory: "DONE",
+    priority: "HIGH",
+    assigneeIds: [MOCK_USER_ID],
+    creatorId: MOCK_USER_ID,
+    startDate: "2026-10-15",
+    dueDate: "2026-11-02",
+    estimatePoints: 5,
+    labelIds: ["018f98a2-lbl-frontend"],
+    milestoneId: null,
+    rankKey: "0|hzzzzz3:",
+    version: 5,
+    fieldRevisions: {
+      statusCategory: 3,
+    },
+    effectivePermissions: makeTaskPermissions(false),
+    createdAt: "2026-10-15T09:00:00Z",
+    updatedAt: "2026-11-03T12:00:00Z",
+    archivedAt: null,
+    assigneeAssignments: makeTaskAssignments([MOCK_USER_ID], MOCK_USER_ID),
+    assigneeEditableFieldGroups: [],
+  },
+
+  // --- ROOT TASK 6: GALA-190 (Terminal CANCELED task) ---
+  {
+    id: "018f98a2-task-010-completed-cancelled",
+    workspaceId: WS_SHARED_GALA_ID,
+    parentTaskId: null,
+    taskKey: "GALA-190",
+    title: "Deprecated legacy spreadsheet export script",
+    description: "Replaced by direct community API export.",
+    itemType: "TASK",
+    statusCategory: "CANCELED",
+    priority: "LOW",
+    assigneeIds: [MOCK_USER_ID],
+    creatorId: OTHER_USER_ID,
+    startDate: null,
+    dueDate: "2026-10-25",
+    estimatePoints: 1,
+    labelIds: [],
+    milestoneId: null,
+    rankKey: "0|hzzzzz4:",
+    version: 2,
+    fieldRevisions: {
+      statusCategory: 2,
+    },
+    effectivePermissions: makeTaskPermissions(false),
+    createdAt: "2026-10-10T11:00:00Z",
+    updatedAt: "2026-10-26T15:00:00Z",
+    archivedAt: null,
+    assigneeAssignments: makeTaskAssignments([MOCK_USER_ID], OTHER_USER_ID),
+    assigneeEditableFieldGroups: [],
+  },
+
+  // --- ROOT TASK 7: READ-ONLY TASK (Viewer permissions) ---
+  {
+    id: "018f98a2-task-011-viewer-readonly",
+    workspaceId: WS_SHARED_ENG_ID,
+    parentTaskId: null,
+    taskKey: "ENG-050",
+    title: "Architecture boundary and dependency-cruiser report",
+    description: "Read-only architecture evaluation for external security auditor.",
+    itemType: "TASK",
+    statusCategory: "TODO",
+    priority: "MEDIUM",
+    assigneeIds: [OTHER_USER_ID],
+    creatorId: OTHER_USER_ID,
+    startDate: null,
+    dueDate: "2026-11-15",
+    estimatePoints: 3,
+    labelIds: ["018f98a2-lbl-security"],
+    milestoneId: null,
+    rankKey: "0|hzzzzz5:",
+    version: 1,
+    fieldRevisions: {
+      title: 1,
+      statusCategory: 1,
+    },
+    // Caller is VIEWER -> cannot edit
+    effectivePermissions: makeTaskPermissions(false),
+    createdAt: "2026-10-18T10:00:00Z",
+    updatedAt: "2026-10-18T10:00:00Z",
+    archivedAt: null,
+    assigneeAssignments: makeTaskAssignments([OTHER_USER_ID], OTHER_USER_ID),
+    assigneeEditableFieldGroups: [],
+  },
+];
+
+/**
+ * Historical key aliases registry.
+ * Maps historical / moved task keys to canonical current keys & workspace.
+ */
+export const initialMockKeyAliases: Record<
+  string,
+  {
+    taskId: string;
+    workspaceId: string;
+    canonicalKey: string;
+    communityId: string;
+  }
+> = {
+  // Historical alias: ENG-OLD-1 was transferred/renamed to ENG-101
+  "ENG-OLD-1": {
+    taskId: "018f98a2-task-001-overdue-assigned",
+    workspaceId: WS_SHARED_ENG_ID,
+    canonicalKey: "ENG-101",
+    communityId: MOCK_COMMUNITY_1_ID,
+  },
+  // Alias in Community 2 (Regional Arts Guild):
+  "ART-OLD-9": {
+    taskId: "018f98a2-task-art-001",
+    workspaceId: "018f98a2-3f12-7890-w005-456789abcdef",
+    canonicalKey: "ART-101",
+    communityId: MOCK_COMMUNITY_2_ID,
+  },
+};

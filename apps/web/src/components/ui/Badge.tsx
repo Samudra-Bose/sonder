@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type TaskStatus = "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE" | "CANCELLED";
+export type TaskStatus = "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE" | "CANCELED" | "CANCELLED";
 export type TaskPriority = "URGENT" | "HIGH" | "MEDIUM" | "LOW" | "NONE";
 export type BadgeVariant =
   | "default"
@@ -59,6 +59,12 @@ const statusConfig: Record<
     styles:
       "bg-[var(--status-done-bg)] border-[var(--status-done-border)] text-[var(--status-done-text)]",
     icon: <CheckCircle2 className="h-3 w-3 shrink-0" aria-hidden="true" data-testid="status-icon-DONE" />,
+  },
+  CANCELED: {
+    // #FEF2F2 / #FECACA / #B91C1C (Light) | #450A0A / #991B1B / #FCA5A5 (Dark)
+    styles:
+      "bg-[var(--status-cancelled-bg)] border-[var(--status-cancelled-border)] text-[var(--status-cancelled-text)]",
+    icon: <XCircle className="h-3 w-3 shrink-0" aria-hidden="true" data-testid="status-icon-CANCELED" />,
   },
   CANCELLED: {
     // #FEF2F2 / #FECACA / #B91C1C (Light) | #450A0A / #991B1B / #FCA5A5 (Dark)

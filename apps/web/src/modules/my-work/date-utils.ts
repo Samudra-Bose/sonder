@@ -57,21 +57,35 @@ export function differenceInCalendarDays(targetDate: string, baseDate: string): 
 
 /**
  * Returns today's calendar date in YYYY-MM-DD format.
- * In test or server environments, an injected fallback can be provided.
+ * Defaults to the client's detected IANA time zone (or explicit parameter).
+ * In server or fallback environments, defaults to UTC.
  */
-export function getDefaultReferenceDate(): string {
-  const now = new Date();
-  const year = now.getUTCFullYear();
-  const month = String(now.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(now.getUTCDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+export function getDefaultReferenceDate(now: Date = new Date(), timeZone?: string): string {
+  try {
+    const tz =
+      timeZone ||
+      (typeof window !== "undefined"
+        ? Intl.DateTimeFormat().resolvedOptions().timeZone
+        : "UTC");
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(now);
+  } catch {
+    const year = now.getUTCFullYear();
+    const month = String(now.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(now.getUTCDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
 }
 
 /**
  * Classifies an active task into exactly one of the four canonical temporal groups.
  *
  * Rules:
- * 1. Terminal tasks (statusCategory is "DONE" or "CANCELLED") are excluded (return null).
+ * 1. Terminal tasks (statusCategory is "DONE" or "CANCELED") are excluded (return null).
  * 2. Unscheduled: Active tasks with no due date (null, undefined, or empty).
  * 3. Overdue: Active tasks with dueDate < referenceDate.
  * 4. Due Today: Active tasks with dueDate === referenceDate.
@@ -84,8 +98,8 @@ export function classifyTemporalGroup(
   statusCategory: string,
   referenceDate: string
 ): TemporalGroupKey | null {
-  // Exclude terminal / completed tasks (supporting both US "CANCELED" and UK "CANCELLED")
-  if (statusCategory === "DONE" || statusCategory === "CANCELLED" || statusCategory === "CANCELED") {
+  // Exclude terminal / completed tasks (canonical contract specifies CANCELED)
+  if (statusCategory === "DONE" || statusCategory === "CANCELED") {
     return null;
   }
 
