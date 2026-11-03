@@ -21,6 +21,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/DropdownMenu";
 import { useTheme } from "@/lib/theme";
+import { useWorkspace } from "@/modules/workspace";
 import type { ApiSchema } from "@sonder/contracts";
 
 export type AuthUser = ApiSchema<"MeContextDto">["user"];
@@ -45,6 +46,7 @@ export function AppHeader({
   menuTriggerRef,
 }: AppHeaderProps): React.JSX.Element {
   const { theme, resolvedTheme, setTheme, toggleTheme } = useTheme();
+  const { currentCommunity, activeWorkspace } = useWorkspace();
 
   return (
     <header
@@ -82,12 +84,31 @@ export function AppHeader({
         {/* Mobile View Title */}
         <div className="flex items-center space-x-2 md:hidden">
           <span className="text-xs font-semibold text-[var(--text-primary)] truncate max-w-[180px]">
-            Overview
+            {activeWorkspace ? activeWorkspace.name : "Overview"}
           </span>
         </div>
 
         {/* Desktop Breadcrumb Context */}
-        <nav aria-label="Breadcrumbs" className="hidden md:flex items-center space-x-1.5 text-xs">
+        <nav
+          aria-label="Breadcrumbs"
+          className="hidden md:flex items-center space-x-1.5 text-xs text-[var(--text-muted)]"
+        >
+          {currentCommunity && (
+            <>
+              <span className="text-[var(--text-secondary)] font-medium truncate max-w-[140px]">
+                {currentCommunity.name}
+              </span>
+              <span aria-hidden="true">/</span>
+            </>
+          )}
+          {activeWorkspace && (
+            <>
+              <span className="text-[var(--text-secondary)] font-medium truncate max-w-[160px]">
+                {activeWorkspace.name}
+              </span>
+              <span aria-hidden="true">/</span>
+            </>
+          )}
           <span className="font-semibold text-[var(--text-primary)]">
             Overview
           </span>

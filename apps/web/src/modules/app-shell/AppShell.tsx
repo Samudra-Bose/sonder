@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import { useAuth } from "@/modules/auth";
 import { ApiProblemError } from "@/lib/api-client";
 import { useKeyboardShortcut } from "@/lib/keyboard";
+import { WorkspaceProvider } from "@/modules/workspace";
 import { AppHeader } from "./AppHeader";
 import { AppSidebar } from "./AppSidebar";
 import { MobileNavigation } from "./MobileNavigation";
@@ -79,83 +80,85 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--surface-canvas)] text-[var(--text-primary)] transition-colors duration-150 pb-14 md:pb-0">
-      {/* Top Application Header */}
-      <AppHeader
-        user={user}
-        isSidebarCollapsed={isSidebarCollapsed}
-        onToggleSidebar={toggleSidebar}
-        onOpenMobileNav={handleOpenMobileNav}
-        onLogout={handleLogout}
-        isLoggingOut={isLoggingOut}
-        menuTriggerRef={menuTriggerRef}
-      />
-
-      {/* Accessible Sign Out Error Alert with Retry Path */}
-      {logoutError && (
-        <div
-          role="alert"
-          aria-live="assertive"
-          className="bg-[var(--feedback-danger-bg)] border-b border-[var(--border-strong)] px-4 py-2 text-xs text-[var(--feedback-danger-text)] flex items-center justify-between z-30"
-        >
-          <div className="flex items-center space-x-2">
-            <span className="font-semibold">Sign out failed: </span>
-            <span>{logoutError}</span>
-          </div>
-          <div className="flex items-center space-x-3">
-            <button
-              type="button"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              className="font-medium underline hover:opacity-80 focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] rounded cursor-pointer"
-            >
-              Retry
-            </button>
-            <button
-              type="button"
-              onClick={() => setLogoutError(null)}
-              aria-label="Dismiss sign out error"
-              className="text-[var(--feedback-danger-text)] hover:opacity-80 focus:outline-none font-bold text-sm cursor-pointer"
-            >
-              &times;
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Main Structural Body: Sidebar + Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Desktop Left Rail Sidebar */}
-        <AppSidebar
-          isCollapsed={isSidebarCollapsed}
-          onToggleCollapse={toggleSidebar}
+    <WorkspaceProvider>
+      <div className="min-h-screen flex flex-col bg-[var(--surface-canvas)] text-[var(--text-primary)] transition-colors duration-150 pb-14 md:pb-0">
+        {/* Top Application Header */}
+        <AppHeader
+          user={user}
+          isSidebarCollapsed={isSidebarCollapsed}
+          onToggleSidebar={toggleSidebar}
+          onOpenMobileNav={handleOpenMobileNav}
+          onLogout={handleLogout}
+          isLoggingOut={isLoggingOut}
+          menuTriggerRef={menuTriggerRef}
         />
 
-        {/* Dynamic Main Content Canvas */}
-        <MainContent>
-          {children ?? <Outlet />}
-        </MainContent>
+        {/* Accessible Sign Out Error Alert with Retry Path */}
+        {logoutError && (
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="bg-[var(--feedback-danger-bg)] border-b border-[var(--border-strong)] px-4 py-2 text-xs text-[var(--feedback-danger-text)] flex items-center justify-between z-30"
+          >
+            <div className="flex items-center space-x-2">
+              <span className="font-semibold">Sign out failed: </span>
+              <span>{logoutError}</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="font-medium underline hover:opacity-80 focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] rounded cursor-pointer"
+              >
+                Retry
+              </button>
+              <button
+                type="button"
+                onClick={() => setLogoutError(null)}
+                aria-label="Dismiss sign out error"
+                className="text-[var(--feedback-danger-text)] hover:opacity-80 focus:outline-none font-bold text-sm cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Main Structural Body: Sidebar + Main Content */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Desktop Left Rail Sidebar */}
+          <AppSidebar
+            isCollapsed={isSidebarCollapsed}
+            onToggleCollapse={toggleSidebar}
+          />
+
+          {/* Dynamic Main Content Canvas */}
+          <MainContent>
+            {children ?? <Outlet />}
+          </MainContent>
+        </div>
+
+        {/* Mobile Navigation Drawer & Bottom Bar */}
+        <MobileNavigation
+          isOpen={isMobileNavOpen}
+          onClose={() => setIsMobileNavOpen(false)}
+          onOpen={handleOpenMobileNav}
+          user={user}
+          onLogout={handleLogout}
+          isLoggingOut={isLoggingOut}
+          triggerEl={openTriggerEl}
+        />
+
+        {/* Semantic Footer (Visible on desktop/tablet) */}
+        <footer
+          role="contentinfo"
+          className="h-8 border-t border-[var(--border-subtle)] bg-[var(--surface-card)] px-4 hidden md:flex items-center justify-between text-xs text-[var(--text-muted)] select-none"
+        >
+          <span>Sonder Platform &copy; 2026</span>
+          <span>Community Edition</span>
+        </footer>
       </div>
-
-      {/* Mobile Navigation Drawer & Bottom Bar */}
-      <MobileNavigation
-        isOpen={isMobileNavOpen}
-        onClose={() => setIsMobileNavOpen(false)}
-        onOpen={handleOpenMobileNav}
-        user={user}
-        onLogout={handleLogout}
-        isLoggingOut={isLoggingOut}
-        triggerEl={openTriggerEl}
-      />
-
-      {/* Semantic Footer (Visible on desktop/tablet) */}
-      <footer
-        role="contentinfo"
-        className="h-8 border-t border-[var(--border-subtle)] bg-[var(--surface-card)] px-4 hidden md:flex items-center justify-between text-xs text-[var(--text-muted)] select-none"
-      >
-        <span>Sonder Platform &copy; 2026</span>
-        <span>Community Edition</span>
-      </footer>
-    </div>
+    </WorkspaceProvider>
   );
 }

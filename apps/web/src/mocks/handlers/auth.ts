@@ -18,7 +18,7 @@ export const mockUser: ApiSchema<"MeContextDto">["user"] = {
   avatarUrl: null,
 };
 
-export const mockCommunities: ApiSchema<"MeContextDto">["communities"] = [
+export const defaultMockCommunities: ApiSchema<"MeContextDto">["communities"] = [
   {
     communityId: "018f98a2-3f12-7890-b123-456789abcdef",
     name: "Sonder Community",
@@ -26,10 +26,27 @@ export const mockCommunities: ApiSchema<"MeContextDto">["communities"] = [
     isCommunityAdmin: true,
     isDefaultCoordinator: false,
   },
+  {
+    communityId: "018f98a2-3f12-7890-b999-456789abcdef",
+    name: "Regional Arts Guild",
+    membershipStatus: "ACTIVE",
+    isCommunityAdmin: false,
+    isDefaultCoordinator: false,
+  },
+];
+
+export let mockCommunities: ApiSchema<"MeContextDto">["communities"] = [
+  ...defaultMockCommunities,
 ];
 
 let isSessionActive = true;
 let currentCsrfToken = "mock-preauth-csrf-token";
+
+export function setMockCommunities(
+  communities: ApiSchema<"MeContextDto">["communities"]
+): void {
+  mockCommunities = [...communities];
+}
 
 export function setMockSessionActive(active: boolean): void {
   isSessionActive = active;
@@ -38,6 +55,7 @@ export function setMockSessionActive(active: boolean): void {
 export function resetAuthMockState(): void {
   isSessionActive = true;
   currentCsrfToken = "mock-preauth-csrf-token";
+  mockCommunities = [...defaultMockCommunities];
 }
 
 export const authHandlers = [

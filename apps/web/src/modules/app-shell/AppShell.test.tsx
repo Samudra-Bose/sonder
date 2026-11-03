@@ -103,8 +103,8 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       expect(within(sidebarNav).getByRole("link", { name: /^my work$/i })).toBeInTheDocument();
       expect(within(sidebarNav).getByRole("link", { name: /^inbox$/i })).toBeInTheDocument();
 
-      // Workspace extension point (neutral notice, no static sample workspaces)
-      expect(screen.getByText(/workspace switcher — coming in vs-02c/i)).toBeInTheDocument();
+      // Workspace switcher integrated (VS-02C)
+      expect(screen.getByRole("button", { name: /select a workspace/i })).toBeInTheDocument();
       expect(screen.queryByText("Engineering Platform")).not.toBeInTheDocument();
       expect(screen.queryByText("Spring Community Gala 2027")).not.toBeInTheDocument();
       expect(screen.queryByText("Alex's Personal")).not.toBeInTheDocument();
