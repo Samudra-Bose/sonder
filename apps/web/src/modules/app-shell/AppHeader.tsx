@@ -2,7 +2,6 @@ import React from "react";
 import {
   PanelLeft,
   Menu,
-  Search,
   Sun,
   Moon,
   Laptop,
@@ -22,6 +21,7 @@ import {
 } from "@/components/ui/DropdownMenu";
 import { useTheme } from "@/lib/theme";
 import { useWorkspace } from "@/modules/workspace";
+import { DesktopOmnibarTrigger, MobileOmnibarTrigger } from "@/modules/omnibar";
 import type { ApiSchema } from "@sonder/contracts";
 
 export type AuthUser = ApiSchema<"MeContextDto">["user"];
@@ -115,25 +115,17 @@ export function AppHeader({
         </nav>
       </div>
 
-      {/* Center: Omnibar Planned Extension Point */}
+      {/* Center: Live Omnibar Entry Point */}
       <div className="flex-1 max-w-xs md:max-w-sm mx-2 md:mx-4 hidden sm:flex justify-center">
-        <button
-          type="button"
-          disabled
-          aria-disabled="true"
-          aria-label="Search (Omnibar — planned for VS-02D)"
-          className="w-full flex items-center justify-between h-8 px-2.5 rounded-md border border-[var(--border-subtle)] bg-[var(--surface-muted)]/60 text-xs text-[var(--text-muted)] cursor-not-allowed select-none opacity-80"
-          title="Omnibar search will be available in VS-02D"
-        >
-          <span className="flex items-center gap-1.5 truncate">
-            <Search className="h-3.5 w-3.5 text-[var(--text-muted)] flex-shrink-0" aria-hidden="true" />
-            <span className="truncate">Search (Coming in VS-02D)</span>
-          </span>
-        </button>
+        <DesktopOmnibarTrigger />
       </div>
 
       {/* Right: Actions, Theme Toggle, User Profile & Sign Out */}
       <div className="flex items-center space-x-2 md:space-x-3">
+        {/* Mobile Omnibar Search Button */}
+        <div className="sm:hidden">
+          <MobileOmnibarTrigger variant="icon" />
+        </div>
 
         {/* Theme Toggle Button */}
         <Tooltip

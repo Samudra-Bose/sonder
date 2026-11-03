@@ -110,22 +110,31 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       expect(screen.queryByText("Alex's Personal")).not.toBeInTheDocument();
     });
 
-    it("renders planned Omnibar extension point as disabled and omits unready Quick Create", async () => {
+    it("renders live Omnibar trigger and opens command palette modal", async () => {
+      const user = userEvent.setup();
       renderApp(["/"]);
 
       await waitFor(() => {
         expect(screen.getByRole("banner")).toBeInTheDocument();
       });
 
-      // Omnibar is clearly disabled and non-functional
+      // Omnibar trigger is present, enabled, and accessible
       const omnibarButton = screen.getByRole("button", {
-        name: /search \(omnibar — planned for vs-02d\)/i,
+        name: /open command palette/i,
       });
       expect(omnibarButton).toBeInTheDocument();
-      expect(omnibarButton).toBeDisabled();
-      expect(omnibarButton).toHaveAttribute("aria-disabled", "true");
+      expect(omnibarButton).toBeEnabled();
 
-      // Quick Create is removed until task creation flow is ready
+      // Clicking opens the command palette modal
+      await user.click(omnibarButton);
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole("dialog", { name: /omnibar command palette/i })
+        ).toBeInTheDocument();
+      });
+
+      // Quick Create remains omitted until task creation flow is ready in later slice
       expect(screen.queryByRole("button", { name: /create task/i })).not.toBeInTheDocument();
     });
   });

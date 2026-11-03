@@ -17,6 +17,7 @@ import { Dialog, DrawerContent, DialogClose } from "@/components/ui/Dialog";
 import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { MobileWorkspaceSelector } from "@/modules/workspace";
+import { MobileOmnibarTrigger } from "@/modules/omnibar";
 import {
   PRIMARY_NAV_ITEMS,
   type NavItem,
@@ -143,6 +144,11 @@ export function MobileNavigation({
 
           {/* Navigation Links with 44px Touch Targets */}
           <div className="flex-1 overflow-y-auto p-3 space-y-4">
+            {/* Quick Omnibar Entry Point */}
+            <div>
+              <MobileOmnibarTrigger variant="drawer-button" onClick={onClose} />
+            </div>
+
             <div>
               <h3 className="px-2 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
                 Navigation
