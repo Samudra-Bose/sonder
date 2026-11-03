@@ -395,7 +395,9 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       expect(drawer).toBeInTheDocument();
 
       // Verify focused element is within drawer
-      expect(drawer.contains(document.activeElement)).toBe(true);
+      await waitFor(() => {
+        expect(drawer.contains(document.activeElement)).toBe(true);
+      });
 
       // Tab navigation remains inside drawer
       await user.tab();
