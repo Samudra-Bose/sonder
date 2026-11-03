@@ -3,12 +3,12 @@ import { NavLink } from "react-router-dom";
 import {
   PanelLeftClose,
   PanelLeftOpen,
-  Layers,
   Sparkles,
 } from "lucide-react";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { Kbd } from "@/components/ui/KeyboardShortcut";
 import { cn } from "@/lib/utils";
+import { WorkspaceSwitcher } from "@/modules/workspace";
 import {
   PRIMARY_NAV_ITEMS,
   type NavItem,
@@ -109,24 +109,14 @@ export function AppSidebar({
           </nav>
         </div>
 
-        {/* Workspaces Section (Extension Point for VS-02C) */}
-        <div className="space-y-1 pt-2 border-t border-[var(--border-subtle)]">
-          {!isCollapsed ? (
-            <div className="px-2 space-y-1">
-              <h2 className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                Workspaces
-              </h2>
-              <p className="text-xs text-[var(--text-muted)] py-1 italic">
-                Workspace Switcher — coming in VS-02C
-              </p>
-            </div>
-          ) : (
-            <Tooltip content="Workspace Switcher (Coming in VS-02C)" side="right">
-              <div className="h-9 w-9 mx-auto flex items-center justify-center rounded-md text-[var(--text-muted)] opacity-60">
-                <Layers className="h-4 w-4" />
-              </div>
-            </Tooltip>
+        {/* Workspaces Section (VS-02C Workspace Switcher) */}
+        <div className="space-y-1.5 pt-2 border-t border-[var(--border-subtle)]">
+          {!isCollapsed && (
+            <h2 className="px-2 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+              Workspaces
+            </h2>
           )}
+          <WorkspaceSwitcher isCollapsed={isCollapsed} />
         </div>
       </div>
 

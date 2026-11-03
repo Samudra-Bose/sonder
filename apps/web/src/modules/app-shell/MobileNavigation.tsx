@@ -16,6 +16,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Dialog, DrawerContent, DialogClose } from "@/components/ui/Dialog";
 import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import { MobileWorkspaceSelector } from "@/modules/workspace";
 import {
   PRIMARY_NAV_ITEMS,
   type NavItem,
@@ -172,16 +173,14 @@ export function MobileNavigation({
               </nav>
             </div>
 
-            {/* Workspaces Section (Extension Point for VS-02C) */}
+            {/* Workspaces Section (VS-02C Workspace Switcher) */}
             <div className="pt-2 border-t border-[var(--border-subtle)]">
               <div className="px-2 pb-1.5 flex items-center justify-between">
                 <h3 className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
                   Workspaces
                 </h3>
               </div>
-              <p className="px-2 py-1.5 text-xs text-[var(--text-muted)] italic">
-                Workspace Switcher — coming in VS-02C
-              </p>
+              <MobileWorkspaceSelector onWorkspaceSelected={onClose} />
             </div>
           </div>
 
