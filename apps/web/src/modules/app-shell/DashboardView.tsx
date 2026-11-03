@@ -62,13 +62,13 @@ export function DashboardView(): React.JSX.Element {
               <CardTitle className="text-base">My Work</CardTitle>
             </div>
             <CardDescription>
-              Personal triage and assigned tasks across your communities.
+              Personal cross-workspace triage for tasks assigned to, created by, or watched by you.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-xs text-[var(--text-secondary)] space-y-1.5">
-            <p>• Fast access to tasks requiring your immediate attention.</p>
-            <p>• Temporal due-date grouping: overdue, due today, and upcoming.</p>
-            <p>• Streamlined status transitions and priority filtering.</p>
+            <p>• Fast access to tasks requiring your attention across workspaces.</p>
+            <p>• Canonical temporal due-date groups: Overdue, Due Today, Upcoming, and Unscheduled.</p>
+            <p>• Live task aggregation query planned for stage VS-02E.</p>
           </CardContent>
         </Card>
 
@@ -79,13 +79,13 @@ export function DashboardView(): React.JSX.Element {
               <CardTitle className="text-base">Workspaces</CardTitle>
             </div>
             <CardDescription>
-              Collaborative workspaces for teams, projects, and initiatives.
+              Workspace containers for organizing tasks and community collaboration.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-xs text-[var(--text-secondary)] space-y-1.5">
-            <p>• Isolated project spaces with customized task prefixes.</p>
-            <p>• Multi-owner governance and collaborative member permissions.</p>
-            <p>• Shared milestones and cross-functional visibility.</p>
+            <p>• Community-unique task identifier prefixes and workspace-scoped milestones.</p>
+            <p>• Multi-owner governance with role-based workspace permissions.</p>
+            <p>• Interactive workspace switcher planned for stage VS-02C.</p>
           </CardContent>
         </Card>
       </div>

@@ -21,6 +21,7 @@ export const DialogBackdrop = React.forwardRef<
   return (
     <BaseDialog.Backdrop
       ref={ref}
+      data-testid="dialog-backdrop"
       className={cn(
         "fixed inset-0 z-50 bg-black/50 backdrop-blur-xs transition-opacity duration-150",
         className
