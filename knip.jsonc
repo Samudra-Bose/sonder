@@ -1,33 +1,17 @@
 {
   "$schema": "https://unpkg.com/knip@5/overview/configuration-schema.json",
+  "ignoreBinaries": ["renovate-config-validator"],
   "workspaces": {
     ".": {
-      "ignore": ["lighthouserc.cjs"]
+      "ignore": ["lighthouserc.cjs"],
     },
     "apps/web": {
-      "entry": [
-        "src/main.tsx!",
-        "src/components/ui/index.ts!",
-        "src/modules/**/index.ts!",
-        "playwright.config.ts",
-        ".storybook/main.ts",
-        ".storybook/preview.tsx"
-      ],
+      "entry": ["src/components/ui/index.ts!", "src/modules/**/index.ts!"],
       "project": ["src/**/*.{ts,tsx}!", "e2e/**/*.ts"],
-      "ignoreDependencies": [
-        "@storybook/addon-a11y",
-        "@storybook/addon-vitest",
-        "@tailwindcss/vite"
-      ]
+      "ignoreDependencies": ["tailwindcss"],
     },
     "packages/contracts": {
-      "entry": ["src/index.ts!", "scripts/generate-ws-types.mjs"],
       "project": ["src/**/*.ts!"],
-      "ignore": [
-        "src/api-types.ts",
-        "src/ws-events-types.ts",
-        "src/ws-protocol-types.ts"
-      ]
-    }
-  }
+    },
+  },
 }

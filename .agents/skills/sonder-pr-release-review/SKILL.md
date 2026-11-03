@@ -8,15 +8,19 @@ description: >-
 # PR Review & Release Readiness Runbook
 
 ## 1. Purpose
+
 Provides a strict, reproducible review framework to ensure every pull request is fully validated, non-destructive, documented, and ready for squash merge.
 
 ## 2. When to Activate
+
 - Prior to pushing a branch or opening a pull request to `develop`.
 - Conducting pre-merge review on an open PR.
 - Performing final synchronization and verification before merging.
 
 ## 3. Required Verification Suite
+
 Before approving or opening a PR, the following commands must be executed and succeed with code 0:
+
 ```bash
 python3 Community-Work-Management-v1.5/validation/validate_v1_5.py
 pnpm typegen:check
@@ -28,6 +32,7 @@ git diff --check
 ```
 
 ## 4. Step-by-Step Review Process
+
 1. **Branch Hygiene**:
    - Confirm branch name matches convention (`feat/*`, `chore/*`, `fix/*`).
    - Confirm target branch is `develop` (never `main` directly).
@@ -46,6 +51,7 @@ git diff --check
    - List what was done, test evidence, and open user actions.
 
 ## 5. Validation Checklist
+
 - [ ] Working tree clean.
 - [ ] All 7 baseline verification checks pass with exit code 0.
 - [ ] No extraneous files or secrets committed.
@@ -53,6 +59,7 @@ git diff --check
 - [ ] Do not auto-merge PR.
 
 ## 6. Prohibited Actions
+
 - Never force-push or reset hard.
 - Never auto-merge pull requests.
 - Never claim tests passed without executing them.

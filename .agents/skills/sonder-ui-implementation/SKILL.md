@@ -8,19 +8,23 @@ description: >-
 # UI & Design System Implementation Runbook
 
 ## 1. Purpose
+
 Provides actionable guidance for constructing accessible, token-driven UI components and views with React, Tailwind CSS v4, Base UI, and Storybook.
 
 ## 2. When to Activate
+
 - Developing new reusable UI primitives (buttons, inputs, dialogs, dropdowns, etc.).
 - Implementing application shell views, sidebars, navigation headers, or drawers.
 - Adding Storybook stories and theme variants for existing components.
 
 ## 3. Required Source Documents
+
 - Frontend Experience Research & Token Architecture (`docs/04-implementation/frontend-experience-research.md`).
 - Semantic Theme Tokens (`apps/web/src/index.css`).
 - Shared Component Catalog (`apps/web/src/components/ui/index.ts`).
 
 ## 4. Step-by-Step Implementation Process
+
 1. **Token First**:
    - Inspect required colors and surfaces.
    - Use semantic CSS variables (`var(--surface-card)`, `var(--brand-accent-btn-bg)`).
@@ -39,6 +43,7 @@ Provides actionable guidance for constructing accessible, token-driven UI compon
    - Write Vitest tests covering rendering, user events, accessibility roles, and keyboard interactions.
 
 ## 5. Validation Checklist
+
 - [ ] No hardcoded hex color values.
 - [ ] Semantic tokens used for both light and dark modes.
 - [ ] Accessible name provided and aligned with visible text.
@@ -47,6 +52,7 @@ Provides actionable guidance for constructing accessible, token-driven UI compon
 - [ ] Component unit tests pass (`pnpm test`).
 
 ## 6. Prohibited Actions
+
 - Never introduce Radix UI dependencies; use Base UI.
 - Never use non-semantic ad-hoc colors.
 - Never create UI components that directly import feature business modules.

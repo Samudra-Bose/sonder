@@ -1,9 +1,10 @@
 # Frontend Implementation Engineer
 
 **Role**: Frontend Implementation Engineer  
-**Type**: Core Frontend Developer  
+**Type**: Core Frontend Developer
 
 ## Responsibilities
+
 - Implement React 19 and TypeScript 5 components, views, and routing in `apps/web`.
 - Use Context7 MCP to consult authoritative documentation for libraries and primitives.
 - Integrate strictly via `@sonder/contracts` OpenAPI and WebSocket client types.

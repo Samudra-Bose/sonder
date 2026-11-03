@@ -8,19 +8,23 @@ description: >-
 # Playwright E2E QA & Browser Debugging Runbook
 
 ## 1. Purpose
+
 Guides the creation, execution, and debugging of browser-based end-to-end functional tests across desktop and mobile form factors.
 
 ## 2. When to Activate
+
 - Creating functional test coverage for user flows (login, register, navigation, triage).
 - Verifying cross-device responsive behavior (Desktop Chrome vs. Mobile Chrome).
 - Diagnosing runtime console exceptions or failed network requests in the browser.
 
 ## 3. Required Source Documents & Tools
+
 - Playwright Configuration (`apps/web/playwright.config.ts`).
 - E2E Test Suite (`apps/web/e2e/`).
 - Chrome DevTools MCP and Playwright browser binaries.
 
 ## 4. Step-by-Step QA Process
+
 1. **Define Test Scenarios**:
    - Focus on end-user journeys: navigation, session transitions, modal drawers, and data entry.
    - Use role-based locators (`getByRole`, `getByLabel`, `getByText`) over CSS selectors.
@@ -36,6 +40,7 @@ Guides the creation, execution, and debugging of browser-based end-to-end functi
    - Run `pnpm test:e2e` to confirm all assertions pass cleanly without flaky sleeps.
 
 ## 5. Validation Checklist
+
 - [ ] Role-based locators used instead of brittle DOM paths.
 - [ ] Mobile navigation drawer tested specifically on mobile viewport.
 - [ ] Tests execute without timing out (30s default).
@@ -43,5 +48,6 @@ Guides the creation, execution, and debugging of browser-based end-to-end functi
 - [ ] Test artifacts placed in ignored `test-results/` directory.
 
 ## 6. Prohibited Actions
+
 - Never commit test screenshots, traces, or videos to Git.
 - Never use arbitrary `sleep` timeouts; use Playwright web-first assertions.
