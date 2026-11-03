@@ -7,6 +7,10 @@ dist/
 build/
 .vite/
 .output/
+storybook-static/
+.artifacts/
+.lighthouseci/
+test-results/
 
 # Testing & Coverage
 coverage/

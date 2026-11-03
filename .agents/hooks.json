@@ -1,0 +1,25 @@
+{
+  "safety-guard": {
+    "PreToolUse": [
+      {
+        "matcher": "run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./.agents/hooks/scripts/pre-command-check.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  },
+  "session-reminder": {
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "./.agents/hooks/scripts/session-reminder.sh",
+        "timeout": 5
+      }
+    ]
+  }
+}

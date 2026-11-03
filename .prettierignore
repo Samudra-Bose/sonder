@@ -1,0 +1,13 @@
+dist
+node_modules
+.artifacts
+test-results
+coverage
+storybook-static
+Community-Work-Management-v1.5/
+Community-Work-Management-Master-Specification-v1.5.0.md
+openapi-0.3.20-draft.yaml
+packages/contracts/src/api-types.ts
+packages/contracts/src/ws-events-types.ts
+packages/contracts/src/ws-protocol-types.ts
+pnpm-lock.yaml

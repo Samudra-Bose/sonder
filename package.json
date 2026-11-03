@@ -10,9 +10,25 @@
   "scripts": {
     "build": "pnpm -r --filter=!sonder run build",
     "test": "pnpm -r run test",
+    "test:e2e": "pnpm --filter @sonder/web test:e2e",
+    "storybook": "pnpm --filter @sonder/web storybook",
+    "build-storybook": "pnpm --filter @sonder/web build-storybook",
+    "lhci:mobile": "lhci autorun",
+    "knip": "knip",
+    "depcruise": "depcruise apps/web/src packages/contracts/src",
+    "analyze": "pnpm --filter @sonder/web analyze",
+    "renovate:validate": "renovate-config-validator .github/renovate.json",
+    "format:check": "prettier --check .",
     "typecheck": "pnpm -r run typecheck",
     "typegen": "pnpm --filter @sonder/contracts typegen",
     "typegen:check": "pnpm --filter @sonder/contracts typegen:check",
     "validate:docs": "python3 Community-Work-Management-v1.5/validation/validate_v1_5.py"
+  },
+  "devDependencies": {
+    "@lhci/cli": "^0.15.1",
+    "dependency-cruiser": "^18.7.1",
+    "knip": "^6.44.1",
+    "prettier": "^3.9.10",
+    "typescript": "5.7.3"
   }
 }
