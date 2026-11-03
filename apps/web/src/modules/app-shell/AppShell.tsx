@@ -5,6 +5,7 @@ import { ApiProblemError } from "@/lib/api-client";
 import { useKeyboardShortcut } from "@/lib/keyboard";
 import { WorkspaceProvider } from "@/modules/workspace";
 import { OmnibarProvider, OmnibarModal } from "@/modules/omnibar";
+import { TaskPeekDrawer } from "@/modules/tasks";
 import { AppHeader } from "./AppHeader";
 import { AppSidebar } from "./AppSidebar";
 import { MobileNavigation } from "./MobileNavigation";
@@ -139,6 +140,9 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
             <MainContent>
               {children ?? <Outlet />}
             </MainContent>
+
+            {/* Task Peek Drawer (Desktop right-docked panel / Mobile bottom sheet) */}
+            <TaskPeekDrawer />
           </div>
 
           {/* Mobile Navigation Drawer & Bottom Bar */}

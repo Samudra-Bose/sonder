@@ -103,7 +103,7 @@ export function processRawTasks(
 
     // Classify into temporal group
     const group = classifyTemporalGroup(raw.dueDate, raw.statusCategory, referenceDate);
-    // If null (terminal task like DONE/CANCELLED or beyond 7-day upcoming horizon), exclude from active triage
+    // If null (terminal task like DONE/CANCELED or beyond 7-day upcoming horizon), exclude from active triage
     if (!group) {
       continue;
     }

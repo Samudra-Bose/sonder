@@ -13,7 +13,7 @@ describe("Badge component - Dual Indicator Standard", () => {
     { status: "IN_PROGRESS", label: "In Progress", iconTestId: "status-icon-IN_PROGRESS" },
     { status: "IN_REVIEW", label: "In Review", iconTestId: "status-icon-IN_REVIEW" },
     { status: "DONE", label: "Done", iconTestId: "status-icon-DONE" },
-    { status: "CANCELLED", label: "Cancelled", iconTestId: "status-icon-CANCELLED" },
+    { status: "CANCELED", label: "Canceled", iconTestId: "status-icon-CANCELED" },
   ];
 
   statuses.forEach(({ status, label, iconTestId }) => {
@@ -30,6 +30,12 @@ describe("Badge component - Dual Indicator Standard", () => {
       expect(screen.getByText(label)).toBeInTheDocument();
       expect(screen.getByTestId(iconTestId)).toBeInTheDocument();
     });
+  });
+
+  it("normalizes legacy CANCELLED variant at boundary to CANCELED icon and styling", () => {
+    render(<Badge variant={"status-CANCELLED" as any}>Cancelled</Badge>);
+    expect(screen.getByText("Cancelled")).toBeInTheDocument();
+    expect(screen.getByTestId("status-icon-CANCELED")).toBeInTheDocument();
   });
 
   const priorities: Array<{ priority: TaskPriority; label: string; iconTestId: string }> = [

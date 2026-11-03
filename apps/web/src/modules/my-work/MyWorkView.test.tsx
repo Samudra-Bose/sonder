@@ -146,14 +146,14 @@ describe("MyWorkView Component (VS-02E)", () => {
       expect(within(taskAlex1).getByLabelText("Personal Workspace")).toBeInTheDocument();
     });
 
-    it("strictly excludes terminal tasks (DONE and CANCELLED) from all active temporal groups", async () => {
+    it("strictly excludes terminal tasks (DONE and CANCELED) from all active temporal groups", async () => {
       renderMyWorkView();
 
       await waitFor(() => {
         expect(screen.getByTestId("my-work-task-ENG-101")).toBeInTheDocument();
       });
 
-      // In mock data: ENG-099 is DONE, GALA-190 is CANCELLED
+      // In mock data: ENG-099 is DONE, GALA-190 is CANCELED
       expect(screen.queryByTestId("my-work-task-ENG-099")).not.toBeInTheDocument();
       expect(screen.queryByText("ENG-099")).not.toBeInTheDocument();
       expect(screen.queryByTestId("my-work-task-GALA-190")).not.toBeInTheDocument();

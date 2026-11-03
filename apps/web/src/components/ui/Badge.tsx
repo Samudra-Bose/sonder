@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type TaskStatus = "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE" | "CANCELED" | "CANCELLED";
+export type TaskStatus = "BACKLOG" | "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE" | "CANCELED";
 export type TaskPriority = "URGENT" | "HIGH" | "MEDIUM" | "LOW" | "NONE";
 export type BadgeVariant =
   | "default"
@@ -36,6 +36,11 @@ const statusConfig: Record<
   TaskStatus,
   { styles: string; icon: React.ReactElement }
 > = {
+  BACKLOG: {
+    styles:
+      "bg-[var(--surface-muted)] border-[var(--border-subtle)] text-[var(--text-secondary)]",
+    icon: <CircleDashed className="h-3 w-3 shrink-0" aria-hidden="true" data-testid="status-icon-BACKLOG" />,
+  },
   TODO: {
     // #F1F5F9 / #CBD5E1 / #334155 (Light) | #1E293B / #334155 / #E2E8F0 (Dark)
     styles:
@@ -65,12 +70,6 @@ const statusConfig: Record<
     styles:
       "bg-[var(--status-cancelled-bg)] border-[var(--status-cancelled-border)] text-[var(--status-cancelled-text)]",
     icon: <XCircle className="h-3 w-3 shrink-0" aria-hidden="true" data-testid="status-icon-CANCELED" />,
-  },
-  CANCELLED: {
-    // #FEF2F2 / #FECACA / #B91C1C (Light) | #450A0A / #991B1B / #FCA5A5 (Dark)
-    styles:
-      "bg-[var(--status-cancelled-bg)] border-[var(--status-cancelled-border)] text-[var(--status-cancelled-text)]",
-    icon: <XCircle className="h-3 w-3 shrink-0" aria-hidden="true" data-testid="status-icon-CANCELLED" />,
   },
 };
 
@@ -125,10 +124,16 @@ export const Badge: React.FC<BadgeProps> = ({
   let styleClasses = genericStyles.default;
   let resolvedIcon: React.ReactNode = icon;
 
-  // Resolve status config
-  let activeStatus: TaskStatus | undefined = status;
-  if (!activeStatus && variant?.startsWith("status-")) {
-    activeStatus = variant.replace("status-", "") as TaskStatus;
+  // Resolve status config (with legacy "CANCELLED" normalization at display boundary)
+  let rawStatus = status as string | undefined;
+  if (!rawStatus && variant?.startsWith("status-")) {
+    rawStatus = variant.replace("status-", "");
+  }
+  let activeStatus: TaskStatus | undefined;
+  if (rawStatus === "CANCELLED" || rawStatus === "CANCELED") {
+    activeStatus = "CANCELED";
+  } else if (rawStatus && rawStatus in statusConfig) {
+    activeStatus = rawStatus as TaskStatus;
   }
 
   // Resolve priority config
