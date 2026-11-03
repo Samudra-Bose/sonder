@@ -42,8 +42,5 @@ module.exports = {
     exclude: {
       path: ["node_modules", "dist", "storybook-static", ".lighthouseci", "test-results"],
     },
-    tsConfig: {
-      fileName: "./apps/web/tsconfig.json",
-    },
   },
 };
