@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "./.agents/hooks/scripts/pre-command-check.sh",
+            "command": "bash ./hooks/scripts/pre-command-check.sh",
             "timeout": 5
           }
         ]
@@ -17,7 +17,7 @@
     "PreInvocation": [
       {
         "type": "command",
-        "command": "./.agents/hooks/scripts/session-reminder.sh",
+        "command": "bash ./hooks/scripts/session-reminder.sh",
         "timeout": 5
       }
     ]
