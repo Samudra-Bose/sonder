@@ -1,6 +1,10 @@
 import { http, HttpResponse, delay } from "msw";
 import type { ApiSchema } from "@sonder/contracts";
-import { mockTasksCommunity1, MOCK_COMMUNITY_1_ID } from "../data/my-work";
+import {
+  mockTasksCommunity1,
+  MOCK_COMMUNITY_1_ID,
+  MOCK_COMMUNITY_2_ID,
+} from "../data/my-work";
 import type { MyWorkQueryResult } from "@/modules/my-work/types";
 
 let myWorkDelayMs = 0;
@@ -44,7 +48,11 @@ export const myWorkHandlers = [
     const communityId = (params.communityId ?? "").toString();
 
     // Reject unknown community with 404 problem
-    if (communityId !== MOCK_COMMUNITY_1_ID && !communityId.startsWith("comm-")) {
+    if (
+      communityId !== MOCK_COMMUNITY_1_ID &&
+      communityId !== MOCK_COMMUNITY_2_ID &&
+      !communityId.startsWith("comm-")
+    ) {
       const notFoundProblem: ApiSchema<"Problem"> = {
         type: "https://errors.sonder.platform/community-not-found",
         title: "Community Not Found",
@@ -58,7 +66,7 @@ export const myWorkHandlers = [
       });
     }
 
-    if (myWorkEmpty) {
+    if (communityId === MOCK_COMMUNITY_2_ID || myWorkEmpty) {
       const emptyResult: MyWorkQueryResult = {
         items: [],
         total: 0,
