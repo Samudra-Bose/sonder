@@ -6,9 +6,9 @@ import { ThemeProvider } from "./lib/theme.js";
 import {
   AppShell,
   DashboardView,
-  MyWorkPlaceholderView,
   InboxPlaceholderView,
 } from "./modules/app-shell/index.js";
+import { MyWorkView } from "./modules/my-work/index.js";
 
 export { AppShell };
 
@@ -63,7 +63,7 @@ export function App({ initialEntries }: AppProps = {}): React.JSX.Element {
                 }
               >
                 <Route index element={<DashboardView />} />
-                <Route path="my-work" element={<MyWorkPlaceholderView />} />
+                <Route path="my-work" element={<MyWorkView />} />
                 <Route path="inbox" element={<InboxPlaceholderView />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />

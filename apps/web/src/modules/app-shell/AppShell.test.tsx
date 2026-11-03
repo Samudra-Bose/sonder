@@ -203,7 +203,7 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
         expect(screen.getByRole("heading", { name: "My Work" })).toBeInTheDocument();
       });
 
-      expect(screen.getByText(/activated in stage vs-02e/i)).toBeInTheDocument();
+      expect(screen.getByTestId("my-work-view")).toBeInTheDocument();
       expect(myWorkLink).toHaveClass("text-[var(--brand-accent-text)]");
     });
 
