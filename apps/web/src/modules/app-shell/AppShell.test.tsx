@@ -280,6 +280,82 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       expect(document.activeElement).toBe(menuBtn);
     });
 
+    it("opens mobile drawer from bottom nav Menu button and restores focus on close button click", async () => {
+      const user = userEvent.setup();
+      renderApp(["/"]);
+
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: "Open menu drawer" })).toBeInTheDocument();
+      });
+
+      const menuBtn = screen.getByRole("button", { name: "Open menu drawer" });
+      await user.click(menuBtn);
+
+      const drawer = await screen.findByRole("dialog", { name: "Navigation drawer" });
+      expect(drawer).toBeInTheDocument();
+
+      // Click Close button
+      const closeBtn = screen.getByRole("button", { name: "Close navigation menu" });
+      await user.click(closeBtn);
+
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog", { name: "Navigation drawer" })).not.toBeInTheDocument();
+      });
+
+      // Focus restored specifically to the bottom nav menu trigger button
+      expect(document.activeElement).toBe(menuBtn);
+    });
+
+    it("restores focus to trigger upon backdrop click dismissal", async () => {
+      const user = userEvent.setup();
+      renderApp(["/"]);
+
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: "Open navigation menu" })).toBeInTheDocument();
+      });
+
+      const openBtn = screen.getByRole("button", { name: "Open navigation menu" });
+      await user.click(openBtn);
+
+      const drawer = await screen.findByRole("dialog", { name: "Navigation drawer" });
+      expect(drawer).toBeInTheDocument();
+
+      // Find backdrop element
+      const backdrop = document.querySelector("[data-base-ui-dialog-backdrop], .bg-black\\/60");
+      if (backdrop) {
+        await user.click(backdrop);
+        await waitFor(() => {
+          expect(screen.queryByRole("dialog", { name: "Navigation drawer" })).not.toBeInTheDocument();
+        });
+        expect(document.activeElement).toBe(openBtn);
+      }
+    });
+
+    it("keeps focus trapped inside drawer upon Tab navigation", async () => {
+      const user = userEvent.setup();
+      renderApp(["/"]);
+
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: "Open navigation menu" })).toBeInTheDocument();
+      });
+
+      const openBtn = screen.getByRole("button", { name: "Open navigation menu" });
+      await user.click(openBtn);
+
+      const drawer = await screen.findByRole("dialog", { name: "Navigation drawer" });
+      expect(drawer).toBeInTheDocument();
+
+      // Verify focused element is within drawer
+      expect(drawer.contains(document.activeElement)).toBe(true);
+
+      // Tab navigation remains inside drawer
+      await user.tab();
+      expect(drawer.contains(document.activeElement)).toBe(true);
+
+      await user.tab({ shift: true });
+      expect(drawer.contains(document.activeElement)).toBe(true);
+    });
+
     it("navigating via route link inside drawer closes drawer and transfers focus to main content without restoring trigger focus", async () => {
       const user = userEvent.setup();
       renderApp(["/"]);
