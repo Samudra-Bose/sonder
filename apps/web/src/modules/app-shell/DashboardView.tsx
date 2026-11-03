@@ -83,8 +83,8 @@ export function DashboardView(): React.JSX.Element {
             </CardDescription>
           </CardHeader>
           <CardContent className="text-xs text-[var(--text-secondary)] space-y-1.5">
-            <p>• Community-unique task identifier prefixes and workspace-scoped milestones.</p>
-            <p>• Multi-owner governance with role-based workspace permissions.</p>
+            <p>• Community-unique task identifier prefixes for clear task keys.</p>
+            <p>• Role-based workspace permissions: Owner, Coordinator, Member, and Viewer.</p>
             <p>• Interactive workspace switcher planned for stage VS-02C.</p>
           </CardContent>
         </Card>

@@ -84,6 +84,12 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       expect(screen.queryByText(/Workspace Overview/i)).not.toBeInTheDocument();
       expect(screen.queryByText(/VS-02B Shell Active/i)).not.toBeInTheDocument();
       expect(screen.queryByText(/OpenAPI 0.3.20-draft/i)).not.toBeInTheDocument();
+
+      // Verify factual workspace copy adhering strictly to canonical model
+      expect(screen.getByText(/Community-unique task identifier prefixes for clear task keys/i)).toBeInTheDocument();
+      expect(screen.getByText(/Role-based workspace permissions: Owner, Coordinator, Member, and Viewer/i)).toBeInTheDocument();
+      expect(screen.queryByText(/workspace-scoped milestones/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/multi-owner governance/i)).not.toBeInTheDocument();
     });
 
     it("renders centralized primary navigation items and workspace extension point without fake previews", async () => {
