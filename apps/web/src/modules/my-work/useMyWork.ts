@@ -61,11 +61,13 @@ export function useMyWork({
         csrfToken,
       });
     },
-    enabled: !!currentCommunityId,
+    enabled: !!currentCommunityId && !!csrfToken,
     staleTime: 1000 * 60 * 2,
   });
 
-  const rawTasks = useMemo(() => data?.items ?? [], [data]);
+  const rawTasks = useMemo(() => {
+    return data?.items ?? [];
+  }, [data]);
 
   // Process raw tasks: strict de-duplication by task ID, relationship derivation, workspace enrichment
   const allProcessedTasks = useMemo(() => {

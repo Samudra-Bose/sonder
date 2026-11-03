@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { ApiSchema } from "@sonder/contracts";
 import { apiRequest, ApiProblemError } from "../../lib/api-client.js";
 
@@ -18,6 +19,13 @@ export interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+  let queryClient: ReturnType<typeof useQueryClient> | null = null;
+  try {
+    queryClient = useQueryClient();
+  } catch {
+    queryClient = null;
+  }
+
   const [user, setUser] = useState<ApiSchema<"MeContextDto">["user"] | null>(null);
   const [communities, setCommunities] = useState<ApiSchema<"MeContextDto">["communities"]>([]);
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
@@ -277,6 +285,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
         setCommunities([]);
         setStatus("unauthenticated");
         setCsrfToken(null);
+
+        // Security & Privacy: Purge client caches and persisted active context upon confirmed logout
+        try {
+          window.localStorage.removeItem("sonder-active-community-id");
+        } catch {
+          // Ignore storage sandbox restriction
+        }
+        if (queryClient) {
+          queryClient.clear();
+        }
 
         // Fetch fresh pre-auth CSRF token for subsequent sign-in (best effort)
         try {

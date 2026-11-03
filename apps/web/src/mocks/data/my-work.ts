@@ -4,7 +4,7 @@ export const MOCK_USER_ID = "018f98a2-3f12-7890-a123-456789abcdef"; // Alex Morg
 export const OTHER_USER_ID = "018f98a2-3f12-7890-c999-456789abcdef"; // Jordan Lee
 
 export const MOCK_COMMUNITY_1_ID = "018f98a2-3f12-7890-b123-456789abcdef"; // Sonder Community
-export const MOCK_COMMUNITY_2_ID = "018f98a2-3f12-7890-b456-456789abcdef"; // Regional Arts Guild
+export const MOCK_COMMUNITY_2_ID = "018f98a2-3f12-7890-b999-456789abcdef"; // Regional Arts Guild
 
 export const WS_PERSONAL_ALEX_ID = "018f98a2-3f12-7890-w001-456789abcdef";
 export const WS_SHARED_ENG_ID = "018f98a2-3f12-7890-w002-456789abcdef";

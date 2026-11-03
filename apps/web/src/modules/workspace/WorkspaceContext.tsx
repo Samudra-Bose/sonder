@@ -169,9 +169,9 @@ export function WorkspaceProvider({
           // Ignore
         }
 
-        // Invalidate and refetch query cache for new community
+        // Invalidate and refetch query cache across community-scoped data
         await queryClient.invalidateQueries({
-          queryKey: ["communities", communityId, "workspaces"],
+          queryKey: ["communities"],
         });
       } catch (err) {
         const msg =
