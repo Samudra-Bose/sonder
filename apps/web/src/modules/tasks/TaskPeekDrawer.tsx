@@ -185,7 +185,7 @@ export function TaskPeekDrawer({
   const renderHeader = () => (
     <div className="flex items-center justify-between p-4 border-b border-[var(--border-subtle)] bg-[var(--surface-card)] flex-shrink-0">
       <div className="flex items-center space-x-2 min-w-0">
-        {targetWorkspace && (
+        {!isNotFound && !error && targetWorkspace && (
           <div className="flex items-center space-x-1.5 flex-shrink-0">
             <WorkspaceBadge
               prefix={targetWorkspace.keyPrefix}

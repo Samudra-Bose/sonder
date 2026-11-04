@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, waitFor, within, act } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MemoryRouter, Routes, Route, useLocation } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import React from "react";
 import { AuthContext, type AuthContextType } from "@/modules/auth/AuthContext.js";
 import { WorkspaceProvider } from "@/modules/workspace/WorkspaceContext.js";
