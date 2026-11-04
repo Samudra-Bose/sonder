@@ -42,36 +42,39 @@ function renderWorkspaceSwitcher({
   isCollapsed = false,
   initialWorkspaceId = null,
   initialCommunityId = "018f98a2-3f12-7890-b123-456789abcdef",
-}: {
-  authOverrides?: Partial<AuthContextType>;
-  isCollapsed?: boolean;
-  initialWorkspaceId?: string | null;
-  initialCommunityId?: string | null;
-} = {}) {
-  const queryClient = new QueryClient({
+  queryClient = new QueryClient({
     defaultOptions: {
       queries: {
         retry: false,
       },
     },
-  });
-
+  }),
+}: {
+  authOverrides?: Partial<AuthContextType>;
+  isCollapsed?: boolean;
+  initialWorkspaceId?: string | null;
+  initialCommunityId?: string | null;
+  queryClient?: QueryClient;
+} = {}) {
   const authValue = createMockAuth(authOverrides);
 
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <AuthContext.Provider value={authValue}>
-        <WorkspaceProvider
-          initialCommunityId={initialCommunityId}
-          initialWorkspaceId={initialWorkspaceId}
-        >
-          <MemoryRouter>
-            <WorkspaceSwitcher isCollapsed={isCollapsed} />
-          </MemoryRouter>
-        </WorkspaceProvider>
-      </AuthContext.Provider>
-    </QueryClientProvider>
-  );
+  return {
+    queryClient,
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <AuthContext.Provider value={authValue}>
+          <WorkspaceProvider
+            initialCommunityId={initialCommunityId}
+            initialWorkspaceId={initialWorkspaceId}
+          >
+            <MemoryRouter>
+              <WorkspaceSwitcher isCollapsed={isCollapsed} />
+            </MemoryRouter>
+          </WorkspaceProvider>
+        </AuthContext.Provider>
+      </QueryClientProvider>
+    ),
+  };
 }
 
 function renderMobileSelector({
