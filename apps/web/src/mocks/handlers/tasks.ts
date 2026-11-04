@@ -620,22 +620,22 @@ export const taskHandlers = [
 
       // Optimistic concurrency check via baseFieldRevisions
       const baseRevisions = body.baseFieldRevisions ?? {};
-      const conflictedFields: string[] = [];
+      const conflictingFields: string[] = [];
 
       for (const [field, clientRev] of Object.entries(baseRevisions)) {
         const serverRev = task.fieldRevisions[field] ?? 1;
         if (clientRev < serverRev) {
-          conflictedFields.push(field);
+          conflictingFields.push(field);
         }
       }
 
-      if (conflictedFields.length > 0) {
+      if (conflictingFields.length > 0) {
         return HttpResponse.json(
           {
             type: "https://errors.sonder.platform/task-concurrency-conflict",
             title: "Task Concurrency Conflict",
             status: 409,
-            detail: `Field(s) '${conflictedFields.join(", ")}' have been modified concurrently.`,
+            detail: `Field(s) '${conflictingFields.join(", ")}' have been modified concurrently.`,
             code: "FIELD_REVISION_CONFLICT",
             conflictingFields,
             currentFieldRevisions: task.fieldRevisions,

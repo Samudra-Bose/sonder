@@ -36,6 +36,16 @@ import { useTaskPeekDrawer } from "./useTaskPeekDrawer.js";
 import { useResolveTaskKey } from "./useResolveTaskKey.js";
 import { useTask } from "./useTask.js";
 import type { TaskDto } from "./types.js";
+import {
+  InlineTitleEditor,
+  InlineDescriptionEditor,
+  InlineStatusEditor,
+  InlinePriorityEditor,
+  InlineDateEditor,
+  InlineEstimateEditor,
+  InlineAssigneeEditor,
+  InlineLabelsEditor,
+} from "./InlineFieldEditors.js";
 
 export interface TaskPeekDrawerProps {
   /** Optional override to force desktop or mobile presentation in tests */
@@ -351,26 +361,29 @@ export function TaskPeekDrawer({
 
         {/* Task Title & Primary Identity */}
         <div className="space-y-2">
-          <h2
-            ref={titleRef}
-            id="task-peek-drawer-title"
-            tabIndex={-1}
-            className="text-lg sm:text-xl font-bold text-[var(--text-primary)] leading-snug outline-none"
-          >
-            {task.title}
-          </h2>
+          <InlineTitleEditor
+            task={task}
+            communityId={currentCommunityId}
+            workspaceId={task.workspaceId}
+            isArchived={isArchived}
+            titleRef={titleRef}
+          />
 
           {/* Status & Priority Badge Strip */}
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            <Badge status={task.statusCategory} size="sm">
-              {task.statusCategory.replace("_", " ")}
-            </Badge>
+            <InlineStatusEditor
+              task={task}
+              communityId={currentCommunityId}
+              workspaceId={task.workspaceId}
+              isArchived={isArchived}
+            />
 
-            {task.priority !== "NONE" && (
-              <Badge priority={task.priority} size="sm">
-                {task.priority}
-              </Badge>
-            )}
+            <InlinePriorityEditor
+              task={task}
+              communityId={currentCommunityId}
+              workspaceId={task.workspaceId}
+              isArchived={isArchived}
+            />
 
             <Badge variant="outline" size="sm" className="text-[10px] font-mono uppercase">
               {task.itemType}
@@ -388,81 +401,42 @@ export function TaskPeekDrawer({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
             {/* Assignees */}
-            <div className="space-y-1">
-              <span className="text-[11px] font-medium text-[var(--text-muted)] flex items-center gap-1">
-                <User className="h-3 w-3" /> Assignee
-              </span>
-              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                {task.assigneeAssignments && task.assigneeAssignments.length > 0 ? (
-                  task.assigneeAssignments.map((assignee) => (
-                    <div
-                      key={assignee.userId}
-                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[var(--surface-card)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-medium text-xs shadow-2xs"
-                    >
-                      <Avatar
-                        name={assignee.user.displayName}
-                        src={assignee.user.avatarUrl ?? undefined}
-                        size="xs"
-                      />
-                      <span>{assignee.user.displayName}</span>
-                    </div>
-                  ))
-                ) : (
-                  <span className="text-[var(--text-muted)] italic">Unassigned</span>
-                )}
-              </div>
-            </div>
+            <InlineAssigneeEditor
+              task={task}
+              communityId={currentCommunityId}
+              workspaceId={task.workspaceId}
+              isArchived={isArchived}
+            />
 
             {/* Due Date */}
-            <div className="space-y-1">
-              <span className="text-[11px] font-medium text-[var(--text-muted)] flex items-center gap-1">
-                <Calendar className="h-3 w-3" /> Due Date
-              </span>
-              <div className="pt-0.5">
-                {task.dueDate ? (
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-[var(--text-primary)]">
-                      {task.dueDate}
-                    </span>
-                    <span className="text-[11px] text-[var(--text-muted)]">
-                      ({formatDueDisplay(task.dueDate, referenceDate)})
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-[var(--text-muted)] italic">No due date</span>
-                )}
-              </div>
-            </div>
+            <InlineDateEditor
+              task={task}
+              field="dueDate"
+              label="Due Date"
+              communityId={currentCommunityId}
+              workspaceId={task.workspaceId}
+              referenceDate={referenceDate}
+              isArchived={isArchived}
+            />
 
             {/* Start Date */}
-            <div className="space-y-1">
-              <span className="text-[11px] font-medium text-[var(--text-muted)] flex items-center gap-1">
-                <Calendar className="h-3 w-3" /> Start Date
-              </span>
-              <div className="pt-0.5">
-                {task.startDate ? (
-                  <span className="font-medium text-[var(--text-primary)]">{task.startDate}</span>
-                ) : (
-                  <span className="text-[var(--text-muted)] italic">None</span>
-                )}
-              </div>
-            </div>
+            <InlineDateEditor
+              task={task}
+              field="startDate"
+              label="Start Date"
+              communityId={currentCommunityId}
+              workspaceId={task.workspaceId}
+              referenceDate={referenceDate}
+              isArchived={isArchived}
+            />
 
             {/* Estimate Points */}
-            <div className="space-y-1">
-              <span className="text-[11px] font-medium text-[var(--text-muted)] flex items-center gap-1">
-                <BarChart2 className="h-3 w-3" /> Estimate
-              </span>
-              <div className="pt-0.5">
-                {task.estimatePoints !== null && task.estimatePoints !== undefined ? (
-                  <span className="font-semibold text-[var(--text-primary)]">
-                    {task.estimatePoints} {task.estimatePoints === 1 ? "point" : "points"}
-                  </span>
-                ) : (
-                  <span className="text-[var(--text-muted)] italic">None</span>
-                )}
-              </div>
-            </div>
+            <InlineEstimateEditor
+              task={task}
+              communityId={currentCommunityId}
+              workspaceId={task.workspaceId}
+              isArchived={isArchived}
+            />
 
             {/* Parent Task / Hierarchy Indicator */}
             {task.parentTaskId && (
@@ -482,39 +456,20 @@ export function TaskPeekDrawer({
         </div>
 
         {/* Labels Section */}
-        <div className="space-y-2">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1.5">
-            <Tag className="h-3.5 w-3.5" /> Labels
-          </h3>
-          <div className="flex flex-wrap gap-1.5">
-            {task.labelIds && task.labelIds.length > 0 ? (
-              task.labelIds.map((labelId) => (
-                <span
-                  key={labelId}
-                  className="px-2 py-0.5 rounded-md text-xs font-medium bg-[var(--surface-muted)] text-[var(--text-secondary)] border border-[var(--border-subtle)]"
-                >
-                  {labelId.replace(/^018f98a2-lbl-/, "")}
-                </span>
-              ))
-            ) : (
-              <span className="text-xs text-[var(--text-muted)] italic">No labels</span>
-            )}
-          </div>
-        </div>
+        <InlineLabelsEditor
+          task={task}
+          communityId={currentCommunityId}
+          workspaceId={task.workspaceId}
+          isArchived={isArchived}
+        />
 
         {/* Description Section */}
-        <div className="space-y-2">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
-            Description
-          </h3>
-          <div className="p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-card)] text-sm text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap min-h-[90px]">
-            {task.description && task.description.trim().length > 0 ? (
-              task.description
-            ) : (
-              <span className="text-[var(--text-muted)] italic">No description provided.</span>
-            )}
-          </div>
-        </div>
+        <InlineDescriptionEditor
+          task={task}
+          communityId={currentCommunityId}
+          workspaceId={task.workspaceId}
+          isArchived={isArchived}
+        />
 
         {/* Audit & Provenance Footer */}
         <div className="pt-4 border-t border-[var(--border-subtle)] text-[11px] text-[var(--text-muted)] flex flex-wrap justify-between gap-2">

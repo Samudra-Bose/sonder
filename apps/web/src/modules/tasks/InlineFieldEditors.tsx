@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   Pencil,
-  Check,
   X,
   Plus,
   AlertCircle,
@@ -18,7 +17,7 @@ import { ApiProblemError } from "@/lib/api-client.js";
 import { getTaskById } from "./api.js";
 import { useUpdateTask } from "./useUpdateTask.js";
 import type { TaskDto, TaskStatusCategory, TaskPriority } from "./types.js";
-import { MOCK_USER_ID, OTHER_USER_ID } from "@/mocks/data/tasks.js";
+import { MOCK_USER_ID, OTHER_USER_ID } from "@/mocks/data/my-work.js";
 
 // ============================================================================
 // Conflict Alert Component
@@ -97,7 +96,7 @@ export function ConflictAlert({
 
 export interface InlineTitleEditorProps {
   task: TaskDto;
-  communityId: string;
+  communityId: string | null;
   workspaceId: string;
   isArchived?: boolean;
   titleRef?: React.Ref<HTMLHeadingElement>;
@@ -159,7 +158,7 @@ export function InlineTitleEditor({
 
     try {
       await updateMutation.mutateAsync({
-        communityId,
+        communityId: communityId ?? "",
         workspaceId,
         taskId: task.id,
         data: {
@@ -193,9 +192,9 @@ export function InlineTitleEditor({
     setIsOverwriting(true);
     setError(null);
     try {
-      const latestTask = await getTaskById({ communityId, workspaceId, taskId: task.id });
+      const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
       await updateMutation.mutateAsync({
-        communityId,
+        communityId: communityId ?? "",
         workspaceId,
         taskId: task.id,
         data: {
@@ -209,7 +208,7 @@ export function InlineTitleEditor({
       setIsEditing(false);
     } catch (err) {
       if (err instanceof ApiProblemError && err.status === 409) {
-        const latestTask = await getTaskById({ communityId, workspaceId, taskId: task.id });
+        const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
         setConflict({
           fieldName: "title",
           serverValue: latestTask.title,
@@ -337,7 +336,7 @@ export function InlineTitleEditor({
 
 export interface InlineDescriptionEditorProps {
   task: TaskDto;
-  communityId: string;
+  communityId: string | null;
   workspaceId: string;
   isArchived?: boolean;
 }
@@ -383,7 +382,7 @@ export function InlineDescriptionEditor({
 
     try {
       await updateMutation.mutateAsync({
-        communityId,
+        communityId: communityId ?? "",
         workspaceId,
         taskId: task.id,
         data: {
@@ -417,10 +416,10 @@ export function InlineDescriptionEditor({
     setIsOverwriting(true);
     setError(null);
     try {
-      const latestTask = await getTaskById({ communityId, workspaceId, taskId: task.id });
+      const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
       const valueToSend = conflict.attemptedValue.trim() ? conflict.attemptedValue : null;
       await updateMutation.mutateAsync({
-        communityId,
+        communityId: communityId ?? "",
         workspaceId,
         taskId: task.id,
         data: {
@@ -434,7 +433,7 @@ export function InlineDescriptionEditor({
       setIsEditing(false);
     } catch (err) {
       if (err instanceof ApiProblemError && err.status === 409) {
-        const latestTask = await getTaskById({ communityId, workspaceId, taskId: task.id });
+        const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
         setConflict({
           fieldName: "description",
           serverValue: latestTask.description ?? "",
@@ -552,7 +551,7 @@ export function InlineDescriptionEditor({
 
 export interface InlineStatusEditorProps {
   task: TaskDto;
-  communityId: string;
+  communityId: string | null;
   workspaceId: string;
   isArchived?: boolean;
 }
@@ -604,7 +603,7 @@ export function InlineStatusEditor({
     setError(null);
     try {
       await updateMutation.mutateAsync({
-        communityId,
+        communityId: communityId ?? "",
         workspaceId,
         taskId: task.id,
         data: {
@@ -638,9 +637,9 @@ export function InlineStatusEditor({
     setIsOverwriting(true);
     setError(null);
     try {
-      const latestTask = await getTaskById({ communityId, workspaceId, taskId: task.id });
+      const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
       await updateMutation.mutateAsync({
-        communityId,
+        communityId: communityId ?? "",
         workspaceId,
         taskId: task.id,
         data: {
@@ -654,7 +653,7 @@ export function InlineStatusEditor({
       setIsEditing(false);
     } catch (err) {
       if (err instanceof ApiProblemError && err.status === 409) {
-        const latestTask = await getTaskById({ communityId, workspaceId, taskId: task.id });
+        const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
         setConflict({
           fieldName: "statusCategory",
           serverValue: latestTask.statusCategory,
@@ -761,7 +760,7 @@ export function InlineStatusEditor({
 
 export interface InlinePriorityEditorProps {
   task: TaskDto;
-  communityId: string;
+  communityId: string | null;
   workspaceId: string;
   isArchived?: boolean;
 }
@@ -813,7 +812,7 @@ export function InlinePriorityEditor({
     setError(null);
     try {
       await updateMutation.mutateAsync({
-        communityId,
+        communityId: communityId ?? "",
         workspaceId,
         taskId: task.id,
         data: {
@@ -847,9 +846,9 @@ export function InlinePriorityEditor({
     setIsOverwriting(true);
     setError(null);
     try {
-      const latestTask = await getTaskById({ communityId, workspaceId, taskId: task.id });
+      const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
       await updateMutation.mutateAsync({
-        communityId,
+        communityId: communityId ?? "",
         workspaceId,
         taskId: task.id,
         data: {
@@ -863,7 +862,7 @@ export function InlinePriorityEditor({
       setIsEditing(false);
     } catch (err) {
       if (err instanceof ApiProblemError && err.status === 409) {
-        const latestTask = await getTaskById({ communityId, workspaceId, taskId: task.id });
+        const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
         setConflict({
           fieldName: "priority",
           serverValue: latestTask.priority,
@@ -976,7 +975,7 @@ export interface InlineDateEditorProps {
   task: TaskDto;
   field: "startDate" | "dueDate";
   label: string;
-  communityId: string;
+  communityId: string | null;
   workspaceId: string;
   referenceDate: string;
   isArchived?: boolean;
@@ -1028,7 +1027,7 @@ export function InlineDateEditor({
 
     try {
       await updateMutation.mutateAsync({
-        communityId,
+        communityId: communityId ?? "",
         workspaceId,
         taskId: task.id,
         data: {
@@ -1062,10 +1061,10 @@ export function InlineDateEditor({
     setIsOverwriting(true);
     setError(null);
     try {
-      const latestTask = await getTaskById({ communityId, workspaceId, taskId: task.id });
+      const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
       const finalValue = conflict.attemptedValue.trim() ? conflict.attemptedValue : null;
       await updateMutation.mutateAsync({
-        communityId,
+        communityId: communityId ?? "",
         workspaceId,
         taskId: task.id,
         data: {
@@ -1079,7 +1078,7 @@ export function InlineDateEditor({
       setIsEditing(false);
     } catch (err) {
       if (err instanceof ApiProblemError && err.status === 409) {
-        const latestTask = await getTaskById({ communityId, workspaceId, taskId: task.id });
+        const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
         setConflict({
           fieldName: field,
           serverValue: String(latestTask[field] ?? ""),
@@ -1209,7 +1208,7 @@ export function InlineDateEditor({
 
 export interface InlineEstimateEditorProps {
   task: TaskDto;
-  communityId: string;
+  communityId: string | null;
   workspaceId: string;
   isArchived?: boolean;
 }
@@ -1285,7 +1284,7 @@ export function InlineEstimateEditor({
 
     try {
       await updateMutation.mutateAsync({
-        communityId,
+        communityId: communityId ?? "",
         workspaceId,
         taskId: task.id,
         data: {
@@ -1319,10 +1318,10 @@ export function InlineEstimateEditor({
     setIsOverwriting(true);
     setError(null);
     try {
-      const latestTask = await getTaskById({ communityId, workspaceId, taskId: task.id });
+      const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
       const numValue = conflict.attemptedValue.trim() ? Number(conflict.attemptedValue) : null;
       await updateMutation.mutateAsync({
-        communityId,
+        communityId: communityId ?? "",
         workspaceId,
         taskId: task.id,
         data: {
@@ -1336,7 +1335,7 @@ export function InlineEstimateEditor({
       setIsEditing(false);
     } catch (err) {
       if (err instanceof ApiProblemError && err.status === 409) {
-        const latestTask = await getTaskById({ communityId, workspaceId, taskId: task.id });
+        const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
         setConflict({
           fieldName: "estimatePoints",
           serverValue: String(latestTask.estimatePoints ?? ""),
@@ -1470,7 +1469,7 @@ export function InlineEstimateEditor({
 
 export interface InlineAssigneeEditorProps {
   task: TaskDto;
-  communityId: string;
+  communityId: string | null;
   workspaceId: string;
   isArchived?: boolean;
 }
@@ -1525,7 +1524,7 @@ export function InlineAssigneeEditor({
     setError(null);
     try {
       await updateMutation.mutateAsync({
-        communityId,
+        communityId: communityId ?? "",
         workspaceId,
         taskId: task.id,
         data: {
@@ -1559,10 +1558,10 @@ export function InlineAssigneeEditor({
     setIsOverwriting(true);
     setError(null);
     try {
-      const latestTask = await getTaskById({ communityId, workspaceId, taskId: task.id });
+      const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
       const idsToSave = conflict.attemptedValue.split(", ").filter(Boolean);
       await updateMutation.mutateAsync({
-        communityId,
+        communityId: communityId ?? "",
         workspaceId,
         taskId: task.id,
         data: {
@@ -1576,7 +1575,7 @@ export function InlineAssigneeEditor({
       setIsEditing(false);
     } catch (err) {
       if (err instanceof ApiProblemError && err.status === 409) {
-        const latestTask = await getTaskById({ communityId, workspaceId, taskId: task.id });
+        const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
         setConflict({
           fieldName: "assigneeIds",
           serverValue: (latestTask.assigneeIds ?? []).join(", "),
@@ -1713,7 +1712,7 @@ export function InlineAssigneeEditor({
 
 export interface InlineLabelsEditorProps {
   task: TaskDto;
-  communityId: string;
+  communityId: string | null;
   workspaceId: string;
   isArchived?: boolean;
 }
@@ -1772,7 +1771,7 @@ export function InlineLabelsEditor({
     setError(null);
     try {
       await updateMutation.mutateAsync({
-        communityId,
+        communityId: communityId ?? "",
         workspaceId,
         taskId: task.id,
         data: {
@@ -1806,10 +1805,10 @@ export function InlineLabelsEditor({
     setIsOverwriting(true);
     setError(null);
     try {
-      const latestTask = await getTaskById({ communityId, workspaceId, taskId: task.id });
+      const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
       const labelsToSave = conflict.attemptedValue.split(", ").filter(Boolean);
       await updateMutation.mutateAsync({
-        communityId,
+        communityId: communityId ?? "",
         workspaceId,
         taskId: task.id,
         data: {
@@ -1823,7 +1822,7 @@ export function InlineLabelsEditor({
       setIsEditing(false);
     } catch (err) {
       if (err instanceof ApiProblemError && err.status === 409) {
-        const latestTask = await getTaskById({ communityId, workspaceId, taskId: task.id });
+        const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
         setConflict({
           fieldName: "labelIds",
           serverValue: (latestTask.labelIds ?? []).join(", "),
