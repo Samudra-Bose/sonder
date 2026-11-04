@@ -650,6 +650,13 @@ export const taskHandlers = [
             code: "FIELD_REVISION_CONFLICT",
             conflictingFields,
             currentFieldRevisions: task.fieldRevisions,
+            conflictDetails: conflictingFields.map((field) => ({
+              fieldPath: field,
+              clientValue: (body as Record<string, unknown>)[field],
+              serverValue: (task as Record<string, unknown>)[field],
+              baseRevision: baseRevisions[field] ?? 0,
+              currentRevision: task.fieldRevisions[field] ?? 1,
+            })),
             serverTask: task,
           },
           {

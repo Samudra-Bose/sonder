@@ -90,6 +90,38 @@ export function ConflictAlert({
   );
 }
 
+export function extractServerConflictValue(
+  err: ApiProblemError,
+  fieldName: string,
+  fallback: unknown
+): string {
+  const problem = (err.problem || {}) as Record<string, unknown>;
+  if (Array.isArray(problem.conflictDetails)) {
+    const detail = (problem.conflictDetails as any[]).find((d: any) => d.fieldPath === fieldName);
+    if (detail && detail.serverValue !== undefined) {
+      if (Array.isArray(detail.serverValue)) {
+        return detail.serverValue.join(", ");
+      }
+      return typeof detail.serverValue === "string"
+        ? detail.serverValue
+        : JSON.stringify(detail.serverValue);
+    }
+  }
+  if (problem.serverTask && typeof problem.serverTask === "object") {
+    const val = (problem.serverTask as Record<string, unknown>)[fieldName];
+    if (val !== undefined) {
+      if (Array.isArray(val)) {
+        return val.join(", ");
+      }
+      return typeof val === "string" ? val : JSON.stringify(val);
+    }
+  }
+  if (Array.isArray(fallback)) {
+    return fallback.join(", ");
+  }
+  return typeof fallback === "string" ? fallback : JSON.stringify(fallback);
+}
+
 // ============================================================================
 // 1. Inline Title Editor
 // ============================================================================
