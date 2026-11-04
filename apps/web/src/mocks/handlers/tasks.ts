@@ -59,6 +59,25 @@ export function resetTaskMockState(): void {
 }
 
 /**
+ * Simulates a concurrent update from another client or background job,
+ * advancing the field revision so any subsequent patch using the previous revision
+ * triggers HTTP 409 Concurrency Conflict.
+ */
+export function simulateConcurrentFieldUpdate(
+  taskId: string,
+  field: string,
+  newValue: unknown
+): void {
+  const task = currentMockTasks.find((t) => t.id === taskId);
+  if (task) {
+    (task as Record<string, unknown>)[field] = newValue;
+    task.fieldRevisions[field] = (task.fieldRevisions[field] ?? 1) + 1;
+    task.version += 1;
+    task.updatedAt = new Date().toISOString();
+  }
+}
+
+/**
  * Calculates current hierarchy depth for a task.
  * 0 = Root Task, 1 = Subtask, 2 = Nested Subtask
  */
@@ -469,8 +488,69 @@ export const taskHandlers = [
 
       const body = (await request.json()) as UpdateTaskRequest;
 
-      // Permission check: if caller is viewer or has restricted permissions
-      if (task.effectivePermissions.canUpdateStatus === false && body.statusCategory) {
+      // Validate baseFieldRevisions required
+      if (!body.baseFieldRevisions || Object.keys(body.baseFieldRevisions).length === 0) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/validation-error",
+            title: "Validation Error",
+            status: 400,
+            detail: "baseFieldRevisions is required for optimistic concurrency.",
+            code: "BASE_FIELD_REVISIONS_REQUIRED",
+          },
+          {
+            status: 400,
+            headers: { "Content-Type": "application/problem+json" },
+          }
+        );
+      }
+
+      // Validations: minLength 1 for title
+      if (body.title !== undefined && (!body.title.trim() || body.title.length > 500)) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/validation-error",
+            title: "Validation Error",
+            status: 400,
+            detail: "Title must be between 1 and 500 characters.",
+            code: "VALIDATION_FAILED",
+          },
+          { status: 400, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      // Validation: estimatePoints non-negative
+      if (body.estimatePoints !== null && body.estimatePoints !== undefined && body.estimatePoints < 0) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/validation-error",
+            title: "Validation Error",
+            status: 400,
+            detail: "Estimate points must be a non-negative number.",
+            code: "VALIDATION_FAILED",
+          },
+          { status: 400, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      // Permission checks: separately authorize every supplied field
+      if (
+        (body.title !== undefined || body.description !== undefined) &&
+        task.effectivePermissions.canEditTitleDescription === false
+      ) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/forbidden",
+            title: "Permission Denied",
+            status: 403,
+            detail: "You do not have permission to edit title or description in this workspace.",
+            code: "PERMISSION_DENIED",
+          },
+          { status: 403, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      if (body.statusCategory !== undefined && task.effectivePermissions.canUpdateStatus === false) {
         return HttpResponse.json(
           {
             type: "https://errors.sonder.platform/forbidden",
@@ -479,10 +559,62 @@ export const taskHandlers = [
             detail: "You do not have permission to update task status in this workspace.",
             code: "PERMISSION_DENIED",
           },
+          { status: 403, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      if (
+        (body.priority !== undefined || body.startDate !== undefined || body.dueDate !== undefined) &&
+        task.effectivePermissions.canEditDatesPriority === false
+      ) {
+        return HttpResponse.json(
           {
+            type: "https://errors.sonder.platform/forbidden",
+            title: "Permission Denied",
             status: 403,
-            headers: { "Content-Type": "application/problem+json" },
-          }
+            detail: "You do not have permission to edit dates or priority in this workspace.",
+            code: "PERMISSION_DENIED",
+          },
+          { status: 403, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      if (body.estimatePoints !== undefined && task.effectivePermissions.canEditEstimate === false) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/forbidden",
+            title: "Permission Denied",
+            status: 403,
+            detail: "You do not have permission to edit estimate in this workspace.",
+            code: "PERMISSION_DENIED",
+          },
+          { status: 403, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      if (body.assigneeIds !== undefined && task.effectivePermissions.canAssign === false) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/forbidden",
+            title: "Permission Denied",
+            status: 403,
+            detail: "You do not have permission to modify task assignees in this workspace.",
+            code: "PERMISSION_DENIED",
+          },
+          { status: 403, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      if (body.labelIds !== undefined && task.effectivePermissions.canEditCustomFieldsLinks === false) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/forbidden",
+            title: "Permission Denied",
+            status: 403,
+            detail: "You do not have permission to modify labels in this workspace.",
+            code: "PERMISSION_DENIED",
+          },
+          { status: 403, headers: { "Content-Type": "application/problem+json" } }
         );
       }
 
@@ -504,8 +636,9 @@ export const taskHandlers = [
             title: "Task Concurrency Conflict",
             status: 409,
             detail: `Field(s) '${conflictedFields.join(", ")}' have been modified concurrently.`,
-            code: "TASK_FIELD_CONCURRENCY_CONFLICT",
-            conflictedFields,
+            code: "FIELD_REVISION_CONFLICT",
+            conflictingFields,
+            currentFieldRevisions: task.fieldRevisions,
             serverTask: task,
           },
           {
