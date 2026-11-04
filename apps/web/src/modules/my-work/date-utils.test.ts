@@ -102,6 +102,30 @@ describe("My Work Date Utilities (VS-02E)", () => {
     });
   });
 
+  describe("getDefaultReferenceDate", () => {
+    it("formats today's calendar date as YYYY-MM-DD", () => {
+      const dateStr = getDefaultReferenceDate();
+      expect(isValidDateString(dateStr)).toBe(true);
+    });
+
+    it("respects IANA timezones across UTC midnight boundaries", () => {
+      // 2026-11-04 at 02:00:00 UTC
+      const utcMidnightCross = new Date("2026-11-04T02:00:00Z");
+
+      // In America/Los_Angeles (UTC-8), it is still 2026-11-03 at 18:00
+      const laDate = getDefaultReferenceDate(utcMidnightCross, "America/Los_Angeles");
+      expect(laDate).toBe("2026-11-03");
+
+      // In Asia/Tokyo (UTC+9), it is already 2026-11-04 at 11:00
+      const tokyoDate = getDefaultReferenceDate(utcMidnightCross, "Asia/Tokyo");
+      expect(tokyoDate).toBe("2026-11-04");
+
+      // In UTC, it is 2026-11-04
+      const utcDate = getDefaultReferenceDate(utcMidnightCross, "UTC");
+      expect(utcDate).toBe("2026-11-04");
+    });
+  });
+
   describe("formatDueDisplay", () => {
     const referenceDate = "2026-11-03";
 
