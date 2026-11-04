@@ -149,6 +149,7 @@ export function WorkspaceProvider({
     async (communityId: string): Promise<void> => {
       if (communityId === currentCommunityId) return;
 
+      const previousCommunityId = currentCommunityId;
       setIsSwitchingCommunity(true);
       setCommunitySwitchError(null);
 
@@ -169,9 +170,16 @@ export function WorkspaceProvider({
           // Ignore
         }
 
-        // Invalidate and refetch query cache across community-scoped data
+        // Security & Privacy: Evict previous community-scoped data from in-memory query cache
+        if (previousCommunityId) {
+          queryClient.removeQueries({
+            queryKey: ["communities", previousCommunityId],
+          });
+        }
+
+        // Invalidate and fetch fresh data for the newly activated community
         await queryClient.invalidateQueries({
-          queryKey: ["communities"],
+          queryKey: ["communities", communityId],
         });
       } catch (err) {
         const msg =
