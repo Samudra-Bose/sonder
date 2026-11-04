@@ -633,10 +633,46 @@ export const taskHandlers = [
       const baseRevisions = body.baseFieldRevisions ?? {};
       const conflictingFields: string[] = [];
 
+      // 1. Identify all fields being modified in this patch
+      const editableFields = [
+        "title",
+        "description",
+        "itemType",
+        "statusCategory",
+        "priority",
+        "startDate",
+        "dueDate",
+        "estimatePoints",
+        "assigneeIds",
+        "labelIds",
+        "milestoneId",
+        "assigneeEditableFieldGroups",
+      ] as const;
+
+      const changedFields = editableFields.filter(
+        (field) => (body as Record<string, unknown>)[field] !== undefined
+      );
+
+      // 2. Every changed field MUST have a matching base revision
+      for (const field of changedFields) {
+        const clientRev = baseRevisions[field];
+        const serverRev = task.fieldRevisions[field] ?? 1;
+
+        // If base revision is missing or doesn't match server revision exactly (stale or future), conflict
+        if (clientRev === undefined || clientRev !== serverRev) {
+          if (!conflictingFields.includes(field)) {
+            conflictingFields.push(field);
+          }
+        }
+      }
+
+      // 3. Any additional field revision supplied in baseFieldRevisions must also match server revision
       for (const [field, clientRev] of Object.entries(baseRevisions)) {
         const serverRev = task.fieldRevisions[field] ?? 1;
-        if (clientRev < serverRev) {
-          conflictingFields.push(field);
+        if (clientRev !== serverRev) {
+          if (!conflictingFields.includes(field)) {
+            conflictingFields.push(field);
+          }
         }
       }
 
@@ -646,18 +682,17 @@ export const taskHandlers = [
             type: "https://errors.sonder.platform/task-concurrency-conflict",
             title: "Task Concurrency Conflict",
             status: 409,
-            detail: `Field(s) '${conflictingFields.join(", ")}' have been modified concurrently.`,
+            detail: `Field(s) '${conflictingFields.join(", ")}' have been modified concurrently or have invalid base revisions.`,
             code: "FIELD_REVISION_CONFLICT",
             conflictingFields,
             currentFieldRevisions: task.fieldRevisions,
             conflictDetails: conflictingFields.map((field) => ({
               fieldPath: field,
-              clientValue: (body as Record<string, unknown>)[field],
-              serverValue: (task as Record<string, unknown>)[field],
+              clientValue: (body as Record<string, unknown>)[field] ?? null,
+              serverValue: (task as Record<string, unknown>)[field] ?? null,
               baseRevision: baseRevisions[field] ?? 0,
               currentRevision: task.fieldRevisions[field] ?? 1,
             })),
-            serverTask: task,
           },
           {
             status: 409,
