@@ -93,11 +93,11 @@ describe("My Work Date Utilities (VS-02E)", () => {
       expect(classifyTemporalGroup("   ", "TODO", referenceDate)).toBe("unscheduled");
     });
 
-    it("excludes terminal tasks (DONE and CANCELLED) even if overdue or due today", () => {
+    it("excludes terminal tasks (DONE and CANCELED) even if overdue or due today", () => {
       expect(classifyTemporalGroup("2026-11-01", "DONE", referenceDate)).toBeNull();
       expect(classifyTemporalGroup("2026-11-03", "DONE", referenceDate)).toBeNull();
-      expect(classifyTemporalGroup("2026-11-05", "CANCELLED", referenceDate)).toBeNull();
-      expect(classifyTemporalGroup(null, "CANCELLED", referenceDate)).toBeNull();
+      expect(classifyTemporalGroup("2026-11-05", "CANCELED", referenceDate)).toBeNull();
+      expect(classifyTemporalGroup(null, "CANCELED", referenceDate)).toBeNull();
       expect(classifyTemporalGroup(null, "DONE", referenceDate)).toBeNull();
     });
   });
