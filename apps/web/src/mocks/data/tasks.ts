@@ -7,7 +7,6 @@ import {
   WS_PERSONAL_ALEX_ID,
   WS_SHARED_ENG_ID,
   WS_SHARED_GALA_ID,
-  WS_SHARED_OUT_ID,
 } from "./my-work.js";
 
 export type TaskDto = ApiSchema<"TaskDto">;
@@ -349,7 +348,7 @@ export const initialMockTasks: TaskDto[] = [
     taskKey: "ENG-050",
     title: "Architecture boundary and dependency-cruiser report",
     description: "Read-only architecture evaluation for external security auditor.",
-    itemType: "RESEARCH",
+    itemType: "TASK",
     statusCategory: "TODO",
     priority: "MEDIUM",
     assigneeIds: [OTHER_USER_ID],

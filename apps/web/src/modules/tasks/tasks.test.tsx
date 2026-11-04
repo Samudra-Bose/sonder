@@ -152,9 +152,10 @@ describe("VS-03 Stage 1: Task Data Access Layer & Mock Infrastructure", () => {
       expect(result).toBeDefined();
       expect(result.currentKey).toBe("ENG-101");
       expect(result.taskId).toBe(ENG_101_TASK_ID);
-      expect(result.canonicalWorkspaceId).toBe(WS_SHARED_ENG_ID);
+      expect(result.workspaceId).toBe(WS_SHARED_ENG_ID);
+      expect(result.requestedKey).toBe("ENG-101");
       expect(result.resolvedFromAlias).toBe(false);
-      expect(result.aliasOriginKey).toBeNull();
+      expect(result.lifecycleState).toBe("ACTIVE");
     });
 
     it("resolves historical alias with redirection metadata", async () => {
@@ -167,9 +168,10 @@ describe("VS-03 Stage 1: Task Data Access Layer & Mock Infrastructure", () => {
       expect(result).toBeDefined();
       expect(result.currentKey).toBe("ENG-101");
       expect(result.taskId).toBe(ENG_101_TASK_ID);
-      expect(result.canonicalWorkspaceId).toBe(WS_SHARED_ENG_ID);
+      expect(result.workspaceId).toBe(WS_SHARED_ENG_ID);
+      expect(result.requestedKey).toBe("ENG-OLD-1");
       expect(result.resolvedFromAlias).toBe(true);
-      expect(result.aliasOriginKey).toBe("ENG-OLD-1");
+      expect(result.lifecycleState).toBe("ACTIVE");
     });
 
     it("returns 404 Problem Details for unknown key indistinguishable from unauthorized key", async () => {
