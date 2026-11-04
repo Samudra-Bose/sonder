@@ -171,6 +171,7 @@ export function InlineTitleEditor({
       setIsEditing(false);
       setConflict(null);
     } catch (err) {
+      console.error("DEBUG CATCH IN TITLE EDITOR:", err);
       if (err instanceof ApiProblemError && err.status === 409) {
         setConflict({
           fieldName: "title",
@@ -207,6 +208,7 @@ export function InlineTitleEditor({
       setConflict(null);
       setIsEditing(false);
     } catch (err) {
+      console.error("DEBUG CATCH IN TITLE EDITOR:", err);
       if (err instanceof ApiProblemError && err.status === 409) {
         const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
         setConflict({
@@ -395,6 +397,7 @@ export function InlineDescriptionEditor({
       setIsEditing(false);
       setConflict(null);
     } catch (err) {
+      console.error("DEBUG CATCH IN TITLE EDITOR:", err);
       if (err instanceof ApiProblemError && err.status === 409) {
         setConflict({
           fieldName: "description",
@@ -432,6 +435,7 @@ export function InlineDescriptionEditor({
       setConflict(null);
       setIsEditing(false);
     } catch (err) {
+      console.error("DEBUG CATCH IN TITLE EDITOR:", err);
       if (err instanceof ApiProblemError && err.status === 409) {
         const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
         setConflict({
@@ -616,6 +620,7 @@ export function InlineStatusEditor({
       setIsEditing(false);
       setConflict(null);
     } catch (err) {
+      console.error("DEBUG CATCH IN TITLE EDITOR:", err);
       if (err instanceof ApiProblemError && err.status === 409) {
         setConflict({
           fieldName: "statusCategory",
@@ -652,6 +657,7 @@ export function InlineStatusEditor({
       setConflict(null);
       setIsEditing(false);
     } catch (err) {
+      console.error("DEBUG CATCH IN TITLE EDITOR:", err);
       if (err instanceof ApiProblemError && err.status === 409) {
         const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
         setConflict({
@@ -825,6 +831,7 @@ export function InlinePriorityEditor({
       setIsEditing(false);
       setConflict(null);
     } catch (err) {
+      console.error("DEBUG CATCH IN TITLE EDITOR:", err);
       if (err instanceof ApiProblemError && err.status === 409) {
         setConflict({
           fieldName: "priority",
@@ -861,6 +868,7 @@ export function InlinePriorityEditor({
       setConflict(null);
       setIsEditing(false);
     } catch (err) {
+      console.error("DEBUG CATCH IN TITLE EDITOR:", err);
       if (err instanceof ApiProblemError && err.status === 409) {
         const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
         setConflict({
@@ -1040,6 +1048,7 @@ export function InlineDateEditor({
       setIsEditing(false);
       setConflict(null);
     } catch (err) {
+      console.error("DEBUG CATCH IN TITLE EDITOR:", err);
       if (err instanceof ApiProblemError && err.status === 409) {
         setConflict({
           fieldName: field,
@@ -1077,6 +1086,7 @@ export function InlineDateEditor({
       setConflict(null);
       setIsEditing(false);
     } catch (err) {
+      console.error("DEBUG CATCH IN TITLE EDITOR:", err);
       if (err instanceof ApiProblemError && err.status === 409) {
         const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
         setConflict({
@@ -1297,6 +1307,7 @@ export function InlineEstimateEditor({
       setIsEditing(false);
       setConflict(null);
     } catch (err) {
+      console.error("DEBUG CATCH IN TITLE EDITOR:", err);
       if (err instanceof ApiProblemError && err.status === 409) {
         setConflict({
           fieldName: "estimatePoints",
@@ -1334,6 +1345,7 @@ export function InlineEstimateEditor({
       setConflict(null);
       setIsEditing(false);
     } catch (err) {
+      console.error("DEBUG CATCH IN TITLE EDITOR:", err);
       if (err instanceof ApiProblemError && err.status === 409) {
         const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
         setConflict({
@@ -1537,6 +1549,7 @@ export function InlineAssigneeEditor({
       setIsEditing(false);
       setConflict(null);
     } catch (err) {
+      console.error("DEBUG CATCH IN TITLE EDITOR:", err);
       if (err instanceof ApiProblemError && err.status === 409) {
         setConflict({
           fieldName: "assigneeIds",
@@ -1574,6 +1587,7 @@ export function InlineAssigneeEditor({
       setConflict(null);
       setIsEditing(false);
     } catch (err) {
+      console.error("DEBUG CATCH IN TITLE EDITOR:", err);
       if (err instanceof ApiProblemError && err.status === 409) {
         const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
         setConflict({
@@ -1784,6 +1798,7 @@ export function InlineLabelsEditor({
       setIsEditing(false);
       setConflict(null);
     } catch (err) {
+      console.error("DEBUG CATCH IN TITLE EDITOR:", err);
       if (err instanceof ApiProblemError && err.status === 409) {
         setConflict({
           fieldName: "labelIds",
@@ -1821,6 +1836,7 @@ export function InlineLabelsEditor({
       setConflict(null);
       setIsEditing(false);
     } catch (err) {
+      console.error("DEBUG CATCH IN TITLE EDITOR:", err);
       if (err instanceof ApiProblemError && err.status === 409) {
         const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
         setConflict({

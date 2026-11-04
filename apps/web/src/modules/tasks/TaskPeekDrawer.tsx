@@ -159,6 +159,13 @@ export function TaskPeekDrawer({
     (!resolveQuery.data && !resolveQuery.isError && isOpen);
 
   const error = resolveQuery.error || taskQuery.error;
+  if (error) {
+    console.error("DEBUG ERROR IN DRAWER:", {
+      resolveError: resolveQuery.error?.message,
+      taskError: taskQuery.error?.message,
+      isNotFound,
+    });
+  }
   const isNotFound =
     (resolveQuery.error instanceof ApiProblemError && resolveQuery.error.status === 404) ||
     (taskQuery.error instanceof ApiProblemError && taskQuery.error.status === 404);
