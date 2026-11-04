@@ -11,18 +11,46 @@ import {
   useResolveTaskKey,
   useCreateTask,
   useUpdateTask,
-  taskKeys,
-} from "./index";
+  taskQueryKey,
+  taskKeyResolutionQueryKey,
+} from "./index.js";
+import { AuthContext, type AuthContextType } from "@/modules/auth/AuthContext.js";
 import {
+  MOCK_COMMUNITY_1_ID,
   WS_SHARED_ENG_ID,
   WS_PERSONAL_ALEX_ID,
   MOCK_USER_ID,
-} from "@/mocks/data/my-work";
+} from "@/mocks/data/my-work.js";
 import {
   resetTaskMockState,
-  setMockTasksError,
-} from "@/mocks/handlers/tasks";
-import { ApiError } from "@/lib/api-client";
+} from "@/mocks/handlers/tasks.js";
+import { defaultMockCommunities } from "@/mocks/handlers/auth.js";
+import { ApiProblemError } from "@/lib/api-client.js";
+
+const TEST_CSRF_TOKEN = "mock-csrf-token-xyz";
+
+const testAuthUser = {
+  id: MOCK_USER_ID,
+  displayName: "Alex Morgan",
+  email: "alex.morgan@example.org",
+  avatarUrl: null,
+};
+
+function createMockAuth(overrides?: Partial<AuthContextType>): AuthContextType {
+  return {
+    user: testAuthUser,
+    communities: defaultMockCommunities,
+    csrfToken: TEST_CSRF_TOKEN,
+    status: "authenticated",
+    error: null,
+    login: vi.fn(),
+    register: vi.fn(),
+    logout: vi.fn(),
+    refreshSession: vi.fn(),
+    clearError: vi.fn(),
+    ...overrides,
+  };
+}
 
 function createTestQueryClient() {
   return new QueryClient({
@@ -38,11 +66,14 @@ function createTestQueryClient() {
   });
 }
 
-function createWrapper(queryClient: QueryClient) {
-  return function QueryWrapper({ children }: { children: React.ReactNode }) {
+function createWrapper(queryClient: QueryClient, authOverrides?: Partial<AuthContextType>) {
+  const authValue = createMockAuth(authOverrides);
+  return function QueryAndAuthWrapper({ children }: { children: React.ReactNode }) {
     return (
       <QueryClientProvider client={queryClient}>
-        {children}
+        <AuthContext.Provider value={authValue}>
+          {children}
+        </AuthContext.Provider>
       </QueryClientProvider>
     );
   };
@@ -56,74 +87,107 @@ describe("VS-03 Stage 1: Task Data Access Layer & Mock Infrastructure", () => {
   describe("API Client: getTaskById", () => {
     it("fetches task by canonical ID with complete contract fields and effectivePermissions", async () => {
       const taskId = "018f98a2-3f12-7890-e123-456789abcdef"; // ENG-101
-      const task = await getTaskById(taskId);
+      const task = await getTaskById({
+        communityId: MOCK_COMMUNITY_1_ID,
+        workspaceId: WS_SHARED_ENG_ID,
+        taskId,
+      });
 
       expect(task).toBeDefined();
       expect(task.id).toBe(taskId);
-      expect(task.key).toBe("ENG-101");
+      expect(task.taskKey).toBe("ENG-101");
       expect(task.workspaceId).toBe(WS_SHARED_ENG_ID);
       expect(task.title).toBe("Implement OAuth 2.0 PKCE Authorization Flow");
-      expect(task.status).toBe("IN_PROGRESS");
+      expect(task.statusCategory).toBe("IN_PROGRESS");
       expect(task.priority).toBe("HIGH");
-      expect(task.subtaskDepth).toBe(0);
       expect(task.parentTaskId).toBeNull();
       expect(task.fieldRevisions).toBeDefined();
       expect(task.fieldRevisions.title).toBe(1);
-      expect(task.fieldRevisions.status).toBe(1);
+      expect(task.fieldRevisions.statusCategory).toBe(1);
 
       // Verify effectivePermissions
       expect(task.effectivePermissions).toBeDefined();
-      expect(task.effectivePermissions.canEdit).toBe(true);
-      expect(task.effectivePermissions.canDelete).toBe(true);
-      expect(task.effectivePermissions.canChangeStatus).toBe(true);
+      expect(task.effectivePermissions.canEditTitleDescription).toBe(true);
+      expect(task.effectivePermissions.canUpdateStatus).toBe(true);
+      expect(task.effectivePermissions.canManageSubtasks).toBe(true);
       expect(task.effectivePermissions.canComment).toBe(true);
       expect(task.effectivePermissions.canAssign).toBe(true);
     });
 
-    it("throws ApiError with 404 Problem Details when task ID is non-existent", async () => {
+    it("throws ApiProblemError with 404 Problem Details when task ID is non-existent", async () => {
       const missingId = "018f98a2-3f12-7890-ffff-000000000000";
-      await expect(getTaskById(missingId)).rejects.toThrow(ApiError);
+      await expect(
+        getTaskById({
+          communityId: MOCK_COMMUNITY_1_ID,
+          workspaceId: WS_SHARED_ENG_ID,
+          taskId: missingId,
+        })
+      ).rejects.toThrow(ApiProblemError);
+
       try {
-        await getTaskById(missingId);
+        await getTaskById({
+          communityId: MOCK_COMMUNITY_1_ID,
+          workspaceId: WS_SHARED_ENG_ID,
+          taskId: missingId,
+        });
       } catch (err) {
-        const apiError = err as ApiError;
-        expect(apiError.status).toBe(404);
-        expect(apiError.problem.title).toBe("Task Not Found");
+        const problem = (err as ApiProblemError).problem;
+        expect((err as ApiProblemError).status).toBe(404);
+        expect(problem.title).toBe("Task Not Found");
       }
     });
   });
 
   describe("API Client: resolveTaskKey", () => {
     it("resolves canonical active task key without redirection", async () => {
-      const result = await resolveTaskKey("ENG-101");
+      const result = await resolveTaskKey({
+        communityId: MOCK_COMMUNITY_1_ID,
+        workspaceId: WS_SHARED_ENG_ID,
+        taskKey: "ENG-101",
+      });
 
       expect(result).toBeDefined();
       expect(result.currentKey).toBe("ENG-101");
       expect(result.taskId).toBe("018f98a2-3f12-7890-e123-456789abcdef");
       expect(result.canonicalWorkspaceId).toBe(WS_SHARED_ENG_ID);
-      expect(result.wasRedirected).toBe(false);
-      expect(result.requestedKey).toBeUndefined();
+      expect(result.resolvedFromAlias).toBe(false);
+      expect(result.aliasOriginKey).toBeNull();
     });
 
     it("resolves historical alias with redirection metadata", async () => {
-      const result = await resolveTaskKey("ENG-OLD-1");
+      const result = await resolveTaskKey({
+        communityId: MOCK_COMMUNITY_1_ID,
+        workspaceId: WS_SHARED_ENG_ID,
+        taskKey: "ENG-OLD-1",
+      });
 
       expect(result).toBeDefined();
       expect(result.currentKey).toBe("ENG-101");
       expect(result.taskId).toBe("018f98a2-3f12-7890-e123-456789abcdef");
       expect(result.canonicalWorkspaceId).toBe(WS_SHARED_ENG_ID);
-      expect(result.wasRedirected).toBe(true);
-      expect(result.requestedKey).toBe("ENG-OLD-1");
+      expect(result.resolvedFromAlias).toBe(true);
+      expect(result.aliasOriginKey).toBe("ENG-OLD-1");
     });
 
     it("returns 404 Problem Details for unknown key indistinguishable from unauthorized key", async () => {
-      await expect(resolveTaskKey("NONEXISTENT-999")).rejects.toThrow(ApiError);
+      await expect(
+        resolveTaskKey({
+          communityId: MOCK_COMMUNITY_1_ID,
+          workspaceId: WS_SHARED_ENG_ID,
+          taskKey: "NONEXISTENT-999",
+        })
+      ).rejects.toThrow(ApiProblemError);
+
       try {
-        await resolveTaskKey("NONEXISTENT-999");
+        await resolveTaskKey({
+          communityId: MOCK_COMMUNITY_1_ID,
+          workspaceId: WS_SHARED_ENG_ID,
+          taskKey: "NONEXISTENT-999",
+        });
       } catch (err) {
-        const apiError = err as ApiError;
-        expect(apiError.status).toBe(404);
-        expect(apiError.problem.title).toBe("Task Not Found");
+        const problem = (err as ApiProblemError).problem;
+        expect((err as ApiProblemError).status).toBe(404);
+        expect(problem.title).toBe("Resource Not Found");
       }
     });
   });
@@ -131,53 +195,63 @@ describe("VS-03 Stage 1: Task Data Access Layer & Mock Infrastructure", () => {
   describe("API Client: createTask & Subtask Hierarchy", () => {
     it("creates root task with monotonic sequence key, default field revisions, and contract properties", async () => {
       const created = await createTask({
+        communityId: MOCK_COMMUNITY_1_ID,
         workspaceId: WS_SHARED_ENG_ID,
-        title: "Build Cache Purge Pipeline",
-        description: "Automated cache eviction workflow",
-        status: "TODO",
-        priority: "MEDIUM",
+        data: {
+          title: "Build Cache Purge Pipeline",
+          description: "Automated cache eviction workflow",
+          statusCategory: "TODO",
+          priority: "MEDIUM",
+        },
+        csrfToken: TEST_CSRF_TOKEN,
       });
 
       expect(created).toBeDefined();
       expect(created.id).toMatch(/^[0-9a-f-]{36}$/);
-      expect(created.key).toMatch(/^ENG-\d+$/);
+      expect(created.taskKey).toMatch(/^ENG-\d+$/);
       expect(created.title).toBe("Build Cache Purge Pipeline");
       expect(created.workspaceId).toBe(WS_SHARED_ENG_ID);
-      expect(created.status).toBe("TODO");
+      expect(created.statusCategory).toBe("TODO");
       expect(created.priority).toBe("MEDIUM");
       expect(created.parentTaskId).toBeNull();
-      expect(created.subtaskDepth).toBe(0);
       expect(created.fieldRevisions.title).toBe(1);
-      expect(created.fieldRevisions.status).toBe(1);
-      expect(created.effectivePermissions.canEdit).toBe(true);
+      expect(created.fieldRevisions.statusCategory).toBe(1);
+      expect(created.effectivePermissions.canEditTitleDescription).toBe(true);
     });
 
     it("creates a subtask at depth 1 under an existing root task", async () => {
       const parentId = "018f98a2-3f12-7890-e123-456789abcdef"; // ENG-101 (depth 0)
       const subtask = await createTask({
+        communityId: MOCK_COMMUNITY_1_ID,
         workspaceId: WS_SHARED_ENG_ID,
-        parentTaskId: parentId,
-        title: "Subtask 1A",
-        status: "TODO",
-        priority: "LOW",
+        data: {
+          parentTaskId: parentId,
+          title: "Subtask 1A",
+          statusCategory: "TODO",
+          priority: "LOW",
+        },
+        csrfToken: TEST_CSRF_TOKEN,
       });
 
       expect(subtask.parentTaskId).toBe(parentId);
-      expect(subtask.subtaskDepth).toBe(1);
+      expect(subtask.title).toBe("Subtask 1A");
     });
 
     it("creates a nested subtask at depth 2 in a workspace supporting depth 2", async () => {
       const depth1ParentId = "018f98a2-3f12-7890-e123-456789abcd04"; // ENG-104 (depth 1)
       const subtask = await createTask({
+        communityId: MOCK_COMMUNITY_1_ID,
         workspaceId: WS_SHARED_ENG_ID,
-        parentTaskId: depth1ParentId,
-        title: "Subtask Level 2",
-        status: "TODO",
-        priority: "LOW",
+        data: {
+          parentTaskId: depth1ParentId,
+          title: "Subtask Level 2",
+          statusCategory: "TODO",
+          priority: "LOW",
+        },
+        csrfToken: TEST_CSRF_TOKEN,
       });
 
       expect(subtask.parentTaskId).toBe(depth1ParentId);
-      expect(subtask.subtaskDepth).toBe(2);
     });
 
     it("rejects subtask exceeding maxSubtaskDepth with 400 Bad Request", async () => {
@@ -186,58 +260,67 @@ describe("VS-03 Stage 1: Task Data Access Layer & Mock Infrastructure", () => {
 
       await expect(
         createTask({
+          communityId: MOCK_COMMUNITY_1_ID,
           workspaceId: WS_SHARED_ENG_ID,
-          parentTaskId: depth2ParentId,
-          title: "Depth 3 Subtask (Should Fail)",
-          status: "TODO",
-          priority: "LOW",
+          data: {
+            parentTaskId: depth2ParentId,
+            title: "Depth 3 Subtask (Should Fail)",
+            statusCategory: "TODO",
+            priority: "LOW",
+          },
+          csrfToken: TEST_CSRF_TOKEN,
         })
-      ).rejects.toThrow(ApiError);
+      ).rejects.toThrow(ApiProblemError);
 
       try {
         await createTask({
+          communityId: MOCK_COMMUNITY_1_ID,
           workspaceId: WS_SHARED_ENG_ID,
-          parentTaskId: depth2ParentId,
-          title: "Depth 3 Subtask",
-          status: "TODO",
-          priority: "LOW",
+          data: {
+            parentTaskId: depth2ParentId,
+            title: "Depth 3 Subtask",
+            statusCategory: "TODO",
+            priority: "LOW",
+          },
+          csrfToken: TEST_CSRF_TOKEN,
         });
       } catch (err) {
-        const apiError = err as ApiError;
-        expect(apiError.status).toBe(400);
-        expect(apiError.problem.title).toBe("Subtask Depth Limit Exceeded");
+        const problem = (err as ApiProblemError).problem;
+        expect((err as ApiProblemError).status).toBe(400);
+        expect(problem.title).toBe("Subtask Depth Limit Exceeded");
       }
     });
 
     it("enforces maxSubtaskDepth of 1 in personal workspace", async () => {
-      // Create depth 1 subtask in personal workspace
-      const rootTask = await createTask({
-        workspaceId: WS_PERSONAL_ALEX_ID,
-        title: "Alex Root Task",
-        status: "TODO",
-        priority: "LOW",
-      });
-      expect(rootTask.subtaskDepth).toBe(0);
-
+      // Create depth 1 subtask under ALEX-1 (depth 0) in personal workspace
+      const alexRootId = "018f98a2-3f12-7890-e123-456789abcd01"; // ALEX-1 (depth 0)
       const depth1Subtask = await createTask({
+        communityId: MOCK_COMMUNITY_1_ID,
         workspaceId: WS_PERSONAL_ALEX_ID,
-        parentTaskId: rootTask.id,
-        title: "Alex Subtask Depth 1",
-        status: "TODO",
-        priority: "LOW",
+        data: {
+          parentTaskId: alexRootId,
+          title: "Alex Subtask Depth 1",
+          statusCategory: "TODO",
+          priority: "LOW",
+        },
+        csrfToken: TEST_CSRF_TOKEN,
       });
-      expect(depth1Subtask.subtaskDepth).toBe(1);
+      expect(depth1Subtask.parentTaskId).toBe(alexRootId);
 
       // Attempting depth 2 in personal workspace must fail (limit is 1)
       await expect(
         createTask({
+          communityId: MOCK_COMMUNITY_1_ID,
           workspaceId: WS_PERSONAL_ALEX_ID,
-          parentTaskId: depth1Subtask.id,
-          title: "Alex Subtask Depth 2 (Forbidden)",
-          status: "TODO",
-          priority: "LOW",
+          data: {
+            parentTaskId: depth1Subtask.id,
+            title: "Alex Subtask Depth 2 (Forbidden)",
+            statusCategory: "TODO",
+            priority: "LOW",
+          },
+          csrfToken: TEST_CSRF_TOKEN,
         })
-      ).rejects.toThrow(ApiError);
+      ).rejects.toThrow(ApiProblemError);
     });
   });
 
@@ -245,19 +328,25 @@ describe("VS-03 Stage 1: Task Data Access Layer & Mock Infrastructure", () => {
     it("updates task fields and increments field revisions", async () => {
       const taskId = "018f98a2-3f12-7890-e123-456789abcdef"; // ENG-101
 
-      const updated = await updateTask(taskId, {
-        title: "Updated Title PKCE",
-        status: "DONE",
-        baseFieldRevisions: {
-          title: 1,
-          status: 1,
+      const updated = await updateTask({
+        communityId: MOCK_COMMUNITY_1_ID,
+        workspaceId: WS_SHARED_ENG_ID,
+        taskId,
+        data: {
+          title: "Updated Title PKCE",
+          statusCategory: "DONE",
+          baseFieldRevisions: {
+            title: 1,
+            statusCategory: 1,
+          },
         },
+        csrfToken: TEST_CSRF_TOKEN,
       });
 
       expect(updated.title).toBe("Updated Title PKCE");
-      expect(updated.status).toBe("DONE");
+      expect(updated.statusCategory).toBe("DONE");
       expect(updated.fieldRevisions.title).toBe(2);
-      expect(updated.fieldRevisions.status).toBe(2);
+      expect(updated.fieldRevisions.statusCategory).toBe(2);
     });
 
     it("returns 409 Conflict when baseFieldRevisions contains a stale revision", async () => {
@@ -265,25 +354,37 @@ describe("VS-03 Stage 1: Task Data Access Layer & Mock Infrastructure", () => {
 
       // Provide stale baseFieldRevisions: { title: 0 }
       await expect(
-        updateTask(taskId, {
-          title: "Conflicting Update",
-          baseFieldRevisions: {
-            title: 0,
+        updateTask({
+          communityId: MOCK_COMMUNITY_1_ID,
+          workspaceId: WS_SHARED_ENG_ID,
+          taskId,
+          data: {
+            title: "Conflicting Update",
+            baseFieldRevisions: {
+              title: 0,
+            },
           },
+          csrfToken: TEST_CSRF_TOKEN,
         })
-      ).rejects.toThrow(ApiError);
+      ).rejects.toThrow(ApiProblemError);
 
       try {
-        await updateTask(taskId, {
-          title: "Conflicting Update",
-          baseFieldRevisions: {
-            title: 0,
+        await updateTask({
+          communityId: MOCK_COMMUNITY_1_ID,
+          workspaceId: WS_SHARED_ENG_ID,
+          taskId,
+          data: {
+            title: "Conflicting Update",
+            baseFieldRevisions: {
+              title: 0,
+            },
           },
+          csrfToken: TEST_CSRF_TOKEN,
         });
       } catch (err) {
-        const apiError = err as ApiError;
-        expect(apiError.status).toBe(409);
-        expect(apiError.problem.title).toBe("Task Concurrency Conflict");
+        const problem = (err as ApiProblemError).problem;
+        expect((err as ApiProblemError).status).toBe(409);
+        expect(problem.title).toBe("Task Concurrency Conflict");
       }
     });
   });
@@ -295,17 +396,27 @@ describe("VS-03 Stage 1: Task Data Access Layer & Mock Infrastructure", () => {
         const wrapper = createWrapper(queryClient);
         const taskId = "018f98a2-3f12-7890-e123-456789abcdef";
 
-        const { result } = renderHook(() => useTask(taskId), { wrapper });
+        const { result } = renderHook(
+          () =>
+            useTask({
+              communityId: MOCK_COMMUNITY_1_ID,
+              workspaceId: WS_SHARED_ENG_ID,
+              taskId,
+            }),
+          { wrapper }
+        );
 
         await waitFor(() => {
           expect(result.current.isSuccess).toBe(true);
         });
 
-        expect(result.current.data?.key).toBe("ENG-101");
+        expect(result.current.data?.taskKey).toBe("ENG-101");
         expect(result.current.data?.title).toBe("Implement OAuth 2.0 PKCE Authorization Flow");
 
         // Verify cache inspection
-        const cached = queryClient.getQueryData(taskKeys.detail(taskId));
+        const cached = queryClient.getQueryData(
+          taskQueryKey(MOCK_COMMUNITY_1_ID, WS_SHARED_ENG_ID, taskId)
+        );
         expect(cached).toBeDefined();
       });
 
@@ -313,26 +424,45 @@ describe("VS-03 Stage 1: Task Data Access Layer & Mock Infrastructure", () => {
         const queryClient = createTestQueryClient();
         const wrapper = createWrapper(queryClient);
 
-        const { result } = renderHook(() => useTask(undefined, { enabled: false }), { wrapper });
+        const { result } = renderHook(
+          () =>
+            useTask({
+              communityId: MOCK_COMMUNITY_1_ID,
+              workspaceId: WS_SHARED_ENG_ID,
+              taskId: undefined,
+              enabled: false,
+            }),
+          { wrapper }
+        );
         expect(result.current.fetchStatus).toBe("idle");
       });
     });
 
     describe("useResolveTaskKey", () => {
-      it("resolves task key and caches under taskKeys.byKey", async () => {
+      it("resolves task key and caches under taskKeyResolutionQueryKey", async () => {
         const queryClient = createTestQueryClient();
         const wrapper = createWrapper(queryClient);
 
-        const { result } = renderHook(() => useResolveTaskKey("ENG-101"), { wrapper });
+        const { result } = renderHook(
+          () =>
+            useResolveTaskKey({
+              communityId: MOCK_COMMUNITY_1_ID,
+              workspaceId: WS_SHARED_ENG_ID,
+              taskKey: "ENG-101",
+            }),
+          { wrapper }
+        );
 
         await waitFor(() => {
           expect(result.current.isSuccess).toBe(true);
         });
 
         expect(result.current.data?.currentKey).toBe("ENG-101");
-        expect(result.current.data?.wasRedirected).toBe(false);
+        expect(result.current.data?.resolvedFromAlias).toBe(false);
 
-        const cached = queryClient.getQueryData(taskKeys.byKey("ENG-101"));
+        const cached = queryClient.getQueryData(
+          taskKeyResolutionQueryKey(MOCK_COMMUNITY_1_ID, WS_SHARED_ENG_ID, "ENG-101")
+        );
         expect(cached).toBeDefined();
       });
     });
@@ -348,10 +478,13 @@ describe("VS-03 Stage 1: Task Data Access Layer & Mock Infrastructure", () => {
         let createdTask: any;
         await act(async () => {
           createdTask = await result.current.mutateAsync({
+            communityId: MOCK_COMMUNITY_1_ID,
             workspaceId: WS_SHARED_ENG_ID,
-            title: "Automated Test Task Creation",
-            status: "TODO",
-            priority: "URGENT",
+            data: {
+              title: "Automated Test Task Creation",
+              statusCategory: "TODO",
+              priority: "URGENT",
+            },
           });
         });
 
@@ -359,7 +492,9 @@ describe("VS-03 Stage 1: Task Data Access Layer & Mock Infrastructure", () => {
         expect(createdTask.title).toBe("Automated Test Task Creation");
 
         // Detail cache should be seeded
-        const cached = queryClient.getQueryData(taskKeys.detail(createdTask.id));
+        const cached = queryClient.getQueryData(
+          taskQueryKey(MOCK_COMMUNITY_1_ID, WS_SHARED_ENG_ID, createdTask.id)
+        );
         expect(cached).toEqual(createdTask);
 
         // my-work queries should have been invalidated
@@ -376,15 +511,24 @@ describe("VS-03 Stage 1: Task Data Access Layer & Mock Infrastructure", () => {
         const taskId = "018f98a2-3f12-7890-e123-456789abcdef";
 
         // Seed initial data
-        const initialTask = await getTaskById(taskId);
-        queryClient.setQueryData(taskKeys.detail(taskId), initialTask);
+        const initialTask = await getTaskById({
+          communityId: MOCK_COMMUNITY_1_ID,
+          workspaceId: WS_SHARED_ENG_ID,
+          taskId,
+        });
+        queryClient.setQueryData(
+          taskQueryKey(MOCK_COMMUNITY_1_ID, WS_SHARED_ENG_ID, taskId),
+          initialTask
+        );
 
         const { result } = renderHook(() => useUpdateTask(), { wrapper });
 
         await act(async () => {
           await result.current.mutateAsync({
+            communityId: MOCK_COMMUNITY_1_ID,
+            workspaceId: WS_SHARED_ENG_ID,
             taskId,
-            request: {
+            data: {
               title: "Optimistically Updated Title",
               baseFieldRevisions: {
                 title: initialTask.fieldRevisions.title,
@@ -393,7 +537,9 @@ describe("VS-03 Stage 1: Task Data Access Layer & Mock Infrastructure", () => {
           });
         });
 
-        const cached = queryClient.getQueryData<any>(taskKeys.detail(taskId));
+        const cached = queryClient.getQueryData<any>(
+          taskQueryKey(MOCK_COMMUNITY_1_ID, WS_SHARED_ENG_ID, taskId)
+        );
         expect(cached.title).toBe("Optimistically Updated Title");
         expect(cached.fieldRevisions.title).toBe(2);
       });
@@ -404,8 +550,15 @@ describe("VS-03 Stage 1: Task Data Access Layer & Mock Infrastructure", () => {
         const taskId = "018f98a2-3f12-7890-e123-456789abcdef";
 
         // Seed initial data
-        const initialTask = await getTaskById(taskId);
-        queryClient.setQueryData(taskKeys.detail(taskId), initialTask);
+        const initialTask = await getTaskById({
+          communityId: MOCK_COMMUNITY_1_ID,
+          workspaceId: WS_SHARED_ENG_ID,
+          taskId,
+        });
+        queryClient.setQueryData(
+          taskQueryKey(MOCK_COMMUNITY_1_ID, WS_SHARED_ENG_ID, taskId),
+          initialTask
+        );
 
         const { result } = renderHook(() => useUpdateTask(), { wrapper });
 
@@ -413,8 +566,10 @@ describe("VS-03 Stage 1: Task Data Access Layer & Mock Infrastructure", () => {
         await act(async () => {
           try {
             await result.current.mutateAsync({
+              communityId: MOCK_COMMUNITY_1_ID,
+              workspaceId: WS_SHARED_ENG_ID,
               taskId,
-              request: {
+              data: {
                 title: "Conflicting Title Should Rollback",
                 baseFieldRevisions: {
                   title: 0,
@@ -427,7 +582,9 @@ describe("VS-03 Stage 1: Task Data Access Layer & Mock Infrastructure", () => {
         });
 
         // Verify cache was rolled back to initial state
-        const cached = queryClient.getQueryData<any>(taskKeys.detail(taskId));
+        const cached = queryClient.getQueryData<any>(
+          taskQueryKey(MOCK_COMMUNITY_1_ID, WS_SHARED_ENG_ID, taskId)
+        );
         expect(cached.title).toBe(initialTask.title);
       });
     });
