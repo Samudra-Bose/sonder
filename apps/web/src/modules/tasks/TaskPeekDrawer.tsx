@@ -3,14 +3,10 @@ import {
   X,
   Copy,
   Check,
-  Calendar,
   AlertCircle,
   FileQuestion,
   Sparkles,
-  User,
   Hash,
-  Tag,
-  BarChart2,
   Lock,
 } from "lucide-react";
 import {
@@ -21,7 +17,6 @@ import {
 import { IconButton } from "@/components/ui/IconButton.js";
 import { Button } from "@/components/ui/Button.js";
 import { Badge } from "@/components/ui/Badge.js";
-import { Avatar } from "@/components/ui/Avatar.js";
 import { Skeleton } from "@/components/ui/Skeleton.js";
 import { Tooltip } from "@/components/ui/Tooltip.js";
 import { Separator } from "@/components/ui/Separator.js";
@@ -30,7 +25,7 @@ import { WorkspaceBadge } from "@/modules/workspace/WorkspaceBadge.js";
 import { useWorkspace } from "@/modules/workspace/index.js";
 import { useKeyboardShortcut } from "@/lib/keyboard.js";
 import { cn } from "@/lib/utils.js";
-import { formatDueDisplay, getDefaultReferenceDate } from "@/modules/my-work/date-utils.js";
+import { getDefaultReferenceDate } from "@/modules/my-work/date-utils.js";
 import { ApiProblemError } from "@/lib/api-client.js";
 import { useTaskPeekDrawer } from "./useTaskPeekDrawer.js";
 import { useResolveTaskKey } from "./useResolveTaskKey.js";
