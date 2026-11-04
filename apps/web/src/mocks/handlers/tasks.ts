@@ -1,5 +1,6 @@
 import { http, HttpResponse, delay } from "msw";
 import type { ApiSchema } from "@sonder/contracts";
+import { generateUuidV7 } from "../../lib/uuid.js";
 import {
   initialMockTasks,
   initialMockKeyAliases,
@@ -337,7 +338,7 @@ export const taskHandlers = [
       const taskKey = `${prefix}-${nextSeq}`;
 
       const now = new Date().toISOString();
-      const newTaskId = `018f98a2-task-${Date.now()}-${nextSeq}`;
+      const newTaskId = generateUuidV7();
 
       const newTask: TaskDto = {
         id: newTaskId,
