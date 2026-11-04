@@ -32,16 +32,25 @@ const workspaceSeqCounters: Record<string, number> = {
 
 // Configurable delay and error overrides for tests
 let tasksDelayMs = 0;
-let tasksErrorOverride: { status: number; problem: ApiSchema<"Problem"> } | null = null;
+export interface MockTasksErrorOverride {
+  status: number;
+  problem: ApiSchema<"Problem">;
+  method?: "GET" | "POST" | "PATCH" | "ALL";
+}
+let tasksErrorOverride: MockTasksErrorOverride | null = null;
 
 export function setMockTasksDelay(ms: number): void {
   tasksDelayMs = ms;
 }
 
-export function setMockTasksError(
-  error: { status: number; problem: ApiSchema<"Problem"> } | null
-): void {
+export function setMockTasksError(error: MockTasksErrorOverride | null): void {
   tasksErrorOverride = error;
+}
+
+function matchesErrorOverride(method: "GET" | "POST" | "PATCH"): boolean {
+  if (!tasksErrorOverride) return false;
+  if (!tasksErrorOverride.method || tasksErrorOverride.method === "ALL") return true;
+  return tasksErrorOverride.method === method;
 }
 
 export function getMockTasks(): TaskDto[] {
@@ -64,11 +73,13 @@ export function resetTaskMockState(): void {
  * triggers HTTP 409 Concurrency Conflict.
  */
 export function simulateConcurrentFieldUpdate(
-  taskId: string,
+  taskIdOrKey: string,
   field: string,
   newValue: unknown
 ): void {
-  const task = currentMockTasks.find((t) => t.id === taskId);
+  const task = currentMockTasks.find(
+    (t) => t.id === taskIdOrKey || t.taskKey.toUpperCase() === taskIdOrKey.toUpperCase()
+  );
   if (task) {
     (task as Record<string, unknown>)[field] = newValue;
     task.fieldRevisions[field] = (task.fieldRevisions[field] ?? 1) + 1;
@@ -98,9 +109,9 @@ export const taskHandlers = [
         await delay(tasksDelayMs);
       }
 
-      if (tasksErrorOverride) {
-        return HttpResponse.json(tasksErrorOverride.problem, {
-          status: tasksErrorOverride.status,
+      if (matchesErrorOverride("GET")) {
+        return HttpResponse.json(tasksErrorOverride!.problem, {
+          status: tasksErrorOverride!.status,
           headers: { "Content-Type": "application/problem+json" },
         });
       }
@@ -188,9 +199,9 @@ export const taskHandlers = [
         await delay(tasksDelayMs);
       }
 
-      if (tasksErrorOverride) {
-        return HttpResponse.json(tasksErrorOverride.problem, {
-          status: tasksErrorOverride.status,
+      if (matchesErrorOverride("GET")) {
+        return HttpResponse.json(tasksErrorOverride!.problem, {
+          status: tasksErrorOverride!.status,
           headers: { "Content-Type": "application/problem+json" },
         });
       }
@@ -241,9 +252,9 @@ export const taskHandlers = [
         await delay(tasksDelayMs);
       }
 
-      if (tasksErrorOverride) {
-        return HttpResponse.json(tasksErrorOverride.problem, {
-          status: tasksErrorOverride.status,
+      if (matchesErrorOverride("POST")) {
+        return HttpResponse.json(tasksErrorOverride!.problem, {
+          status: tasksErrorOverride!.status,
           headers: { "Content-Type": "application/problem+json" },
         });
       }
@@ -418,9 +429,9 @@ export const taskHandlers = [
         await delay(tasksDelayMs);
       }
 
-      if (tasksErrorOverride) {
-        return HttpResponse.json(tasksErrorOverride.problem, {
-          status: tasksErrorOverride.status,
+      if (matchesErrorOverride("PATCH")) {
+        return HttpResponse.json(tasksErrorOverride!.problem, {
+          status: tasksErrorOverride!.status,
           headers: { "Content-Type": "application/problem+json" },
         });
       }

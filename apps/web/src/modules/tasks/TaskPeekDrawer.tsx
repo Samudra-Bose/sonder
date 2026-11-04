@@ -159,11 +159,6 @@ export function TaskPeekDrawer({
     (!resolveQuery.data && !resolveQuery.isError && isOpen);
 
   const error = resolveQuery.error || taskQuery.error;
-  if (error) {
-    process.stderr.write(
-      `>>> TASK_ERROR: ${JSON.stringify(taskQuery.error)} | RESOLVE_ERROR: ${JSON.stringify(resolveQuery.error)}\n`
-    );
-  }
   const isNotFound =
     (resolveQuery.error instanceof ApiProblemError && resolveQuery.error.status === 404) ||
     (taskQuery.error instanceof ApiProblemError && taskQuery.error.status === 404);
@@ -280,7 +275,7 @@ export function TaskPeekDrawer({
       );
     }
 
-    if (error || isNotFound) {
+    if (!task && (error || isNotFound)) {
       if (isNotFound) {
         return (
           <div
