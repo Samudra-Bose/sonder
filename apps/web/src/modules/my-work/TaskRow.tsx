@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { WorkspaceBadge } from "@/modules/workspace";
+import { useTaskPeekDrawer } from "@/modules/tasks";
 import { cn } from "@/lib/utils";
 import { formatDueDisplay } from "./date-utils";
 import type { MyWorkTaskItem, TaskPriority } from "./types";
@@ -33,20 +34,45 @@ export function TaskRow({
   referenceDate,
   className,
 }: TaskRowProps): React.JSX.Element {
+  const { openTask } = useTaskPeekDrawer();
   const isOverdue = task.temporalGroup === "overdue";
   const isDueToday = task.temporalGroup === "dueToday";
   const isUpcoming = task.temporalGroup === "upcoming";
 
   const dueLabel = formatDueDisplay(task.dueDate, referenceDate);
 
+  const handleRowClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("button, a, input, select, textarea, [role='button']:not(article)")) {
+      return;
+    }
+    openTask(task.taskKey, { workspaceId: task.workspaceId });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      const target = e.target as HTMLElement;
+      if (target.closest("button, a, input, select, textarea")) {
+        return;
+      }
+      e.preventDefault();
+      openTask(task.taskKey, { workspaceId: task.workspaceId });
+    }
+  };
+
   return (
     <article
       data-testid={`my-work-task-${task.taskKey}`}
+      role="button"
+      tabIndex={0}
+      aria-label={`View details for ${task.taskKey}: ${task.title}`}
+      onClick={handleRowClick}
+      onKeyDown={handleKeyDown}
       className={cn(
         "group flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:px-4 sm:py-2.5 rounded-lg",
         "bg-[var(--surface-card)] border border-[var(--border-subtle)] hover:border-[var(--border-strong)]",
         "transition-colors shadow-2xs gap-2.5 sm:gap-4 select-none",
-        "min-h-[44px]",
+        "min-h-[44px] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-focus)]",
         className
       )}
     >

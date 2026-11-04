@@ -372,6 +372,38 @@ export const initialMockTasks: TaskDto[] = [
     assigneeAssignments: makeTaskAssignments([OTHER_USER_ID], OTHER_USER_ID),
     assigneeEditableFieldGroups: [],
   },
+
+  // --- ROOT TASK 8: ENG-088 (Archived task) ---
+  {
+    id: "018f98a2-task-088-archived",
+    workspaceId: WS_SHARED_ENG_ID,
+    parentTaskId: null,
+    taskKey: "ENG-088",
+    title: "Migrate Redis cluster to Sentinel v2",
+    description: "Legacy infrastructure migration completed and archived.",
+    itemType: "TASK",
+    statusCategory: "DONE",
+    priority: "MEDIUM",
+    assigneeIds: [MOCK_USER_ID],
+    creatorId: MOCK_USER_ID,
+    startDate: "2026-09-01",
+    dueDate: "2026-09-15",
+    estimatePoints: 3,
+    labelIds: ["018f98a2-lbl-backend"],
+    milestoneId: null,
+    rankKey: "0|hzzzzz6:",
+    version: 4,
+    fieldRevisions: {
+      title: 1,
+      statusCategory: 2,
+    },
+    effectivePermissions: makeTaskPermissions(false),
+    createdAt: "2026-09-01T09:00:00Z",
+    updatedAt: "2026-09-15T16:00:00Z",
+    archivedAt: "2026-09-20T10:00:00Z",
+    assigneeAssignments: makeTaskAssignments([MOCK_USER_ID], MOCK_USER_ID),
+    assigneeEditableFieldGroups: [],
+  },
 ];
 
 /**
