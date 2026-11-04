@@ -23,7 +23,7 @@ import { Separator } from "@/components/ui/Separator.js";
 import { Feedback } from "@/components/ui/Feedback.js";
 import { WorkspaceBadge } from "@/modules/workspace/WorkspaceBadge.js";
 import { useWorkspace } from "@/modules/workspace/index.js";
-import { useKeyboardShortcut } from "@/lib/keyboard.js";
+import { useKeyboardShortcut, isInputElement } from "@/lib/keyboard.js";
 import { cn } from "@/lib/utils.js";
 import { getDefaultReferenceDate } from "@/modules/my-work/date-utils.js";
 import { ApiProblemError } from "@/lib/api-client.js";
@@ -111,6 +111,9 @@ export function TaskPeekDrawer({
   useEffect(() => {
     if (isOpen) {
       const timer = setTimeout(() => {
+        if (isInputElement(document.activeElement)) {
+          return;
+        }
         if (titleRef.current) {
           titleRef.current.focus();
         } else if (closeButtonRef.current) {

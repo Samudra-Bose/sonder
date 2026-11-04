@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   Pencil,
-  X,
-  Plus,
   AlertCircle,
   Calendar,
   User,
@@ -17,7 +15,6 @@ import { ApiProblemError } from "@/lib/api-client.js";
 import { getTaskById } from "./api.js";
 import { useUpdateTask } from "./useUpdateTask.js";
 import type { TaskDto, TaskStatusCategory, TaskPriority } from "./types.js";
-import { MOCK_USER_ID, OTHER_USER_ID } from "@/mocks/data/my-work.js";
 
 // ============================================================================
 // Conflict Alert Component
@@ -34,6 +31,7 @@ export interface ConflictAlertProps {
   onDiscard: () => void;
   onOverwrite: () => void;
   isOverwriting?: boolean;
+  error?: string | null;
 }
 
 export function ConflictAlert({
@@ -41,6 +39,7 @@ export function ConflictAlert({
   onDiscard,
   onOverwrite,
   isOverwriting = false,
+  error = null,
 }: ConflictAlertProps): React.JSX.Element {
   return (
     <div
@@ -66,6 +65,14 @@ export function ConflictAlert({
           </span>
         </div>
       </div>
+      {error && (
+        <div
+          data-testid={`conflict-error-${conflict.fieldName}`}
+          className="text-xs text-[var(--feedback-danger-text)] font-medium p-1.5 rounded bg-[var(--surface-card)] border border-[var(--border-subtle)]"
+        >
+          {error}
+        </div>
+      )}
       <div className="flex items-center gap-2 pt-1">
         <Button
           size="sm"
@@ -98,22 +105,13 @@ export function extractServerConflictValue(
   const problem = (err.problem || {}) as Record<string, unknown>;
   if (Array.isArray(problem.conflictDetails)) {
     const detail = (problem.conflictDetails as any[]).find((d: any) => d.fieldPath === fieldName);
-    if (detail && detail.serverValue !== undefined) {
+    if (detail && detail.serverValue !== undefined && detail.serverValue !== null) {
       if (Array.isArray(detail.serverValue)) {
         return detail.serverValue.join(", ");
       }
       return typeof detail.serverValue === "string"
         ? detail.serverValue
         : JSON.stringify(detail.serverValue);
-    }
-  }
-  if (problem.serverTask && typeof problem.serverTask === "object") {
-    const val = (problem.serverTask as Record<string, unknown>)[fieldName];
-    if (val !== undefined) {
-      if (Array.isArray(val)) {
-        return val.join(", ");
-      }
-      return typeof val === "string" ? val : JSON.stringify(val);
     }
   }
   if (Array.isArray(fallback)) {
@@ -333,6 +331,7 @@ export function InlineTitleEditor({
           }}
           onOverwrite={handleOverwrite}
           isOverwriting={isOverwriting}
+          error={error}
         />
       )}
 
@@ -546,6 +545,7 @@ export function InlineDescriptionEditor({
               }}
               onOverwrite={handleOverwrite}
               isOverwriting={isOverwriting}
+              error={error}
             />
           )}
 
@@ -780,6 +780,7 @@ export function InlineStatusEditor({
           }}
           onOverwrite={handleOverwrite}
           isOverwriting={isOverwriting}
+          error={error}
         />
       )}
     </div>
@@ -993,6 +994,7 @@ export function InlinePriorityEditor({
           }}
           onOverwrite={handleOverwrite}
           isOverwriting={isOverwriting}
+          error={error}
         />
       )}
     </div>
@@ -1226,6 +1228,7 @@ export function InlineDateEditor({
               }}
               onOverwrite={handleOverwrite}
               isOverwriting={isOverwriting}
+              error={error}
             />
           )}
         </div>
@@ -1491,6 +1494,7 @@ export function InlineEstimateEditor({
               }}
               onOverwrite={handleOverwrite}
               isOverwriting={isOverwriting}
+              error={error}
             />
           )}
         </div>
@@ -1510,238 +1514,42 @@ export interface InlineAssigneeEditorProps {
   isArchived?: boolean;
 }
 
-const CANDIDATE_ASSIGNEES = [
-  { id: MOCK_USER_ID, name: "Alex Morgan" },
-  { id: OTHER_USER_ID, name: "Jordan Lee" },
-];
-
 export function InlineAssigneeEditor({
   task,
-  communityId,
-  workspaceId,
-  isArchived = false,
+  communityId: _communityId,
+  workspaceId: _workspaceId,
+  isArchived: _isArchived = false,
 }: InlineAssigneeEditorProps): React.JSX.Element {
-  const [isEditing, setIsEditing] = useState(false);
-  const [selectedAssignees, setSelectedAssignees] = useState<string[]>(task.assigneeIds ?? []);
-  const [conflict, setConflict] = useState<ConflictState | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isOverwriting, setIsOverwriting] = useState(false);
-
-  const updateMutation = useUpdateTask();
-  const canEdit = !isArchived && task.effectivePermissions.canAssign;
-
-  useEffect(() => {
-    if (!isEditing) {
-      setSelectedAssignees(task.assigneeIds ?? []);
-    }
-  }, [task.assigneeIds, isEditing]);
-
-  const handleStartEdit = () => {
-    setSelectedAssignees(task.assigneeIds ?? []);
-    setConflict(null);
-    setError(null);
-    setIsEditing(true);
-  };
-
-  const handleCancel = () => {
-    setSelectedAssignees(task.assigneeIds ?? []);
-    setConflict(null);
-    setError(null);
-    setIsEditing(false);
-  };
-
-  const toggleAssignee = (uid: string) => {
-    setSelectedAssignees((prev) =>
-      prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid]
-    );
-  };
-
-  const handleSave = async () => {
-    setError(null);
-    try {
-      await updateMutation.mutateAsync({
-        communityId: communityId ?? "",
-        workspaceId,
-        taskId: task.id,
-        data: {
-          assigneeIds: selectedAssignees,
-          baseFieldRevisions: {
-            assigneeIds: task.fieldRevisions.assigneeIds ?? 1,
-          },
-        },
-      });
-      setIsEditing(false);
-      setConflict(null);
-    } catch (err) {
-      if (err instanceof ApiProblemError && err.status === 409) {
-        setConflict({
-          fieldName: "assigneeIds",
-          serverValue: extractServerConflictValue(
-            err,
-            "assigneeIds",
-            (task.assigneeIds ?? []).join(", ")
-          ),
-          attemptedValue: selectedAssignees.join(", "),
-        });
-      } else {
-        setError(
-          err instanceof ApiProblemError
-            ? err.detail || err.message
-            : (err as Error).message
-        );
-      }
-    }
-  };
-
-  const handleOverwrite = async () => {
-    if (!conflict) return;
-    setIsOverwriting(true);
-    setError(null);
-    try {
-      const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
-      const idsToSave = conflict.attemptedValue.split(", ").filter(Boolean);
-      await updateMutation.mutateAsync({
-        communityId: communityId ?? "",
-        workspaceId,
-        taskId: task.id,
-        data: {
-          assigneeIds: idsToSave,
-          baseFieldRevisions: {
-            assigneeIds: latestTask.fieldRevisions.assigneeIds ?? latestTask.version,
-          },
-        },
-      });
-      setConflict(null);
-      setIsEditing(false);
-    } catch (err) {
-      if (err instanceof ApiProblemError && err.status === 409) {
-        const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
-        setConflict({
-          fieldName: "assigneeIds",
-          serverValue: (latestTask.assigneeIds ?? []).join(", "),
-          attemptedValue: conflict.attemptedValue,
-        });
-      } else {
-        setError(
-          err instanceof ApiProblemError
-            ? err.detail || err.message
-            : (err as Error).message
-        );
-      }
-    } finally {
-      setIsOverwriting(false);
-    }
-  };
-
+  // Authoritative workspace member lookup is currently unavailable in the frontend.
+  // Per VS-03 Stage 3.1 requirements, existing assignees remain fully readable with avatars and names,
+  // but changing assignees is deferred until a real workspace membership data source is wired.
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-medium text-[var(--text-muted)] flex items-center gap-1">
           <User className="h-3 w-3" /> Assignee
         </span>
-        {canEdit && !isEditing && (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={handleStartEdit}
-            data-testid="edit-assignees-btn"
-            aria-label="Edit assignees"
-            className="min-h-[24px] h-6 px-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-          >
-            <Pencil className="h-3 w-3 mr-0.5" />
-            <span>Edit</span>
-          </Button>
-        )}
       </div>
 
-      {!isEditing ? (
-        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-          {task.assigneeAssignments && task.assigneeAssignments.length > 0 ? (
-            task.assigneeAssignments.map((assignee) => (
-              <div
-                key={assignee.userId}
-                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[var(--surface-card)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-medium text-xs shadow-2xs"
-              >
-                <Avatar
-                  name={assignee.user.displayName}
-                  src={assignee.user.avatarUrl ?? undefined}
-                  size="xs"
-                />
-                <span>{assignee.user.displayName}</span>
-              </div>
-            ))
-          ) : (
-            <span className="text-[var(--text-muted)] italic">Unassigned</span>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-2 pt-1 p-2 rounded-lg border border-[var(--border-strong)] bg-[var(--surface-card)]">
-          <div className="space-y-1.5">
-            {CANDIDATE_ASSIGNEES.map((user) => {
-              const checked = selectedAssignees.includes(user.id);
-              return (
-                <label
-                  key={user.id}
-                  className="flex items-center gap-2 text-xs text-[var(--text-primary)] cursor-pointer select-none"
-                >
-                  <input
-                    type="checkbox"
-                    data-testid={`assignee-checkbox-${user.id}`}
-                    checked={checked}
-                    onChange={() => toggleAssignee(user.id)}
-                    disabled={updateMutation.isPending || isOverwriting}
-                    className="rounded border-[var(--border-strong)] text-[var(--brand-primary)]"
-                  />
-                  <span>{user.name}</span>
-                </label>
-              );
-            })}
-          </div>
-
-          {error && !conflict && (
-            <p role="alert" className="text-xs text-[var(--feedback-danger-text)]">
-              {error}
-            </p>
-          )}
-
-          {conflict && (
-            <ConflictAlert
-              conflict={conflict}
-              onDiscard={() => {
-                setConflict(null);
-                setIsEditing(false);
-              }}
-              onOverwrite={handleOverwrite}
-              isOverwriting={isOverwriting}
-            />
-          )}
-
-          {!conflict && (
-            <div className="flex items-center gap-2 pt-1">
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={handleSave}
-                disabled={updateMutation.isPending}
-                data-testid="save-assignees-btn"
-                className="h-8 px-2.5 text-xs"
-              >
-                {updateMutation.isPending ? "Saving..." : "Save"}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleCancel}
-                disabled={updateMutation.isPending}
-                data-testid="cancel-assignees-btn"
-                className="h-8 px-2.5 text-xs"
-              >
-                Cancel
-              </Button>
+      <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+        {task.assigneeAssignments && task.assigneeAssignments.length > 0 ? (
+          task.assigneeAssignments.map((assignee) => (
+            <div
+              key={assignee.userId}
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[var(--surface-card)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-medium text-xs shadow-2xs"
+            >
+              <Avatar
+                name={assignee.user.displayName}
+                src={assignee.user.avatarUrl ?? undefined}
+                size="xs"
+              />
+              <span>{assignee.user.displayName}</span>
             </div>
-          )}
-        </div>
-      )}
+          ))
+        ) : (
+          <span className="text-[var(--text-muted)] italic">Unassigned</span>
+        )}
+      </div>
     </div>
   );
 }
@@ -1759,263 +1567,35 @@ export interface InlineLabelsEditorProps {
 
 export function InlineLabelsEditor({
   task,
-  communityId,
-  workspaceId,
-  isArchived = false,
+  communityId: _communityId,
+  workspaceId: _workspaceId,
+  isArchived: _isArchived = false,
 }: InlineLabelsEditorProps): React.JSX.Element {
-  const [isEditing, setIsEditing] = useState(false);
-  const [labelsDraft, setLabelsDraft] = useState<string[]>(task.labelIds ?? []);
-  const [newLabelInput, setNewLabelInput] = useState("");
-  const [conflict, setConflict] = useState<ConflictState | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isOverwriting, setIsOverwriting] = useState(false);
-
-  const updateMutation = useUpdateTask();
-  const canEdit = !isArchived && task.effectivePermissions.canEditCustomFieldsLinks;
-
-  useEffect(() => {
-    if (!isEditing) {
-      setLabelsDraft(task.labelIds ?? []);
-    }
-  }, [task.labelIds, isEditing]);
-
-  const handleStartEdit = () => {
-    setLabelsDraft(task.labelIds ?? []);
-    setNewLabelInput("");
-    setConflict(null);
-    setError(null);
-    setIsEditing(true);
-  };
-
-  const handleCancel = () => {
-    setLabelsDraft(task.labelIds ?? []);
-    setNewLabelInput("");
-    setConflict(null);
-    setError(null);
-    setIsEditing(false);
-  };
-
-  const addLabel = () => {
-    const trimmed = newLabelInput.trim();
-    if (trimmed && !labelsDraft.includes(trimmed)) {
-      setLabelsDraft([...labelsDraft, trimmed]);
-      setNewLabelInput("");
-    }
-  };
-
-  const removeLabel = (labelId: string) => {
-    setLabelsDraft(labelsDraft.filter((l) => l !== labelId));
-  };
-
-  const handleSave = async () => {
-    setError(null);
-    try {
-      await updateMutation.mutateAsync({
-        communityId: communityId ?? "",
-        workspaceId,
-        taskId: task.id,
-        data: {
-          labelIds: labelsDraft,
-          baseFieldRevisions: {
-            labelIds: task.fieldRevisions.labelIds ?? 1,
-          },
-        },
-      });
-      setIsEditing(false);
-      setConflict(null);
-    } catch (err) {
-      if (err instanceof ApiProblemError && err.status === 409) {
-        setConflict({
-          fieldName: "labelIds",
-          serverValue: extractServerConflictValue(
-            err,
-            "labelIds",
-            (task.labelIds ?? []).join(", ")
-          ),
-          attemptedValue: labelsDraft.join(", "),
-        });
-      } else {
-        setError(
-          err instanceof ApiProblemError
-            ? err.detail || err.message
-            : (err as Error).message
-        );
-      }
-    }
-  };
-
-  const handleOverwrite = async () => {
-    if (!conflict) return;
-    setIsOverwriting(true);
-    setError(null);
-    try {
-      const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
-      const labelsToSave = conflict.attemptedValue.split(", ").filter(Boolean);
-      await updateMutation.mutateAsync({
-        communityId: communityId ?? "",
-        workspaceId,
-        taskId: task.id,
-        data: {
-          labelIds: labelsToSave,
-          baseFieldRevisions: {
-            labelIds: latestTask.fieldRevisions.labelIds ?? latestTask.version,
-          },
-        },
-      });
-      setConflict(null);
-      setIsEditing(false);
-    } catch (err) {
-      if (err instanceof ApiProblemError && err.status === 409) {
-        const latestTask = await getTaskById({ communityId: communityId ?? "", workspaceId, taskId: task.id });
-        setConflict({
-          fieldName: "labelIds",
-          serverValue: (latestTask.labelIds ?? []).join(", "),
-          attemptedValue: conflict.attemptedValue,
-        });
-      } else {
-        setError(
-          err instanceof ApiProblemError
-            ? err.detail || err.message
-            : (err as Error).message
-        );
-      }
-    } finally {
-      setIsOverwriting(false);
-    }
-  };
-
+  // Authoritative workspace label catalogue is not defined in the OpenAPI contract.
+  // Per VS-03 Stage 3.1 requirements, arbitrary typed text must not be converted into fabricated label IDs.
+  // Existing assigned labels are preserved and rendered read-only until an authoritative workspace label collection is available.
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1.5">
           <Tag className="h-3.5 w-3.5" /> Labels
         </h3>
-        {canEdit && !isEditing && (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={handleStartEdit}
-            data-testid="edit-labels-btn"
-            aria-label="Edit labels"
-            className="min-h-[28px] h-7 px-2 text-xs"
-          >
-            <Pencil className="h-3 w-3 mr-1" />
-            <span>Edit</span>
-          </Button>
-        )}
       </div>
 
-      {!isEditing ? (
-        <div className="flex flex-wrap gap-1.5">
-          {task.labelIds && task.labelIds.length > 0 ? (
-            task.labelIds.map((labelId) => (
-              <span
-                key={labelId}
-                className="px-2 py-0.5 rounded-md text-xs font-medium bg-[var(--surface-muted)] text-[var(--text-secondary)] border border-[var(--border-subtle)]"
-              >
-                {labelId.replace(/^018f98a2-lbl-/, "")}
-              </span>
-            ))
-          ) : (
-            <span className="text-xs text-[var(--text-muted)] italic">No labels</span>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-2.5 p-3 rounded-xl border border-[var(--border-strong)] bg-[var(--surface-card)]">
-          {/* Active labels with remove buttons */}
-          <div className="flex flex-wrap gap-1.5 min-h-[28px]">
-            {labelsDraft.map((labelId) => (
-              <span
-                key={labelId}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-[var(--surface-muted)] text-[var(--text-secondary)] border border-[var(--border-subtle)]"
-              >
-                <span>{labelId.replace(/^018f98a2-lbl-/, "")}</span>
-                <button
-                  type="button"
-                  onClick={() => removeLabel(labelId)}
-                  data-testid={`remove-label-${labelId}`}
-                  aria-label={`Remove label ${labelId}`}
-                  className="hover:text-[var(--feedback-danger-text)] cursor-pointer"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            ))}
-          </div>
-
-          {/* Add label input */}
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              data-testid="add-label-input"
-              aria-label="New label"
-              value={newLabelInput}
-              onChange={(e) => setNewLabelInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addLabel();
-                }
-              }}
-              placeholder="Add label..."
-              disabled={updateMutation.isPending || isOverwriting}
-              className="h-8 px-2 text-xs rounded border border-[var(--border-strong)] bg-[var(--surface-canvas)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] flex-1"
-            />
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={addLabel}
-              disabled={updateMutation.isPending || !newLabelInput.trim()}
-              data-testid="add-label-btn"
-              className="h-8 px-2.5 text-xs"
+      <div className="flex flex-wrap gap-1.5">
+        {task.labelIds && task.labelIds.length > 0 ? (
+          task.labelIds.map((labelId) => (
+            <span
+              key={labelId}
+              className="px-2 py-0.5 rounded-md text-xs font-medium bg-[var(--surface-muted)] text-[var(--text-secondary)] border border-[var(--border-subtle)]"
             >
-              <Plus className="h-3 w-3 mr-1" />
-              Add
-            </Button>
-          </div>
-
-          {error && !conflict && (
-            <p role="alert" className="text-xs text-[var(--feedback-danger-text)]">
-              {error}
-            </p>
-          )}
-
-          {conflict && (
-            <ConflictAlert
-              conflict={conflict}
-              onDiscard={() => {
-                setConflict(null);
-                setIsEditing(false);
-              }}
-              onOverwrite={handleOverwrite}
-              isOverwriting={isOverwriting}
-            />
-          )}
-
-          {!conflict && (
-            <div className="flex items-center gap-2 pt-1">
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={handleSave}
-                disabled={updateMutation.isPending}
-                data-testid="save-labels-btn"
-              >
-                {updateMutation.isPending ? "Saving..." : "Save"}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleCancel}
-                disabled={updateMutation.isPending}
-                data-testid="cancel-labels-btn"
-              >
-                Cancel
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
+              {labelId.replace(/^018f98a2-lbl-/, "")}
+            </span>
+          ))
+        ) : (
+          <span className="text-xs text-[var(--text-muted)] italic">No labels</span>
+        )}
+      </div>
     </div>
   );
 }
