@@ -160,11 +160,9 @@ export function TaskPeekDrawer({
 
   const error = resolveQuery.error || taskQuery.error;
   if (error) {
-    console.error("DEBUG ERROR IN DRAWER:", {
-      resolveError: resolveQuery.error?.message,
-      taskError: taskQuery.error?.message,
-      isNotFound,
-    });
+    process.stderr.write(
+      `>>> TASK_ERROR: ${JSON.stringify(taskQuery.error)} | RESOLVE_ERROR: ${JSON.stringify(resolveQuery.error)}\n`
+    );
   }
   const isNotFound =
     (resolveQuery.error instanceof ApiProblemError && resolveQuery.error.status === 404) ||
