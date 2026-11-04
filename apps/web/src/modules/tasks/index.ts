@@ -6,3 +6,4 @@ export * from "./useCreateTask.js";
 export * from "./useUpdateTask.js";
 export * from "./useTaskPeekDrawer.js";
 export * from "./TaskPeekDrawer.js";
+export * from "./InlineFieldEditors.js";

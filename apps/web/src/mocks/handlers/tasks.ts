@@ -32,16 +32,25 @@ const workspaceSeqCounters: Record<string, number> = {
 
 // Configurable delay and error overrides for tests
 let tasksDelayMs = 0;
-let tasksErrorOverride: { status: number; problem: ApiSchema<"Problem"> } | null = null;
+export interface MockTasksErrorOverride {
+  status: number;
+  problem: ApiSchema<"Problem">;
+  method?: "GET" | "POST" | "PATCH" | "ALL";
+}
+let tasksErrorOverride: MockTasksErrorOverride | null = null;
 
 export function setMockTasksDelay(ms: number): void {
   tasksDelayMs = ms;
 }
 
-export function setMockTasksError(
-  error: { status: number; problem: ApiSchema<"Problem"> } | null
-): void {
+export function setMockTasksError(error: MockTasksErrorOverride | null): void {
   tasksErrorOverride = error;
+}
+
+function matchesErrorOverride(method: "GET" | "POST" | "PATCH"): boolean {
+  if (!tasksErrorOverride) return false;
+  if (!tasksErrorOverride.method || tasksErrorOverride.method === "ALL") return true;
+  return tasksErrorOverride.method === method;
 }
 
 export function getMockTasks(): TaskDto[] {
@@ -56,6 +65,27 @@ export function resetTaskMockState(): void {
   workspaceSeqCounters[WS_PERSONAL_ALEX_ID] = 2;
   tasksDelayMs = 0;
   tasksErrorOverride = null;
+}
+
+/**
+ * Simulates a concurrent update from another client or background job,
+ * advancing the field revision so any subsequent patch using the previous revision
+ * triggers HTTP 409 Concurrency Conflict.
+ */
+export function simulateConcurrentFieldUpdate(
+  taskIdOrKey: string,
+  field: string,
+  newValue: unknown
+): void {
+  const task = currentMockTasks.find(
+    (t) => t.id === taskIdOrKey || t.taskKey.toUpperCase() === taskIdOrKey.toUpperCase()
+  );
+  if (task) {
+    (task as Record<string, unknown>)[field] = newValue;
+    task.fieldRevisions[field] = (task.fieldRevisions[field] ?? 1) + 1;
+    task.version += 1;
+    task.updatedAt = new Date().toISOString();
+  }
 }
 
 /**
@@ -79,9 +109,9 @@ export const taskHandlers = [
         await delay(tasksDelayMs);
       }
 
-      if (tasksErrorOverride) {
-        return HttpResponse.json(tasksErrorOverride.problem, {
-          status: tasksErrorOverride.status,
+      if (matchesErrorOverride("GET")) {
+        return HttpResponse.json(tasksErrorOverride!.problem, {
+          status: tasksErrorOverride!.status,
           headers: { "Content-Type": "application/problem+json" },
         });
       }
@@ -169,9 +199,9 @@ export const taskHandlers = [
         await delay(tasksDelayMs);
       }
 
-      if (tasksErrorOverride) {
-        return HttpResponse.json(tasksErrorOverride.problem, {
-          status: tasksErrorOverride.status,
+      if (matchesErrorOverride("GET")) {
+        return HttpResponse.json(tasksErrorOverride!.problem, {
+          status: tasksErrorOverride!.status,
           headers: { "Content-Type": "application/problem+json" },
         });
       }
@@ -222,9 +252,9 @@ export const taskHandlers = [
         await delay(tasksDelayMs);
       }
 
-      if (tasksErrorOverride) {
-        return HttpResponse.json(tasksErrorOverride.problem, {
-          status: tasksErrorOverride.status,
+      if (matchesErrorOverride("POST")) {
+        return HttpResponse.json(tasksErrorOverride!.problem, {
+          status: tasksErrorOverride!.status,
           headers: { "Content-Type": "application/problem+json" },
         });
       }
@@ -399,9 +429,9 @@ export const taskHandlers = [
         await delay(tasksDelayMs);
       }
 
-      if (tasksErrorOverride) {
-        return HttpResponse.json(tasksErrorOverride.problem, {
-          status: tasksErrorOverride.status,
+      if (matchesErrorOverride("PATCH")) {
+        return HttpResponse.json(tasksErrorOverride!.problem, {
+          status: tasksErrorOverride!.status,
           headers: { "Content-Type": "application/problem+json" },
         });
       }
@@ -469,8 +499,69 @@ export const taskHandlers = [
 
       const body = (await request.json()) as UpdateTaskRequest;
 
-      // Permission check: if caller is viewer or has restricted permissions
-      if (task.effectivePermissions.canUpdateStatus === false && body.statusCategory) {
+      // Validate baseFieldRevisions required
+      if (!body.baseFieldRevisions || Object.keys(body.baseFieldRevisions).length === 0) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/validation-error",
+            title: "Validation Error",
+            status: 400,
+            detail: "baseFieldRevisions is required for optimistic concurrency.",
+            code: "BASE_FIELD_REVISIONS_REQUIRED",
+          },
+          {
+            status: 400,
+            headers: { "Content-Type": "application/problem+json" },
+          }
+        );
+      }
+
+      // Validations: minLength 1 for title
+      if (body.title !== undefined && (!body.title.trim() || body.title.length > 500)) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/validation-error",
+            title: "Validation Error",
+            status: 400,
+            detail: "Title must be between 1 and 500 characters.",
+            code: "VALIDATION_FAILED",
+          },
+          { status: 400, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      // Validation: estimatePoints non-negative
+      if (body.estimatePoints !== null && body.estimatePoints !== undefined && body.estimatePoints < 0) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/validation-error",
+            title: "Validation Error",
+            status: 400,
+            detail: "Estimate points must be a non-negative number.",
+            code: "VALIDATION_FAILED",
+          },
+          { status: 400, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      // Permission checks: separately authorize every supplied field
+      if (
+        (body.title !== undefined || body.description !== undefined) &&
+        task.effectivePermissions.canEditTitleDescription === false
+      ) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/forbidden",
+            title: "Permission Denied",
+            status: 403,
+            detail: "You do not have permission to edit title or description in this workspace.",
+            code: "PERMISSION_DENIED",
+          },
+          { status: 403, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      if (body.statusCategory !== undefined && task.effectivePermissions.canUpdateStatus === false) {
         return HttpResponse.json(
           {
             type: "https://errors.sonder.platform/forbidden",
@@ -479,33 +570,93 @@ export const taskHandlers = [
             detail: "You do not have permission to update task status in this workspace.",
             code: "PERMISSION_DENIED",
           },
+          { status: 403, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      if (
+        (body.priority !== undefined || body.startDate !== undefined || body.dueDate !== undefined) &&
+        task.effectivePermissions.canEditDatesPriority === false
+      ) {
+        return HttpResponse.json(
           {
+            type: "https://errors.sonder.platform/forbidden",
+            title: "Permission Denied",
             status: 403,
-            headers: { "Content-Type": "application/problem+json" },
-          }
+            detail: "You do not have permission to edit dates or priority in this workspace.",
+            code: "PERMISSION_DENIED",
+          },
+          { status: 403, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      if (body.estimatePoints !== undefined && task.effectivePermissions.canEditEstimate === false) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/forbidden",
+            title: "Permission Denied",
+            status: 403,
+            detail: "You do not have permission to edit estimate in this workspace.",
+            code: "PERMISSION_DENIED",
+          },
+          { status: 403, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      if (body.assigneeIds !== undefined && task.effectivePermissions.canAssign === false) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/forbidden",
+            title: "Permission Denied",
+            status: 403,
+            detail: "You do not have permission to modify task assignees in this workspace.",
+            code: "PERMISSION_DENIED",
+          },
+          { status: 403, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      if (body.labelIds !== undefined && task.effectivePermissions.canEditCustomFieldsLinks === false) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/forbidden",
+            title: "Permission Denied",
+            status: 403,
+            detail: "You do not have permission to modify labels in this workspace.",
+            code: "PERMISSION_DENIED",
+          },
+          { status: 403, headers: { "Content-Type": "application/problem+json" } }
         );
       }
 
       // Optimistic concurrency check via baseFieldRevisions
       const baseRevisions = body.baseFieldRevisions ?? {};
-      const conflictedFields: string[] = [];
+      const conflictingFields: string[] = [];
 
       for (const [field, clientRev] of Object.entries(baseRevisions)) {
         const serverRev = task.fieldRevisions[field] ?? 1;
         if (clientRev < serverRev) {
-          conflictedFields.push(field);
+          conflictingFields.push(field);
         }
       }
 
-      if (conflictedFields.length > 0) {
+      if (conflictingFields.length > 0) {
         return HttpResponse.json(
           {
             type: "https://errors.sonder.platform/task-concurrency-conflict",
             title: "Task Concurrency Conflict",
             status: 409,
-            detail: `Field(s) '${conflictedFields.join(", ")}' have been modified concurrently.`,
-            code: "TASK_FIELD_CONCURRENCY_CONFLICT",
-            conflictedFields,
+            detail: `Field(s) '${conflictingFields.join(", ")}' have been modified concurrently.`,
+            code: "FIELD_REVISION_CONFLICT",
+            conflictingFields,
+            currentFieldRevisions: task.fieldRevisions,
+            conflictDetails: conflictingFields.map((field) => ({
+              fieldPath: field,
+              clientValue: (body as Record<string, unknown>)[field],
+              serverValue: (task as Record<string, unknown>)[field],
+              baseRevision: baseRevisions[field] ?? 0,
+              currentRevision: task.fieldRevisions[field] ?? 1,
+            })),
             serverTask: task,
           },
           {
