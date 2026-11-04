@@ -5,6 +5,7 @@ import {
   classifyTemporalGroup,
   formatDueDisplay,
   isValidDateString,
+  getDefaultReferenceDate,
 } from "./date-utils";
 
 describe("My Work Date Utilities (VS-02E)", () => {
