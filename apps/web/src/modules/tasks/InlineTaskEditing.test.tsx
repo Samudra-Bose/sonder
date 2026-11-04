@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, useLocation } from "react-router-dom";
+import * as fs from "fs";
+import * as path from "path";
 import { AuthContext, type AuthContextType } from "@/modules/auth/AuthContext.js";
 import { WorkspaceProvider } from "@/modules/workspace/WorkspaceContext.js";
 import { defaultMockCommunities } from "@/mocks/handlers/auth.js";
@@ -10,7 +12,6 @@ import {
   MOCK_COMMUNITY_1_ID,
   WS_SHARED_ENG_ID,
   MOCK_USER_ID,
-  OTHER_USER_ID,
 } from "@/mocks/data/my-work.js";
 import {
   resetTaskMockState,
@@ -18,6 +19,8 @@ import {
   simulateConcurrentFieldUpdate,
   getMockTasks,
 } from "@/mocks/handlers/tasks.js";
+import { ApiProblemError } from "@/lib/api-client.js";
+import { updateTask } from "./api.js";
 import { TaskPeekDrawer } from "./TaskPeekDrawer.js";
 import { useTaskPeekDrawer } from "./useTaskPeekDrawer.js";
 
@@ -185,7 +188,7 @@ describe("VS-03 Stage 3: Inline Task Editing & Concurrency Conflict Resolution",
       expect(saveBtn).toBeDisabled();
 
       // Press Enter to attempt submission
-      await user.keyboard("{Enter}");
+      await user.type(titleInput, "{Enter}");
 
       expect(screen.getByTestId("title-error")).toHaveTextContent(/title must not be empty/i);
       expect(screen.getByTestId("title-input")).toBeInTheDocument();
@@ -344,54 +347,27 @@ describe("VS-03 Stage 3: Inline Task Editing & Concurrency Conflict Resolution",
       expect(task?.fieldRevisions.estimatePoints).toBe(2);
     });
 
-    it("edits assignees by toggling workspace members", async () => {
-      const user = userEvent.setup();
+    it("renders assignees readable with avatar and name while changing assignees is deferred", async () => {
       renderTaskDrawerTest();
 
       await waitFor(() => {
-        expect(screen.getByTestId("edit-assignees-btn")).toBeInTheDocument();
+        expect(screen.getByText("Alex Morgan")).toBeInTheDocument();
       });
 
-      await user.click(screen.getByTestId("edit-assignees-btn"));
-      // ENG-101 is initially assigned to Alex Morgan (MOCK_USER_ID)
-      // Toggle Jordan Lee (OTHER_USER_ID)
-      const jordanCheckbox = screen.getByTestId(`assignee-checkbox-${OTHER_USER_ID}`);
-      await user.click(jordanCheckbox);
-
-      await user.click(screen.getByTestId("save-assignees-btn"));
-
-      await waitFor(() => {
-        expect(screen.getByText("Jordan Lee")).toBeInTheDocument();
-      });
-
-      const task = getMockTasks().find((t) => t.taskKey === "ENG-101");
-      expect(task?.assigneeIds).toContain(OTHER_USER_ID);
-      expect(task?.assigneeIds).toContain(MOCK_USER_ID);
-      expect(task?.fieldRevisions.assigneeIds).toBe(2);
+      // Changing assignees is deferred pending an authoritative workspace member data source
+      expect(screen.queryByTestId("edit-assignees-btn")).not.toBeInTheDocument();
     });
 
-    it("edits labels by adding and removing tags", async () => {
-      const user = userEvent.setup();
+    it("renders existing assigned labels as badges while label mutation is deferred", async () => {
       renderTaskDrawerTest();
 
       await waitFor(() => {
-        expect(screen.getByTestId("edit-labels-btn")).toBeInTheDocument();
+        expect(screen.getByText("security")).toBeInTheDocument();
+        expect(screen.getByText("backend")).toBeInTheDocument();
       });
 
-      await user.click(screen.getByTestId("edit-labels-btn"));
-      const addInput = screen.getByTestId("add-label-input");
-      await user.type(addInput, "frontend-perf");
-      await user.click(screen.getByTestId("add-label-btn"));
-
-      await user.click(screen.getByTestId("save-labels-btn"));
-
-      await waitFor(() => {
-        expect(screen.getByText("frontend-perf")).toBeInTheDocument();
-      });
-
-      const task = getMockTasks().find((t) => t.taskKey === "ENG-101");
-      expect(task?.labelIds).toContain("frontend-perf");
-      expect(task?.fieldRevisions.labelIds).toBe(2);
+      // Changing labels is deferred pending a canonical workspace label catalogue endpoint
+      expect(screen.queryByTestId("edit-labels-btn")).not.toBeInTheDocument();
     });
   });
 
@@ -607,6 +583,285 @@ describe("VS-03 Stage 3: Inline Task Editing & Concurrency Conflict Resolution",
       expect(task?.title).toBe("Client authoritative title decision");
       // Revision advanced past concurrent revision (1 -> 2 -> 3)
       expect(task?.fieldRevisions.title).toBe(3);
+    });
+
+    it("detects concurrent statusCategory modification (409) and displays conflict alert with server value", async () => {
+      const user = userEvent.setup();
+      renderTaskDrawerTest();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("edit-status-btn")).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByTestId("edit-status-btn"));
+      const statusSelect = screen.getByTestId("status-select");
+      await user.selectOptions(statusSelect, "DONE");
+
+      // Concurrently change status to CANCELED on server (advancing revision to 3)
+      simulateConcurrentFieldUpdate("ENG-101", "statusCategory", "CANCELED");
+
+      await user.click(screen.getByTestId("save-status-btn"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("conflict-alert-statusCategory")).toBeInTheDocument();
+      });
+
+      expect(screen.getByTestId("conflict-alert-statusCategory")).toHaveTextContent(
+        "CANCELED"
+      );
+      expect(screen.getByTestId("conflict-alert-statusCategory")).toHaveTextContent(
+        "DONE"
+      );
+
+      // Discard edit and adopt server value
+      await user.click(screen.getByTestId("conflict-discard-statusCategory-btn"));
+      await waitFor(() => {
+        expect(screen.queryByTestId("conflict-alert-statusCategory")).not.toBeInTheDocument();
+        expect(screen.getByText("CANCELED")).toBeInTheDocument();
+      });
+    });
+
+    it("detects concurrent dueDate modification (409) and allows deliberate overwrite", async () => {
+      const user = userEvent.setup();
+      renderTaskDrawerTest();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("edit-due-date-btn")).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByTestId("edit-due-date-btn"));
+      const dueDateInput = screen.getByTestId("due-date-input");
+      fireEvent.change(dueDateInput, { target: { value: "2026-12-15" } });
+
+      // Concurrently change due date on server
+      simulateConcurrentFieldUpdate("ENG-101", "dueDate", "2026-11-30");
+
+      await user.click(screen.getByTestId("save-due-date-btn"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("conflict-alert-dueDate")).toBeInTheDocument();
+      });
+
+      expect(screen.getByTestId("conflict-alert-dueDate")).toHaveTextContent("2026-11-30");
+      expect(screen.getByTestId("conflict-alert-dueDate")).toHaveTextContent("2026-12-15");
+
+      // Deliberately overwrite
+      await user.click(screen.getByTestId("conflict-overwrite-dueDate-btn"));
+
+      await waitFor(() => {
+        expect(screen.queryByTestId("conflict-alert-dueDate")).not.toBeInTheDocument();
+        expect(screen.getByText("2026-12-15")).toBeInTheDocument();
+      });
+
+      const task = getMockTasks().find((t) => t.taskKey === "ENG-101");
+      expect(task?.dueDate).toBe("2026-12-15");
+      expect(task?.fieldRevisions.dueDate).toBe(3);
+    });
+
+    it("surfaces refetch error during conflict overwrite without silent retry with stale revisions", async () => {
+      const user = userEvent.setup();
+      renderTaskDrawerTest();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("edit-title-btn")).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByTestId("edit-title-btn"));
+      const titleInput = screen.getByTestId("title-input");
+      await user.clear(titleInput);
+      await user.type(titleInput, "Attempted title before network crash");
+
+      simulateConcurrentFieldUpdate("ENG-101", "title", "Concurrent server title");
+
+      await user.click(screen.getByTestId("save-title-btn"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("conflict-overwrite-title-btn")).toBeInTheDocument();
+      });
+
+      // Now simulate server failure for the refetch (GET /tasks/:taskId)
+      setMockTasksError({
+        status: 500,
+        problem: {
+          type: "https://errors.sonder.platform/server-error",
+          title: "Internal Server Error",
+          status: 500,
+          detail: "Database connection lost during refetch.",
+        },
+        method: "GET",
+      });
+
+      await user.click(screen.getByTestId("conflict-overwrite-title-btn"));
+
+      // Error must be displayed inside conflict alert, conflict alert remains open, and no silent retry occurs
+      await waitFor(() => {
+        expect(screen.getByTestId("conflict-error-title")).toHaveTextContent(
+          /database connection lost during refetch/i
+        );
+      });
+
+      // Conflict alert is still present with user's attempted value
+      expect(screen.getByTestId("conflict-alert-title")).toBeInTheDocument();
+      expect(screen.getByTestId("title-input")).toHaveValue(
+        "Attempted title before network crash"
+      );
+
+      // Clear error
+      setMockTasksError(null);
+    });
+  });
+
+  describe("Mock Concurrency & Contract Revision Rules", () => {
+    const taskId = "018f98a2-task-001-overdue-assigned";
+
+    it("matching revision succeeds and increments field revision monotonically", async () => {
+      const taskBefore = getMockTasks().find((t) => t.id === taskId);
+      const currentRev = taskBefore?.fieldRevisions.title ?? 1;
+
+      const updated = await updateTask({
+        communityId: MOCK_COMMUNITY_1_ID,
+        workspaceId: WS_SHARED_ENG_ID,
+        taskId,
+        csrfToken: "mock-csrf-token",
+        data: {
+          title: "Updated Title with Exact Match Revision",
+          baseFieldRevisions: {
+            title: currentRev,
+          },
+        },
+      });
+
+      expect(updated.title).toBe("Updated Title with Exact Match Revision");
+      expect(updated.fieldRevisions.title).toBe(currentRev + 1);
+    });
+
+    it("stale revision (clientRev < serverRev) is rejected with 409 FIELD_REVISION_CONFLICT", async () => {
+      simulateConcurrentFieldUpdate(taskId, "title", "Concurrent server title");
+      const currentRev = getMockTasks().find((t) => t.id === taskId)!.fieldRevisions.title ?? 1;
+
+      try {
+        await updateTask({
+          communityId: MOCK_COMMUNITY_1_ID,
+          workspaceId: WS_SHARED_ENG_ID,
+          taskId,
+          csrfToken: "mock-csrf-token",
+          data: {
+            title: "Stale update attempt",
+            baseFieldRevisions: {
+              title: currentRev - 1,
+            },
+          },
+        });
+        expect.unreachable("Should have thrown ApiProblemError");
+      } catch (err) {
+        expect(err).toBeInstanceOf(ApiProblemError);
+        const problemErr = err as ApiProblemError;
+        expect(problemErr.status).toBe(409);
+        const problem = problemErr.problem as Record<string, unknown>;
+        expect(problem.code).toBe("FIELD_REVISION_CONFLICT");
+        expect(problem.conflictingFields).toContain("title");
+        expect(problem.serverTask).toBeUndefined();
+        const details = problem.conflictDetails as any[];
+        expect(details).toBeDefined();
+        const titleDetail = details.find((d) => d.fieldPath === "title");
+        expect(titleDetail.serverValue).toBe("Concurrent server title");
+        expect(titleDetail.clientValue).toBe("Stale update attempt");
+      }
+    });
+
+    it("future revision (clientRev > serverRev) is rejected with 409 FIELD_REVISION_CONFLICT", async () => {
+      const currentRev = getMockTasks().find((t) => t.id === taskId)!.fieldRevisions.title ?? 1;
+
+      try {
+        await updateTask({
+          communityId: MOCK_COMMUNITY_1_ID,
+          workspaceId: WS_SHARED_ENG_ID,
+          taskId,
+          csrfToken: "mock-csrf-token",
+          data: {
+            title: "Future revision attempt",
+            baseFieldRevisions: {
+              title: currentRev + 99,
+            },
+          },
+        });
+        expect.unreachable("Should have thrown ApiProblemError");
+      } catch (err) {
+        expect(err).toBeInstanceOf(ApiProblemError);
+        const problemErr = err as ApiProblemError;
+        expect(problemErr.status).toBe(409);
+        const problem = problemErr.problem as Record<string, unknown>;
+        expect(problem.code).toBe("FIELD_REVISION_CONFLICT");
+        expect(problem.conflictingFields).toContain("title");
+      }
+    });
+
+    it("missing revision for a changed field is rejected with 409 FIELD_REVISION_CONFLICT", async () => {
+      try {
+        await updateTask({
+          communityId: MOCK_COMMUNITY_1_ID,
+          workspaceId: WS_SHARED_ENG_ID,
+          taskId,
+          csrfToken: "mock-csrf-token",
+          data: {
+            title: "Title without revision",
+            baseFieldRevisions: {
+              description: 1,
+            },
+          },
+        });
+        expect.unreachable("Should have thrown ApiProblemError");
+      } catch (err) {
+        expect(err).toBeInstanceOf(ApiProblemError);
+        const problemErr = err as ApiProblemError;
+        expect(problemErr.status).toBe(409);
+        const problem = problemErr.problem as Record<string, unknown>;
+        expect(problem.code).toBe("FIELD_REVISION_CONFLICT");
+        expect(problem.conflictingFields).toContain("title");
+      }
+    });
+
+    it("concurrent modification of one field permits modification of an unrelated field with valid base revision", async () => {
+      simulateConcurrentFieldUpdate(taskId, "title", "Concurrent title from other actor");
+
+      const currentDescRev = getMockTasks().find((t) => t.id === taskId)!.fieldRevisions.description ?? 1;
+
+      const updated = await updateTask({
+        communityId: MOCK_COMMUNITY_1_ID,
+        workspaceId: WS_SHARED_ENG_ID,
+        taskId,
+        csrfToken: "mock-csrf-token",
+        data: {
+          description: "Unrelated description updated successfully",
+          baseFieldRevisions: {
+            description: currentDescRev,
+          },
+        },
+      });
+
+      expect(updated.description).toBe("Unrelated description updated successfully");
+      expect(updated.title).toBe("Concurrent title from other actor");
+      expect(updated.fieldRevisions.description).toBe(currentDescRev + 1);
+    });
+  });
+
+  describe("Production Module Boundaries", () => {
+    it("verifies no production task module imports from mock fixture modules", () => {
+      const tasksDir = path.resolve(__dirname);
+      const files = fs.readdirSync(tasksDir);
+      const productionFiles = files.filter(
+        (f) => (f.endsWith(".ts") || f.endsWith(".tsx")) && !f.includes(".test.")
+      );
+
+      expect(productionFiles.length).toBeGreaterThan(0);
+
+      for (const file of productionFiles) {
+        const filePath = path.join(tasksDir, file);
+        const content = fs.readFileSync(filePath, "utf-8");
+        expect(content).not.toMatch(/from\s+["']@\/mocks/);
+        expect(content).not.toMatch(/from\s+["']\.\.?\/\.\.?\/mocks/);
+        expect(content).not.toMatch(/from\s+["']\.\.?\/mocks/);
+      }
     });
   });
 

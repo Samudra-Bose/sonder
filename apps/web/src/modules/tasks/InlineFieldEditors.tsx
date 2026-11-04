@@ -31,6 +31,7 @@ export interface ConflictAlertProps {
   onDiscard: () => void;
   onOverwrite: () => void;
   isOverwriting?: boolean;
+  error?: string | null;
 }
 
 export function ConflictAlert({
@@ -38,6 +39,7 @@ export function ConflictAlert({
   onDiscard,
   onOverwrite,
   isOverwriting = false,
+  error = null,
 }: ConflictAlertProps): React.JSX.Element {
   return (
     <div
@@ -63,6 +65,14 @@ export function ConflictAlert({
           </span>
         </div>
       </div>
+      {error && (
+        <div
+          data-testid={`conflict-error-${conflict.fieldName}`}
+          className="text-xs text-[var(--feedback-danger-text)] font-medium p-1.5 rounded bg-[var(--surface-card)] border border-[var(--border-subtle)]"
+        >
+          {error}
+        </div>
+      )}
       <div className="flex items-center gap-2 pt-1">
         <Button
           size="sm"
@@ -321,6 +331,7 @@ export function InlineTitleEditor({
           }}
           onOverwrite={handleOverwrite}
           isOverwriting={isOverwriting}
+          error={error}
         />
       )}
 
@@ -534,6 +545,7 @@ export function InlineDescriptionEditor({
               }}
               onOverwrite={handleOverwrite}
               isOverwriting={isOverwriting}
+              error={error}
             />
           )}
 
@@ -768,6 +780,7 @@ export function InlineStatusEditor({
           }}
           onOverwrite={handleOverwrite}
           isOverwriting={isOverwriting}
+          error={error}
         />
       )}
     </div>
@@ -981,6 +994,7 @@ export function InlinePriorityEditor({
           }}
           onOverwrite={handleOverwrite}
           isOverwriting={isOverwriting}
+          error={error}
         />
       )}
     </div>
@@ -1214,6 +1228,7 @@ export function InlineDateEditor({
               }}
               onOverwrite={handleOverwrite}
               isOverwriting={isOverwriting}
+              error={error}
             />
           )}
         </div>
@@ -1479,6 +1494,7 @@ export function InlineEstimateEditor({
               }}
               onOverwrite={handleOverwrite}
               isOverwriting={isOverwriting}
+              error={error}
             />
           )}
         </div>
