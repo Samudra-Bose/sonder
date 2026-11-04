@@ -281,6 +281,37 @@ describe("VS-02C: Workspace Switcher", () => {
       });
       expect(screen.queryByText("Engineering Platform")).not.toBeInTheDocument();
     });
+
+    it("evicts previous community queries from cache when switching communities", async () => {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: false,
+          },
+        },
+      });
+
+      const initialCommId = "018f98a2-3f12-7890-b123-456789abcdef";
+      // Seed query data for previous community
+      queryClient.setQueryData(["communities", initialCommId, "workspaces"], { dummy: true });
+      expect(queryClient.getQueryData(["communities", initialCommId, "workspaces"])).toBeDefined();
+
+      const user = userEvent.setup();
+      renderWorkspaceSwitcher({ queryClient, initialCommunityId: initialCommId });
+
+      await user.click(screen.getByRole("button", { name: /select a workspace/i }));
+      await user.click(screen.getByRole("button", { name: /switch/i }));
+      await user.click(screen.getByRole("button", { name: /regional arts guild/i }));
+
+      await waitFor(() => {
+        expect(getMockActiveCommunityId()).toBe("018f98a2-3f12-7890-b999-456789abcdef");
+      });
+
+      // The previous community's query cache must have been removed
+      await waitFor(() => {
+        expect(queryClient.getQueryData(["communities", initialCommId, "workspaces"])).toBeUndefined();
+      });
+    });
   });
 
   describe("Error Recovery & Loading States", () => {
