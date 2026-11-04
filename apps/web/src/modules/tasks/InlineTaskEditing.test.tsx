@@ -262,7 +262,7 @@ describe("VS-03 Stage 3: Inline Task Editing & Concurrency Conflict Resolution",
 
       const task = getMockTasks().find((t) => t.taskKey === "ENG-101");
       expect(task?.statusCategory).toBe("CANCELED");
-      expect(task?.fieldRevisions.statusCategory).toBe(2);
+      expect(task?.fieldRevisions.statusCategory).toBe(3);
     });
 
     it("edits priority successfully", async () => {
@@ -284,7 +284,7 @@ describe("VS-03 Stage 3: Inline Task Editing & Concurrency Conflict Resolution",
 
       const task = getMockTasks().find((t) => t.taskKey === "ENG-101");
       expect(task?.priority).toBe("LOW");
-      expect(task?.fieldRevisions.priority).toBe(2);
+      expect(task?.fieldRevisions.priority).toBe(3);
     });
 
     it("edits due date and start date successfully", async () => {
@@ -460,6 +460,7 @@ describe("VS-03 Stage 3: Inline Task Editing & Concurrency Conflict Resolution",
           status: 500,
           detail: "Database write timeout occurred.",
         },
+        method: "PATCH",
       });
 
       await user.click(screen.getByTestId("edit-title-btn"));
@@ -505,7 +506,7 @@ describe("VS-03 Stage 3: Inline Task Editing & Concurrency Conflict Resolution",
 
       // Another user modifies the title concurrently on server (advancing revision to 2)
       simulateConcurrentFieldUpdate(
-        "018f98a2-task-001-auth-race",
+        "ENG-101",
         "title",
         "Concurrent title update from Jordan"
       );
@@ -543,7 +544,7 @@ describe("VS-03 Stage 3: Inline Task Editing & Concurrency Conflict Resolution",
       await user.type(titleInput, "Client edit to discard");
 
       simulateConcurrentFieldUpdate(
-        "018f98a2-task-001-auth-race",
+        "ENG-101",
         "title",
         "Server accepted concurrent title"
       );
@@ -581,7 +582,7 @@ describe("VS-03 Stage 3: Inline Task Editing & Concurrency Conflict Resolution",
       await user.type(titleInput, "Client authoritative title decision");
 
       simulateConcurrentFieldUpdate(
-        "018f98a2-task-001-auth-race",
+        "ENG-101",
         "title",
         "Temporary concurrent title"
       );

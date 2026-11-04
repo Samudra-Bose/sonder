@@ -206,7 +206,7 @@ export function InlineTitleEditor({
       if (err instanceof ApiProblemError && err.status === 409) {
         setConflict({
           fieldName: "title",
-          serverValue: task.title,
+          serverValue: extractServerConflictValue(err, "title", task.title),
           attemptedValue: trimmed,
         });
       } else {
@@ -430,7 +430,7 @@ export function InlineDescriptionEditor({
       if (err instanceof ApiProblemError && err.status === 409) {
         setConflict({
           fieldName: "description",
-          serverValue: task.description ?? "",
+          serverValue: extractServerConflictValue(err, "description", task.description ?? ""),
           attemptedValue: descriptionDraft,
         });
       } else {
@@ -651,7 +651,7 @@ export function InlineStatusEditor({
       if (err instanceof ApiProblemError && err.status === 409) {
         setConflict({
           fieldName: "statusCategory",
-          serverValue: task.statusCategory,
+          serverValue: extractServerConflictValue(err, "statusCategory", task.statusCategory),
           attemptedValue: statusToSave,
         });
       } else {
@@ -860,7 +860,7 @@ export function InlinePriorityEditor({
       if (err instanceof ApiProblemError && err.status === 409) {
         setConflict({
           fieldName: "priority",
-          serverValue: task.priority,
+          serverValue: extractServerConflictValue(err, "priority", task.priority),
           attemptedValue: priorityToSave,
         });
       } else {
@@ -1075,7 +1075,7 @@ export function InlineDateEditor({
       if (err instanceof ApiProblemError && err.status === 409) {
         setConflict({
           fieldName: field,
-          serverValue: currentValue ?? "",
+          serverValue: extractServerConflictValue(err, field, currentValue ?? ""),
           attemptedValue: finalValue ?? "",
         });
       } else {
@@ -1332,7 +1332,11 @@ export function InlineEstimateEditor({
       if (err instanceof ApiProblemError && err.status === 409) {
         setConflict({
           fieldName: "estimatePoints",
-          serverValue: task.estimatePoints !== null ? String(task.estimatePoints) : "",
+          serverValue: extractServerConflictValue(
+            err,
+            "estimatePoints",
+            task.estimatePoints !== null ? String(task.estimatePoints) : ""
+          ),
           attemptedValue: estimateDraft,
         });
       } else {
@@ -1572,7 +1576,11 @@ export function InlineAssigneeEditor({
       if (err instanceof ApiProblemError && err.status === 409) {
         setConflict({
           fieldName: "assigneeIds",
-          serverValue: (task.assigneeIds ?? []).join(", "),
+          serverValue: extractServerConflictValue(
+            err,
+            "assigneeIds",
+            (task.assigneeIds ?? []).join(", ")
+          ),
           attemptedValue: selectedAssignees.join(", "),
         });
       } else {
@@ -1819,7 +1827,11 @@ export function InlineLabelsEditor({
       if (err instanceof ApiProblemError && err.status === 409) {
         setConflict({
           fieldName: "labelIds",
-          serverValue: (task.labelIds ?? []).join(", "),
+          serverValue: extractServerConflictValue(
+            err,
+            "labelIds",
+            (task.labelIds ?? []).join(", ")
+          ),
           attemptedValue: labelsDraft.join(", "),
         });
       } else {
