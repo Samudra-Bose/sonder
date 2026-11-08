@@ -14,7 +14,12 @@ const queryClient = new QueryClient({
 });
 
 async function enableMocking(): Promise<void> {
-  if (process.env.NODE_ENV !== "development") {
+  const isLocalhost =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1");
+
+  if (process.env.NODE_ENV !== "development" && !isLocalhost) {
     return;
   }
   const { worker } = await import("./mocks/browser.js");

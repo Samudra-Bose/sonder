@@ -1321,6 +1321,122 @@ export const taskHandlers = [
         });
       }
 
+      // CALENDAR projection handling
+      if (body.projection === "CALENDAR") {
+        const dateWindow = body.querySpec?.dateWindow;
+        const includeUnscheduled = dateWindow?.includeUnscheduled ?? true;
+        const dateField = dateWindow?.dateField ?? "DUE_DATE";
+        const from = dateWindow?.from;
+        const to = dateWindow?.to;
+
+        // Filter dated tasks that fall within [from, to]
+        const datedTasks = snapshot.items.filter((t) => {
+          if (!t.dueDate || !t.dueDate.trim()) return false;
+          if (dateField === "START_TO_DUE_SPAN") {
+            const start = t.startDate ?? t.dueDate;
+            const end = t.dueDate ?? t.startDate;
+            if (!from && !to) return true;
+            if (from && end < from) return false;
+            if (to && start > to) return false;
+            return true;
+          } else {
+            // DUE_DATE mode
+            if (!from && !to) return true;
+            if (from && t.dueDate < from) return false;
+            if (to && t.dueDate > to) return false;
+            return true;
+          }
+        });
+
+        // Filter unscheduled tasks
+        const unscheduledTasks = snapshot.items.filter((t) => !t.dueDate || !t.dueDate.trim());
+
+        const limit = Math.max(1, Math.min(200, body.limit ?? 200));
+
+        // If client requested UNSCHEDULED page scope
+        if (body.pageScope === "UNSCHEDULED") {
+          const pageItems = unscheduledTasks.slice(0, limit);
+          const nextCursor =
+            limit < unscheduledTasks.length
+              ? btoa(JSON.stringify({ snapshotId: snapshot.id, scope: "UNSCHEDULED", offset: limit, v: 1 }))
+              : null;
+
+          const result: ApiSchema<"TaskQueryResult"> = {
+            projection: "CALENDAR",
+            pageScope: "UNSCHEDULED",
+            groupKey: null,
+            querySnapshotId: snapshot.id,
+            snapshotSequence: workspaceSeqCounters[workspaceId] ?? 1,
+            snapshotAt: new Date(snapshot.createdAt).toISOString(),
+            snapshotExpiresAt: new Date(snapshot.expiresAt).toISOString(),
+            items: pageItems,
+            total: snapshot.items.length + (snapshot.backlogCount ?? 0),
+            primaryCount: datedTasks.length,
+            backlogCount: snapshot.backlogCount ?? 0,
+            backlogPreview: snapshot.backlogPreview ?? [],
+            backlogNextCursor: null,
+            unscheduledCount: unscheduledTasks.length,
+            unscheduledPreview: unscheduledTasks.slice(0, 20),
+            unscheduledNextCursor: nextCursor,
+            nextCursor,
+            groups: [],
+            dependencyEdges: [],
+          };
+
+          return HttpResponse.json(result, {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "private, no-store",
+            },
+          });
+        }
+
+        // PRIMARY scope (dated items page)
+        const pageItems = datedTasks.slice(0, limit);
+        let nextCursor: string | null = null;
+        if (limit < datedTasks.length) {
+          nextCursor = btoa(JSON.stringify({ snapshotId: snapshot.id, offset: limit, v: 1 }));
+        }
+
+        const unscheduledPreview = includeUnscheduled ? unscheduledTasks.slice(0, 20) : [];
+        const unscheduledCount = includeUnscheduled ? unscheduledTasks.length : 0;
+        const unscheduledNextCursor =
+          includeUnscheduled && unscheduledTasks.length > 20
+            ? btoa(JSON.stringify({ snapshotId: snapshot.id, scope: "UNSCHEDULED", offset: 20, v: 1 }))
+            : null;
+
+        const result: ApiSchema<"TaskQueryResult"> = {
+          projection: "CALENDAR",
+          pageScope: "PRIMARY",
+          groupKey: null,
+          querySnapshotId: snapshot.id,
+          snapshotSequence: workspaceSeqCounters[workspaceId] ?? 1,
+          snapshotAt: new Date(snapshot.createdAt).toISOString(),
+          snapshotExpiresAt: new Date(snapshot.expiresAt).toISOString(),
+          items: pageItems,
+          total: snapshot.items.length + (snapshot.backlogCount ?? 0),
+          primaryCount: datedTasks.length,
+          backlogCount: snapshot.backlogCount ?? 0,
+          backlogPreview: snapshot.backlogPreview ?? [],
+          backlogNextCursor: null,
+          unscheduledCount,
+          unscheduledPreview,
+          unscheduledNextCursor,
+          nextCursor,
+          groups: [],
+          dependencyEdges: [],
+        };
+
+        return HttpResponse.json(result, {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "private, no-store",
+          },
+        });
+      }
+
       // LIST projection handling (default)
       const limit = Math.max(1, Math.min(200, body.limit ?? 200));
       const pageItems = snapshot.items.slice(0, limit);

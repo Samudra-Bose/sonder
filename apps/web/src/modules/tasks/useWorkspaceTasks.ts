@@ -78,7 +78,7 @@ export function useWorkspaceTasks({
   const { csrfToken } = useAuth();
   const normalizedQuery = useMemo(() => normalizeWorkspaceTasksQuery(query), [query]);
   const querySpecJson = useMemo(() => JSON.stringify(normalizedQuery), [normalizedQuery]);
-  const isQueryEnabled = Boolean(communityId && workspaceId && enabled);
+  const isQueryEnabled = Boolean(communityId && workspaceId && csrfToken && enabled);
 
   return useQuery({
     queryKey: workspaceTasksQueryKey(communityId, workspaceId, querySpecJson),
@@ -102,7 +102,7 @@ export function useWorkspaceTasks({
             csrfToken: csrfToken ?? undefined,
           });
 
-          if (normalizedQuery.projection === "BOARD") {
+          if (normalizedQuery.projection === "BOARD" || normalizedQuery.projection === "CALENDAR") {
             latestResult = result;
             break;
           }
@@ -143,7 +143,7 @@ export function useWorkspaceTasks({
         throw new Error("No query result returned from workspace tasks query.");
       }
 
-      if (normalizedQuery.projection === "BOARD") {
+      if (normalizedQuery.projection === "BOARD" || normalizedQuery.projection === "CALENDAR") {
         return latestResult;
       }
 

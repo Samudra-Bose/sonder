@@ -15,6 +15,7 @@ export type ViewQuerySpec = ApiSchema<"ViewQuerySpec">;
 export type QueryFilterGroup = ApiSchema<"QueryFilterGroup">;
 export type QueryFilterCondition = ApiSchema<"QueryFilterCondition">;
 export type QuerySortTerm = ApiSchema<"QuerySortTerm">;
+export type QueryDateWindow = ApiSchema<"QueryDateWindow">;
 export type MoveTaskRequest = ApiSchema<"MoveTaskRequest">;
 export type TaskMoveResultDto = ApiSchema<"TaskMoveResultDto">;
 

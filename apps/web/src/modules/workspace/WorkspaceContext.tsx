@@ -32,7 +32,8 @@ export function WorkspaceProvider({
   initialCommunityId = null,
   initialWorkspaceId = null,
 }: WorkspaceProviderProps): React.JSX.Element {
-  const { communities, csrfToken } = useAuth();
+  const { communities: rawCommunities, csrfToken } = useAuth();
+  const communities = useMemo(() => rawCommunities ?? [], [rawCommunities]);
   const queryClient = useQueryClient();
 
   // Active community context. Respects "No blind index-0 assumption":
@@ -43,15 +44,16 @@ export function WorkspaceProvider({
       if (typeof window !== "undefined") {
         try {
           const stored = window.localStorage.getItem("sonder-active-community-id");
-          if (stored && communities.some((c) => c.communityId === stored)) {
+          if (stored && (rawCommunities ?? []).some((c) => c.communityId === stored)) {
             return stored;
           }
         } catch {
           // Storage sandbox
         }
       }
-      if (communities.length === 1 && communities[0]) {
-        return communities[0].communityId;
+      const comList = rawCommunities ?? [];
+      if (comList.length === 1 && comList[0]) {
+        return comList[0].communityId;
       }
       return null;
     }
@@ -63,7 +65,7 @@ export function WorkspaceProvider({
       if (typeof window !== "undefined") {
         try {
           const stored = window.localStorage.getItem("sonder-active-community-id");
-          if (stored && communities.some((c) => c.communityId === stored)) {
+          if (stored && communities?.some((c) => c.communityId === stored)) {
             setCurrentCommunityId(stored);
             return;
           }
@@ -71,7 +73,7 @@ export function WorkspaceProvider({
           // Ignore
         }
       }
-      if (communities.length === 1 && communities[0]) {
+      if (communities?.length === 1 && communities[0]) {
         setCurrentCommunityId(communities[0].communityId);
       }
     }

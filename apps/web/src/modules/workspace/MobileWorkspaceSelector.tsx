@@ -98,7 +98,7 @@ export function MobileWorkspaceSelector({
           </span>
         </div>
 
-        {communities.length > 1 && (
+        {(communities?.length ?? 0) > 1 && (
           <button
             type="button"
             onClick={() => setIsCommunitySelectorOpen((prev) => !prev)}
@@ -113,12 +113,12 @@ export function MobileWorkspaceSelector({
       </div>
 
       {/* Community Picker Accordion (if multiple communities) */}
-      {isCommunitySelectorOpen && communities.length > 1 && (
+      {isCommunitySelectorOpen && (communities?.length ?? 0) > 1 && (
         <div className="p-2 bg-[var(--surface-card)] rounded-lg border border-[var(--border-strong)] space-y-1">
           <p className="text-[10px] uppercase font-bold text-[var(--text-muted)] px-1">
             Select Active Community
           </p>
-          {communities.map((c) => {
+          {(communities ?? []).map((c) => {
             const isCurrent = c.communityId === currentCommunity?.communityId;
             return (
               <button

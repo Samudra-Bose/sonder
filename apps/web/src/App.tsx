@@ -68,12 +68,15 @@ export function App({ initialEntries }: AppProps = {}): React.JSX.Element {
                 <Route path="inbox" element={<InboxPlaceholderView />} />
                 <Route path="list" element={<WorkspaceTasksView defaultView="list" />} />
                 <Route path="board" element={<WorkspaceTasksView defaultView="board" />} />
+                <Route path="calendar" element={<WorkspaceTasksView defaultView="calendar" />} />
                 <Route path="workspaces/:workspaceId" element={<Navigate to="list" replace />} />
                 <Route path="workspaces/:workspaceId/list" element={<WorkspaceTasksView defaultView="list" />} />
                 <Route path="workspaces/:workspaceId/board" element={<WorkspaceTasksView defaultView="board" />} />
+                <Route path="workspaces/:workspaceId/calendar" element={<WorkspaceTasksView defaultView="calendar" />} />
                 <Route path="c/:communityId/w/:workspaceId" element={<Navigate to="list" replace />} />
                 <Route path="c/:communityId/w/:workspaceId/list" element={<WorkspaceTasksView defaultView="list" />} />
                 <Route path="c/:communityId/w/:workspaceId/board" element={<WorkspaceTasksView defaultView="board" />} />
+                <Route path="c/:communityId/w/:workspaceId/calendar" element={<WorkspaceTasksView defaultView="calendar" />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

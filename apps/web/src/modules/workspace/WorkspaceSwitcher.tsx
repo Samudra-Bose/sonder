@@ -204,7 +204,7 @@ export function WorkspaceSwitcher({
                 </span>
               </div>
 
-              {communities.length > 1 && (
+              {(communities?.length ?? 0) > 1 && (
                 <button
                   type="button"
                   onClick={() => setIsCommunityMenuOpen((prev) => !prev)}
@@ -218,12 +218,12 @@ export function WorkspaceSwitcher({
             </div>
 
             {/* Community Switcher Dropdown (When multiple communities exist) */}
-            {isCommunityMenuOpen && communities.length > 1 && (
+            {isCommunityMenuOpen && (communities?.length ?? 0) > 1 && (
               <div className="mt-2 pt-2 border-t border-[var(--border-subtle)] space-y-1">
                 <p className="text-[10px] uppercase font-bold text-[var(--text-muted)] px-1">
                   Your Communities
                 </p>
-                {communities.map((c) => {
+                {(communities ?? []).map((c) => {
                   const isCurrent = c.communityId === currentCommunity?.communityId;
                   return (
                     <button
