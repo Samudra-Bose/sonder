@@ -7,3 +7,5 @@ export * from "./useUpdateTask.js";
 export * from "./useTaskPeekDrawer.js";
 export * from "./TaskPeekDrawer.js";
 export * from "./InlineFieldEditors.js";
+export * from "./QuickTaskComposerContext.js";
+export * from "./QuickTaskComposer.js";

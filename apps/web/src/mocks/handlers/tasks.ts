@@ -30,6 +30,14 @@ const workspaceSeqCounters: Record<string, number> = {
   [WS_PERSONAL_ALEX_ID]: 2,
 };
 
+// Idempotency cache tracking processed task creation mutations
+interface ProcessedTaskMutation {
+  rawBody: string;
+  response: TaskDto;
+  seq: number;
+}
+const processedTaskMutations = new Map<string, ProcessedTaskMutation>();
+
 // Configurable delay and error overrides for tests
 let tasksDelayMs = 0;
 export interface MockTasksErrorOverride {
@@ -63,6 +71,7 @@ export function resetTaskMockState(): void {
   workspaceSeqCounters[WS_SHARED_ENG_ID] = 106;
   workspaceSeqCounters[WS_SHARED_GALA_ID] = 201;
   workspaceSeqCounters[WS_PERSONAL_ALEX_ID] = 2;
+  processedTaskMutations.clear();
   tasksDelayMs = 0;
   tasksErrorOverride = null;
 }
@@ -299,6 +308,37 @@ export const taskHandlers = [
         );
       }
 
+      // Check idempotency replay / payload mismatch
+      const rawBody = await request.clone().text();
+      const cachedMutation = processedTaskMutations.get(mutationId);
+      if (cachedMutation) {
+        if (cachedMutation.rawBody === rawBody) {
+          return HttpResponse.json(cachedMutation.response, {
+            status: 201,
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "private, no-store",
+              "X-Workspace-Seq": String(cachedMutation.seq),
+              "X-Idempotent-Replayed": "true",
+            },
+          });
+        } else {
+          return HttpResponse.json(
+            {
+              type: "https://errors.sonder.platform/idempotency-mismatch",
+              title: "Idempotency Key Payload Mismatch",
+              status: 409,
+              detail: "X-Mutation-Id was already processed with a different request payload.",
+              code: "IDEMPOTENCY_KEY_PAYLOAD_MISMATCH",
+            },
+            {
+              status: 409,
+              headers: { "Content-Type": "application/problem+json" },
+            }
+          );
+        }
+      }
+
       const body = (await request.json()) as CreateTaskRequest;
 
       // Validate title
@@ -318,9 +358,56 @@ export const taskHandlers = [
         );
       }
 
+      if (body.title.length > 500) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/validation-error",
+            title: "Validation Error",
+            status: 422,
+            detail: "Task title must be 500 characters or fewer.",
+            code: "VALIDATION_FAILED",
+          },
+          {
+            status: 422,
+            headers: { "Content-Type": "application/problem+json" },
+          }
+        );
+      }
+
+      if (body.description && body.description.length > 20000) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/validation-error",
+            title: "Validation Error",
+            status: 422,
+            detail: "Task description must be 20000 characters or fewer.",
+            code: "VALIDATION_FAILED",
+          },
+          {
+            status: 422,
+            headers: { "Content-Type": "application/problem+json" },
+          }
+        );
+      }
+
       // Find workspace and its maxSubtaskDepth
       const workspace = mockWorkspacesCommunity1.find((w) => w.id === workspaceId);
-      const maxSubtaskDepth = workspace?.maxSubtaskDepth ?? 1;
+      if (!workspace) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/workspace-not-found",
+            title: "Workspace Not Found",
+            status: 404,
+            detail: `Workspace '${workspaceId}' not found in community.`,
+            code: "WORKSPACE_NOT_FOUND",
+          },
+          {
+            status: 404,
+            headers: { "Content-Type": "application/problem+json" },
+          }
+        );
+      }
+      const maxSubtaskDepth = workspace.maxSubtaskDepth ?? 1;
 
       // Subtask parent validation & depth limit checking
       if (body.parentTaskId) {
@@ -409,6 +496,11 @@ export const taskHandlers = [
       };
 
       currentMockTasks.push(newTask);
+      processedTaskMutations.set(mutationId, {
+        rawBody,
+        response: newTask,
+        seq: nextSeq,
+      });
 
       return HttpResponse.json(newTask, {
         status: 201,

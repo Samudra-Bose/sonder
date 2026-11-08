@@ -22,9 +22,13 @@ import type { CommandItem, CommandGroup } from "./types";
 
 export interface OmnibarModalProps {
   onToggleSidebar?: () => void;
+  onOpenQuickComposer?: () => void;
 }
 
-export function OmnibarModal({ onToggleSidebar }: OmnibarModalProps): React.JSX.Element {
+export function OmnibarModal({
+  onToggleSidebar,
+  onOpenQuickComposer,
+}: OmnibarModalProps): React.JSX.Element {
   const { isOpen, close, searchQuery, setSearchQuery } = useOmnibar();
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -33,6 +37,7 @@ export function OmnibarModal({ onToggleSidebar }: OmnibarModalProps): React.JSX.
   const { groupedCommands } = useOmnibarCommands({
     onClose: close,
     onToggleSidebar,
+    onOpenQuickComposer,
   });
 
   // Filter commands based on current search query
