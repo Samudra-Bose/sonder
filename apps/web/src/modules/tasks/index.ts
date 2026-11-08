@@ -9,3 +9,8 @@ export * from "./TaskPeekDrawer.js";
 export * from "./InlineFieldEditors.js";
 export * from "./QuickTaskComposerContext.js";
 export * from "./QuickTaskComposer.js";
+export * from "./useWorkspaceTasks.js";
+export * from "./useMoveTask.js";
+export * from "./SubtaskItem.js";
+export * from "./SubtaskList.js";
+export * from "./ReparentTaskModal.js";

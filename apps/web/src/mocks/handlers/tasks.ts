@@ -109,6 +109,37 @@ function getTaskDepth(task: TaskDto, allTasks: TaskDto[]): number {
   return 2;
 }
 
+/**
+ * Calculates the maximum height of a task's descendant subtree.
+ * 0 = Leaf task (no children), 1 = Has direct children only, 2 = Has nested grandchildren
+ */
+function getTaskSubtreeHeight(taskId: string, allTasks: TaskDto[]): number {
+  const children = allTasks.filter((t) => t.parentTaskId === taskId);
+  if (children.length === 0) return 0;
+  let maxHeight = 0;
+  for (const child of children) {
+    maxHeight = Math.max(maxHeight, 1 + getTaskSubtreeHeight(child.id, allTasks));
+  }
+  return maxHeight;
+}
+
+/**
+ * Returns set of all descendant task IDs under the given taskId (transitive closure).
+ */
+function getTaskDescendantIds(taskId: string, allTasks: TaskDto[]): Set<string> {
+  const descendantIds = new Set<string>();
+  function traverse(currentId: string) {
+    for (const t of allTasks) {
+      if (t.parentTaskId === currentId) {
+        descendantIds.add(t.id);
+        traverse(t.id);
+      }
+    }
+  }
+  traverse(taskId);
+  return descendantIds;
+}
+
 export const taskHandlers = [
   // 1. GET /api/v1/communities/:communityId/workspaces/:workspaceId/tasks/by-key/:taskKey
   http.get(
@@ -425,6 +456,22 @@ export const taskHandlers = [
             },
             {
               status: 400,
+              headers: { "Content-Type": "application/problem+json" },
+            }
+          );
+        }
+
+        if (parent.effectivePermissions && !parent.effectivePermissions.canCreateSubtask) {
+          return HttpResponse.json(
+            {
+              type: "https://errors.sonder.platform/forbidden",
+              title: "Forbidden",
+              status: 403,
+              detail: "You do not have permission to create a subtask under this parent task.",
+              code: "FORBIDDEN",
+            },
+            {
+              status: 403,
               headers: { "Content-Type": "application/problem+json" },
             }
           );
@@ -845,6 +892,269 @@ export const taskHandlers = [
           "Content-Type": "application/json",
           "Cache-Control": "private, no-store",
           "X-Workspace-Seq": String(task.version),
+        },
+      });
+    }
+  ),
+
+  // 5. POST /api/v1/communities/:communityId/workspaces/:workspaceId/tasks/query
+  http.post(
+    "/api/v1/communities/:communityId/workspaces/:workspaceId/tasks/query",
+    async ({ params, request }) => {
+      if (tasksDelayMs > 0) {
+        await delay(tasksDelayMs);
+      }
+
+      if (matchesErrorOverride("POST")) {
+        return HttpResponse.json(tasksErrorOverride!.problem, {
+          status: tasksErrorOverride!.status,
+          headers: { "Content-Type": "application/problem+json" },
+        });
+      }
+
+      const { workspaceId } = params as {
+        communityId: string;
+        workspaceId: string;
+      };
+
+      const body = (await request.json().catch(() => ({}))) as Partial<ApiSchema<"TaskViewQueryRequest">>;
+
+      // Check workspace exists
+      const workspace = mockWorkspacesCommunity1.find((w) => w.id === workspaceId);
+      if (!workspace) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/workspace-not-found",
+            title: "Workspace Not Found",
+            status: 404,
+            detail: `Workspace '${workspaceId}' not found.`,
+            code: "WORKSPACE_NOT_FOUND",
+          },
+          {
+            status: 404,
+            headers: { "Content-Type": "application/problem+json" },
+          }
+        );
+      }
+
+      let items = currentMockTasks.filter((t) => t.workspaceId === workspaceId);
+
+      const subtaskMode = body.querySpec?.subtaskMode ?? "NESTED";
+      if (subtaskMode === "TOP_LEVEL_ONLY") {
+        items = items.filter((t) => t.parentTaskId === null);
+      }
+
+      const result: ApiSchema<"TaskQueryResult"> = {
+        projection: body.projection ?? "LIST",
+        pageScope: body.pageScope ?? "PRIMARY",
+        querySnapshotId: `snapshot-${generateUuidV7()}`,
+        snapshotSequence: workspaceSeqCounters[workspaceId] ?? 1,
+        snapshotAt: new Date().toISOString(),
+        snapshotExpiresAt: new Date(Date.now() + 900_000).toISOString(),
+        items,
+        total: items.length,
+        primaryCount: items.length,
+        backlogCount: 0,
+        backlogPreview: [],
+        backlogNextCursor: null,
+        unscheduledCount: 0,
+        unscheduledPreview: [],
+        unscheduledNextCursor: null,
+        nextCursor: null,
+        groups: [],
+        dependencyEdges: [],
+      };
+
+      return HttpResponse.json(result, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "private, no-store",
+        },
+      });
+    }
+  ),
+
+  // 6. POST /api/v1/communities/:communityId/workspaces/:workspaceId/tasks/:taskId/move
+  http.post(
+    "/api/v1/communities/:communityId/workspaces/:workspaceId/tasks/:taskId/move",
+    async ({ params, request }) => {
+      if (tasksDelayMs > 0) {
+        await delay(tasksDelayMs);
+      }
+
+      if (matchesErrorOverride("POST")) {
+        return HttpResponse.json(tasksErrorOverride!.problem, {
+          status: tasksErrorOverride!.status,
+          headers: { "Content-Type": "application/problem+json" },
+        });
+      }
+
+      const { workspaceId, taskId } = params as {
+        communityId: string;
+        workspaceId: string;
+        taskId: string;
+      };
+
+      const rawBody = await request.text();
+      let body: ApiSchema<"MoveTaskRequest">;
+      try {
+        body = JSON.parse(rawBody);
+      } catch {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/validation-error",
+            title: "Invalid JSON",
+            status: 400,
+            detail: "Malformed JSON in request body.",
+            code: "MALFORMED_JSON",
+          },
+          { status: 400, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      // Find task
+      const task = currentMockTasks.find(
+        (t) => t.id === taskId && t.workspaceId === workspaceId
+      );
+      if (!task) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/task-not-found",
+            title: "Task Not Found",
+            status: 404,
+            detail: `Task '${taskId}' was not found.`,
+            code: "TASK_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      // Permission check: canMove
+      if (task.effectivePermissions && !task.effectivePermissions.canMove) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/forbidden",
+            title: "Forbidden",
+            status: 403,
+            detail: "You do not have permission to move or reparent this task.",
+            code: "FORBIDDEN",
+          },
+          { status: 403, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      // Same-workspace validation
+      if (body.targetWorkspaceId !== workspaceId) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/transfer-not-supported",
+            title: "Transfer Not Supported",
+            status: 422,
+            detail: "Cross-workspace task transfers are not supported in this stage.",
+            code: "TRANSFER_NOT_SUPPORTED",
+          },
+          { status: 422, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      const targetParentId = body.targetParentTaskId;
+
+      // Self-parent validation
+      if (targetParentId === taskId) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/target-parent-invalid",
+            title: "Invalid Target Parent",
+            status: 422,
+            detail: "A task cannot be its own parent.",
+            code: "TARGET_PARENT_INVALID",
+          },
+          { status: 422, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      // Descendant cycle check
+      const descendants = getTaskDescendantIds(taskId, currentMockTasks);
+      if (targetParentId && descendants.has(targetParentId)) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/target-parent-invalid",
+            title: "Hierarchy Cycle Detected",
+            status: 422,
+            detail: "Cycle detected: cannot reparent a task under one of its own descendants.",
+            code: "TARGET_PARENT_INVALID",
+          },
+          { status: 422, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      // Destination depth check
+      const workspace = mockWorkspacesCommunity1.find((w) => w.id === workspaceId);
+      const maxSubtaskDepth = workspace?.maxSubtaskDepth ?? 1;
+
+      if (targetParentId) {
+        const destParent = currentMockTasks.find(
+          (t) => t.id === targetParentId && t.workspaceId === workspaceId
+        );
+        if (!destParent) {
+          return HttpResponse.json(
+            {
+              type: "https://errors.sonder.platform/target-parent-invalid",
+              title: "Target Parent Not Found",
+              status: 422,
+              detail: `Target parent '${targetParentId}' was not found in this workspace.`,
+              code: "TARGET_PARENT_INVALID",
+            },
+            { status: 422, headers: { "Content-Type": "application/problem+json" } }
+          );
+        }
+
+        const destParentDepth = getTaskDepth(destParent, currentMockTasks);
+        const subtreeHeight = getTaskSubtreeHeight(taskId, currentMockTasks);
+
+        if (destParentDepth + 1 + subtreeHeight > maxSubtaskDepth) {
+          return HttpResponse.json(
+            {
+              type: "https://errors.sonder.platform/max-subtask-depth-exceeded",
+              title: "Maximum Subtask Depth Exceeded",
+              status: 422,
+              detail: `Move would exceed maximum subtask depth (${maxSubtaskDepth}) for this workspace.`,
+              code: "MAX_SUBTASK_DEPTH_EXCEEDED",
+            },
+            { status: 422, headers: { "Content-Type": "application/problem+json" } }
+          );
+        }
+      }
+
+      // Atomic move update
+      task.parentTaskId = targetParentId ?? null;
+      task.updatedAt = new Date().toISOString();
+      task.version += 1;
+
+      const newSeq = (workspaceSeqCounters[workspaceId] ?? 100) + 1;
+      workspaceSeqCounters[workspaceId] = newSeq;
+
+      const result: ApiSchema<"TaskMoveResultDto"> = {
+        transferId: generateUuidV7(),
+        mode: "PRESERVE_IN_PLACE",
+        rootTask: task,
+        movedTaskCount: 1 + descendants.size,
+        sourceWorkspaceId: workspaceId,
+        targetWorkspaceId: workspaceId,
+        sourceWorkspaceSeq: newSeq,
+        targetWorkspaceSeq: newSeq,
+        previousRootKey: task.taskKey,
+        currentRootKey: task.taskKey,
+        aliasesCreated: 0,
+      };
+
+      return HttpResponse.json(result, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "private, no-store",
+          "X-Workspace-Seq": String(newSeq),
         },
       });
     }

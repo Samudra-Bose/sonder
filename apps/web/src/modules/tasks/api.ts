@@ -6,6 +6,11 @@ import type {
   ResolveTaskKeyParams,
   CreateTaskParams,
   UpdateTaskParams,
+  QueryWorkspaceTasksParams,
+  TaskQueryResult,
+  MoveTaskParams,
+  TaskMoveResultDto,
+  TaskViewQueryRequest,
 } from "./types.js";
 
 /**
@@ -77,6 +82,63 @@ export async function updateTask({
     `/communities/${encodeURIComponent(communityId)}/workspaces/${encodeURIComponent(workspaceId)}/tasks/${encodeURIComponent(taskId)}`,
     {
       method: "PATCH",
+      body: JSON.stringify(data),
+      csrfToken,
+      mutationId,
+    }
+  );
+}
+
+/**
+ * Queries workspace tasks according to canonical querySpec.
+ * Used for building and rendering task and subtask hierarchies.
+ */
+export async function queryWorkspaceTasks({
+  communityId,
+  workspaceId,
+  query = {},
+  csrfToken,
+}: QueryWorkspaceTasksParams): Promise<TaskQueryResult> {
+  const fullBody: TaskViewQueryRequest = {
+    projection: query.projection ?? "LIST",
+    pageScope: query.pageScope ?? "PRIMARY",
+    querySpec: query.querySpec ?? {
+      subtaskMode: "NESTED",
+      groupBy: "none",
+      subGroupBy: "none",
+      includeBacklog: true,
+      includeCompleted: true,
+      filter: { conjunction: "AND", conditions: [] },
+    },
+    ...query,
+  };
+
+  return apiRequest<TaskQueryResult>(
+    `/communities/${encodeURIComponent(communityId)}/workspaces/${encodeURIComponent(workspaceId)}/tasks/query`,
+    {
+      method: "POST",
+      body: JSON.stringify(fullBody),
+      csrfToken,
+    }
+  );
+}
+
+/**
+ * Moves a task within a workspace (same-workspace reparenting) or across workspaces.
+ * In Stage 5, constrained to same-workspace moves (targetWorkspaceId === workspaceId).
+ */
+export async function moveTask({
+  communityId,
+  workspaceId,
+  taskId,
+  data,
+  csrfToken,
+  mutationId,
+}: MoveTaskParams): Promise<TaskMoveResultDto> {
+  return apiRequest<TaskMoveResultDto>(
+    `/communities/${encodeURIComponent(communityId)}/workspaces/${encodeURIComponent(workspaceId)}/tasks/${encodeURIComponent(taskId)}/move`,
+    {
+      method: "POST",
       body: JSON.stringify(data),
       csrfToken,
       mutationId,
