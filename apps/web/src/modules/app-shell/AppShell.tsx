@@ -5,7 +5,12 @@ import { ApiProblemError } from "@/lib/api-client";
 import { useKeyboardShortcut } from "@/lib/keyboard";
 import { WorkspaceProvider } from "@/modules/workspace";
 import { OmnibarProvider, OmnibarModal } from "@/modules/omnibar";
-import { TaskPeekDrawer } from "@/modules/tasks";
+import {
+  TaskPeekDrawer,
+  QuickTaskComposerProvider,
+  QuickTaskComposer,
+  useQuickTaskComposer,
+} from "@/modules/tasks";
 import { AppHeader } from "./AppHeader";
 import { AppSidebar } from "./AppSidebar";
 import { MobileNavigation } from "./MobileNavigation";
@@ -17,8 +22,9 @@ export interface AppShellProps {
   children?: React.ReactNode;
 }
 
-export function AppShell({ children }: AppShellProps): React.JSX.Element {
+function AppShellContent({ children }: AppShellProps): React.JSX.Element {
   const { user, logout, clearError } = useAuth();
+  const { open: openQuickComposer } = useQuickTaskComposer();
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
@@ -82,92 +88,106 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
   };
 
   return (
+    <div className="min-h-screen flex flex-col bg-[var(--surface-canvas)] text-[var(--text-primary)] transition-colors duration-150 pb-14 md:pb-0">
+      {/* Top Application Header */}
+      <AppHeader
+        user={user}
+        isSidebarCollapsed={isSidebarCollapsed}
+        onToggleSidebar={toggleSidebar}
+        onOpenMobileNav={handleOpenMobileNav}
+        onLogout={handleLogout}
+        isLoggingOut={isLoggingOut}
+        menuTriggerRef={menuTriggerRef}
+      />
+
+      {/* Accessible Sign Out Error Alert with Retry Path */}
+      {logoutError && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="bg-[var(--feedback-danger-bg)] border-b border-[var(--border-strong)] px-4 py-2 text-xs text-[var(--feedback-danger-text)] flex items-center justify-between z-30"
+        >
+          <div className="flex items-center space-x-2">
+            <span className="font-semibold">Sign out failed: </span>
+            <span>{logoutError}</span>
+          </div>
+          <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="font-medium underline hover:opacity-80 focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] rounded cursor-pointer"
+            >
+              Retry
+            </button>
+            <button
+              type="button"
+              onClick={() => setLogoutError(null)}
+              aria-label="Dismiss sign out error"
+              className="text-[var(--feedback-danger-text)] hover:opacity-80 focus:outline-none font-bold text-sm cursor-pointer"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Main Structural Body: Sidebar + Main Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Desktop Left Rail Sidebar */}
+        <AppSidebar
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={toggleSidebar}
+        />
+
+        {/* Dynamic Main Content Canvas */}
+        <MainContent>
+          {children ?? <Outlet />}
+        </MainContent>
+
+        {/* Task Peek Drawer (Desktop right-docked panel / Mobile bottom sheet) */}
+        <TaskPeekDrawer />
+      </div>
+
+      {/* Mobile Navigation Drawer & Bottom Bar */}
+      <MobileNavigation
+        isOpen={isMobileNavOpen}
+        onClose={() => setIsMobileNavOpen(false)}
+        onOpen={handleOpenMobileNav}
+        user={user}
+        onLogout={handleLogout}
+        isLoggingOut={isLoggingOut}
+        triggerEl={openTriggerEl}
+      />
+
+      {/* Global Omnibar Command Palette Modal */}
+      <OmnibarModal
+        onToggleSidebar={toggleSidebar}
+        onOpenQuickComposer={() => openQuickComposer()}
+      />
+
+      {/* Quick Task Composer Modal */}
+      <QuickTaskComposer />
+
+      {/* Semantic Footer (Visible on desktop/tablet) */}
+      <footer
+        role="contentinfo"
+        className="h-8 border-t border-[var(--border-subtle)] bg-[var(--surface-card)] px-4 hidden md:flex items-center justify-between text-xs text-[var(--text-muted)] select-none"
+      >
+        <span>Sonder Platform &copy; 2026</span>
+        <span>Community Edition</span>
+      </footer>
+    </div>
+  );
+}
+
+export function AppShell({ children }: AppShellProps): React.JSX.Element {
+  return (
     <WorkspaceProvider>
       <OmnibarProvider>
-        <div className="min-h-screen flex flex-col bg-[var(--surface-canvas)] text-[var(--text-primary)] transition-colors duration-150 pb-14 md:pb-0">
-          {/* Top Application Header */}
-          <AppHeader
-            user={user}
-            isSidebarCollapsed={isSidebarCollapsed}
-            onToggleSidebar={toggleSidebar}
-            onOpenMobileNav={handleOpenMobileNav}
-            onLogout={handleLogout}
-            isLoggingOut={isLoggingOut}
-            menuTriggerRef={menuTriggerRef}
-          />
-
-          {/* Accessible Sign Out Error Alert with Retry Path */}
-          {logoutError && (
-            <div
-              role="alert"
-              aria-live="assertive"
-              className="bg-[var(--feedback-danger-bg)] border-b border-[var(--border-strong)] px-4 py-2 text-xs text-[var(--feedback-danger-text)] flex items-center justify-between z-30"
-            >
-              <div className="flex items-center space-x-2">
-                <span className="font-semibold">Sign out failed: </span>
-                <span>{logoutError}</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  disabled={isLoggingOut}
-                  className="font-medium underline hover:opacity-80 focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] rounded cursor-pointer"
-                >
-                  Retry
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLogoutError(null)}
-                  aria-label="Dismiss sign out error"
-                  className="text-[var(--feedback-danger-text)] hover:opacity-80 focus:outline-none font-bold text-sm cursor-pointer"
-                >
-                  &times;
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Main Structural Body: Sidebar + Main Content */}
-          <div className="flex-1 flex overflow-hidden">
-            {/* Desktop Left Rail Sidebar */}
-            <AppSidebar
-              isCollapsed={isSidebarCollapsed}
-              onToggleCollapse={toggleSidebar}
-            />
-
-            {/* Dynamic Main Content Canvas */}
-            <MainContent>
-              {children ?? <Outlet />}
-            </MainContent>
-
-            {/* Task Peek Drawer (Desktop right-docked panel / Mobile bottom sheet) */}
-            <TaskPeekDrawer />
-          </div>
-
-          {/* Mobile Navigation Drawer & Bottom Bar */}
-          <MobileNavigation
-            isOpen={isMobileNavOpen}
-            onClose={() => setIsMobileNavOpen(false)}
-            onOpen={handleOpenMobileNav}
-            user={user}
-            onLogout={handleLogout}
-            isLoggingOut={isLoggingOut}
-            triggerEl={openTriggerEl}
-          />
-
-          {/* Global Omnibar Command Palette Modal */}
-          <OmnibarModal onToggleSidebar={toggleSidebar} />
-
-          {/* Semantic Footer (Visible on desktop/tablet) */}
-          <footer
-            role="contentinfo"
-            className="h-8 border-t border-[var(--border-subtle)] bg-[var(--surface-card)] px-4 hidden md:flex items-center justify-between text-xs text-[var(--text-muted)] select-none"
-          >
-            <span>Sonder Platform &copy; 2026</span>
-            <span>Community Edition</span>
-          </footer>
-        </div>
+        <QuickTaskComposerProvider>
+          <AppShellContent>{children}</AppShellContent>
+        </QuickTaskComposerProvider>
       </OmnibarProvider>
     </WorkspaceProvider>
   );

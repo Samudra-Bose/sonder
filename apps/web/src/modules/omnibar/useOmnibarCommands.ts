@@ -13,6 +13,7 @@ import {
   Laptop,
   PanelLeft,
   LogOut,
+  Plus,
 } from "lucide-react";
 import { useWorkspace } from "@/modules/workspace";
 import { useTheme } from "@/lib/theme";
@@ -22,11 +23,13 @@ import type { CommandItem, CommandGroup, CommandCategory } from "./types";
 export interface UseOmnibarCommandsOptions {
   onClose: () => void;
   onToggleSidebar?: () => void;
+  onOpenQuickComposer?: () => void;
 }
 
 export function useOmnibarCommands({
   onClose,
   onToggleSidebar,
+  onOpenQuickComposer,
 }: UseOmnibarCommandsOptions): {
   allCommands: CommandItem[];
   groupedCommands: CommandGroup[];
@@ -233,6 +236,23 @@ export function useOmnibarCommands({
         onClose();
       },
     });
+
+    if (onOpenQuickComposer) {
+      items.push({
+        id: "action-create-task",
+        title: "Create Task",
+        description: "Open the Quick Task Composer (C)",
+        category: "action",
+        categoryLabel: "Actions",
+        icon: Plus,
+        shortcut: "C",
+        keywords: ["create", "task", "new", "todo", "issue", "composer"],
+        onSelect: () => {
+          onClose();
+          onOpenQuickComposer();
+        },
+      });
+    }
 
     if (onToggleSidebar) {
       items.push({
