@@ -10,6 +10,11 @@ export type TaskPriority = ApiSchema<"TaskPriority">;
 export type TaskType = ApiSchema<"TaskType">;
 export type TaskViewQueryRequest = ApiSchema<"TaskViewQueryRequest">;
 export type TaskQueryResult = ApiSchema<"TaskQueryResult">;
+export type TaskQueryBucketDto = ApiSchema<"TaskQueryBucketDto">;
+export type ViewQuerySpec = ApiSchema<"ViewQuerySpec">;
+export type QueryFilterGroup = ApiSchema<"QueryFilterGroup">;
+export type QueryFilterCondition = ApiSchema<"QueryFilterCondition">;
+export type QuerySortTerm = ApiSchema<"QuerySortTerm">;
 export type MoveTaskRequest = ApiSchema<"MoveTaskRequest">;
 export type TaskMoveResultDto = ApiSchema<"TaskMoveResultDto">;
 

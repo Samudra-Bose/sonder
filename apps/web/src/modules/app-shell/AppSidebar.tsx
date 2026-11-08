@@ -4,11 +4,13 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Sparkles,
+  List,
+  LayoutGrid,
 } from "lucide-react";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { Kbd } from "@/components/ui/KeyboardShortcut";
 import { cn } from "@/lib/utils";
-import { WorkspaceSwitcher } from "@/modules/workspace";
+import { WorkspaceSwitcher, useWorkspace } from "@/modules/workspace";
 import {
   PRIMARY_NAV_ITEMS,
   type NavItem,
@@ -23,6 +25,8 @@ export function AppSidebar({
   isCollapsed,
   onToggleCollapse,
 }: AppSidebarProps): React.JSX.Element {
+  const { activeWorkspace, currentCommunityId } = useWorkspace();
+
   return (
     <aside
       role="navigation"
@@ -118,6 +122,70 @@ export function AppSidebar({
           )}
           <WorkspaceSwitcher isCollapsed={isCollapsed} />
         </div>
+
+        {/* Active Workspace Views (VS-04 List & Board Views) */}
+        {activeWorkspace && (
+          <div className="space-y-1 pt-2 border-t border-[var(--border-subtle)]">
+            {!isCollapsed && (
+              <h2 className="px-2 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                Views
+              </h2>
+            )}
+            <nav aria-label="Workspace Views" className="space-y-0.5">
+              {[
+                {
+                  id: "list",
+                  label: "List",
+                  icon: List,
+                  href: currentCommunityId
+                    ? `/c/${currentCommunityId}/w/${activeWorkspace.id}/list`
+                    : `/workspaces/${activeWorkspace.id}/list`,
+                },
+                {
+                  id: "board",
+                  label: "Board",
+                  icon: LayoutGrid,
+                  href: currentCommunityId
+                    ? `/c/${currentCommunityId}/w/${activeWorkspace.id}/board`
+                    : `/workspaces/${activeWorkspace.id}/board`,
+                },
+              ].map((viewItem) => {
+                const ViewIcon = viewItem.icon;
+                const link = (
+                  <NavLink
+                    key={viewItem.id}
+                    to={viewItem.href}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center rounded-md text-xs font-medium transition-colors focus-ring",
+                        isCollapsed
+                          ? "h-9 w-9 mx-auto justify-center p-0"
+                          : "h-8 px-2.5 w-full justify-start gap-2.5",
+                        isActive
+                          ? "bg-[var(--surface-muted)] text-[var(--brand-accent-text)] font-semibold shadow-2xs border-l-2 border-[var(--brand-accent-btn-bg)]"
+                          : "text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]"
+                      )
+                    }
+                  >
+                    <ViewIcon className="h-4 w-4 flex-shrink-0" />
+                    {!isCollapsed && (
+                      <span className="flex-1 truncate text-left">{viewItem.label}</span>
+                    )}
+                  </NavLink>
+                );
+
+                if (isCollapsed) {
+                  return (
+                    <Tooltip key={viewItem.id} content={viewItem.label} side="right">
+                      {link}
+                    </Tooltip>
+                  );
+                }
+                return link;
+              })}
+            </nav>
+          </div>
+        )}
       </div>
 
       {/* Footer / Sidebar Collapse Control */}

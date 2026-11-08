@@ -40,3 +40,8 @@ pnpm-debug.log*
 # Temp
 .temp/
 tmp/
+
+# Antigravity agents configuration
+.agents/*
+!.agents/rules/
+
