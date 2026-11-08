@@ -11,6 +11,7 @@ import {
   useResolveTaskKey,
   useCreateTask,
   useUpdateTask,
+  useWorkspaceTasks,
   taskQueryKey,
   taskKeyResolutionQueryKey,
 } from "./index.js";
@@ -580,6 +581,61 @@ describe("VS-03 Stage 1: Task Data Access Layer & Mock Infrastructure", () => {
         );
         expect(cached.title).toBe(initialTask.title);
       });
+    });
+  });
+
+  describe("useWorkspaceTasks Query Hook — CSRF & Session Invariants", () => {
+    it("waits for CSRF token and remains disabled when csrfToken is null", async () => {
+      const queryClient = createTestQueryClient();
+      const authWithoutCsrf = createMockAuth({ csrfToken: null });
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <QueryClientProvider client={queryClient}>
+          <AuthContext.Provider value={authWithoutCsrf}>
+            {children}
+          </AuthContext.Provider>
+        </QueryClientProvider>
+      );
+
+      const { result } = renderHook(
+        () =>
+          useWorkspaceTasks({
+            communityId: MOCK_COMMUNITY_1_ID,
+            workspaceId: WS_SHARED_ENG_ID,
+          }),
+        { wrapper }
+      );
+
+      // Must remain in idle / disabled state without triggering query
+      expect(result.current.fetchStatus).toBe("idle");
+      expect(result.current.data).toBeUndefined();
+    });
+
+    it("executes query and populates tasks when csrfToken is present", async () => {
+      const queryClient = createTestQueryClient();
+      const authWithCsrf = createMockAuth({ csrfToken: TEST_CSRF_TOKEN });
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <QueryClientProvider client={queryClient}>
+          <AuthContext.Provider value={authWithCsrf}>
+            {children}
+          </AuthContext.Provider>
+        </QueryClientProvider>
+      );
+
+      const { result } = renderHook(
+        () =>
+          useWorkspaceTasks({
+            communityId: MOCK_COMMUNITY_1_ID,
+            workspaceId: WS_SHARED_ENG_ID,
+          }),
+        { wrapper }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      expect(result.current.data?.items.length).toBeGreaterThan(0);
+      expect(result.current.data?.items[0]?.workspaceId).toBe(WS_SHARED_ENG_ID);
     });
   });
 });
