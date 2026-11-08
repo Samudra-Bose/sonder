@@ -8,6 +8,7 @@ import {
   Sparkles,
   Hash,
   Lock,
+  ArrowRightLeft,
 } from "lucide-react";
 import {
   Dialog,
@@ -30,6 +31,9 @@ import { ApiProblemError } from "@/lib/api-client.js";
 import { useTaskPeekDrawer } from "./useTaskPeekDrawer.js";
 import { useResolveTaskKey } from "./useResolveTaskKey.js";
 import { useTask } from "./useTask.js";
+import { useWorkspaceTasks } from "./useWorkspaceTasks.js";
+import { SubtaskList } from "./SubtaskList.js";
+import { ReparentTaskModal } from "./ReparentTaskModal.js";
 import type { TaskDto } from "./types.js";
 import {
   InlineTitleEditor,
@@ -86,6 +90,7 @@ export function TaskPeekDrawer({
   const isDesktop = forceMode ? forceMode === "desktop" : systemIsDesktop;
 
   const [hasCopied, setHasCopied] = useState(false);
+  const [isReparentOpen, setIsReparentOpen] = useState(false);
   const triggerRef = useRef<HTMLElement | null>(null);
   const titleRef = useRef<HTMLHeadingElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -171,6 +176,14 @@ export function TaskPeekDrawer({
     const wsId = task?.workspaceId ?? effectiveWorkspaceId;
     return workspaces.find((w) => w.id === wsId);
   }, [workspaces, task?.workspaceId, effectiveWorkspaceId]);
+
+  const { data: workspaceTasksData } = useWorkspaceTasks({
+    communityId: currentCommunityId,
+    workspaceId: effectiveWorkspaceId,
+    enabled: isOpen && Boolean(currentCommunityId && effectiveWorkspaceId),
+  });
+  const allWorkspaceTasks = workspaceTasksData?.items ?? [];
+  const maxSubtaskDepth = targetWorkspace?.maxSubtaskDepth ?? 1;
 
   const handleCopyLink = async () => {
     if (!taskKey) return;
@@ -436,20 +449,41 @@ export function TaskPeekDrawer({
               isArchived={isArchived}
             />
 
-            {/* Parent Task / Hierarchy Indicator */}
-            {task.parentTaskId && (
-              <div className="col-span-1 sm:col-span-2 space-y-1 pt-1 border-t border-[var(--border-subtle)]">
+            {/* Hierarchy & Parent Indicator */}
+            <div className="col-span-1 sm:col-span-2 space-y-1 pt-1 border-t border-[var(--border-subtle)]">
+              <div className="flex items-center justify-between">
                 <span className="text-[11px] font-medium text-[var(--text-muted)] flex items-center gap-1">
                   <Hash className="h-3 w-3" /> Hierarchy
                 </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-[var(--text-secondary)]">Subtask</span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--surface-muted)] text-[var(--text-muted)]">
+                {Boolean(task.effectivePermissions?.canMove && !isArchived) && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsReparentOpen(true)}
+                    data-testid="reparent-current-task-btn"
+                    className="h-5 px-1.5 text-[10px] gap-1 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                  >
+                    <ArrowRightLeft className="h-2.5 w-2.5" />
+                    <span>Reparent</span>
+                  </Button>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[var(--text-secondary)]">
+                  {task.parentTaskId ? "Subtask" : "Root Task"}
+                </span>
+                {task.parentTaskId && (
+                  <span
+                    className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--surface-muted)] text-[var(--text-muted)] truncate max-w-[200px]"
+                    title={task.parentTaskId}
+                    data-testid="parent-task-indicator"
+                  >
                     Parent: {task.parentTaskId}
                   </span>
-                </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
 
@@ -469,12 +503,33 @@ export function TaskPeekDrawer({
           isArchived={isArchived}
         />
 
+        {/* Subtasks Section */}
+        <SubtaskList
+          task={task}
+          communityId={currentCommunityId}
+          workspaceId={task.workspaceId}
+          isArchived={isArchived}
+        />
+
         {/* Audit & Provenance Footer */}
         <div className="pt-4 border-t border-[var(--border-subtle)] text-[11px] text-[var(--text-muted)] flex flex-wrap justify-between gap-2">
           <span>Created: {new Date(task.createdAt).toLocaleDateString()}</span>
           <span>Updated: {new Date(task.updatedAt).toLocaleDateString()}</span>
           <span className="font-mono">Version {task.version}</span>
         </div>
+
+        {/* Reparent Task Modal for Current Task */}
+        {isReparentOpen && (
+          <ReparentTaskModal
+            task={task}
+            allTasks={allWorkspaceTasks}
+            maxSubtaskDepth={maxSubtaskDepth}
+            communityId={currentCommunityId}
+            workspaceId={task.workspaceId}
+            isOpen={isReparentOpen}
+            onClose={() => setIsReparentOpen(false)}
+          />
+        )}
       </div>
     );
   };
