@@ -38,6 +38,27 @@ interface ProcessedTaskMutation {
 }
 const processedTaskMutations = new Map<string, ProcessedTaskMutation>();
 
+// Query snapshot registry for workspace query pagination
+export interface QuerySnapshotRecord {
+  id: string;
+  workspaceId: string;
+  items: TaskDto[];
+  createdAt: number;
+  expiresAt: number;
+}
+const querySnapshots = new Map<string, QuerySnapshotRecord>();
+let forceSnapshotExpired = false;
+let forceSnapshotExpiredOnce = false;
+
+export function setForceExpireSnapshot(expired: boolean, once = false): void {
+  forceSnapshotExpired = expired;
+  forceSnapshotExpiredOnce = once;
+}
+
+export function getQuerySnapshots(): Map<string, QuerySnapshotRecord> {
+  return querySnapshots;
+}
+
 // Configurable delay and error overrides for tests
 let tasksDelayMs = 0;
 export interface MockTasksErrorOverride {
@@ -72,6 +93,9 @@ export function resetTaskMockState(): void {
   workspaceSeqCounters[WS_SHARED_GALA_ID] = 201;
   workspaceSeqCounters[WS_PERSONAL_ALEX_ID] = 2;
   processedTaskMutations.clear();
+  querySnapshots.clear();
+  forceSnapshotExpired = false;
+  forceSnapshotExpiredOnce = false;
   tasksDelayMs = 0;
   tasksErrorOverride = null;
 }
@@ -937,30 +961,182 @@ export const taskHandlers = [
         );
       }
 
-      let items = currentMockTasks.filter((t) => t.workspaceId === workspaceId);
+      // Continuation page with cursor
+      if (body.cursor) {
+        if (forceSnapshotExpired || forceSnapshotExpiredOnce) {
+          if (forceSnapshotExpiredOnce) {
+            forceSnapshotExpiredOnce = false;
+          }
+          return HttpResponse.json(
+            {
+              type: "https://errors.sonder.platform/query-snapshot-expired",
+              title: "Query Snapshot Expired",
+              status: 409,
+              detail: "The query snapshot has expired. Restart query from page 1.",
+              code: "QUERY_SNAPSHOT_EXPIRED",
+            },
+            {
+              status: 409,
+              headers: { "Content-Type": "application/problem+json" },
+            }
+          );
+        }
+
+        let cursorData: { snapshotId?: string; offset?: number } | null = null;
+        try {
+          const decoded = atob(body.cursor);
+          cursorData = JSON.parse(decoded);
+        } catch {
+          return HttpResponse.json(
+            {
+              type: "https://errors.sonder.platform/query-cursor-invalid",
+              title: "Query Cursor Invalid",
+              status: 409,
+              detail: "The provided continuation cursor is invalid or malformed.",
+              code: "QUERY_CURSOR_INVALID",
+            },
+            {
+              status: 409,
+              headers: { "Content-Type": "application/problem+json" },
+            }
+          );
+        }
+
+        if (
+          !cursorData ||
+          typeof cursorData.snapshotId !== "string" ||
+          typeof cursorData.offset !== "number"
+        ) {
+          return HttpResponse.json(
+            {
+              type: "https://errors.sonder.platform/query-cursor-invalid",
+              title: "Query Cursor Invalid",
+              status: 409,
+              detail: "The provided continuation cursor is invalid or malformed.",
+              code: "QUERY_CURSOR_INVALID",
+            },
+            {
+              status: 409,
+              headers: { "Content-Type": "application/problem+json" },
+            }
+          );
+        }
+
+        const snapshot = querySnapshots.get(cursorData.snapshotId);
+        if (!snapshot || Date.now() > snapshot.expiresAt) {
+          return HttpResponse.json(
+            {
+              type: "https://errors.sonder.platform/query-snapshot-expired",
+              title: "Query Snapshot Expired",
+              status: 409,
+              detail: "The query snapshot has expired. Restart query from page 1.",
+              code: "QUERY_SNAPSHOT_EXPIRED",
+            },
+            {
+              status: 409,
+              headers: { "Content-Type": "application/problem+json" },
+            }
+          );
+        }
+
+        if (cursorData.offset < 0 || cursorData.offset > snapshot.items.length) {
+          return HttpResponse.json(
+            {
+              type: "https://errors.sonder.platform/query-cursor-invalid",
+              title: "Query Cursor Invalid",
+              status: 409,
+              detail: "The continuation cursor offset is out of bounds.",
+              code: "QUERY_CURSOR_INVALID",
+            },
+            {
+              status: 409,
+              headers: { "Content-Type": "application/problem+json" },
+            }
+          );
+        }
+
+        const limit = Math.max(1, Math.min(200, body.limit ?? 200));
+        const pageItems = snapshot.items.slice(cursorData.offset, cursorData.offset + limit);
+        const nextOffset = cursorData.offset + limit;
+        let nextCursor: string | null = null;
+        if (nextOffset < snapshot.items.length) {
+          nextCursor = btoa(JSON.stringify({ snapshotId: snapshot.id, offset: nextOffset, v: 1 }));
+        }
+
+        const result: ApiSchema<"TaskQueryResult"> = {
+          projection: body.projection ?? "LIST",
+          pageScope: body.pageScope ?? "PRIMARY",
+          querySnapshotId: snapshot.id,
+          snapshotSequence: workspaceSeqCounters[workspaceId] ?? 1,
+          snapshotAt: new Date(snapshot.createdAt).toISOString(),
+          snapshotExpiresAt: new Date(snapshot.expiresAt).toISOString(),
+          items: pageItems,
+          total: snapshot.items.length,
+          primaryCount: snapshot.items.length,
+          backlogCount: 0,
+          backlogPreview: [],
+          backlogNextCursor: null,
+          unscheduledCount: 0,
+          unscheduledPreview: [],
+          unscheduledNextCursor: null,
+          nextCursor,
+          groups: [],
+          dependencyEdges: [],
+        };
+
+        return HttpResponse.json(result, {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "private, no-store",
+          },
+        });
+      }
+
+      // Initial query (no cursor) - create new snapshot
+      let allFiltered = currentMockTasks.filter((t) => t.workspaceId === workspaceId);
 
       const subtaskMode = body.querySpec?.subtaskMode ?? "NESTED";
       if (subtaskMode === "TOP_LEVEL_ONLY") {
-        items = items.filter((t) => t.parentTaskId === null);
+        allFiltered = allFiltered.filter((t) => t.parentTaskId === null);
+      }
+
+      const snapshotId = `snapshot-${generateUuidV7()}`;
+      const now = Date.now();
+      const expiresAt = now + 900_000; // 900 seconds (15 minutes) canonical lifetime
+      const snapshot: QuerySnapshotRecord = {
+        id: snapshotId,
+        workspaceId,
+        items: [...allFiltered],
+        createdAt: now,
+        expiresAt,
+      };
+      querySnapshots.set(snapshotId, snapshot);
+
+      const limit = Math.max(1, Math.min(200, body.limit ?? 200));
+      const pageItems = snapshot.items.slice(0, limit);
+      let nextCursor: string | null = null;
+      if (limit < snapshot.items.length) {
+        nextCursor = btoa(JSON.stringify({ snapshotId: snapshot.id, offset: limit, v: 1 }));
       }
 
       const result: ApiSchema<"TaskQueryResult"> = {
         projection: body.projection ?? "LIST",
         pageScope: body.pageScope ?? "PRIMARY",
-        querySnapshotId: `snapshot-${generateUuidV7()}`,
+        querySnapshotId: snapshot.id,
         snapshotSequence: workspaceSeqCounters[workspaceId] ?? 1,
-        snapshotAt: new Date().toISOString(),
-        snapshotExpiresAt: new Date(Date.now() + 900_000).toISOString(),
-        items,
-        total: items.length,
-        primaryCount: items.length,
+        snapshotAt: new Date(snapshot.createdAt).toISOString(),
+        snapshotExpiresAt: new Date(snapshot.expiresAt).toISOString(),
+        items: pageItems,
+        total: snapshot.items.length,
+        primaryCount: snapshot.items.length,
         backlogCount: 0,
         backlogPreview: [],
         backlogNextCursor: null,
         unscheduledCount: 0,
         unscheduledPreview: [],
         unscheduledNextCursor: null,
-        nextCursor: null,
+        nextCursor,
         groups: [],
         dependencyEdges: [],
       };

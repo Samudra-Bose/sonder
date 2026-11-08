@@ -269,6 +269,17 @@ export function SubtaskList({
           ))}
         </ul>
       )}
+
+      {/* Partial hierarchy warning if query hit page bound */}
+      {Boolean(queryResult?.nextCursor) && (
+        <div
+          data-testid="subtasks-partial-warning"
+          className="text-[11px] text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1.5 rounded flex items-center gap-1.5"
+        >
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          <span>Workspace task limit reached. Some subtasks may not be visible in this view.</span>
+        </div>
+      )}
     </div>
   );
 }
