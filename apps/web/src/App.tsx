@@ -9,6 +9,7 @@ import {
   InboxPlaceholderView,
 } from "./modules/app-shell/index.js";
 import { MyWorkView } from "./modules/my-work/index.js";
+import { WorkspaceTasksView } from "./modules/tasks/index.js";
 
 export { AppShell };
 
@@ -65,6 +66,14 @@ export function App({ initialEntries }: AppProps = {}): React.JSX.Element {
                 <Route index element={<DashboardView />} />
                 <Route path="my-work" element={<MyWorkView />} />
                 <Route path="inbox" element={<InboxPlaceholderView />} />
+                <Route path="list" element={<WorkspaceTasksView defaultView="list" />} />
+                <Route path="board" element={<WorkspaceTasksView defaultView="board" />} />
+                <Route path="workspaces/:workspaceId" element={<Navigate to="list" replace />} />
+                <Route path="workspaces/:workspaceId/list" element={<WorkspaceTasksView defaultView="list" />} />
+                <Route path="workspaces/:workspaceId/board" element={<WorkspaceTasksView defaultView="board" />} />
+                <Route path="c/:communityId/w/:workspaceId" element={<Navigate to="list" replace />} />
+                <Route path="c/:communityId/w/:workspaceId/list" element={<WorkspaceTasksView defaultView="list" />} />
+                <Route path="c/:communityId/w/:workspaceId/board" element={<WorkspaceTasksView defaultView="board" />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

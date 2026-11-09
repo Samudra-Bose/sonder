@@ -45,6 +45,9 @@ export interface QuerySnapshotRecord {
   items: TaskDto[];
   createdAt: number;
   expiresAt: number;
+  backlogCount?: number;
+  backlogPreview?: TaskDto[];
+  filterSignature?: string;
 }
 const querySnapshots = new Map<string, QuerySnapshotRecord>();
 let forceSnapshotExpired = false;
@@ -982,7 +985,7 @@ export const taskHandlers = [
           );
         }
 
-        let cursorData: { snapshotId?: string; offset?: number } | null = null;
+        let cursorData: { snapshotId?: string; offset?: number; groupKey?: string } | null = null;
         try {
           const decoded = atob(body.cursor);
           cursorData = JSON.parse(decoded);
@@ -1066,15 +1069,16 @@ export const taskHandlers = [
         const result: ApiSchema<"TaskQueryResult"> = {
           projection: body.projection ?? "LIST",
           pageScope: body.pageScope ?? "PRIMARY",
+          groupKey: null,
           querySnapshotId: snapshot.id,
           snapshotSequence: workspaceSeqCounters[workspaceId] ?? 1,
           snapshotAt: new Date(snapshot.createdAt).toISOString(),
           snapshotExpiresAt: new Date(snapshot.expiresAt).toISOString(),
           items: pageItems,
-          total: snapshot.items.length,
+          total: snapshot.items.length + (snapshot.backlogCount ?? 0),
           primaryCount: snapshot.items.length,
-          backlogCount: 0,
-          backlogPreview: [],
+          backlogCount: snapshot.backlogCount ?? 0,
+          backlogPreview: snapshot.backlogPreview ?? [],
           backlogNextCursor: null,
           unscheduledCount: 0,
           unscheduledPreview: [],
@@ -1093,26 +1097,231 @@ export const taskHandlers = [
         });
       }
 
-      // Initial query (no cursor) - create new snapshot
-      let allFiltered = currentMockTasks.filter((t) => t.workspaceId === workspaceId);
+      // Check querySnapshotId reuse
+      let snapshot: QuerySnapshotRecord | undefined;
+      if (body.querySnapshotId) {
+        if (forceSnapshotExpired || forceSnapshotExpiredOnce) {
+          if (forceSnapshotExpiredOnce) forceSnapshotExpiredOnce = false;
+          return HttpResponse.json(
+            {
+              type: "https://errors.sonder.platform/query-snapshot-expired",
+              title: "Query Snapshot Expired",
+              status: 409,
+              detail: "The query snapshot has expired. Restart query from page 1.",
+              code: "QUERY_SNAPSHOT_EXPIRED",
+            },
+            {
+              status: 409,
+              headers: { "Content-Type": "application/problem+json" },
+            }
+          );
+        }
 
-      const subtaskMode = body.querySpec?.subtaskMode ?? "NESTED";
-      if (subtaskMode === "TOP_LEVEL_ONLY") {
-        allFiltered = allFiltered.filter((t) => t.parentTaskId === null);
+        const existing = querySnapshots.get(body.querySnapshotId);
+        if (!existing || Date.now() > existing.expiresAt) {
+          return HttpResponse.json(
+            {
+              type: "https://errors.sonder.platform/query-snapshot-expired",
+              title: "Query Snapshot Expired",
+              status: 409,
+              detail: "The query snapshot has expired. Restart query from page 1.",
+              code: "QUERY_SNAPSHOT_EXPIRED",
+            },
+            {
+              status: 409,
+              headers: { "Content-Type": "application/problem+json" },
+            }
+          );
+        }
+
+        const incomingFilter = JSON.stringify(body.querySpec?.filter ?? {});
+        if (!existing.filterSignature || existing.filterSignature === incomingFilter) {
+          snapshot = existing;
+        }
       }
 
-      const snapshotId = `snapshot-${generateUuidV7()}`;
-      const now = Date.now();
-      const expiresAt = now + 900_000; // 900 seconds (15 minutes) canonical lifetime
-      const snapshot: QuerySnapshotRecord = {
-        id: snapshotId,
-        workspaceId,
-        items: [...allFiltered],
-        createdAt: now,
-        expiresAt,
-      };
-      querySnapshots.set(snapshotId, snapshot);
+      // Initial query without existing valid snapshot - create new snapshot
+      if (!snapshot) {
+        let allFiltered = currentMockTasks.filter((t) => t.workspaceId === workspaceId);
 
+        const subtaskMode = body.querySpec?.subtaskMode ?? "NESTED";
+        if (subtaskMode === "TOP_LEVEL_ONLY") {
+          allFiltered = allFiltered.filter((t) => t.parentTaskId === null);
+        }
+
+        const includeCompleted = body.querySpec?.includeCompleted ?? true;
+        if (!includeCompleted) {
+          allFiltered = allFiltered.filter(
+            (t) => t.statusCategory !== "DONE" && t.statusCategory !== "CANCELED"
+          );
+        }
+
+        // Apply filter conditions if present
+        const filterGroup = body.querySpec?.filter;
+        if (filterGroup && filterGroup.conditions && filterGroup.conditions.length > 0) {
+          allFiltered = allFiltered.filter((task) => {
+            const matchesCondition = (cond: any): boolean => {
+              if (!cond || !cond.field) return true;
+              const { field, operator, value } = cond;
+              if (field === "q") {
+                const searchStr = String(value || "").toLowerCase().trim();
+                if (!searchStr) return true;
+                const corpus = `${task.taskKey} ${task.title} ${task.description || ""}`.toLowerCase();
+                return corpus.includes(searchStr);
+              }
+              if (field === "statusCategory") {
+                if (operator === "EQ") return task.statusCategory === value;
+                if (operator === "IN" && Array.isArray(value)) return value.includes(task.statusCategory);
+                if (operator === "NEQ") return task.statusCategory !== value;
+              }
+              if (field === "priority") {
+                if (operator === "EQ") return task.priority === value;
+                if (operator === "IN" && Array.isArray(value)) return value.includes(task.priority);
+                if (operator === "NEQ") return task.priority !== value;
+              }
+              if (field === "assigneeId") {
+                if (operator === "EQ") return task.assigneeIds.includes(String(value));
+                if (operator === "IN" && Array.isArray(value)) {
+                  return value.some((v: string) => task.assigneeIds.includes(v));
+                }
+              }
+              return true;
+            };
+
+            if (filterGroup.conjunction === "OR") {
+              return filterGroup.conditions.some(matchesCondition);
+            }
+            return filterGroup.conditions.every(matchesCondition);
+          });
+        }
+
+        // Apply sorting if present
+        const sortBy = body.querySpec?.sortBy;
+        if (sortBy && Array.isArray(sortBy) && sortBy.length > 0) {
+          const priorityWeights: Record<string, number> = {
+            URGENT: 4,
+            HIGH: 3,
+            MEDIUM: 2,
+            LOW: 1,
+            NONE: 0,
+          };
+          allFiltered.sort((a, b) => {
+            for (const term of sortBy) {
+              const field = term.field;
+              const dir = term.direction === "DESC" ? -1 : 1;
+              if (field === "priority") {
+                const diff = (priorityWeights[a.priority] ?? 0) - (priorityWeights[b.priority] ?? 0);
+                if (diff !== 0) return diff * dir;
+              } else if (field === "dueDate") {
+                const aDue = a.dueDate || "9999-99-99";
+                const bDue = b.dueDate || "9999-99-99";
+                if (aDue !== bDue) return aDue.localeCompare(bDue) * dir;
+              } else if (field === "createdAt") {
+                if (a.createdAt !== b.createdAt) return a.createdAt.localeCompare(b.createdAt) * dir;
+              } else if (field === "currentKey") {
+                if (a.taskKey !== b.taskKey) return a.taskKey.localeCompare(b.taskKey) * dir;
+              } else if (field === "rankKey") {
+                const aRank = a.rankKey ?? "";
+                const bRank = b.rankKey ?? "";
+                if (aRank !== bRank) return aRank.localeCompare(bRank) * dir;
+              }
+            }
+            return 0;
+          });
+        }
+
+        // Backlog separation
+        const includeBacklog = body.querySpec?.includeBacklog ?? false;
+        let primaryItems = allFiltered;
+        let backlogItems: TaskDto[] = [];
+        if (!includeBacklog) {
+          primaryItems = allFiltered.filter((t) => t.statusCategory !== "BACKLOG");
+          backlogItems = allFiltered.filter((t) => t.statusCategory === "BACKLOG");
+        }
+
+        const snapshotId = `snapshot-${generateUuidV7()}`;
+        const now = Date.now();
+        const expiresAt = now + 900_000; // 900 seconds (15 minutes) canonical lifetime
+        snapshot = {
+          id: snapshotId,
+          workspaceId,
+          items: [...primaryItems],
+          backlogCount: backlogItems.length,
+          backlogPreview: backlogItems.slice(0, 20),
+          filterSignature: JSON.stringify(body.querySpec?.filter ?? {}),
+          createdAt: now,
+          expiresAt,
+        };
+        querySnapshots.set(snapshotId, snapshot);
+      }
+
+      // BOARD projection handling
+      if (body.projection === "BOARD") {
+        const includeBacklog = body.querySpec?.includeBacklog ?? false;
+        const includeCompleted = body.querySpec?.includeCompleted ?? true;
+
+        const categories: Array<{ key: string; label: string }> = [
+          ...(includeBacklog ? [{ key: "BACKLOG", label: "Backlog" }] : []),
+          { key: "TODO", label: "To Do" },
+          { key: "IN_PROGRESS", label: "In Progress" },
+          ...(includeCompleted
+            ? [
+                { key: "DONE", label: "Done" },
+                { key: "CANCELED", label: "Canceled" },
+              ]
+            : []),
+        ];
+
+        const limit = Math.max(1, Math.min(200, body.limit ?? 50));
+        const groups: ApiSchema<"TaskQueryBucketDto">[] = categories.map((cat) => {
+          const bucketTasks = snapshot!.items.filter((t) => t.statusCategory === cat.key);
+          const bucketItems = bucketTasks.slice(0, limit);
+          const nextCursor =
+            bucketTasks.length > limit
+              ? btoa(JSON.stringify({ snapshotId: snapshot!.id, groupKey: cat.key, offset: limit, v: 1 }))
+              : null;
+          return {
+            key: cat.key,
+            label: cat.label,
+            total: bucketTasks.length,
+            items: bucketItems,
+            nextCursor,
+            children: [],
+          };
+        });
+
+        const result: ApiSchema<"TaskQueryResult"> = {
+          projection: "BOARD",
+          pageScope: body.pageScope ?? "PRIMARY",
+          groupKey: null,
+          querySnapshotId: snapshot.id,
+          snapshotSequence: workspaceSeqCounters[workspaceId] ?? 1,
+          snapshotAt: new Date(snapshot.createdAt).toISOString(),
+          snapshotExpiresAt: new Date(snapshot.expiresAt).toISOString(),
+          items: [],
+          total: snapshot.items.length + (snapshot.backlogCount ?? 0),
+          primaryCount: snapshot.items.length,
+          backlogCount: snapshot.backlogCount ?? 0,
+          backlogPreview: snapshot.backlogPreview ?? [],
+          backlogNextCursor: null,
+          unscheduledCount: 0,
+          unscheduledPreview: [],
+          unscheduledNextCursor: null,
+          nextCursor: null,
+          groups,
+          dependencyEdges: [],
+        };
+
+        return HttpResponse.json(result, {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "private, no-store",
+          },
+        });
+      }
+
+      // LIST projection handling (default)
       const limit = Math.max(1, Math.min(200, body.limit ?? 200));
       const pageItems = snapshot.items.slice(0, limit);
       let nextCursor: string | null = null;
@@ -1123,15 +1332,16 @@ export const taskHandlers = [
       const result: ApiSchema<"TaskQueryResult"> = {
         projection: body.projection ?? "LIST",
         pageScope: body.pageScope ?? "PRIMARY",
+        groupKey: null,
         querySnapshotId: snapshot.id,
         snapshotSequence: workspaceSeqCounters[workspaceId] ?? 1,
         snapshotAt: new Date(snapshot.createdAt).toISOString(),
         snapshotExpiresAt: new Date(snapshot.expiresAt).toISOString(),
         items: pageItems,
-        total: snapshot.items.length,
+        total: snapshot.items.length + (snapshot.backlogCount ?? 0),
         primaryCount: snapshot.items.length,
-        backlogCount: 0,
-        backlogPreview: [],
+        backlogCount: snapshot.backlogCount ?? 0,
+        backlogPreview: snapshot.backlogPreview ?? [],
         backlogNextCursor: null,
         unscheduledCount: 0,
         unscheduledPreview: [],

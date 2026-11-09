@@ -13,7 +13,7 @@ export interface UseWorkspaceTasksOptions {
   maxPages?: number;
 }
 
-const DEFAULT_QUERY_SPEC: TaskViewQueryRequest["querySpec"] = {
+export const DEFAULT_QUERY_SPEC: TaskViewQueryRequest["querySpec"] = {
   subtaskMode: "NESTED",
   groupBy: "none",
   subGroupBy: "none",
@@ -25,10 +25,19 @@ const DEFAULT_QUERY_SPEC: TaskViewQueryRequest["querySpec"] = {
 export function normalizeWorkspaceTasksQuery(
   query?: Partial<TaskViewQueryRequest>
 ): TaskViewQueryRequest {
+  const isBoard = query?.projection === "BOARD";
   return {
     projection: query?.projection ?? "LIST",
     pageScope: query?.pageScope ?? "PRIMARY",
-    querySpec: query?.querySpec ?? DEFAULT_QUERY_SPEC,
+    querySpec: {
+      subtaskMode: "NESTED",
+      groupBy: isBoard ? "statusCategory" : "none",
+      subGroupBy: "none",
+      includeBacklog: query?.querySpec?.includeBacklog ?? true,
+      includeCompleted: query?.querySpec?.includeCompleted ?? true,
+      filter: { conjunction: "AND", conditions: [] },
+      ...query?.querySpec,
+    },
     ...query,
   };
 }
@@ -93,6 +102,11 @@ export function useWorkspaceTasks({
             csrfToken: csrfToken ?? undefined,
           });
 
+          if (normalizedQuery.projection === "BOARD") {
+            latestResult = result;
+            break;
+          }
+
           allItems.push(...result.items);
           latestResult = result;
           pageCount++;
@@ -108,16 +122,16 @@ export function useWorkspaceTasks({
           }
         } catch (error: unknown) {
           const err = error as { code?: string; status?: number };
-          // If query snapshot expired mid-traversal, restart from page 1 once
+          // If query snapshot expired mid-traversal or with stale querySnapshotId, restart from page 1 once
           if (
             (err?.code === "QUERY_SNAPSHOT_EXPIRED" || err?.status === 409) &&
             restartCount === 0 &&
-            pageCount > 0
+            (pageCount > 0 || currentQuery.querySnapshotId)
           ) {
             restartCount++;
             allItems.length = 0;
             pageCount = 0;
-            const { cursor: _c, ...baseQuery } = normalizedQuery;
+            const { cursor: _c, querySnapshotId: _s, ...baseQuery } = normalizedQuery;
             currentQuery = { ...baseQuery };
             continue;
           }
@@ -127,6 +141,10 @@ export function useWorkspaceTasks({
 
       if (!latestResult) {
         throw new Error("No query result returned from workspace tasks query.");
+      }
+
+      if (normalizedQuery.projection === "BOARD") {
+        return latestResult;
       }
 
       return {

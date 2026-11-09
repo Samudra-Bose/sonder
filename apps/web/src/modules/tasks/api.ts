@@ -99,16 +99,18 @@ export async function queryWorkspaceTasks({
   query = {},
   csrfToken,
 }: QueryWorkspaceTasksParams): Promise<TaskQueryResult> {
+  const isBoard = query.projection === "BOARD";
   const fullBody: TaskViewQueryRequest = {
     projection: query.projection ?? "LIST",
     pageScope: query.pageScope ?? "PRIMARY",
-    querySpec: query.querySpec ?? {
+    querySpec: {
       subtaskMode: "NESTED",
-      groupBy: "none",
+      groupBy: isBoard ? "statusCategory" : "none",
       subGroupBy: "none",
-      includeBacklog: true,
-      includeCompleted: true,
+      includeBacklog: query.querySpec?.includeBacklog ?? true,
+      includeCompleted: query.querySpec?.includeCompleted ?? true,
       filter: { conjunction: "AND", conditions: [] },
+      ...query.querySpec,
     },
     ...query,
   };

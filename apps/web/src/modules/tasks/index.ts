@@ -14,3 +14,4 @@ export * from "./useMoveTask.js";
 export * from "./SubtaskItem.js";
 export * from "./SubtaskList.js";
 export * from "./ReparentTaskModal.js";
+export * from "./views/index.js";
