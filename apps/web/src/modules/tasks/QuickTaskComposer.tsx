@@ -40,7 +40,7 @@ interface FormValidationErrors {
 export function QuickTaskComposer({
   className,
 }: QuickTaskComposerProps): React.JSX.Element | null {
-  const { isOpen, close } = useQuickTaskComposer();
+  const { isOpen, close, initialValues } = useQuickTaskComposer();
   const { currentCommunityId, workspaces, activeWorkspaceId } = useWorkspace();
   const createMutation = useCreateTask();
   const { openTask } = useTaskPeekDrawer();
@@ -58,19 +58,31 @@ export function QuickTaskComposer({
   const [validationErrors, setValidationErrors] = useState<FormValidationErrors>({});
   const [serverError, setServerError] = useState<string | null>(null);
 
-  // Initialize workspace selection when dialog opens or active workspace changes
+  // Initialize form fields and prefilled values when dialog opens
   useEffect(() => {
     if (isOpen) {
       const fallbackWsId = activeWorkspaceId ?? (workspaces.length > 0 ? workspaces[0]?.id : "");
       setSelectedWorkspaceId((current) => {
-        // If current is still a valid workspace in this community, keep it, else default
+        if (initialValues?.workspaceId && workspaces.some((w) => w.id === initialValues.workspaceId)) {
+          return initialValues.workspaceId;
+        }
         if (current && workspaces.some((w) => w.id === current)) {
           return current;
         }
         return fallbackWsId ?? "";
       });
+
+      if (initialValues?.dueDate !== undefined) {
+        setDueDate(initialValues.dueDate);
+      }
+      if (initialValues?.priority !== undefined) {
+        setPriority(initialValues.priority);
+      }
+      if (initialValues?.title !== undefined) {
+        setTitle(initialValues.title);
+      }
     }
-  }, [isOpen, activeWorkspaceId, workspaces]);
+  }, [isOpen, activeWorkspaceId, workspaces, initialValues]);
 
   // Autofocus the title input when dialog opens
   useEffect(() => {

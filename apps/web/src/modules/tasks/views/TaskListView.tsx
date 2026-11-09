@@ -3,6 +3,9 @@ import {
   Calendar,
   RefreshCw,
   GitFork,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -21,6 +24,9 @@ export interface TaskListViewProps {
   onRetry: () => void;
   workspaceId: string;
   communityId: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  onSortChange?: (field: string, direction: "asc" | "desc") => void;
   className?: string;
 }
 
@@ -66,9 +72,23 @@ export function TaskListView({
   onRetry,
   workspaceId,
   communityId: _communityId,
+  sortBy = "priority",
+  sortOrder = "desc",
+  onSortChange,
   className,
 }: TaskListViewProps): React.JSX.Element {
   const { openTask } = useTaskPeekDrawer();
+
+  const handleSortClick = (field: string) => {
+    if (!onSortChange) return;
+    if (sortBy === field) {
+      const nextOrder = sortOrder === "asc" ? "desc" : "asc";
+      onSortChange(field, nextOrder);
+    } else {
+      const defaultOrder = (field === "priority" ? "desc" : "asc");
+      onSortChange(field, defaultOrder);
+    }
+  };
 
   // Loading skeleton
   if (isLoading) {
@@ -138,21 +158,131 @@ export function TaskListView({
         <table className="w-full text-left border-collapse text-xs" aria-label="Tasks table">
           <thead>
             <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-muted)] text-[var(--text-muted)] font-semibold select-none">
-              <th scope="col" className="py-2.5 px-3 w-28 font-mono">
-                Key
+              {/* Sortable: Key */}
+              <th
+                scope="col"
+                aria-sort={
+                  sortBy === "currentKey"
+                    ? sortOrder === "desc"
+                      ? "descending"
+                      : "ascending"
+                    : "none"
+                }
+                className="py-2.5 px-3 w-28 font-mono"
+              >
+                <button
+                  type="button"
+                  onClick={() => handleSortClick("currentKey")}
+                  aria-label={`Sort by Key, currently ${
+                    sortBy === "currentKey"
+                      ? sortOrder === "desc"
+                        ? "descending"
+                        : "ascending"
+                      : "not sorted"
+                  }`}
+                  data-testid="sort-header-currentKey"
+                  className="inline-flex items-center gap-1.5 font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] focus-ring rounded py-0.5 px-1 -mx-1 transition-colors cursor-pointer"
+                >
+                  <span>Key</span>
+                  {sortBy === "currentKey" ? (
+                    sortOrder === "desc" ? (
+                      <ArrowDown className="h-3 w-3 text-[var(--brand-accent-text)]" aria-hidden="true" />
+                    ) : (
+                      <ArrowUp className="h-3 w-3 text-[var(--brand-accent-text)]" aria-hidden="true" />
+                    )
+                  ) : (
+                    <ArrowUpDown className="h-3 w-3 opacity-40 hover:opacity-100" aria-hidden="true" />
+                  )}
+                </button>
               </th>
+
+              {/* Non-sortable: Title */}
               <th scope="col" className="py-2.5 px-3 min-w-[200px]">
                 Title
               </th>
+
+              {/* Non-sortable: Status */}
               <th scope="col" className="py-2.5 px-3 w-32">
                 Status
               </th>
-              <th scope="col" className="py-2.5 px-3 w-28">
-                Priority
+
+              {/* Sortable: Priority */}
+              <th
+                scope="col"
+                aria-sort={
+                  sortBy === "priority"
+                    ? sortOrder === "desc"
+                      ? "descending"
+                      : "ascending"
+                    : "none"
+                }
+                className="py-2.5 px-3 w-28"
+              >
+                <button
+                  type="button"
+                  onClick={() => handleSortClick("priority")}
+                  aria-label={`Sort by Priority, currently ${
+                    sortBy === "priority"
+                      ? sortOrder === "desc"
+                        ? "descending"
+                        : "ascending"
+                      : "not sorted"
+                  }`}
+                  data-testid="sort-header-priority"
+                  className="inline-flex items-center gap-1.5 font-semibold text-[var(--text-muted)] hover:text-[var(--text-primary)] focus-ring rounded py-0.5 px-1 -mx-1 transition-colors cursor-pointer"
+                >
+                  <span>Priority</span>
+                  {sortBy === "priority" ? (
+                    sortOrder === "desc" ? (
+                      <ArrowDown className="h-3 w-3 text-[var(--brand-accent-text)]" aria-hidden="true" />
+                    ) : (
+                      <ArrowUp className="h-3 w-3 text-[var(--brand-accent-text)]" aria-hidden="true" />
+                    )
+                  ) : (
+                    <ArrowUpDown className="h-3 w-3 opacity-40 hover:opacity-100" aria-hidden="true" />
+                  )}
+                </button>
               </th>
-              <th scope="col" className="py-2.5 px-3 w-32">
-                Due Date
+
+              {/* Sortable: Due Date */}
+              <th
+                scope="col"
+                aria-sort={
+                  sortBy === "dueDate"
+                    ? sortOrder === "desc"
+                      ? "descending"
+                      : "ascending"
+                    : "none"
+                }
+                className="py-2.5 px-3 w-32"
+              >
+                <button
+                  type="button"
+                  onClick={() => handleSortClick("dueDate")}
+                  aria-label={`Sort by Due Date, currently ${
+                    sortBy === "dueDate"
+                      ? sortOrder === "desc"
+                        ? "descending"
+                        : "ascending"
+                      : "not sorted"
+                  }`}
+                  data-testid="sort-header-dueDate"
+                  className="inline-flex items-center gap-1.5 font-semibold text-[var(--text-muted)] hover:text-[var(--text-primary)] focus-ring rounded py-0.5 px-1 -mx-1 transition-colors cursor-pointer"
+                >
+                  <span>Due Date</span>
+                  {sortBy === "dueDate" ? (
+                    sortOrder === "desc" ? (
+                      <ArrowDown className="h-3 w-3 text-[var(--brand-accent-text)]" aria-hidden="true" />
+                    ) : (
+                      <ArrowUp className="h-3 w-3 text-[var(--brand-accent-text)]" aria-hidden="true" />
+                    )
+                  ) : (
+                    <ArrowUpDown className="h-3 w-3 opacity-40 hover:opacity-100" aria-hidden="true" />
+                  )}
+                </button>
               </th>
+
+              {/* Non-sortable: Subtasks */}
               <th scope="col" className="py-2.5 px-3 w-24 text-center">
                 Subtasks
               </th>

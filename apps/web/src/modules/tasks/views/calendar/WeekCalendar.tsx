@@ -1,5 +1,5 @@
 import React from "react";
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CalendarTaskItem } from "./CalendarTaskItem";
 import type { WeekDayInfo } from "./calendar-date-utils";
@@ -10,6 +10,7 @@ export interface WeekCalendarProps {
   tasksByDate: Record<string, TaskDto[]>;
   todayStr: string;
   onTaskClick: (task: TaskDto) => void;
+  onCreateTask?: (dateStr: string, invoker?: HTMLElement | null) => void;
   className?: string;
 }
 
@@ -18,6 +19,7 @@ export function WeekCalendar({
   tasksByDate,
   todayStr,
   onTaskClick,
+  onCreateTask,
   className,
 }: WeekCalendarProps): React.JSX.Element {
   return (
@@ -84,19 +86,49 @@ export function WeekCalendar({
                     {day}
                   </span>
                 </div>
-                {tasks.length > 0 && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[var(--surface-muted)] text-[var(--text-muted)] border border-[var(--border-subtle)]">
-                    {tasks.length}
-                  </span>
-                )}
+                <div className="flex items-center gap-1">
+                  {onCreateTask && (
+                    <button
+                      type="button"
+                      aria-label={`Create task on ${dateStr}`}
+                      data-testid={`week-add-task-btn-${dateStr}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCreateTask(dateStr, e.currentTarget);
+                      }}
+                      className="p-1 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-muted)] transition-colors cursor-pointer focus-ring"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  )}
+                  {tasks.length > 0 && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[var(--surface-muted)] text-[var(--text-muted)] border border-[var(--border-subtle)]">
+                      {tasks.length}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Tasks Content Area */}
               <div className="flex-1 overflow-y-auto space-y-2">
                 {tasks.length === 0 ? (
-                  <div className="h-24 flex items-center justify-center text-center p-2">
-                    <span className="text-[11px] text-[var(--text-muted)] italic">
-                      No tasks
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Create task for ${dateStr}`}
+                    data-testid={`week-empty-slot-${dateStr}`}
+                    onClick={(e) => onCreateTask?.(dateStr, e.currentTarget)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onCreateTask?.(dateStr, e.currentTarget);
+                      }
+                    }}
+                    className="h-28 flex flex-col items-center justify-center text-center p-2 rounded-lg border border-dashed border-[var(--border-subtle)] hover:border-[var(--brand-accent-text)]/50 hover:bg-[var(--surface-muted)]/50 cursor-pointer focus-ring transition-colors group"
+                  >
+                    <Plus className="h-4 w-4 text-[var(--text-muted)] group-hover:text-[var(--brand-accent-text)] mb-1 transition-colors" />
+                    <span className="text-[11px] text-[var(--text-muted)] group-hover:text-[var(--text-primary)] transition-colors">
+                      Add task
                     </span>
                   </div>
                 ) : (

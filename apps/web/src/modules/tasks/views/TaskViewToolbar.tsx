@@ -6,6 +6,8 @@ import {
   GanttChart,
   Filter,
   ArrowUpDown,
+  ArrowDown,
+  ArrowUp,
   Plus,
   RefreshCw,
   Layers,
@@ -25,7 +27,9 @@ export interface TaskViewToolbarProps {
   statusFilter: string;
   onStatusChange: (status: string) => void;
   sortBy: string;
+  sortOrder?: "asc" | "desc";
   onSortChange: (sort: string) => void;
+  onSortOrderToggle?: (order: "asc" | "desc") => void;
   includeBacklog: boolean;
   onIncludeBacklogChange: (include: boolean) => void;
   totalCount: number;
@@ -44,7 +48,9 @@ export function TaskViewToolbar({
   statusFilter,
   onStatusChange,
   sortBy,
+  sortOrder = "desc",
   onSortChange,
+  onSortOrderToggle,
   includeBacklog,
   onIncludeBacklogChange,
   totalCount,
@@ -253,6 +259,25 @@ export function TaskViewToolbar({
               <option value="createdAt">Created Date</option>
               <option value="currentKey">Task Key</option>
             </select>
+
+            {onSortOrderToggle && (
+              <button
+                type="button"
+                aria-label={`Toggle sort direction: currently ${
+                  sortOrder === "desc" ? "descending" : "ascending"
+                }`}
+                title={`Sort direction: ${sortOrder === "desc" ? "Descending" : "Ascending"}`}
+                data-testid="toolbar-sort-order-toggle"
+                onClick={() => onSortOrderToggle(sortOrder === "asc" ? "desc" : "asc")}
+                className="p-1 rounded border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-muted)] focus-ring transition-colors cursor-pointer"
+              >
+                {sortOrder === "desc" ? (
+                  <ArrowDown className="h-3.5 w-3.5" />
+                ) : (
+                  <ArrowUp className="h-3.5 w-3.5" />
+                )}
+              </button>
+            )}
           </div>
 
           {/* Include Backlog toggle */}
