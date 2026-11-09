@@ -1,11 +1,11 @@
 # SONDER — VS-06B DELIVERY REPORT: TASK VIEW INTERACTION REFINEMENT & UX POLISH
 
 **Baseline Branch**: `develop` at `43806ec`  
-**Active Working Branch**: `feat/FE-VS06B-task-view-interaction-refinement`  
+**Active Working Branch**: `feat/FE-VS06B-task-view-interaction-refinement` (merged into `develop`)  
 **Target Branch**: `develop`  
-**Pull Request**: Pending merge  
-**Final Merge Commit**: Pending  
-**Status**: COMPLETED & VERIFIED — Interactive Column Sorting, Calendar Click-to-Create Prefill, Toolbar Synchronization, Multi-Viewport QA  
+**Pull Request**: [#27](https://github.com/Samudra-Bose/sonder/pull/27)  
+**Final Merge Commit**: `764b99d`  
+**Status**: MERGED & VERIFIED — Interactive Column Sorting, Calendar Click-to-Create Prefill, Toolbar Synchronization, Multi-Viewport QA  
 **Date**: November 9, 2026  
 **Author**: Antigravity Pair Programming Agent  
 
