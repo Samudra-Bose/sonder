@@ -181,4 +181,4 @@ To maintain strict phased discipline:
 
 | Stage | Milestone | Branch | Status |
 | :--- | :--- | :--- | :--- |
-| **VS-05A** | Calendar View & Unscheduled Tray | `feat/FE-VS05A-calendar-view` | **COMPLETE** |
+| **VS-05A** | Calendar View & Unscheduled Tray | `feat/FE-VS05A-calendar-view` (merged via PR #21 commit `303426e79b9a674d81f2150a24f0c4068532c589`) | **COMPLETE** |
