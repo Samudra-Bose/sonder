@@ -51,8 +51,9 @@ export function TimelineDependencyConnectors({
   // Measure container width responsively
   useEffect(() => {
     const updateWidth = () => {
-      if (containerRef.current) {
-        const width = containerRef.current.clientWidth;
+      const el = containerRef.current?.parentElement ?? containerRef.current;
+      if (el) {
+        const width = el.clientWidth || el.getBoundingClientRect().width;
         if (width > 0) {
           setContainerWidth(width);
         }
@@ -61,15 +62,17 @@ export function TimelineDependencyConnectors({
 
     updateWidth();
 
-    if (typeof ResizeObserver !== "undefined" && containerRef.current) {
+    const el = containerRef.current?.parentElement ?? containerRef.current;
+    if (typeof ResizeObserver !== "undefined" && el) {
       const ro = new ResizeObserver((entries) => {
         for (const entry of entries) {
-          if (entry.contentRect.width > 0) {
-            setContainerWidth(entry.contentRect.width);
+          const width = entry.contentRect.width;
+          if (width > 0) {
+            setContainerWidth(width);
           }
         }
       });
-      ro.observe(containerRef.current);
+      ro.observe(el);
       return () => ro.disconnect();
     }
 

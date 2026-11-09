@@ -129,7 +129,7 @@ export function useUpdateMilestone(): UseMutationResult<
       });
       // Invalidate workspace tasks in case milestone name changes affect task displays
       queryClient.invalidateQueries({
-        queryKey: ["workspace-tasks", communityId, workspaceId],
+        queryKey: ["communities", communityId, "workspaces", workspaceId, "tasks"],
       });
     },
   });
@@ -171,7 +171,7 @@ export function useDeleteMilestone(): UseMutationResult<
       });
       // Server clears milestoneId on linked tasks, so invalidate tasks cache
       queryClient.invalidateQueries({
-        queryKey: ["workspace-tasks", communityId, workspaceId],
+        queryKey: ["communities", communityId, "workspaces", workspaceId, "tasks"],
       });
     },
   });

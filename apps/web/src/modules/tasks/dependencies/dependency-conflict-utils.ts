@@ -13,11 +13,12 @@ export interface TaskDateSubset {
 
 /**
  * Pure utility to detect scheduling conflicts between an upstream blocker and a dependent task.
- * Canonical rule (Master Spec §4.3 & line 21189):
- * Scheduling conflict exists when an upstream blocker finishes after its dependent task is scheduled to begin:
- * blocker.dueDate > dependent.startDate (or blocker.startDate > dependent.startDate if blocker has no dueDate).
+ * Canonical rule only (Master Spec §4.3 & line 21189):
+ * Scheduling conflict exists when an upstream blocker is due after its dependent task is scheduled to begin:
+ * blocker.dueDate > dependent.startDate
  *
  * Missing dates do NOT generate fabricated conflicts.
+ * Equal dates (blocker.dueDate === dependent.startDate) are NOT a conflict.
  */
 export function detectBlockerConflict(
   blocker: TaskDateSubset | null | undefined,
@@ -27,32 +28,29 @@ export function detectBlockerConflict(
     return { hasConflict: false };
   }
 
-  // Dependent must have a scheduled start date to evaluate if the blocker finishes after it starts
+  // Canonical rule requires both blocker.dueDate and dependent.startDate
+  // If either date is missing, do not fabricate conflicts
+  const blockerDue = blocker.dueDate;
   const depStart = dependent.startDate;
-  if (!depStart) {
+  if (!blockerDue || !depStart) {
     return { hasConflict: false };
   }
 
-  // Blocker finish point is its dueDate, or fallback to startDate if dueDate is not set
-  const blockerFinish = blocker.dueDate ?? blocker.startDate;
-  if (!blockerFinish) {
-    return { hasConflict: false };
-  }
-
-  // Compare date strings (ISO YYYY-MM-DD or full ISO strings)
-  const blockerFinishDateStr = blockerFinish.slice(0, 10);
+  // Compare date strings strictly (ISO YYYY-MM-DD)
+  const blockerDueDateStr = blockerDue.slice(0, 10);
   const depStartDateStr = depStart.slice(0, 10);
 
-  if (blockerFinishDateStr > depStartDateStr) {
+  // Strictly greater: equal dates are valid, only due AFTER start is a conflict
+  if (blockerDueDateStr > depStartDateStr) {
     const blockerName = blocker.taskKey ?? "Blocker task";
     const depName = dependent.taskKey ?? "dependent task";
     return {
       hasConflict: true,
       blockerId: blocker.id,
       dependentId: dependent.id,
-      blockerDueDate: blocker.dueDate ?? blocker.startDate,
+      blockerDueDate: blocker.dueDate,
       dependentStartDate: dependent.startDate,
-      reason: `Scheduling conflict: Upstream blocker ${blockerName} is scheduled to finish on ${blockerFinishDateStr}, after ${depName} is scheduled to begin on ${depStartDateStr}.`,
+      reason: `Scheduling conflict: Upstream blocker ${blockerName} is scheduled to finish on ${blockerDueDateStr}, after ${depName} is scheduled to begin on ${depStartDateStr}.`,
     };
   }
 
@@ -81,7 +79,7 @@ export function detectLinkConflict(
     return detectBlockerConflict(target, source);
   }
 
-  // RELATES_TO and DUPLICATES are non-blocking relations, so no scheduling conflict
+  // RELATES_TO and DUPLICATES are non-blocking relations, so never a scheduling conflict
   return { hasConflict: false };
 }
 

@@ -32,7 +32,7 @@ describe("dependency-conflict-utils", () => {
       expect(result.reason).toContain("2026-11-10");
     });
 
-    it("detects conflict using blocker startDate when dueDate is absent", () => {
+    it("does NOT generate fabricated conflicts when blocker has startDate but no dueDate", () => {
       const blocker = {
         id: "task-1",
         taskKey: "ENG-101",
@@ -47,7 +47,7 @@ describe("dependency-conflict-utils", () => {
       };
 
       const result = detectBlockerConflict(blocker, dependent);
-      expect(result.hasConflict).toBe(true);
+      expect(result.hasConflict).toBe(false);
     });
 
     it("returns no conflict when blocker finishes before dependent starts", () => {
