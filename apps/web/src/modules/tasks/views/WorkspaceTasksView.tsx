@@ -10,16 +10,25 @@ import { useWorkspaceTasks } from "../useWorkspaceTasks";
 import { TaskViewToolbar } from "./TaskViewToolbar";
 import { TaskListView } from "./TaskListView";
 import { TaskBoardView } from "./TaskBoardView";
+import {
+  CalendarView,
+  parseDateParts,
+  getMonthCalendarGrid,
+  getWeekDays,
+  getTodayString,
+} from "./calendar";
+import { useTaskPeekDrawer } from "../useTaskPeekDrawer";
 import type {
   TaskViewQueryRequest,
   QueryFilterCondition,
   QuerySortTerm,
+  QueryDateWindow,
   TaskPriority,
   TaskStatusCategory,
 } from "../types";
 
 export interface WorkspaceTasksViewProps {
-  defaultView?: "list" | "board";
+  defaultView?: "list" | "board" | "calendar";
   className?: string;
 }
 
@@ -52,18 +61,21 @@ export function WorkspaceTasksView({
     }
   }, [params.workspaceId, activeWorkspaceId, selectWorkspace]);
 
-  // Determine active view: route pathname (/board vs /list) has priority, then query param ?view=, then defaultView
-  const routeView = location.pathname.endsWith("/board")
+  // Determine active view: route pathname (/calendar vs /board vs /list) has priority, then query param ?view=, then defaultView
+  const routeView = location.pathname.endsWith("/calendar")
+    ? "calendar"
+    : location.pathname.endsWith("/board")
     ? "board"
     : location.pathname.endsWith("/list")
     ? "list"
     : null;
 
-  const paramView = searchParams.get("view") === "board" || searchParams.get("view") === "list"
-    ? (searchParams.get("view") as "list" | "board")
+  const validViews = ["list", "board", "calendar"];
+  const paramView = validViews.includes(searchParams.get("view") || "")
+    ? (searchParams.get("view") as "list" | "board" | "calendar")
     : null;
 
-  const activeView: "list" | "board" = routeView || paramView || defaultView;
+  const activeView: "list" | "board" | "calendar" = routeView || paramView || defaultView;
 
   // Search, filter, and sort state from URL search params
   const searchQuery = searchParams.get("q") ?? "";
@@ -72,6 +84,8 @@ export function WorkspaceTasksView({
   const sortBy = searchParams.get("sort") ?? "priority";
   const includeBacklog = searchParams.get("backlog") === "true";
   const mobileStage = searchParams.get("stage") ?? "TODO";
+  const calendarMode = (searchParams.get("mode") === "week" ? "week" : "month") as "month" | "week";
+  const calendarDate = searchParams.get("date") ?? getTodayString();
 
   // Track snapshot ID strictly for projection transitions to ensure snapshot parity
   const transitionSnapshotIdRef = useRef<string | null>(null);
@@ -97,7 +111,7 @@ export function WorkspaceTasksView({
     [setSearchParams]
   );
 
-  const handleViewChange = (newView: "list" | "board") => {
+  const handleViewChange = (newView: "list" | "board" | "calendar") => {
     if (newView === activeView) return;
 
     // Capture current snapshotId so the new projection reuses the identical canonical snapshot
@@ -105,14 +119,21 @@ export function WorkspaceTasksView({
       transitionSnapshotIdRef.current = queryResult.querySnapshotId;
     }
 
-    // If current route has /list or /board in path, navigate to the sibling path while keeping search params
-    if (location.pathname.endsWith("/list") || location.pathname.endsWith("/board")) {
-      const basePath = location.pathname.replace(/\/(list|board)$/, "");
+    // If current route has /list, /board, or /calendar in path, navigate to the sibling path while keeping search params
+    if (
+      location.pathname.endsWith("/list") ||
+      location.pathname.endsWith("/board") ||
+      location.pathname.endsWith("/calendar")
+    ) {
+      const basePath = location.pathname.replace(/\/(list|board|calendar)$/, "");
       navigate(`${basePath}/${newView}${location.search}`, { replace: true });
     } else {
       updateSearchParams({ view: newView });
     }
   };
+
+  const handleCalendarModeChange = (mode: "month" | "week") => updateSearchParams({ mode });
+  const handleCalendarDateChange = (date: string) => updateSearchParams({ date });
 
   const handleSearchChange = (q: string) => updateSearchParams({ q: q || null });
   const handlePriorityChange = (priority: string) => updateSearchParams({ priority });

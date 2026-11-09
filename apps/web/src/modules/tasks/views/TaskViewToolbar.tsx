@@ -2,6 +2,7 @@ import React from "react";
 import {
   List,
   LayoutGrid,
+  Calendar,
   Filter,
   ArrowUpDown,
   Plus,
@@ -14,8 +15,8 @@ import { cn } from "@/lib/utils";
 import { useQuickTaskComposer } from "../QuickTaskComposerContext";
 
 export interface TaskViewToolbarProps {
-  activeView: "list" | "board";
-  onViewChange: (view: "list" | "board") => void;
+  activeView: "list" | "board" | "calendar";
+  onViewChange: (view: "list" | "board" | "calendar") => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   priorityFilter: string;
@@ -104,6 +105,25 @@ export function TaskViewToolbar({
           >
             <LayoutGrid className="h-3.5 w-3.5" aria-hidden="true" />
             <span>Board</span>
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeView === "calendar"}
+            aria-controls="tasks-calendar-panel"
+            id="tab-view-calendar"
+            data-testid="tab-view-calendar"
+            onClick={() => onViewChange("calendar")}
+            className={cn(
+              "inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all cursor-pointer focus-ring",
+              activeView === "calendar"
+                ? "bg-[var(--surface-card)] text-[var(--text-primary)] shadow-xs font-semibold"
+                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            )}
+          >
+            <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>Calendar</span>
           </button>
         </div>
 
