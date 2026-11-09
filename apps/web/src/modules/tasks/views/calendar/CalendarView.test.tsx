@@ -471,6 +471,129 @@ describe("VS-05A: Calendar View & Unscheduled Task Tray", () => {
     });
   });
 
+  describe("VS-06B: Calendar Click-to-Create on Empty Dates", () => {
+    it("invokes onCreateTask with exact YYYY-MM-DD when clicking an empty day cell in Month View", async () => {
+      const user = userEvent.setup();
+      const grid = getMonthCalendarGrid(2026, 11, "2026-11-09", 0);
+      const onCreateTask = vi.fn();
+      const onTaskClick = vi.fn();
+
+      render(
+        <MonthCalendar
+          grid={grid}
+          tasksByDate={{}}
+          todayStr="2026-11-09"
+          onTaskClick={onTaskClick}
+          onCreateTask={onCreateTask}
+        />
+      );
+
+      const dayCell = screen.getByTestId("calendar-day-cell-2026-11-15");
+      await user.click(dayCell);
+
+      expect(onCreateTask).toHaveBeenCalledTimes(1);
+      expect(onCreateTask).toHaveBeenCalledWith("2026-11-15", expect.anything());
+      expect(onTaskClick).not.toHaveBeenCalled();
+    });
+
+    it("invokes onCreateTask via keyboard Enter and Space on a focused empty day cell", async () => {
+      const user = userEvent.setup();
+      const grid = getMonthCalendarGrid(2026, 11, "2026-11-09", 0);
+      const onCreateTask = vi.fn();
+
+      render(
+        <MonthCalendar
+          grid={grid}
+          tasksByDate={{}}
+          todayStr="2026-11-09"
+          onTaskClick={vi.fn()}
+          onCreateTask={onCreateTask}
+        />
+      );
+
+      const dayCell = screen.getByTestId("calendar-day-cell-2026-11-20");
+      dayCell.focus();
+      expect(dayCell).toHaveFocus();
+
+      await user.keyboard("{Enter}");
+      expect(onCreateTask).toHaveBeenCalledWith("2026-11-20", expect.anything());
+
+      await user.keyboard(" ");
+      expect(onCreateTask).toHaveBeenCalledWith("2026-11-20", expect.anything());
+    });
+
+    it("invokes onCreateTask via '+' header button in Month View cell", async () => {
+      const user = userEvent.setup();
+      const grid = getMonthCalendarGrid(2026, 11, "2026-11-09", 0);
+      const onCreateTask = vi.fn();
+
+      render(
+        <MonthCalendar
+          grid={grid}
+          tasksByDate={{}}
+          todayStr="2026-11-09"
+          onTaskClick={vi.fn()}
+          onCreateTask={onCreateTask}
+        />
+      );
+
+      const addBtn = screen.getByTestId("calendar-add-task-btn-2026-11-12");
+      await user.click(addBtn);
+
+      expect(onCreateTask).toHaveBeenCalledWith("2026-11-12", expect.anything());
+    });
+
+    it("clicking an existing task card triggers onTaskClick without triggering onCreateTask", async () => {
+      const user = userEvent.setup();
+      const grid = getMonthCalendarGrid(2026, 11, "2026-11-09", 0);
+      const onCreateTask = vi.fn();
+      const onTaskClick = vi.fn();
+
+      const task = makeTestTask({ taskKey: "GALA-501", dueDate: "2026-11-14", title: "Existing Task" });
+      render(
+        <MonthCalendar
+          grid={grid}
+          tasksByDate={{ "2026-11-14": [task] }}
+          todayStr="2026-11-09"
+          onTaskClick={onTaskClick}
+          onCreateTask={onCreateTask}
+        />
+      );
+
+      const taskBtn = screen.getByRole("button", { name: /Existing Task/ });
+      await user.click(taskBtn);
+
+      expect(onTaskClick).toHaveBeenCalledWith(task);
+      expect(onCreateTask).not.toHaveBeenCalled();
+    });
+
+    it("invokes onCreateTask in Week View when clicking empty day slot or header '+' button", async () => {
+      const user = userEvent.setup();
+      const weekDays = getWeekDays("2026-11-09", "2026-11-09", 0);
+      const onCreateTask = vi.fn();
+
+      render(
+        <WeekCalendar
+          weekDays={weekDays}
+          tasksByDate={{}}
+          todayStr="2026-11-09"
+          onTaskClick={vi.fn()}
+          onCreateTask={onCreateTask}
+        />
+      );
+
+      // Header "+" button for 2026-11-09
+      const addBtn = screen.getByTestId("week-add-task-btn-2026-11-09");
+      await user.click(addBtn);
+      expect(onCreateTask).toHaveBeenCalledWith("2026-11-09", expect.anything());
+
+      // Empty slot click
+      const emptySlot = screen.getByTestId("week-empty-slot-2026-11-10");
+      await user.click(emptySlot);
+      expect(onCreateTask).toHaveBeenCalledWith("2026-11-10", expect.anything());
+    });
+  });
+
   describe("Architectural Boundary Rules", () => {
     it("strictly verifies zero mock imports in production calendar view modules", () => {
       const calendarDir = path.resolve(__dirname, ".");

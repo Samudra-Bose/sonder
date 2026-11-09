@@ -24,6 +24,7 @@ import {
 } from "./timeline";
 import { useMilestones } from "@/modules/milestones";
 import { useTaskPeekDrawer } from "../useTaskPeekDrawer";
+import { useQuickTaskComposer } from "../QuickTaskComposerContext";
 import type {
   TaskViewQueryRequest,
   QueryFilterCondition,
@@ -90,6 +91,13 @@ export function WorkspaceTasksView({
   const priorityFilter = searchParams.get("priority") ?? "ALL";
   const statusFilter = searchParams.get("status") ?? "ALL";
   const sortBy = searchParams.get("sort") ?? "priority";
+  const sortOrderParam = searchParams.get("order")?.toLowerCase();
+  const sortOrder: "asc" | "desc" =
+    sortOrderParam === "asc" || sortOrderParam === "desc"
+      ? sortOrderParam
+      : sortBy === "priority" || sortBy === "createdAt"
+      ? "desc"
+      : "asc";
   const includeBacklog = searchParams.get("backlog") === "true";
   const mobileStage = searchParams.get("stage") ?? "TODO";
   const calendarMode = (searchParams.get("mode") === "week" ? "week" : "month") as "month" | "week";
@@ -149,6 +157,14 @@ export function WorkspaceTasksView({
   const handleCalendarDateChange = (date: string) => updateSearchParams({ date });
 
   const { openTask } = useTaskPeekDrawer();
+  const { open: openQuickComposer } = useQuickTaskComposer();
+
+  const handleCalendarCreateTask = useCallback(
+    (dateStr: string, invoker?: HTMLElement | null) => {
+      openQuickComposer(invoker, { dueDate: dateStr });
+    },
+    [openQuickComposer]
+  );
 
   // Date window calculation for Calendar and Timeline views
   const dateWindow = useMemo<QueryDateWindow | undefined>(() => {
@@ -199,7 +215,16 @@ export function WorkspaceTasksView({
   const handleSearchChange = (q: string) => updateSearchParams({ q: q || null });
   const handlePriorityChange = (priority: string) => updateSearchParams({ priority });
   const handleStatusChange = (status: string) => updateSearchParams({ status });
-  const handleSortChange = (sort: string) => updateSearchParams({ sort });
+  const handleSortChange = (sort: string) => {
+    const defaultOrder = sort === "priority" || sort === "createdAt" ? "desc" : "asc";
+    updateSearchParams({ sort, order: defaultOrder });
+  };
+  const handleSortOrderToggle = (order: "asc" | "desc") => {
+    updateSearchParams({ order });
+  };
+  const handleColumnSortChange = (field: string, direction: "asc" | "desc") => {
+    updateSearchParams({ sort: field, order: direction });
+  };
   const handleIncludeBacklogChange = (include: boolean) =>
     updateSearchParams({ backlog: include ? "true" : "false" });
   const handleSelectMobileStage = (stage: string) => updateSearchParams({ stage });
@@ -235,7 +260,7 @@ export function WorkspaceTasksView({
     const sortTerms: QuerySortTerm[] = [
       {
         field: sortBy as any,
-        direction: sortBy === "priority" ? "DESC" : "ASC",
+        direction: sortOrder === "desc" ? "DESC" : "ASC",
       },
     ];
 
@@ -252,7 +277,7 @@ export function WorkspaceTasksView({
       sortBy: sortTerms,
       ...(dateWindow ? { dateWindow } : {}),
     };
-  }, [searchQuery, priorityFilter, statusFilter, sortBy, includeBacklog, dateWindow]);
+  }, [searchQuery, priorityFilter, statusFilter, sortBy, sortOrder, includeBacklog, dateWindow]);
 
   // Execute workspace tasks query with snapshot reuse during view transitions
   const activeSnapshotId = transitionSnapshotIdRef.current ?? undefined;
@@ -371,7 +396,9 @@ export function WorkspaceTasksView({
         statusFilter={statusFilter}
         onStatusChange={handleStatusChange}
         sortBy={sortBy}
+        sortOrder={sortOrder}
         onSortChange={handleSortChange}
+        onSortOrderToggle={handleSortOrderToggle}
         includeBacklog={includeBacklog}
         onIncludeBacklogChange={handleIncludeBacklogChange}
         totalCount={totalCount}
@@ -389,6 +416,9 @@ export function WorkspaceTasksView({
           onRetry={() => refetchTasks()}
           workspaceId={effectiveWorkspaceId}
           communityId={effectiveCommunityId!}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={handleColumnSortChange}
         />
       ) : activeView === "board" ? (
         <TaskBoardView
@@ -419,6 +449,7 @@ export function WorkspaceTasksView({
               workspaceId: effectiveWorkspaceId ?? undefined,
             })
           }
+          onCreateTask={handleCalendarCreateTask}
         />
       ) : (
         <TimelineView

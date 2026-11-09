@@ -10,6 +10,7 @@ export interface CalendarDayCellProps {
   tasks: TaskDto[];
   todayStr: string;
   onTaskClick: (task: TaskDto) => void;
+  onCreateTask?: (dateStr: string, invoker?: HTMLElement | null) => void;
   maxVisibleTasks?: number;
 }
 
@@ -18,6 +19,7 @@ export function CalendarDayCell({
   tasks,
   todayStr,
   onTaskClick,
+  onCreateTask,
   maxVisibleTasks = 2,
 }: CalendarDayCellProps): React.JSX.Element {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -27,15 +29,40 @@ export function CalendarDayCell({
   const visibleTasks = tasks.slice(0, maxVisibleTasks);
   const hiddenCount = tasks.length - maxVisibleTasks;
 
+  const handleCellClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!onCreateTask) return;
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('[data-testid^="calendar-task-item-"]') ||
+      target.closest('[data-testid="calendar-more-tasks-btn"]') ||
+      target.closest('[role="dialog"]') ||
+      target.closest("button")
+    ) {
+      return;
+    }
+    onCreateTask(dateStr, e.currentTarget);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!onCreateTask) return;
+    if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      onCreateTask(dateStr, e.currentTarget);
+    }
+  };
+
   return (
     <div
       role="gridcell"
+      tabIndex={0}
       data-testid={`calendar-day-cell-${dateStr}`}
       aria-label={`${dateStr}, ${tasks.length} task${tasks.length === 1 ? "" : "s"}${
         isToday ? ", today" : ""
-      }`}
+      }${onCreateTask ? " (Click or press Enter to add task)" : ""}`}
+      onClick={handleCellClick}
+      onKeyDown={handleKeyDown}
       className={cn(
-        "relative flex flex-col min-h-[90px] md:min-h-[110px] p-1.5 border-b border-r border-[var(--border-subtle)] transition-colors select-none",
+        "group relative flex flex-col min-h-[90px] md:min-h-[110px] p-1.5 border-b border-r border-[var(--border-subtle)] transition-colors select-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-inset focus:ring-[var(--border-focus)]",
         isCurrentMonth
           ? "bg-[var(--surface-card)] hover:bg-[var(--surface-muted)]/40"
           : "bg-[var(--surface-muted)]/30 text-[var(--text-muted)]",
@@ -57,11 +84,28 @@ export function CalendarDayCell({
           {day}
         </span>
 
-        {tasks.length > 0 && (
-          <span className="text-[10px] font-medium text-[var(--text-muted)] tabular-nums px-1">
-            {tasks.length}
-          </span>
-        )}
+        <div className="flex items-center gap-1">
+          {onCreateTask && (
+            <button
+              type="button"
+              aria-label={`Create task on ${dateStr}`}
+              data-testid={`calendar-add-task-btn-${dateStr}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onCreateTask(dateStr, e.currentTarget);
+              }}
+              className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-0.5 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-muted)] transition-opacity cursor-pointer focus-ring"
+            >
+              <Plus className="h-3 w-3" />
+            </button>
+          )}
+
+          {tasks.length > 0 && (
+            <span className="text-[10px] font-medium text-[var(--text-muted)] tabular-nums px-1">
+              {tasks.length}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Visible Tasks Stack */}

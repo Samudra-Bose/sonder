@@ -7,12 +7,29 @@ import React, {
   useMemo,
 } from "react";
 import { useKeyboardShortcut } from "@/lib/keyboard.js";
+import type { TaskPriority } from "./types.js";
+
+export interface QuickTaskComposerInitialValues {
+  /** Optional prefilled due date (YYYY-MM-DD) */
+  dueDate?: string;
+  /** Optional prefilled priority */
+  priority?: TaskPriority;
+  /** Optional prefilled title */
+  title?: string;
+  /** Optional prefilled workspace ID */
+  workspaceId?: string;
+}
 
 export interface QuickTaskComposerContextValue {
   /** Whether the Quick Task Composer dialog is currently open */
   isOpen: boolean;
-  /** Opens the composer, optionally capturing the triggering invoker element */
-  open: (invoker?: HTMLElement | null) => void;
+  /** Current initial/prefilled values when opened */
+  initialValues?: QuickTaskComposerInitialValues | null;
+  /** Opens the composer, optionally capturing the triggering invoker element and prefilled values */
+  open: (
+    invoker?: HTMLElement | null,
+    initialValues?: QuickTaskComposerInitialValues | null
+  ) => void;
   /** Closes the composer and restores focus to the initiating element */
   close: () => void;
   /** Toggles the open state of the composer */
@@ -58,23 +75,32 @@ export function QuickTaskComposerProvider({
   enableShortcut = true,
 }: QuickTaskComposerProviderProps): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [initialValues, setInitialValues] = useState<QuickTaskComposerInitialValues | null>(null);
   const invokerRef = useRef<HTMLElement | null>(null);
 
-  const open = useCallback((invoker?: HTMLElement | null) => {
-    if (invoker) {
-      invokerRef.current = invoker;
-    } else if (
-      typeof document !== "undefined" &&
-      document.activeElement instanceof HTMLElement &&
-      document.activeElement !== document.body
-    ) {
-      invokerRef.current = document.activeElement;
-    }
-    setIsOpen(true);
-  }, []);
+  const open = useCallback(
+    (
+      invoker?: HTMLElement | null,
+      values?: QuickTaskComposerInitialValues | null
+    ) => {
+      if (invoker) {
+        invokerRef.current = invoker;
+      } else if (
+        typeof document !== "undefined" &&
+        document.activeElement instanceof HTMLElement &&
+        document.activeElement !== document.body
+      ) {
+        invokerRef.current = document.activeElement;
+      }
+      setInitialValues(values ?? null);
+      setIsOpen(true);
+    },
+    []
+  );
 
   const close = useCallback(() => {
     setIsOpen(false);
+    setInitialValues(null);
     // Restore focus to invoker asynchronously once dialog transition unmounts
     const targetEl = invokerRef.current;
     if (targetEl && typeof targetEl.focus === "function") {
@@ -118,11 +144,12 @@ export function QuickTaskComposerProvider({
   const value = useMemo<QuickTaskComposerContextValue>(
     () => ({
       isOpen,
+      initialValues,
       open,
       close,
       toggle,
     }),
-    [isOpen, open, close, toggle]
+    [isOpen, initialValues, open, close, toggle]
   );
 
   return (

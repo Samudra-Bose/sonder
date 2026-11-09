@@ -604,6 +604,68 @@ describe("VS-03 Stage 4: Quick Task Composer", () => {
         expect(screen.getByTestId("quick-task-composer-dialog")).toBeInTheDocument();
       });
     });
+
+    it("pre-populates dueDate, priority, and title when opened with initialValues", async () => {
+      const user = userEvent.setup();
+      function CustomOpener() {
+        const { open } = useQuickTaskComposer();
+        return (
+          <>
+            <button
+              type="button"
+              data-testid="open-with-initials-btn"
+              onClick={() =>
+                open(null, {
+                  dueDate: "2026-12-25",
+                  priority: "URGENT",
+                  title: "Prefilled Holiday Task",
+                })
+              }
+            >
+              Open with initials
+            </button>
+            <QuickTaskComposer />
+          </>
+        );
+      }
+
+      const queryClient = createTestQueryClient();
+      const authValue = createMockAuth();
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <AuthContext.Provider value={authValue}>
+              <WorkspaceProvider
+                initialCommunityId={MOCK_COMMUNITY_1_ID}
+                initialWorkspaceId={WS_SHARED_ENG_ID}
+              >
+                <QuickTaskComposerProvider>
+                  <MemoryRouter>
+                    <CustomOpener />
+                  </MemoryRouter>
+                </QuickTaskComposerProvider>
+              </WorkspaceProvider>
+            </AuthContext.Provider>
+          </ThemeProvider>
+        </QueryClientProvider>
+      );
+
+      await user.click(screen.getByTestId("open-with-initials-btn"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("quick-task-composer-dialog")).toBeInTheDocument();
+      });
+
+      const titleInput = screen.getByTestId("composer-title-input") as HTMLInputElement;
+      expect(titleInput.value).toBe("Prefilled Holiday Task");
+
+      const dateInput = screen.getByTestId("composer-due-date-input") as HTMLInputElement;
+      expect(dateInput.value).toBe("2026-12-25");
+
+      const prioritySelect = screen.getByTestId("composer-priority-select") as HTMLSelectElement;
+      expect(prioritySelect.value).toBe("URGENT");
+    });
   });
 
   describe("Production Module Boundaries", () => {

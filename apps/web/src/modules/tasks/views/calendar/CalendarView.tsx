@@ -32,6 +32,7 @@ export interface CalendarViewProps {
   currentDate: string; // YYYY-MM-DD
   onCurrentDateChange: (newDate: string) => void;
   onTaskClick: (task: TaskDto) => void;
+  onCreateTask?: (dateStr: string, invoker?: HTMLElement | null) => void;
   className?: string;
 }
 
@@ -47,6 +48,7 @@ export function CalendarView({
   currentDate,
   onCurrentDateChange,
   onTaskClick,
+  onCreateTask,
   className,
 }: CalendarViewProps): React.JSX.Element {
   const [isTrayOpen, setIsTrayOpen] = useState(true);
@@ -189,6 +191,7 @@ export function CalendarView({
           tasksByDate={tasksByDate}
           todayStr={todayStr}
           onTaskClick={onTaskClick}
+          onCreateTask={onCreateTask}
         />
       ) : (
         <WeekCalendar
@@ -196,6 +199,7 @@ export function CalendarView({
           tasksByDate={tasksByDate}
           todayStr={todayStr}
           onTaskClick={onTaskClick}
+          onCreateTask={onCreateTask}
         />
       )}
 

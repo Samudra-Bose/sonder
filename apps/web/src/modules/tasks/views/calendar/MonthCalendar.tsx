@@ -11,6 +11,7 @@ export interface MonthCalendarProps {
   tasksByDate: Record<string, TaskDto[]>;
   todayStr: string;
   onTaskClick: (task: TaskDto) => void;
+  onCreateTask?: (dateStr: string, invoker?: HTMLElement | null) => void;
   className?: string;
 }
 
@@ -19,6 +20,7 @@ export function MonthCalendar({
   tasksByDate,
   todayStr,
   onTaskClick,
+  onCreateTask,
   className,
 }: MonthCalendarProps): React.JSX.Element {
   return (
@@ -52,6 +54,7 @@ export function MonthCalendar({
             tasks={tasksByDate[dayInfo.dateStr] ?? []}
             todayStr={todayStr}
             onTaskClick={onTaskClick}
+            onCreateTask={onCreateTask}
           />
         ))}
       </div>
