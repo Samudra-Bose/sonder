@@ -1,11 +1,11 @@
 # SONDER — VS-06B.1 DELIVERY REPORT: POST-MERGE CROSS-VIEW INTEGRATION HARDENING
 
 **Baseline Branch**: `develop` at `8c0f310`  
-**Active Working Branch**: `fix/FE-VS06B1-cross-view-integration-hardening`  
+**Active Working Branch**: `fix/FE-VS06B1-cross-view-integration-hardening` (merged into `develop`)  
 **Target Branch**: `develop`  
-**Pull Request**: Pending merge  
-**Final Merge Commit**: Pending  
-**Status**: COMPLETED & VERIFIED — Cross-View History Navigation, OpenAPI Sort Allowlist Enforcement, Stale Prefill Prevention, Full Playwright Verification  
+**Pull Request**: [#28](https://github.com/Samudra-Bose/sonder/pull/28)  
+**Final Merge Commit**: `9ccabe2`  
+**Status**: MERGED & VERIFIED — Cross-View History Navigation, OpenAPI Sort Allowlist Enforcement, Stale Prefill Prevention, Full Playwright Verification  
 **Date**: November 9, 2026  
 **Author**: Antigravity Pair Programming Agent  
 
