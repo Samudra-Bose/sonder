@@ -97,9 +97,6 @@ export function UnscheduledTaskTray({
             </div>
           ) : (
             tasks.map((task) => {
-              const priorityBadge = getPriorityBadgeColor(task.priority);
-              const statusBadge = getStatusBadgeColor(task.statusCategory);
-
               const handleClick = () => onTaskClick(task);
               const handleKeyDown = (e: React.KeyboardEvent) => {
                 if (e.key === "Enter" || e.key === " ") {
@@ -130,29 +127,15 @@ export function UnscheduledTaskTray({
 
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     {/* Status Badge */}
-                    <span
-                      className={cn(
-                        "text-[10px] font-medium px-1.5 py-0.5 rounded border",
-                        statusBadge.bg,
-                        statusBadge.text,
-                        statusBadge.border
-                      )}
-                    >
-                      {statusBadge.label}
-                    </span>
+                    <Badge status={task.statusCategory} size="sm">
+                      {formatStatus(task.statusCategory)}
+                    </Badge>
 
                     {/* Priority Badge */}
                     {task.priority !== "NONE" && (
-                      <span
-                        className={cn(
-                          "text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase",
-                          priorityBadge.bg,
-                          priorityBadge.text,
-                          priorityBadge.border
-                        )}
-                      >
+                      <Badge priority={task.priority} size="sm">
                         {task.priority}
-                      </span>
+                      </Badge>
                     )}
                   </div>
                 </div>
