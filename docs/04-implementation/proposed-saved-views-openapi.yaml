@@ -1,355 +1,48 @@
 # ==============================================================================
-# SONDER — PROPOSED SAVED VIEWS OPENAPI SPECIFICATION EXTENSION (VS-07A)
+# SONDER — PROPOSED SAVED VIEWS CONTRACT DELTA SPECIFICATION (VS-07A.1)
 # ==============================================================================
-# STATUS: PROPOSED / NOT APPROVED / NON-CANONICAL
+# STATUS: PROPOSED / NOT APPROVED / NON-CANONICAL CONTRACT DELTA
 # BASELINE SPECIFICATION: Community-Work-Management OpenAPI 0.3.20-draft
-# GOVERNANCE NOTICE:
-# This artifact is a technical proposal and readiness blueprint authored during
-# VS-07A. It documents existing canonical saved-views endpoints alongside
-# proposed backward-compatible extensions.
 #
-# DO NOT IMPORT OR MERGE INTO CANONICAL openapi.yaml WITHOUT FORMAL JOINT
-# FRONTEND, BACKEND, AND PRODUCT STAKEHOLDER SIGN-OFF.
+# GOVERNANCE NOTICE:
+# This document defines ONLY the proposed delta/extension to the canonical OpenAPI
+# contract (Community-Work-Management-v1.5/docs/contracts/openapi.yaml).
+#
+# CANONICAL OPERATIONS ALREADY DEFINED IN openapi.yaml:
+# The following 6 operations already exist in the canonical contract and MUST NOT
+# be re-declared or duplicated:
+#   1. GET    /communities/{cid}/workspaces/{wid}/saved-views               (listSavedViews, lines 2435-2478)
+#   2. POST   /communities/{cid}/workspaces/{wid}/saved-views               (createSavedView, lines 2479-2547)
+#   3. GET    /communities/{cid}/workspaces/{wid}/saved-views/{viewId}      (getSavedView, lines 2548-2595)
+#   4. PATCH  /communities/{cid}/workspaces/{wid}/saved-views/{viewId}      (updateSavedView, lines 2596-2689)
+#   5. DELETE /communities/{cid}/workspaces/{wid}/saved-views/{viewId}      (deleteSavedView, lines 2690-2737)
+#   6. POST   /communities/{cid}/workspaces/{srcWid}/saved-views/{viewId}/copy (copySavedView, lines 5345-5410)
+#
+# CANONICAL SCHEMAS ALREADY DEFINED IN openapi.yaml:
+#   - SavedViewDto (lines 8455-8512)
+#   - SavedViewListDto (lines 8513-8521)
+#   - SaveViewRequest (lines 8522-8570)
+#   - UpdateSavedViewRequest (lines 8571-8600)
+#   - CopySavedViewRequest (lines 11284-11300)
+#   - BoardSavedViewDisplayOptions (lines 11248-11273)
+#   - SavedViewDisplayOptions (lines 11274-11283)
+#   - SavedViewVersionConflictProblem (lines 8390-8410)
+#
+# DO NOT IMPORT OR MERGE THIS DELTA INTO CANONICAL openapi.yaml WITHOUT
+# FORMAL JOINT PRODUCT OWNER AND BACKEND LEAD SIGN-OFF.
 # ==============================================================================
 
 openapi: 3.1.0
 info:
-  title: Sonder Saved Views Extension (Proposed)
-  version: 0.3.21-proposed
+  title: Sonder Saved Views Proposed Contract Delta
+  version: 0.3.21-delta-proposal
   description: >
-    Proposed contract extension and clarification for Sonder Saved Views (FEAT-C04).
-    Contains canonical existing operations and proposed additions for default workspace
-    view configuration and multi-projection display options.
+    Minimal, non-canonical proposed delta for Sonder Saved Views (FEAT-C04).
+    Contains only proposed additions currently under joint product and backend review.
 
 paths:
-  /communities/{communityId}/workspaces/{workspaceId}/saved-views:
-    get:
-      tags:
-        - Views
-      operationId: listSavedViews
-      summary: List personal and shared saved views visible to the caller
-      description: >
-        Requires ACTIVE workspace membership and task:read. Returns caller-owned
-        PERSONAL views and workspace SHARED views. Never returns another member's
-        PERSONAL view, even to Workspace Owner, Community Admin, or Break-Glass.
-        Saved-view querySpec execution re-runs CR-04 task authorization dynamically.
-      parameters:
-        - name: communityId
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Uuid'
-        - name: workspaceId
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Uuid'
-      responses:
-        '200':
-          description: List of personal and shared saved views visible to the caller.
-          headers:
-            Cache-Control:
-              description: Private/no-store; saved view definitions are principal-scoped.
-              schema:
-                type: string
-                example: private, no-store
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SavedViewListDto'
-        '401':
-          $ref: '#/components/responses/Problem'
-        '403':
-          $ref: '#/components/responses/Problem'
-        '404':
-          $ref: '#/components/responses/Problem'
-
-    post:
-      tags:
-        - Views
-      operationId: createSavedView
-      summary: Create a personal or shared saved view
-      description: >
-        Requires ACTIVE membership and task:read. PERSONAL views may be created by any
-        active member. SHARED views require saved_view:manage_shared capability.
-        Scope and createdById are server-controlled and immutable after creation.
-        Name is trimmed and Unicode NFKC-normalized; uniqueness is case-insensitive
-        within (workspaceId, createdById) for PERSONAL and within workspaceId for SHARED.
-        Only SHARED view creation emits realtime event saved_view.created and increments
-        X-Workspace-Seq.
-      parameters:
-        - $ref: '#/components/parameters/MutationId'
-        - name: communityId
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Uuid'
-        - name: workspaceId
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Uuid'
-        - $ref: '#/components/parameters/CsrfToken'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SaveViewRequest'
-      responses:
-        '201':
-          description: Saved view created successfully.
-          headers:
-            X-Workspace-Seq:
-              $ref: '#/components/headers/WorkspaceSeq'
-              description: Present only when created view has scope SHARED; omitted for PERSONAL.
-            X-Idempotent-Replayed:
-              $ref: '#/components/headers/IdempotentReplayed'
-            Cache-Control:
-              schema:
-                type: string
-                example: private, no-store
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SavedViewDto'
-        '400':
-          $ref: '#/components/responses/Problem'
-        '401':
-          $ref: '#/components/responses/Problem'
-        '403':
-          $ref: '#/components/responses/Problem'
-        '409':
-          description: Name collision or idempotency payload mismatch.
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '422':
-          description: Projection, querySpec, or display options validation failure.
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-
-  /communities/{communityId}/workspaces/{workspaceId}/saved-views/{viewId}:
-    get:
-      tags:
-        - Views
-      operationId: getSavedView
-      summary: Retrieve a single saved view by ID
-      description: >
-        Requires ACTIVE membership and task:read. Returns the view if it is SHARED or
-        if caller is createdById for a PERSONAL view. Attempting to read another user's
-        PERSONAL view returns 404 RESOURCE_NOT_FOUND (not 403) to prevent identity leakage.
-      parameters:
-        - name: communityId
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Uuid'
-        - name: workspaceId
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Uuid'
-        - name: viewId
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Uuid'
-      responses:
-        '200':
-          description: Saved view record.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SavedViewDto'
-        '401':
-          $ref: '#/components/responses/Problem'
-        '403':
-          $ref: '#/components/responses/Problem'
-        '404':
-          $ref: '#/components/responses/Problem'
-
-    patch:
-      tags:
-        - Views
-      operationId: updateSavedView
-      summary: Update a saved view with optimistic concurrency
-      description: >
-        Requires ACTIVE membership and task:read. PERSONAL views may be updated by
-        createdById only. SHARED views may be updated by saved_view:manage_shared or by
-        the original creator while still active and retaining task:read.
-        Scope and createdById are immutable. Request version must match current version;
-        stale version returns 409 SAVED_VIEW_VERSION_CONFLICT without modifying state.
-        Only SHARED view updates emit realtime event saved_view.updated and return X-Workspace-Seq.
-      parameters:
-        - $ref: '#/components/parameters/MutationId'
-        - name: communityId
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Uuid'
-        - name: workspaceId
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Uuid'
-        - name: viewId
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Uuid'
-        - $ref: '#/components/parameters/CsrfToken'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateSavedViewRequest'
-      responses:
-        '200':
-          description: Saved view updated successfully.
-          headers:
-            X-Workspace-Seq:
-              $ref: '#/components/headers/WorkspaceSeq'
-              description: Present only for SHARED view updates.
-            X-Idempotent-Replayed:
-              $ref: '#/components/headers/IdempotentReplayed'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SavedViewDto'
-        '400':
-          $ref: '#/components/responses/Problem'
-        '401':
-          $ref: '#/components/responses/Problem'
-        '403':
-          $ref: '#/components/responses/Problem'
-        '404':
-          $ref: '#/components/responses/Problem'
-        '409':
-          description: Version conflict or name collision.
-          content:
-            application/problem+json:
-              schema:
-                oneOf:
-                  - $ref: '#/components/schemas/SavedViewVersionConflictProblem'
-                  - $ref: '#/components/schemas/Problem'
-        '422':
-          $ref: '#/components/responses/Problem'
-
-    delete:
-      tags:
-        - Views
-      operationId: deleteSavedView
-      summary: Delete a saved view
-      description: >
-        Requires ACTIVE membership and task:read. PERSONAL views may be deleted by
-        createdById only. SHARED views may be deleted only by users with saved_view:manage_shared
-        (the creator update exception does NOT grant deletion rights).
-        Deletions emit saved_view.deleted for SHARED views and return X-Workspace-Seq.
-      parameters:
-        - $ref: '#/components/parameters/MutationId'
-        - name: communityId
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Uuid'
-        - name: workspaceId
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Uuid'
-        - name: viewId
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Uuid'
-        - $ref: '#/components/parameters/CsrfToken'
-      responses:
-        '204':
-          description: Saved view deleted.
-          headers:
-            X-Workspace-Seq:
-              $ref: '#/components/headers/WorkspaceSeq'
-              description: Present only for SHARED view deletion.
-            X-Idempotent-Replayed:
-              $ref: '#/components/headers/IdempotentReplayed'
-        '401':
-          $ref: '#/components/responses/Problem'
-        '403':
-          $ref: '#/components/responses/Problem'
-        '404':
-          $ref: '#/components/responses/Problem'
-
-  /communities/{communityId}/workspaces/{sourceWorkspaceId}/saved-views/{viewId}/copy:
-    post:
-      tags:
-        - Views
-      operationId: copySavedView
-      summary: Copy a saved view into another workspace in the same community
-      description: >
-        Creates a new destination record; source remains untouched. Requires active
-        membership and task:read in both source and destination workspaces.
-        Source PERSONAL view is copyable only by its creator; source SHARED view is
-        copyable by any active reader. Destination SHARED requires saved_view:manage_shared.
-        Target workspace custom-field or status references are re-validated atomically.
-      parameters:
-        - $ref: '#/components/parameters/MutationId'
-        - name: communityId
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Uuid'
-        - name: sourceWorkspaceId
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Uuid'
-        - name: viewId
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Uuid'
-        - $ref: '#/components/parameters/CsrfToken'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CopySavedViewRequest'
-      responses:
-        '201':
-          description: New saved view created in target workspace.
-          headers:
-            X-Workspace-Seq:
-              $ref: '#/components/headers/WorkspaceSeq'
-              description: Present only if destination scope is SHARED.
-            X-Idempotent-Replayed:
-              $ref: '#/components/headers/IdempotentReplayed'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SavedViewDto'
-        '400':
-          $ref: '#/components/responses/Problem'
-        '401':
-          $ref: '#/components/responses/Problem'
-        '403':
-          $ref: '#/components/responses/Problem'
-        '404':
-          $ref: '#/components/responses/Problem'
-        '422':
-          description: Incompatible destination configuration or projection validation failed.
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-
   # ----------------------------------------------------------------------------
-  # PROPOSED EXTENSION: Default Workspace View Configuration
+  # PROPOSED EXTENSION: Workspace Default Shared View Configuration
   # ----------------------------------------------------------------------------
   /communities/{communityId}/workspaces/{workspaceId}/default-view:
     put:
@@ -359,8 +52,8 @@ paths:
       operationId: setWorkspaceDefaultView
       summary: Set or clear the default shared view for a workspace
       description: >
-        [PROPOSED / RECOMMENDED CHOICE FOR DECISION 3]
-        Requires Workspace Owner role (workspace:update_settings capability).
+        [PROPOSED / PENDING PRODUCT & BACKEND APPROVAL]
+        Requires ACTIVE workspace membership and Workspace Owner role (workspace:update_settings capability).
         The referenced viewId must exist, belong to this workspace, and have scope: SHARED.
         Supplying null or omitting viewId resets the workspace default to the system
         fallback (List view).
@@ -395,16 +88,22 @@ paths:
                 $ref: '#/components/schemas/WorkspaceDefaultViewDto'
         '400':
           $ref: '#/components/responses/Problem'
-        '403':
+        '401':
           $ref: '#/components/responses/Problem'
+        '403':
+          description: Forbidden. Caller lacks Workspace Owner role.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
-          description: Workspace or referenced view not found.
+          description: Workspace or referenced viewId not found.
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
-          description: View is PERSONAL or incompatible with workspace default.
+          description: View has scope PERSONAL or does not belong to this workspace.
           content:
             application/problem+json:
               schema:
@@ -412,147 +111,9 @@ paths:
 
 components:
   schemas:
-    SavedViewScope:
-      type: string
-      enum:
-        - PERSONAL
-        - SHARED
-      description: Visibility and mutation boundary of the saved view.
-
-    SavedViewType:
-      type: string
-      enum:
-        - LIST
-        - BOARD
-        - CALENDAR
-        - TIMELINE
-      description: Saved projection type. Independent of the stored querySpec AST.
-
-    SavedViewDto:
-      type: object
-      required:
-        - id
-        - workspaceId
-        - name
-        - scope
-        - viewType
-        - querySpec
-        - version
-        - createdAt
-        - updatedAt
-        - createdById
-        - displayOptions
-      properties:
-        id:
-          $ref: '#/components/schemas/Uuid'
-        workspaceId:
-          $ref: '#/components/schemas/Uuid'
-        name:
-          type: string
-          minLength: 1
-          maxLength: 120
-          description: NFKC-normalized, trimmed view name.
-        scope:
-          $ref: '#/components/schemas/SavedViewScope'
-        viewType:
-          $ref: '#/components/schemas/SavedViewType'
-        querySpec:
-          $ref: '#/components/schemas/ViewQuerySpec'
-        version:
-          type: integer
-          minimum: 1
-          description: Monotonically increasing version counter for optimistic concurrency.
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-        createdById:
-          $ref: '#/components/schemas/Uuid'
-          description: User ID of original creator.
-        displayOptions:
-          $ref: '#/components/schemas/SavedViewDisplayOptions'
-        isDefault:
-          type: boolean
-          default: false
-          description: >
-            [PROPOSED] Synthesized convenience flag indicating if this view is the
-            active workspace default view. True only for SHARED views matching
-            workspace.defaultSavedViewId.
-      additionalProperties: false
-
-    SavedViewListDto:
-      type: object
-      required:
-        - items
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/SavedViewDto'
-
-    SaveViewRequest:
-      type: object
-      required:
-        - name
-        - scope
-        - viewType
-        - querySpec
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 120
-        scope:
-          $ref: '#/components/schemas/SavedViewScope'
-        viewType:
-          $ref: '#/components/schemas/SavedViewType'
-        querySpec:
-          $ref: '#/components/schemas/ViewQuerySpec'
-        displayOptions:
-          $ref: '#/components/schemas/SavedViewDisplayOptions'
-          default: {}
-      additionalProperties: false
-
-    UpdateSavedViewRequest:
-      type: object
-      required:
-        - version
-      minProperties: 2
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 120
-        querySpec:
-          $ref: '#/components/schemas/ViewQuerySpec'
-        version:
-          type: integer
-          minimum: 1
-        viewType:
-          $ref: '#/components/schemas/SavedViewType'
-        displayOptions:
-          $ref: '#/components/schemas/SavedViewDisplayOptions'
-      additionalProperties: false
-
-    CopySavedViewRequest:
-      type: object
-      required:
-        - targetWorkspaceId
-        - name
-        - scope
-      properties:
-        targetWorkspaceId:
-          $ref: '#/components/schemas/Uuid'
-        name:
-          type: string
-          minLength: 1
-          maxLength: 120
-        scope:
-          $ref: '#/components/schemas/SavedViewScope'
-      additionalProperties: false
-
+    # --------------------------------------------------------------------------
+    # PROPOSED SCHEMAS: Workspace Default View DTOs
+    # --------------------------------------------------------------------------
     SetWorkspaceDefaultViewRequest:
       type: object
       properties:
@@ -577,10 +138,11 @@ components:
             - type: 'null'
       additionalProperties: false
 
-    # ----------------------------------------------------------------------------
-    # DISPLAY OPTIONS (PROPOSED MULTI-PROJECTION EXTENSION)
-    # ----------------------------------------------------------------------------
-    SavedViewDisplayOptions:
+    # --------------------------------------------------------------------------
+    # PROPOSED SCHEMAS: Multi-Projection Display Options Extension
+    # (Note: Canonical SavedViewDisplayOptions currently only defines 'board')
+    # --------------------------------------------------------------------------
+    ExtendedSavedViewDisplayOptions:
       type: object
       properties:
         board:
@@ -593,31 +155,9 @@ components:
           $ref: '#/components/schemas/TimelineSavedViewDisplayOptions'
       additionalProperties: false
       description: >
-        Presentation preferences for task views. Each sub-object is valid only
-        when the corresponding viewType is active.
-
-    BoardSavedViewDisplayOptions:
-      type: object
-      properties:
-        visibleCardBadges:
-          type: array
-          items:
-            type: string
-            enum:
-              - DUE_DATE
-              - LABELS
-              - SUBTASK_COUNT
-              - ESTIMATE
-          uniqueItems: true
-          minItems: 0
-          maxItems: 4
-          default:
-            - DUE_DATE
-            - LABELS
-        showEmptyColumns:
-          type: boolean
-          default: true
-      additionalProperties: false
+        [PROPOSED / PENDING REVIEW]
+        Presentation-only preferences. Each sub-object is valid only when the
+        corresponding viewType is active.
 
     ListSavedViewDisplayOptions:
       type: object
@@ -683,38 +223,9 @@ components:
       additionalProperties: false
       description: "[PROPOSED] Optional presentation preferences for Timeline view."
 
-    # ----------------------------------------------------------------------------
-    # REUSED QUERY VOCABULARY & ERROR PROBLEMS
-    # ----------------------------------------------------------------------------
-    SavedViewVersionConflictProblem:
-      type: object
-      required:
-        - type
-        - title
-        - status
-        - code
-        - currentVersion
-      properties:
-        type:
-          type: string
-          example: https://errors.sonder.platform/saved-view-version-conflict
-        title:
-          type: string
-          example: Saved View Version Conflict
-        status:
-          type: integer
-          example: 409
-        code:
-          type: string
-          example: SAVED_VIEW_VERSION_CONFLICT
-        detail:
-          type: string
-          example: The saved view has been updated by another user. Please refresh and retry.
-        currentVersion:
-          type: integer
-          minimum: 1
-      additionalProperties: true
-
+    # --------------------------------------------------------------------------
+    # PROPOSED SCHEMAS: Quota Exceeded Problem
+    # --------------------------------------------------------------------------
     SavedViewLimitExceededProblem:
       type: object
       required:
@@ -739,7 +250,7 @@ components:
           example: SAVED_VIEW_LIMIT_EXCEEDED
         detail:
           type: string
-          example: You have reached the maximum quota of 50 personal views for this workspace.
+          example: Maximum quota of 50 personal views reached for this workspace.
         limit:
           type: integer
           example: 50
@@ -748,10 +259,19 @@ components:
           example: 50
       additionalProperties: true
 
+    # Referenced canonical primitives (included for internal validator resolution)
     Uuid:
       type: string
       format: uuid
       pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
+
+    BoardSavedViewDisplayOptions:
+      type: object
+      description: Reused from canonical #/components/schemas/BoardSavedViewDisplayOptions
+
+    Problem:
+      type: object
+      description: Reused from canonical #/components/schemas/Problem
 
   parameters:
     MutationId:
@@ -775,9 +295,4 @@ components:
       schema:
         type: integer
         minimum: 1
-      description: Monotonically increasing workspace event sequence counter. Emitted on SHARED mutations.
-
-    IdempotentReplayed:
-      schema:
-        type: boolean
-      description: True if response was served from idempotency ledger replay.
+      description: Monotonically increasing workspace event sequence counter.
