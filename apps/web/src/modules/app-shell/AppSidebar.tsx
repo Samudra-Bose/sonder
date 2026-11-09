@@ -6,6 +6,7 @@ import {
   Sparkles,
   List,
   LayoutGrid,
+  Calendar,
 } from "lucide-react";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { Kbd } from "@/components/ui/KeyboardShortcut";
@@ -148,6 +149,14 @@ export function AppSidebar({
                   href: currentCommunityId
                     ? `/c/${currentCommunityId}/w/${activeWorkspace.id}/board`
                     : `/workspaces/${activeWorkspace.id}/board`,
+                },
+                {
+                  id: "calendar",
+                  label: "Calendar",
+                  icon: Calendar,
+                  href: currentCommunityId
+                    ? `/c/${currentCommunityId}/w/${activeWorkspace.id}/calendar`
+                    : `/workspaces/${activeWorkspace.id}/calendar`,
                 },
               ].map((viewItem) => {
                 const ViewIcon = viewItem.icon;

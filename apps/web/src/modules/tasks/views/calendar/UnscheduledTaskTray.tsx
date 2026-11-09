@@ -1,11 +1,25 @@
 import React from "react";
 import { ChevronDown, ChevronRight, Inbox, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  getStatusBadgeColor,
-  getPriorityBadgeColor,
-} from "@/lib/design-tokens";
-import type { TaskDto } from "../../types";
+import { Badge } from "@/components/ui/Badge.js";
+import type { TaskDto, TaskStatusCategory } from "../../types";
+
+function formatStatus(status: TaskStatusCategory): string {
+  switch (status) {
+    case "BACKLOG":
+      return "Backlog";
+    case "TODO":
+      return "To Do";
+    case "IN_PROGRESS":
+      return "In Progress";
+    case "DONE":
+      return "Done";
+    case "CANCELED":
+      return "Canceled";
+    default:
+      return status;
+  }
+}
 
 export interface UnscheduledTaskTrayProps {
   tasks: TaskDto[];

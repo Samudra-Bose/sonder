@@ -1,5 +1,5 @@
 import React from "react";
-import { CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CalendarTaskItem } from "./CalendarTaskItem";
 import type { WeekDayInfo } from "./calendar-date-utils";

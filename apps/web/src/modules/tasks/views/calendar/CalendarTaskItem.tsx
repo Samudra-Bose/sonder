@@ -1,10 +1,7 @@
 import React from "react";
-import { AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  getStatusBadgeColor,
-  getPriorityBadgeColor,
-} from "@/lib/design-tokens";
+import { Badge } from "@/components/ui/Badge.js";
 import type { TaskDto } from "../../types";
 
 export interface CalendarTaskItemProps {
@@ -23,8 +20,6 @@ export function CalendarTaskItem({
   className,
 }: CalendarTaskItemProps): React.JSX.Element {
   const isTerminal = task.statusCategory === "DONE" || task.statusCategory === "CANCELED";
-  const priorityBadge = getPriorityBadgeColor(task.priority);
-  const statusBadge = getStatusBadgeColor(task.statusCategory);
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -91,16 +86,9 @@ export function CalendarTaskItem({
 
       {/* Non-compact priority badge */}
       {!compact && task.priority !== "NONE" && (
-        <span
-          className={cn(
-            "text-[9px] font-bold px-1 py-0.2 rounded border flex-shrink-0 uppercase",
-            priorityBadge.bg,
-            priorityBadge.text,
-            priorityBadge.border
-          )}
-        >
-          {task.priority.slice(0, 3)}
-        </span>
+        <Badge priority={task.priority} size="sm" className="flex-shrink-0">
+          {task.priority}
+        </Badge>
       )}
     </div>
   );

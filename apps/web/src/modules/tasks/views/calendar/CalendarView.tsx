@@ -52,12 +52,14 @@ export function CalendarView({
   const [isTrayOpen, setIsTrayOpen] = useState(true);
 
   // Parse current date parts safely
-  const { year, month, day } = useMemo(() => {
+  const { year, month } = useMemo(() => {
     try {
-      return parseDateParts(currentDate);
+      const parts = parseDateParts(currentDate);
+      return { year: parts.year, month: parts.month };
     } catch {
       const today = getTodayString();
-      return parseDateParts(today);
+      const parts = parseDateParts(today);
+      return { year: parts.year, month: parts.month };
     }
   }, [currentDate]);
 
@@ -142,7 +144,7 @@ export function CalendarView({
     return (
       <div data-testid="calendar-error-state" className="p-4">
         <Feedback
-          variant="error"
+          variant="danger"
           title="Failed to load calendar tasks"
         >
           <div className="space-y-3">

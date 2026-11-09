@@ -135,6 +135,36 @@ export function WorkspaceTasksView({
   const handleCalendarModeChange = (mode: "month" | "week") => updateSearchParams({ mode });
   const handleCalendarDateChange = (date: string) => updateSearchParams({ date });
 
+  const { openTask } = useTaskPeekDrawer();
+
+  // Date window calculation for Calendar view
+  const dateWindow = useMemo<QueryDateWindow | undefined>(() => {
+    if (activeView !== "calendar") return undefined;
+    try {
+      const { year, month } = parseDateParts(calendarDate);
+      const todayStr = getTodayString();
+      if (calendarMode === "month") {
+        const grid = getMonthCalendarGrid(year, month, todayStr);
+        return {
+          dateField: "DUE_DATE",
+          from: grid[0]!.dateStr,
+          to: grid[grid.length - 1]!.dateStr,
+          includeUnscheduled: true,
+        };
+      } else {
+        const week = getWeekDays(calendarDate, todayStr);
+        return {
+          dateField: "DUE_DATE",
+          from: week[0]!.dateStr,
+          to: week[6]!.dateStr,
+          includeUnscheduled: true,
+        };
+      }
+    } catch {
+      return undefined;
+    }
+  }, [activeView, calendarDate, calendarMode]);
+
   const handleSearchChange = (q: string) => updateSearchParams({ q: q || null });
   const handlePriorityChange = (priority: string) => updateSearchParams({ priority });
   const handleStatusChange = (status: string) => updateSearchParams({ status });
@@ -189,8 +219,9 @@ export function WorkspaceTasksView({
         conditions,
       },
       sortBy: sortTerms,
+      ...(dateWindow ? { dateWindow } : {}),
     };
-  }, [searchQuery, priorityFilter, statusFilter, sortBy, includeBacklog]);
+  }, [searchQuery, priorityFilter, statusFilter, sortBy, includeBacklog, dateWindow]);
 
   // Execute workspace tasks query with snapshot reuse during view transitions
   const activeSnapshotId = transitionSnapshotIdRef.current ?? undefined;
@@ -206,7 +237,8 @@ export function WorkspaceTasksView({
     communityId: effectiveCommunityId,
     workspaceId: effectiveWorkspaceId,
     query: {
-      projection: activeView === "board" ? "BOARD" : "LIST",
+      projection:
+        activeView === "board" ? "BOARD" : activeView === "calendar" ? "CALENDAR" : "LIST",
       pageScope: "PRIMARY",
       querySnapshotId: activeSnapshotId,
       querySpec,
@@ -303,7 +335,7 @@ export function WorkspaceTasksView({
         onRefresh={() => refetchTasks()}
       />
 
-      {/* Primary View Projection (List or Board) */}
+      {/* Primary View Projection (List, Board, or Calendar) */}
       {activeView === "list" ? (
         <TaskListView
           tasks={queryResult?.items ?? []}
@@ -314,7 +346,7 @@ export function WorkspaceTasksView({
           workspaceId={effectiveWorkspaceId}
           communityId={effectiveCommunityId!}
         />
-      ) : (
+      ) : activeView === "board" ? (
         <TaskBoardView
           groups={queryResult?.groups ?? []}
           isLoading={isTasksLoading}
@@ -325,6 +357,20 @@ export function WorkspaceTasksView({
           communityId={effectiveCommunityId!}
           selectedMobileStage={mobileStage}
           onSelectMobileStage={handleSelectMobileStage}
+        />
+      ) : (
+        <CalendarView
+          tasks={queryResult?.items ?? []}
+          unscheduledTasks={queryResult?.unscheduledPreview ?? []}
+          isLoading={isTasksLoading}
+          isError={isTasksError}
+          errorMessage={tasksError?.message}
+          onRetry={() => refetchTasks()}
+          calendarMode={calendarMode}
+          onCalendarModeChange={handleCalendarModeChange}
+          currentDate={calendarDate}
+          onCurrentDateChange={handleCalendarDateChange}
+          onTaskClick={(task) => openTask(task.id)}
         />
       )}
 
