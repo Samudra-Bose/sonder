@@ -39,6 +39,7 @@ export function CalendarTaskItem({
       role="button"
       tabIndex={0}
       data-testid={`calendar-task-item-${task.taskKey}`}
+      data-calendar-task-card="true"
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       aria-label={`${task.taskKey}: ${task.title}, priority ${task.priority}, status ${task.statusCategory}${

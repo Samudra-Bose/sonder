@@ -48,7 +48,7 @@ VS-06B resolves the interaction and usability gaps confirmed during the VS-06A C
 | **Sort Allowlist Invariant** | OpenAPI `0.3.20-draft` (`QuerySortField`) | `currentKey`, `priority`, `dueDate` are sortable; `title`, `status`, `subtasks` remain non-interactive |
 | **Sort Direction Vocabulary** | OpenAPI `components.schemas.QuerySortTerm` | `direction: "ASC" \| "DESC"`, synchronized with URL `order=asc\|desc` |
 | **Date-Only Format** | Master Spec §4.2 & line 20876 | `YYYY-MM-DD` string format strictly preserved without local timezone shift |
-| **Accessible Table Headers** | WCAG 2.1 AA §1.3.1 & WAI-ARIA 1.2 | `th[aria-sort]` with embedded `<button>` and descriptive `aria-label` |
+| **Accessible Table Headers** | WAI-ARIA 1.2 & WCAG-guided design patterns (keyboard focus rings, accessible names, aria-sort; pending formal WCAG certification audit) | `th[aria-sort]` with embedded `<button>` and descriptive `aria-label` |
 | **Drawer Navigation Isolation** | VS-03 / VS-05A Spec | Task clicks open `TaskPeekDrawer` (`?task=KEY`); empty clicks open `QuickTaskComposer` |
 | **No Backend Mutations** | Architecture Governance | Frontend-only implementation; zero contract schema or backend endpoint modifications |
 

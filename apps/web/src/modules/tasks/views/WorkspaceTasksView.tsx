@@ -39,6 +39,20 @@ export interface WorkspaceTasksViewProps {
   className?: string;
 }
 
+const ALLOWED_SORT_FIELDS = new Set([
+  "rankKey",
+  "priority",
+  "dueDate",
+  "startDate",
+  "createdAt",
+  "currentKey",
+]);
+
+function isValidSortField(field: string): boolean {
+  if (ALLOWED_SORT_FIELDS.has(field)) return true;
+  return /^cf\.[a-z][a-z0-9_]{0,47}$/.test(field);
+}
+
 export function WorkspaceTasksView({
   defaultView = "list",
   className,
@@ -90,7 +104,8 @@ export function WorkspaceTasksView({
   const searchQuery = searchParams.get("q") ?? "";
   const priorityFilter = searchParams.get("priority") ?? "ALL";
   const statusFilter = searchParams.get("status") ?? "ALL";
-  const sortBy = searchParams.get("sort") ?? "priority";
+  const rawSortBy = searchParams.get("sort");
+  const sortBy = rawSortBy && isValidSortField(rawSortBy) ? rawSortBy : "priority";
   const sortOrderParam = searchParams.get("order")?.toLowerCase();
   const sortOrder: "asc" | "desc" =
     sortOrderParam === "asc" || sortOrderParam === "desc"
@@ -111,7 +126,7 @@ export function WorkspaceTasksView({
 
   // Helper to update URL search parameters while preserving unrelated params (e.g. ?task=)
   const updateSearchParams = useCallback(
-    (updates: Record<string, string | null>) => {
+    (updates: Record<string, string | null>, options?: { replace?: boolean }) => {
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
@@ -124,7 +139,7 @@ export function WorkspaceTasksView({
           }
           return next;
         },
-        { replace: true }
+        { replace: options?.replace ?? false }
       );
     },
     [setSearchParams]
@@ -146,9 +161,9 @@ export function WorkspaceTasksView({
       location.pathname.endsWith("/timeline")
     ) {
       const basePath = location.pathname.replace(/\/(list|board|calendar|timeline)$/, "");
-      navigate(`${basePath}/${newView}${location.search}`, { replace: true });
+      navigate(`${basePath}/${newView}${location.search}`, { replace: false });
     } else {
-      updateSearchParams({ view: newView });
+      updateSearchParams({ view: newView }, { replace: false });
     }
   };
 
@@ -212,7 +227,7 @@ export function WorkspaceTasksView({
     return undefined;
   }, [activeView, calendarDate, calendarMode, timelineMode]);
 
-  const handleSearchChange = (q: string) => updateSearchParams({ q: q || null });
+  const handleSearchChange = (q: string) => updateSearchParams({ q: q || null }, { replace: true });
   const handlePriorityChange = (priority: string) => updateSearchParams({ priority });
   const handleStatusChange = (status: string) => updateSearchParams({ status });
   const handleSortChange = (sort: string) => {
