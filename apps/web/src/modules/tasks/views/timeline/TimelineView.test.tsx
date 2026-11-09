@@ -343,7 +343,7 @@ describe("Timeline View & Workspace Milestones (VS-05B)", () => {
 
       // Drawer should open
       await waitFor(() => {
-        expect(screen.getByTestId("task-peek-drawer")).toBeInTheDocument();
+        expect(screen.getByTestId("task-peek-drawer-desktop")).toBeInTheDocument();
       });
     });
 
