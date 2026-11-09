@@ -17,6 +17,12 @@ import {
   getWeekDays,
   getTodayString,
 } from "./calendar";
+import {
+  TimelineView,
+  getTimelineRange,
+  type TimelineMode,
+} from "./timeline";
+import { useMilestones } from "@/modules/milestones";
 import { useTaskPeekDrawer } from "../useTaskPeekDrawer";
 import type {
   TaskViewQueryRequest,
@@ -28,7 +34,7 @@ import type {
 } from "../types";
 
 export interface WorkspaceTasksViewProps {
-  defaultView?: "list" | "board" | "calendar";
+  defaultView?: "list" | "board" | "calendar" | "timeline";
   className?: string;
 }
 
@@ -61,8 +67,10 @@ export function WorkspaceTasksView({
     }
   }, [params.workspaceId, activeWorkspaceId, selectWorkspace]);
 
-  // Determine active view: route pathname (/calendar vs /board vs /list) has priority, then query param ?view=, then defaultView
-  const routeView = location.pathname.endsWith("/calendar")
+  // Determine active view: route pathname (/timeline vs /calendar vs /board vs /list) has priority, then query param ?view=, then defaultView
+  const routeView = location.pathname.endsWith("/timeline")
+    ? "timeline"
+    : location.pathname.endsWith("/calendar")
     ? "calendar"
     : location.pathname.endsWith("/board")
     ? "board"
@@ -70,12 +78,12 @@ export function WorkspaceTasksView({
     ? "list"
     : null;
 
-  const validViews = ["list", "board", "calendar"];
+  const validViews = ["list", "board", "calendar", "timeline"];
   const paramView = validViews.includes(searchParams.get("view") || "")
-    ? (searchParams.get("view") as "list" | "board" | "calendar")
+    ? (searchParams.get("view") as "list" | "board" | "calendar" | "timeline")
     : null;
 
-  const activeView: "list" | "board" | "calendar" = routeView || paramView || defaultView;
+  const activeView: "list" | "board" | "calendar" | "timeline" = routeView || paramView || defaultView;
 
   // Search, filter, and sort state from URL search params
   const searchQuery = searchParams.get("q") ?? "";
@@ -85,6 +93,9 @@ export function WorkspaceTasksView({
   const includeBacklog = searchParams.get("backlog") === "true";
   const mobileStage = searchParams.get("stage") ?? "TODO";
   const calendarMode = (searchParams.get("mode") === "week" ? "week" : "month") as "month" | "week";
+  const timelineMode = (["day", "week", "month"].includes(searchParams.get("mode") || "")
+    ? searchParams.get("mode")
+    : "day") as TimelineMode;
   const calendarDate = searchParams.get("date") ?? getTodayString();
 
   // Track snapshot ID strictly for projection transitions to ensure snapshot parity
@@ -111,7 +122,7 @@ export function WorkspaceTasksView({
     [setSearchParams]
   );
 
-  const handleViewChange = (newView: "list" | "board" | "calendar") => {
+  const handleViewChange = (newView: "list" | "board" | "calendar" | "timeline") => {
     if (newView === activeView) return;
 
     // Capture current snapshotId so the new projection reuses the identical canonical snapshot
@@ -119,13 +130,14 @@ export function WorkspaceTasksView({
       transitionSnapshotIdRef.current = queryResult.querySnapshotId;
     }
 
-    // If current route has /list, /board, or /calendar in path, navigate to the sibling path while keeping search params
+    // If current route has /list, /board, /calendar, or /timeline in path, navigate to the sibling path while keeping search params
     if (
       location.pathname.endsWith("/list") ||
       location.pathname.endsWith("/board") ||
-      location.pathname.endsWith("/calendar")
+      location.pathname.endsWith("/calendar") ||
+      location.pathname.endsWith("/timeline")
     ) {
-      const basePath = location.pathname.replace(/\/(list|board|calendar)$/, "");
+      const basePath = location.pathname.replace(/\/(list|board|calendar|timeline)$/, "");
       navigate(`${basePath}/${newView}${location.search}`, { replace: true });
     } else {
       updateSearchParams({ view: newView });
@@ -133,37 +145,56 @@ export function WorkspaceTasksView({
   };
 
   const handleCalendarModeChange = (mode: "month" | "week") => updateSearchParams({ mode });
+  const handleTimelineModeChange = (mode: TimelineMode) => updateSearchParams({ mode });
   const handleCalendarDateChange = (date: string) => updateSearchParams({ date });
 
   const { openTask } = useTaskPeekDrawer();
 
-  // Date window calculation for Calendar view
+  // Date window calculation for Calendar and Timeline views
   const dateWindow = useMemo<QueryDateWindow | undefined>(() => {
-    if (activeView !== "calendar") return undefined;
-    try {
-      const { year, month } = parseDateParts(calendarDate);
-      const todayStr = getTodayString();
-      if (calendarMode === "month") {
-        const grid = getMonthCalendarGrid(year, month, todayStr);
-        return {
-          dateField: "DUE_DATE",
-          from: grid[0]!.dateStr,
-          to: grid[grid.length - 1]!.dateStr,
-          includeUnscheduled: true,
-        };
-      } else {
-        const week = getWeekDays(calendarDate, todayStr);
-        return {
-          dateField: "DUE_DATE",
-          from: week[0]!.dateStr,
-          to: week[6]!.dateStr,
-          includeUnscheduled: true,
-        };
+    if (activeView === "calendar") {
+      try {
+        const { year, month } = parseDateParts(calendarDate);
+        const todayStr = getTodayString();
+        if (calendarMode === "month") {
+          const grid = getMonthCalendarGrid(year, month, todayStr);
+          return {
+            dateField: "DUE_DATE",
+            from: grid[0]!.dateStr,
+            to: grid[grid.length - 1]!.dateStr,
+            includeUnscheduled: true,
+          };
+        } else {
+          const week = getWeekDays(calendarDate, todayStr);
+          return {
+            dateField: "DUE_DATE",
+            from: week[0]!.dateStr,
+            to: week[6]!.dateStr,
+            includeUnscheduled: true,
+          };
+        }
+      } catch {
+        return undefined;
       }
-    } catch {
-      return undefined;
     }
-  }, [activeView, calendarDate, calendarMode]);
+
+    if (activeView === "timeline") {
+      try {
+        const todayStr = getTodayString();
+        const range = getTimelineRange(calendarDate, timelineMode, todayStr);
+        return {
+          dateField: "START_TO_DUE_SPAN",
+          from: range.startDate,
+          to: range.endDate,
+          includeUnscheduled: true,
+        };
+      } catch {
+        return undefined;
+      }
+    }
+
+    return undefined;
+  }, [activeView, calendarDate, calendarMode, timelineMode]);
 
   const handleSearchChange = (q: string) => updateSearchParams({ q: q || null });
   const handlePriorityChange = (priority: string) => updateSearchParams({ priority });
@@ -238,13 +269,26 @@ export function WorkspaceTasksView({
     workspaceId: effectiveWorkspaceId,
     query: {
       projection:
-        activeView === "board" ? "BOARD" : activeView === "calendar" ? "CALENDAR" : "LIST",
+        activeView === "board"
+          ? "BOARD"
+          : activeView === "calendar"
+          ? "CALENDAR"
+          : activeView === "timeline"
+          ? "TIMELINE"
+          : "LIST",
       pageScope: "PRIMARY",
       querySnapshotId: activeSnapshotId,
       querySpec,
     },
     enabled: Boolean(effectiveCommunityId && effectiveWorkspaceId),
   });
+
+  // Fetch workspace milestones for Timeline view
+  const { data: milestonesData } = useMilestones(
+    effectiveCommunityId,
+    effectiveWorkspaceId,
+    { enabled: Boolean(effectiveCommunityId && effectiveWorkspaceId) }
+  );
 
   // Reset transition snapshot ID once query has executed
   useEffect(() => {
@@ -335,7 +379,7 @@ export function WorkspaceTasksView({
         onRefresh={() => refetchTasks()}
       />
 
-      {/* Primary View Projection (List, Board, or Calendar) */}
+      {/* Primary View Projection (List, Board, Calendar, or Timeline) */}
       {activeView === "list" ? (
         <TaskListView
           tasks={queryResult?.items ?? []}
@@ -358,7 +402,7 @@ export function WorkspaceTasksView({
           selectedMobileStage={mobileStage}
           onSelectMobileStage={handleSelectMobileStage}
         />
-      ) : (
+      ) : activeView === "calendar" ? (
         <CalendarView
           tasks={queryResult?.items ?? []}
           unscheduledTasks={queryResult?.unscheduledPreview ?? []}
@@ -370,6 +414,27 @@ export function WorkspaceTasksView({
           onCalendarModeChange={handleCalendarModeChange}
           currentDate={calendarDate}
           onCurrentDateChange={handleCalendarDateChange}
+          onTaskClick={(task) =>
+            openTask(task.taskKey, {
+              workspaceId: effectiveWorkspaceId ?? undefined,
+            })
+          }
+        />
+      ) : (
+        <TimelineView
+          tasks={queryResult?.items ?? []}
+          unscheduledTasks={queryResult?.unscheduledPreview ?? []}
+          milestones={milestonesData?.items ?? []}
+          isLoading={isTasksLoading}
+          isError={isTasksError}
+          errorMessage={tasksError?.message}
+          onRetry={() => refetchTasks()}
+          timelineMode={timelineMode}
+          onTimelineModeChange={handleTimelineModeChange}
+          currentDate={calendarDate}
+          onCurrentDateChange={handleCalendarDateChange}
+          workspaceId={effectiveWorkspaceId!}
+          communityId={effectiveCommunityId!}
           onTaskClick={(task) =>
             openTask(task.taskKey, {
               workspaceId: effectiveWorkspaceId ?? undefined,

@@ -7,6 +7,7 @@ import {
   List,
   LayoutGrid,
   Calendar,
+  GanttChart,
 } from "lucide-react";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { Kbd } from "@/components/ui/KeyboardShortcut";
@@ -157,6 +158,14 @@ export function AppSidebar({
                   href: currentCommunityId
                     ? `/c/${currentCommunityId}/w/${activeWorkspace.id}/calendar`
                     : `/workspaces/${activeWorkspace.id}/calendar`,
+                },
+                {
+                  id: "timeline",
+                  label: "Timeline",
+                  icon: GanttChart,
+                  href: currentCommunityId
+                    ? `/c/${currentCommunityId}/w/${activeWorkspace.id}/timeline`
+                    : `/workspaces/${activeWorkspace.id}/timeline`,
                 },
               ].map((viewItem) => {
                 const ViewIcon = viewItem.icon;
