@@ -360,7 +360,7 @@ export const initialMockTasks: TaskDto[] = [
     priority: "MEDIUM",
     assigneeIds: [OTHER_USER_ID],
     creatorId: OTHER_USER_ID,
-    startDate: null,
+    startDate: "2026-11-05",
     dueDate: "2026-11-15",
     estimatePoints: 3,
     labelIds: ["018f98a2-lbl-security"],

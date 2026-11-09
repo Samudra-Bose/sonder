@@ -33,6 +33,7 @@ import { useResolveTaskKey } from "./useResolveTaskKey.js";
 import { useTask } from "./useTask.js";
 import { useWorkspaceTasks } from "./useWorkspaceTasks.js";
 import { SubtaskList } from "./SubtaskList.js";
+import { TaskDependencies } from "./TaskDependencies.js";
 import { ReparentTaskModal } from "./ReparentTaskModal.js";
 import type { TaskDto } from "./types.js";
 import {
@@ -84,7 +85,7 @@ export function TaskPeekDrawer({
   forceMode,
   className,
 }: TaskPeekDrawerProps): React.JSX.Element | null {
-  const { isOpen, taskKey, resolvedWorkspaceId, closeTask } = useTaskPeekDrawer();
+  const { isOpen, taskKey, resolvedWorkspaceId, closeTask, openTask } = useTaskPeekDrawer();
   const { currentCommunityId, workspaces } = useWorkspace();
   const systemIsDesktop = useIsDesktop();
   const isDesktop = forceMode ? forceMode === "desktop" : systemIsDesktop;
@@ -509,6 +510,16 @@ export function TaskPeekDrawer({
           communityId={currentCommunityId}
           workspaceId={task.workspaceId}
           isArchived={isArchived}
+        />
+
+        {/* Dependencies & Relationships Section */}
+        <TaskDependencies
+          task={task}
+          allTasks={allWorkspaceTasks}
+          communityId={currentCommunityId}
+          workspaceId={task.workspaceId}
+          isArchived={isArchived}
+          onNavigateToTask={(key) => openTask(key, { workspaceId: task.workspaceId })}
         />
 
         {/* Audit & Provenance Footer */}

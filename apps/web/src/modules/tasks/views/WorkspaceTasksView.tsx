@@ -425,6 +425,7 @@ export function WorkspaceTasksView({
           tasks={queryResult?.items ?? []}
           unscheduledTasks={queryResult?.unscheduledPreview ?? []}
           milestones={milestonesData?.items ?? []}
+          dependencyEdges={queryResult?.dependencyEdges ?? []}
           isLoading={isTasksLoading}
           isError={isTasksError}
           errorMessage={tasksError?.message}

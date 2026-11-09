@@ -5,4 +5,5 @@ export * from "./TimelineTaskRow.js";
 export * from "./TimelineMilestoneMarker.js";
 export * from "./TimelineMilestoneModal.js";
 export * from "./TimelineUnscheduledTray.js";
+export * from "./TimelineDependencyConnectors.js";
 export * from "./TimelineView.js";
