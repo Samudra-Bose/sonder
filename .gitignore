@@ -40,6 +40,7 @@ pnpm-debug.log*
 # Temp
 .temp/
 tmp/
+.playwright-mcp/
 
 # Antigravity agents configuration
 .agents/*

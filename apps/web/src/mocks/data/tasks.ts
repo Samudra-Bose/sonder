@@ -405,13 +405,13 @@ export const initialMockTasks: TaskDto[] = [
     assigneeEditableFieldGroups: [],
   },
 
-  // --- CALENDAR SEED TASKS FOR VS-05A ---
+  // --- CALENDAR SEED TASKS FOR VS-05A (Assigned to Gala Workspace to preserve ENG counts) ---
   // Multiple tasks on 2026-11-09 (reference date)
   {
     id: "018f98a2-task-cal-001-multi-1",
-    workspaceId: WS_SHARED_ENG_ID,
+    workspaceId: WS_SHARED_GALA_ID,
     parentTaskId: null,
-    taskKey: "ENG-107",
+    taskKey: "GALA-202",
     title: "Prepare database migration scripts for v1.5",
     description: "Verify foreign key constraints on cascade delete for workspaces.",
     itemType: "TASK",
@@ -436,9 +436,9 @@ export const initialMockTasks: TaskDto[] = [
   },
   {
     id: "018f98a2-task-cal-002-multi-2",
-    workspaceId: WS_SHARED_ENG_ID,
+    workspaceId: WS_SHARED_GALA_ID,
     parentTaskId: null,
-    taskKey: "ENG-108",
+    taskKey: "GALA-203",
     title: "Conduct client-side performance profiling",
     description: "Audit React re-renders on task filter changes.",
     itemType: "TASK",
@@ -463,9 +463,9 @@ export const initialMockTasks: TaskDto[] = [
   },
   {
     id: "018f98a2-task-cal-003-multi-3",
-    workspaceId: WS_SHARED_ENG_ID,
+    workspaceId: WS_SHARED_GALA_ID,
     parentTaskId: null,
-    taskKey: "ENG-109",
+    taskKey: "GALA-204",
     title: "Update security dependency vulnerabilities",
     description: "Patch critical npm audit findings in base UI dependencies.",
     itemType: "TASK",
@@ -491,9 +491,9 @@ export const initialMockTasks: TaskDto[] = [
   // Upcoming task on 2026-11-10
   {
     id: "018f98a2-task-cal-004-upcoming",
-    workspaceId: WS_SHARED_ENG_ID,
+    workspaceId: WS_SHARED_GALA_ID,
     parentTaskId: null,
-    taskKey: "ENG-110",
+    taskKey: "GALA-205",
     title: "Review pull request for calendar view",
     description: "Verify WCAG 2.2 AA accessibility and unit tests.",
     itemType: "TASK",
@@ -519,9 +519,9 @@ export const initialMockTasks: TaskDto[] = [
   // Month boundary task on 2026-11-30
   {
     id: "018f98a2-task-cal-005-month-end",
-    workspaceId: WS_SHARED_ENG_ID,
+    workspaceId: WS_SHARED_GALA_ID,
     parentTaskId: null,
-    taskKey: "ENG-111",
+    taskKey: "GALA-206",
     title: "Finalize sprint retro documentation",
     description: "Summarize sprint metrics and velocity.",
     itemType: "TASK",
@@ -547,9 +547,9 @@ export const initialMockTasks: TaskDto[] = [
   // Unscheduled task 1 (No due date)
   {
     id: "018f98a2-task-cal-006-unscheduled-1",
-    workspaceId: WS_SHARED_ENG_ID,
+    workspaceId: WS_SHARED_GALA_ID,
     parentTaskId: null,
-    taskKey: "ENG-112",
+    taskKey: "GALA-207",
     title: "Configure WebSocket reconnect backoff strategy",
     description: "Implement exponential jittered backoff on network drop.",
     itemType: "TASK",
@@ -575,9 +575,9 @@ export const initialMockTasks: TaskDto[] = [
   // Unscheduled task 2 (No due date)
   {
     id: "018f98a2-task-cal-007-unscheduled-2",
-    workspaceId: WS_SHARED_ENG_ID,
+    workspaceId: WS_SHARED_GALA_ID,
     parentTaskId: null,
-    taskKey: "ENG-113",
+    taskKey: "GALA-208",
     title: "Investigate edge case in date picker bounds",
     description: "Prevent selection beyond 366-day calendar limit.",
     itemType: "TASK",

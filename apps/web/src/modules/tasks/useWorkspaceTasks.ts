@@ -78,7 +78,7 @@ export function useWorkspaceTasks({
   const { csrfToken } = useAuth();
   const normalizedQuery = useMemo(() => normalizeWorkspaceTasksQuery(query), [query]);
   const querySpecJson = useMemo(() => JSON.stringify(normalizedQuery), [normalizedQuery]);
-  const isQueryEnabled = Boolean(communityId && workspaceId && enabled);
+  const isQueryEnabled = Boolean(communityId && workspaceId && csrfToken && enabled);
 
   return useQuery({
     queryKey: workspaceTasksQueryKey(communityId, workspaceId, querySpecJson),
