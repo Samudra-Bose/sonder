@@ -209,4 +209,4 @@ To maintain strict phased discipline:
 | Stage | Milestone | Branch | Status |
 | :--- | :--- | :--- | :--- |
 | **VS-05A** | Calendar View & Unscheduled Tray | `feat/FE-VS05A-calendar-view` (merged via PR #21 commit `303426e79b9a674d81f2150a24f0c4068532c589`) | **COMPLETE** |
-| **VS-05A.1** | Runtime & QA Hardening | `fix/FE-VS05A-runtime-qa-hardening` | **COMPLETE** |
+| **VS-05A.1** | Runtime & QA Hardening | `fix/FE-VS05A-runtime-qa-hardening` (merged via PR #22 commit `4770e4952d7681c2f90ef5bf0fb036814b7e9b04`) | **COMPLETE** |
