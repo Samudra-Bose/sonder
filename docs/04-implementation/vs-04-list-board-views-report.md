@@ -163,5 +163,7 @@ A dedicated test suite `apps/web/src/modules/tasks/TaskViews.test.tsx` was creat
 
 - **Baseline Commit**: `b8234637950442b1c63431b0cb6a6a4a568e6490`
 - **Working Branch**: `feat/FE-VS04-list-board-views`
-- **Pull Request**: Submitted targeting `develop`
+- **Pull Request**: [#20](https://github.com/Samudra-Bose/sonder/pull/20) (Merged)
+- **Merge Commit**: `8b18be2193173734faa95dc48d88d80cb8c7977b`
 - **Merge Method**: Squash and merge
+- **Target Branch**: `develop`
