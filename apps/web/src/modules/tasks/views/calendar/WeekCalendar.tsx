@@ -60,7 +60,7 @@ export function WeekCalendar({
               key={dateStr}
               data-testid={`week-column-${dateStr}`}
               className={cn(
-                "flex flex-col min-w-[130px] sm:min-w-0 min-h-[300px] md:min-h-[420px] p-2.5 transition-colors",
+                "group flex flex-col min-w-[130px] sm:min-w-0 min-h-[300px] md:min-h-[420px] p-2.5 transition-colors",
                 isToday ? "bg-[var(--brand-accent-btn-bg)]/5" : "bg-[var(--surface-card)]"
               )}
             >
@@ -184,6 +184,23 @@ export function WeekCalendar({
                           />
                         ))}
                       </div>
+                    )}
+
+                    {/* Bottom Quick-Add Action */}
+                    {onCreateTask && (
+                      <button
+                        type="button"
+                        aria-label={`Create task on ${dateStr}`}
+                        data-testid={`week-add-task-bottom-btn-${dateStr}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onCreateTask(dateStr, e.currentTarget);
+                        }}
+                        className="w-full mt-2 py-1 px-2 flex items-center justify-center gap-1 rounded text-[11px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-muted)] transition-colors cursor-pointer border border-dashed border-[var(--border-subtle)] focus-ring opacity-0 group-hover:opacity-100 focus:opacity-100"
+                      >
+                        <Plus className="h-3 w-3" />
+                        <span>Add task</span>
+                      </button>
                     )}
                   </>
                 )}

@@ -72,15 +72,13 @@ export function QuickTaskComposer({
         return fallbackWsId ?? "";
       });
 
-      if (initialValues?.dueDate !== undefined) {
-        setDueDate(initialValues.dueDate);
-      }
-      if (initialValues?.priority !== undefined) {
-        setPriority(initialValues.priority);
-      }
-      if (initialValues?.title !== undefined) {
-        setTitle(initialValues.title);
-      }
+      // Initialize or reset form values to ensure no stale prefilled values persist on reopen
+      setDueDate(initialValues?.dueDate ?? "");
+      setPriority(initialValues?.priority ?? "NONE");
+      setTitle(initialValues?.title ?? "");
+      setDescription("");
+      setValidationErrors({});
+      setServerError(null);
     }
   }, [isOpen, activeWorkspaceId, workspaces, initialValues]);
 
