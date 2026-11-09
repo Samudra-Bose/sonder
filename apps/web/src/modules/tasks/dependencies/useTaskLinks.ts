@@ -94,9 +94,9 @@ export function useCreateTaskLink(): UseMutationResult<
           queryKey: taskLinksQueryKey(communityId, workspaceId, data.targetTaskId),
         });
       }
-      // Invalidate workspace tasks so timeline dependencyEdges are refreshed
+      // Invalidate canonical workspace tasks query cache so Timeline refreshes its dependencyEdges
       queryClient.invalidateQueries({
-        queryKey: ["workspace-tasks", communityId, workspaceId],
+        queryKey: ["communities", communityId, "workspaces", workspaceId, "tasks"],
       });
     },
   });
@@ -144,8 +144,9 @@ export function useDeleteTaskLink(): UseMutationResult<
           queryKey: taskLinksQueryKey(communityId, workspaceId, targetTaskId),
         });
       }
+      // Invalidate canonical workspace tasks query cache so Timeline refreshes its dependencyEdges
       queryClient.invalidateQueries({
-        queryKey: ["workspace-tasks", communityId, workspaceId],
+        queryKey: ["communities", communityId, "workspaces", workspaceId, "tasks"],
       });
     },
   });

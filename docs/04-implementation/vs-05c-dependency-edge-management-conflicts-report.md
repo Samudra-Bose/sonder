@@ -133,6 +133,14 @@ apps/web/src/
 | **Production Build** | `pnpm build` | **Passed (3112 modules built in 3.3s, 0 MSW leakage)** |
 | **Git Diff Check** | `git diff --check` | **Clean (no whitespace errors)** |
 
+### 4.3 Historical CI Rollup Verification (PR #24)
+
+An audit of PR #24 status check rollup via GitHub CLI confirms the completed check runs prior to merge:
+- **Run ID `42569267270`** (`job/129002616414`): Started at `05:47:10Z`, **SUCCESS** at `05:48:46Z`.
+- **Run ID `42569291032`** (`job/129002691334`): Started at `05:47:24Z`, **SUCCESS** at `05:48:59Z`.
+- **Squash Merge**: Merged into `develop` at commit `31ed749339cac2e5505694cfcd81d57a342975b0` at `05:49:19Z` (20 seconds after both checks finished green).
+- **Post-Merge Hardening Note**: While both jobs passed green before the squash merge, transient polling during execution displayed an in-progress status. VS-05C.1 was commissioned to conduct post-merge integration hardening for query invalidation keys, explicit container `ResizeObserver`, and conflict boundary tests.
+
 ---
 
 ## 5. Playwright Browser QA & Visual Artifacts
