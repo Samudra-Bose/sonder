@@ -14,7 +14,6 @@ import {
   useCreateMilestone,
   useUpdateMilestone,
   useDeleteMilestone,
-  milestonesQueryKey,
 } from "./useMilestones.js";
 import { resetMockMilestones } from "@/mocks/data/milestones.js";
 import { resetTaskMockState, getMockTasks } from "@/mocks/handlers/tasks.js";

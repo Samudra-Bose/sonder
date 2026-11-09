@@ -16,6 +16,7 @@ import {
 } from "@/mocks/data/my-work.js";
 import { resetTaskMockState } from "@/mocks/handlers/tasks.js";
 import { resetMockMilestones } from "@/mocks/data/milestones.js";
+import { makeTaskPermissions } from "@/mocks/data/tasks.js";
 import type { TaskDto } from "../../types.js";
 import type { MilestoneDto } from "@/modules/milestones/types.js";
 
@@ -69,23 +70,7 @@ function makeTestTask(overrides: Partial<TaskDto> = {}): TaskDto {
     rankKey: "0|hzzzzz:",
     version: 1,
     fieldRevisions: {},
-    effectivePermissions: {
-      canEditTitleDescription: true,
-      canEditDatesPriority: true,
-      canEditCustomFieldsLinks: true,
-      canEditEstimate: true,
-      canUpdateStatus: true,
-      canRequestSignoff: false,
-      canApproveSignoff: false,
-      canAssign: true,
-      canManageSubtasks: true,
-      canCreateSubtask: true,
-      canMove: true,
-      canComment: true,
-      canWatch: true,
-      canArchive: true,
-      canRestore: true,
-    },
+    effectivePermissions: makeTaskPermissions(true),
     createdAt: "2026-11-01T10:00:00Z",
     updatedAt: "2026-11-01T10:00:00Z",
     archivedAt: null,
