@@ -370,7 +370,11 @@ export function WorkspaceTasksView({
           onCalendarModeChange={handleCalendarModeChange}
           currentDate={calendarDate}
           onCurrentDateChange={handleCalendarDateChange}
-          onTaskClick={(task) => openTask(task.id)}
+          onTaskClick={(task) =>
+            openTask(task.taskKey, {
+              workspaceId: effectiveWorkspaceId ?? undefined,
+            })
+          }
         />
       )}
 

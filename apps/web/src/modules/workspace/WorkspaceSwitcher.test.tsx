@@ -370,4 +370,36 @@ describe("VS-02C: Workspace Switcher", () => {
       expect(onSelect).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe("Defensive Authentication Loading & Hydration State", () => {
+    it("renders WorkspaceSwitcher safely without error when communities are initially undefined", () => {
+      expect(() => {
+        renderWorkspaceSwitcher({
+          authOverrides: {
+            communities: undefined as any,
+            status: "loading",
+          },
+          initialCommunityId: null,
+        });
+      }).not.toThrow();
+
+      expect(screen.getByRole("button", { name: /select a workspace/i })).toBeInTheDocument();
+      expect(screen.getByText("No community selected")).toBeInTheDocument();
+    });
+
+    it("renders MobileWorkspaceSelector safely without error when communities are initially undefined", () => {
+      expect(() => {
+        renderMobileSelector({
+          authOverrides: {
+            communities: undefined as any,
+            status: "loading",
+          },
+          initialCommunityId: null,
+        });
+      }).not.toThrow();
+
+      expect(screen.getByRole("button", { name: /select a workspace/i })).toBeInTheDocument();
+      expect(screen.getByText("No community selected")).toBeInTheDocument();
+    });
+  });
 });

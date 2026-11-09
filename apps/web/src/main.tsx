@@ -14,18 +14,12 @@ const queryClient = new QueryClient({
 });
 
 async function enableMocking(): Promise<void> {
-  const isLocalhost =
-    typeof window !== "undefined" &&
-    (window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1");
-
-  if (process.env.NODE_ENV !== "development" && !isLocalhost) {
-    return;
+  if (import.meta.env.DEV) {
+    const { worker } = await import("./mocks/browser.js");
+    await worker.start({
+      onUnhandledRequest: "bypass",
+    });
   }
-  const { worker } = await import("./mocks/browser.js");
-  await worker.start({
-    onUnhandledRequest: "bypass",
-  });
 }
 
 enableMocking().then(() => {
