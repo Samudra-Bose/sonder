@@ -5,6 +5,11 @@ import { Skeleton } from "@/components/ui/Skeleton.js";
 import { EmptyState } from "@/components/ui/EmptyState.js";
 import { cn } from "@/lib/utils.js";
 import type { TaskDto } from "@/modules/tasks/types.js";
+import type {
+  TaskQueryDependencyEdgeDto,
+  TaskQueryVisibleEndpointDto,
+} from "@/modules/tasks/dependencies/types.js";
+import { detectBlockerConflict } from "@/modules/tasks/dependencies/dependency-conflict-utils.js";
 import {
   useDeleteMilestone,
   type MilestoneDto,
@@ -17,6 +22,7 @@ import {
   diffInCalendarDays,
   navigateTimelineDate,
   type TimelineMode,
+  type TaskTimelinePosition,
 } from "./timeline-date-utils.js";
 import { TimelineHeader } from "./TimelineHeader.js";
 import { TimelineTimeAxis, TimelineGridLines } from "./TimelineTimeAxis.js";
@@ -24,11 +30,13 @@ import { TimelineTaskRow } from "./TimelineTaskRow.js";
 import { TimelineMilestoneMarker } from "./TimelineMilestoneMarker.js";
 import { TimelineMilestoneModal } from "./TimelineMilestoneModal.js";
 import { TimelineUnscheduledTray } from "./TimelineUnscheduledTray.js";
+import { TimelineDependencyConnectors } from "./TimelineDependencyConnectors.js";
 
 export interface TimelineViewProps {
   tasks: TaskDto[];
   unscheduledTasks?: TaskDto[];
   milestones?: MilestoneDto[];
+  dependencyEdges?: TaskQueryDependencyEdgeDto[];
   isLoading?: boolean;
   isError?: boolean;
   errorMessage?: string;
@@ -47,6 +55,7 @@ export function TimelineView({
   tasks,
   unscheduledTasks = [],
   milestones = [],
+  dependencyEdges = [],
   isLoading = false,
   isError = false,
   errorMessage,
@@ -114,6 +123,58 @@ export function TimelineView({
       return { task, position, milestone };
     });
   }, [tasks, range.startDate, range.endDate, range.totalDays, milestonesById]);
+
+  // Map of taskId -> position for connector line calculations
+  const taskPositionsMap = useMemo(() => {
+    const map = new Map<string, TaskTimelinePosition>();
+    for (const item of taskRowData) {
+      map.set(item.task.id, item.position);
+    }
+    return map;
+  }, [taskRowData]);
+
+  // Tasks by ID lookup
+  const tasksById = useMemo(() => new Map(tasks.map((t) => [t.id, t])), [tasks]);
+
+  // Conflict and restricted dependency detection for task rows
+  const { taskConflictsMap, restrictedDepsSet } = useMemo(() => {
+    const conflicts = new Map<string, string>();
+    const restricted = new Set<string>();
+
+    for (const edge of dependencyEdges) {
+      if (edge.otherEndpoint.access === "RESTRICTED") {
+        restricted.add(edge.visibleTaskId);
+        continue;
+      }
+
+      const otherEndpoint = edge.otherEndpoint as TaskQueryVisibleEndpointDto;
+      const otherTask = tasksById.get(otherEndpoint.taskId);
+      const visibleTask = tasksById.get(edge.visibleTaskId);
+
+      if (!otherTask || !visibleTask) continue;
+
+      let blocker: TaskDto;
+      let dependent: TaskDto;
+
+      if (edge.type === "BLOCKS") {
+        blocker = edge.direction === "OUTGOING" ? visibleTask : otherTask;
+        dependent = edge.direction === "OUTGOING" ? otherTask : visibleTask;
+      } else if (edge.type === "IS_BLOCKED_BY") {
+        blocker = edge.direction === "OUTGOING" ? otherTask : visibleTask;
+        dependent = edge.direction === "OUTGOING" ? visibleTask : otherTask;
+      } else {
+        continue;
+      }
+
+      const res = detectBlockerConflict(blocker, dependent);
+      if (res.hasConflict && res.reason) {
+        conflicts.set(blocker.id, res.reason);
+        conflicts.set(dependent.id, res.reason);
+      }
+    }
+
+    return { taskConflictsMap: conflicts, restrictedDepsSet: restricted };
+  }, [dependencyEdges, tasksById]);
 
   // Navigation handlers
   const handlePrev = () => {
@@ -271,7 +332,7 @@ export function TimelineView({
 
               {/* Timeline Body Rows with Vertical Grid Lines and Milestone Markers */}
               <div className="relative min-h-[300px]">
-                {/* Background Grid Lines (behind task rows) */}
+                {/* Background Grid Lines, Milestone Markers & Dependency Connectors (behind task rows) */}
                 <div className="absolute top-0 bottom-0 left-72 md:left-80 right-0 pointer-events-none">
                   <TimelineGridLines
                     range={range}
@@ -292,6 +353,13 @@ export function TimelineView({
                         isDeleting={deleteMilestoneMutation.isPending}
                       />
                     ))}
+
+                  {/* Task Dependency Edge Connectors */}
+                  <TimelineDependencyConnectors
+                    tasks={tasks}
+                    taskPositions={taskPositionsMap}
+                    dependencyEdges={dependencyEdges}
+                  />
                 </div>
 
                 {/* Task Rows */}
@@ -307,6 +375,8 @@ export function TimelineView({
                         task={task}
                         position={position}
                         milestone={milestone}
+                        conflictReason={taskConflictsMap.get(task.id)}
+                        hasRestrictedDependency={restrictedDepsSet.has(task.id)}
                         onTaskClick={onTaskClick}
                       />
                     ))}

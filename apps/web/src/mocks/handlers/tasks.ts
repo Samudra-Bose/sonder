@@ -19,6 +19,7 @@ import {
 } from "../data/my-work.js";
 import { mockWorkspacesCommunity1 } from "../data/workspaces.js";
 import { resetMockMilestones } from "../data/milestones.js";
+import { getMockTaskLinks, resetMockTaskLinks } from "../data/task-links.js";
 
 // In-memory mock task store mutable during tests
 let currentMockTasks: TaskDto[] = JSON.parse(JSON.stringify(initialMockTasks));
@@ -104,6 +105,7 @@ export function resetTaskMockState(): void {
   currentMockTasks = JSON.parse(JSON.stringify(initialMockTasks));
   currentKeyAliases = { ...initialMockKeyAliases };
   resetMockMilestones();
+  resetMockTaskLinks();
   workspaceSeqCounters[WS_SHARED_ENG_ID] = 106;
   workspaceSeqCounters[WS_SHARED_GALA_ID] = 201;
   workspaceSeqCounters[WS_PERSONAL_ALEX_ID] = 2;
@@ -1440,6 +1442,61 @@ export const taskHandlers = [
             ? btoa(JSON.stringify({ snapshotId: snapshot.id, scope: "UNSCHEDULED", offset: 20, v: 1 }))
             : null;
 
+        const dependencyEdges: ApiSchema<"TaskQueryDependencyEdgeDto">[] = [];
+        if (isTimeline) {
+          const allLinks = getMockTaskLinks().filter((l) => l.workspaceId === workspaceId);
+          const tasksById = new Map(currentMockTasks.map((t) => [t.id, t]));
+          const visibleTaskIds = new Set(pageItems.map((t) => t.id));
+
+          for (const l of allLinks) {
+            if (visibleTaskIds.has(l.sourceTaskId)) {
+              const targetTask = tasksById.get(l.targetTaskId);
+              const isRestricted = l.isTargetRestricted || !targetTask;
+              dependencyEdges.push({
+                linkId: l.id,
+                visibleTaskId: l.sourceTaskId,
+                direction: "OUTGOING",
+                type: l.type,
+                otherEndpoint:
+                  isRestricted || !targetTask
+                    ? {
+                        access: "RESTRICTED",
+                        label: "Restricted Task",
+                      }
+                    : {
+                        access: "VISIBLE",
+                        taskId: targetTask.id,
+                        taskKey: targetTask.taskKey,
+                        title: targetTask.title,
+                        statusCategory: targetTask.statusCategory,
+                      },
+              });
+            } else if (visibleTaskIds.has(l.targetTaskId)) {
+              const sourceTask = tasksById.get(l.sourceTaskId);
+              const isRestricted = !sourceTask;
+              dependencyEdges.push({
+                linkId: l.id,
+                visibleTaskId: l.targetTaskId,
+                direction: "INCOMING",
+                type: l.type,
+                otherEndpoint:
+                  isRestricted || !sourceTask
+                    ? {
+                        access: "RESTRICTED",
+                        label: "Restricted Task",
+                      }
+                    : {
+                        access: "VISIBLE",
+                        taskId: sourceTask.id,
+                        taskKey: sourceTask.taskKey,
+                        title: sourceTask.title,
+                        statusCategory: sourceTask.statusCategory,
+                      },
+              });
+            }
+          }
+        }
+
         const result: ApiSchema<"TaskQueryResult"> = {
           projection: body.projection,
           pageScope: "PRIMARY",
@@ -1459,7 +1516,7 @@ export const taskHandlers = [
           unscheduledNextCursor,
           nextCursor,
           groups: [],
-          dependencyEdges: [],
+          dependencyEdges,
         };
 
         return HttpResponse.json(result, {

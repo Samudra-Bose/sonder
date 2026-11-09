@@ -1,5 +1,5 @@
 import React from "react";
-import { GitFork, Milestone } from "lucide-react";
+import { GitFork, Milestone, AlertTriangle, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/Badge.js";
 import { cn } from "@/lib/utils";
 import type { TaskDto } from "@/modules/tasks/types.js";
@@ -10,6 +10,8 @@ export interface TimelineTaskRowProps {
   task: TaskDto;
   position: TaskTimelinePosition;
   milestone?: MilestoneDto;
+  conflictReason?: string | null;
+  hasRestrictedDependency?: boolean;
   onTaskClick: (task: TaskDto) => void;
   className?: string;
 }
@@ -18,6 +20,8 @@ export function TimelineTaskRow({
   task,
   position,
   milestone,
+  conflictReason,
+  hasRestrictedDependency,
   onTaskClick,
   className,
 }: TimelineTaskRowProps): React.JSX.Element {
@@ -80,6 +84,27 @@ export function TimelineTaskRow({
         </div>
 
         <div className="flex items-center gap-1 flex-shrink-0">
+          {conflictReason && (
+            <span
+              data-testid={`task-conflict-badge-${task.id}`}
+              title={conflictReason}
+              aria-label={conflictReason}
+              className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-medium bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30"
+            >
+              <AlertTriangle className="h-2.5 w-2.5 flex-shrink-0" />
+              <span className="hidden xl:inline">Conflict</span>
+            </span>
+          )}
+          {hasRestrictedDependency && (
+            <span
+              data-testid={`task-restricted-dep-badge-${task.id}`}
+              title="Linked to a restricted task"
+              aria-label="Linked to a restricted task"
+              className="inline-flex items-center p-0.5 rounded text-[9px] font-medium text-[var(--text-muted)] bg-[var(--surface-muted)] border border-[var(--border-subtle)]"
+            >
+              <Lock className="h-2.5 w-2.5 flex-shrink-0" />
+            </span>
+          )}
           {milestone && (
             <span
               title={`Milestone: ${milestone.name}`}
@@ -116,18 +141,27 @@ export function TimelineTaskRow({
               left: `${position.leftPercent}%`,
               width: `${position.widthPercent}%`,
             }}
-            title={`${task.taskKey}: ${task.title} (${position.startDateFormatted ?? "No start"} → ${position.dueDateFormatted ?? "No due"})`}
-            aria-label={`${task.taskKey}: ${task.title}`}
+            title={`${task.taskKey}: ${task.title} (${position.startDateFormatted ?? "No start"} → ${position.dueDateFormatted ?? "No due"})${conflictReason ? ` [${conflictReason}]` : ""}`}
+            aria-label={`${task.taskKey}: ${task.title}${conflictReason ? " (Has scheduling conflict)" : ""}`}
             className={cn(
               "absolute h-7 rounded-md border text-xs font-medium px-2 flex items-center justify-between gap-1.5 shadow-2xs cursor-pointer select-none transition-transform active:scale-[0.99] focus-ring z-10",
               getStatusBarStyle(task.statusCategory),
+              conflictReason && "ring-1 ring-amber-500/50 border-amber-500/60",
               position.isStartClipped && "rounded-l-none border-l-0",
               position.isEndClipped && "rounded-r-none border-r-0"
             )}
           >
-            <span className="truncate text-[11px] font-medium">
-              {task.title}
-            </span>
+            <div className="flex items-center gap-1 truncate min-w-0">
+              {conflictReason && (
+                <AlertTriangle
+                  aria-hidden="true"
+                  className="h-3 w-3 text-amber-500 flex-shrink-0"
+                />
+              )}
+              <span className="truncate text-[11px] font-medium">
+                {task.title}
+              </span>
+            </div>
 
             <span className="text-[10px] opacity-75 font-mono whitespace-nowrap hidden sm:inline">
               {position.spanType === "RANGE" && (
