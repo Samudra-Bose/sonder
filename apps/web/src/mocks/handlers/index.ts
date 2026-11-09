@@ -3,6 +3,7 @@ import { authHandlers } from "./auth.js";
 import { workspaceHandlers } from "./workspaces.js";
 import { myWorkHandlers } from "./my-work.js";
 import { taskHandlers } from "./tasks.js";
+import { milestoneHandlers } from "./milestones.js";
 
 export const handlers = [
   ...healthHandlers,
@@ -10,4 +11,5 @@ export const handlers = [
   ...workspaceHandlers,
   ...myWorkHandlers,
   ...taskHandlers,
+  ...milestoneHandlers,
 ];

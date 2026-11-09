@@ -18,6 +18,7 @@ import {
   WS_SHARED_GALA_ID,
 } from "../data/my-work.js";
 import { mockWorkspacesCommunity1 } from "../data/workspaces.js";
+import { resetMockMilestones } from "../data/milestones.js";
 
 // In-memory mock task store mutable during tests
 let currentMockTasks: TaskDto[] = JSON.parse(JSON.stringify(initialMockTasks));
@@ -89,9 +90,20 @@ export function getMockTasks(): TaskDto[] {
   return currentMockTasks;
 }
 
+export function clearMilestoneFromTasks(milestoneId: string): void {
+  for (const task of currentMockTasks) {
+    if (task.milestoneId === milestoneId) {
+      task.milestoneId = null;
+      task.updatedAt = new Date().toISOString();
+      task.version += 1;
+    }
+  }
+}
+
 export function resetTaskMockState(): void {
   currentMockTasks = JSON.parse(JSON.stringify(initialMockTasks));
   currentKeyAliases = { ...initialMockKeyAliases };
+  resetMockMilestones();
   workspaceSeqCounters[WS_SHARED_ENG_ID] = 106;
   workspaceSeqCounters[WS_SHARED_GALA_ID] = 201;
   workspaceSeqCounters[WS_PERSONAL_ALEX_ID] = 2;
@@ -1321,16 +1333,31 @@ export const taskHandlers = [
         });
       }
 
-      // CALENDAR projection handling
-      if (body.projection === "CALENDAR") {
+      // CALENDAR and TIMELINE projection handling
+      if (body.projection === "CALENDAR" || body.projection === "TIMELINE") {
+        const isTimeline = body.projection === "TIMELINE";
         const dateWindow = body.querySpec?.dateWindow;
         const includeUnscheduled = dateWindow?.includeUnscheduled ?? true;
-        const dateField = dateWindow?.dateField ?? "DUE_DATE";
+        const dateField = isTimeline ? (dateWindow?.dateField ?? "START_TO_DUE_SPAN") : (dateWindow?.dateField ?? "DUE_DATE");
         const from = dateWindow?.from;
         const to = dateWindow?.to;
 
         // Filter dated tasks that fall within [from, to]
         const datedTasks = snapshot.items.filter((t) => {
+          if (isTimeline) {
+            // In Timeline projection, task is dated if it has either startDate or dueDate
+            const hasStart = Boolean(t.startDate && t.startDate.trim());
+            const hasDue = Boolean(t.dueDate && t.dueDate.trim());
+            if (!hasStart && !hasDue) return false;
+
+            const start = (hasStart ? t.startDate : t.dueDate)!;
+            const end = (hasDue ? t.dueDate : t.startDate)!;
+            if (from && end < from) return false;
+            if (to && start > to) return false;
+            return true;
+          }
+
+          // Calendar projection
           if (!t.dueDate || !t.dueDate.trim()) return false;
           if (dateField === "START_TO_DUE_SPAN") {
             const start = t.startDate ?? t.dueDate;
@@ -1349,7 +1376,14 @@ export const taskHandlers = [
         });
 
         // Filter unscheduled tasks
-        const unscheduledTasks = snapshot.items.filter((t) => !t.dueDate || !t.dueDate.trim());
+        const unscheduledTasks = snapshot.items.filter((t) => {
+          if (isTimeline) {
+            const hasStart = Boolean(t.startDate && t.startDate.trim());
+            const hasDue = Boolean(t.dueDate && t.dueDate.trim());
+            return !hasStart && !hasDue;
+          }
+          return !t.dueDate || !t.dueDate.trim();
+        });
 
         const limit = Math.max(1, Math.min(200, body.limit ?? 200));
 
@@ -1362,7 +1396,7 @@ export const taskHandlers = [
               : null;
 
           const result: ApiSchema<"TaskQueryResult"> = {
-            projection: "CALENDAR",
+            projection: body.projection,
             pageScope: "UNSCHEDULED",
             groupKey: null,
             querySnapshotId: snapshot.id,
@@ -1407,7 +1441,7 @@ export const taskHandlers = [
             : null;
 
         const result: ApiSchema<"TaskQueryResult"> = {
-          projection: "CALENDAR",
+          projection: body.projection,
           pageScope: "PRIMARY",
           groupKey: null,
           querySnapshotId: snapshot.id,

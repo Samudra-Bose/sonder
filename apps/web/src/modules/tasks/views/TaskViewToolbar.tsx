@@ -3,6 +3,7 @@ import {
   List,
   LayoutGrid,
   Calendar,
+  GanttChart,
   Filter,
   ArrowUpDown,
   Plus,
@@ -15,8 +16,8 @@ import { cn } from "@/lib/utils";
 import { useQuickTaskComposer } from "../QuickTaskComposerContext";
 
 export interface TaskViewToolbarProps {
-  activeView: "list" | "board" | "calendar";
-  onViewChange: (view: "list" | "board" | "calendar") => void;
+  activeView: "list" | "board" | "calendar" | "timeline";
+  onViewChange: (view: "list" | "board" | "calendar" | "timeline") => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   priorityFilter: string;
@@ -124,6 +125,25 @@ export function TaskViewToolbar({
           >
             <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
             <span>Calendar</span>
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeView === "timeline"}
+            aria-controls="tasks-timeline-panel"
+            id="tab-view-timeline"
+            data-testid="tab-view-timeline"
+            onClick={() => onViewChange("timeline")}
+            className={cn(
+              "inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all cursor-pointer focus-ring",
+              activeView === "timeline"
+                ? "bg-[var(--surface-card)] text-[var(--text-primary)] shadow-xs font-semibold"
+                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            )}
+          >
+            <GanttChart className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>Timeline</span>
           </button>
         </div>
 

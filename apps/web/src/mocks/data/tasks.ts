@@ -8,6 +8,13 @@ import {
   WS_SHARED_ENG_ID,
   WS_SHARED_GALA_ID,
 } from "./my-work.js";
+import {
+  MILESTONE_ENG_FREEZE_ID,
+  MILESTONE_ENG_BETA_ID,
+  MILESTONE_ENG_GA_ID,
+  MILESTONE_GALA_SIGNOFF_ID,
+  MILESTONE_GALA_TICKETS_ID,
+} from "./milestones.js";
 
 export type TaskDto = ApiSchema<"TaskDto">;
 export type TaskKeyResolutionDto = ApiSchema<"TaskKeyResolutionDto">;
@@ -83,7 +90,7 @@ export const initialMockTasks: TaskDto[] = [
     dueDate: "2026-10-28",
     estimatePoints: 5,
     labelIds: ["018f98a2-lbl-security", "018f98a2-lbl-backend"],
-    milestoneId: null,
+    milestoneId: MILESTONE_ENG_FREEZE_ID,
     rankKey: "0|hzzzzz:",
     version: 3,
     fieldRevisions: {
@@ -121,7 +128,7 @@ export const initialMockTasks: TaskDto[] = [
     dueDate: "2026-11-04",
     estimatePoints: 2,
     labelIds: ["018f98a2-lbl-testing"],
-    milestoneId: null,
+    milestoneId: MILESTONE_ENG_FREEZE_ID,
     rankKey: "0|hzzzzz:0|1:",
     version: 1,
     fieldRevisions: {
@@ -191,7 +198,7 @@ export const initialMockTasks: TaskDto[] = [
     dueDate: "2026-11-03",
     estimatePoints: 8,
     labelIds: ["018f98a2-lbl-frontend"],
-    milestoneId: null,
+    milestoneId: MILESTONE_ENG_FREEZE_ID,
     rankKey: "0|hzzzzz0:",
     version: 2,
     fieldRevisions: {
@@ -261,7 +268,7 @@ export const initialMockTasks: TaskDto[] = [
     dueDate: "2026-11-01",
     estimatePoints: 3,
     labelIds: ["018f98a2-lbl-ops"],
-    milestoneId: null,
+    milestoneId: MILESTONE_GALA_SIGNOFF_ID,
     rankKey: "0|hzzzzz2:",
     version: 1,
     fieldRevisions: {
@@ -295,7 +302,7 @@ export const initialMockTasks: TaskDto[] = [
     dueDate: "2026-11-02",
     estimatePoints: 5,
     labelIds: ["018f98a2-lbl-frontend"],
-    milestoneId: null,
+    milestoneId: MILESTONE_ENG_GA_ID,
     rankKey: "0|hzzzzz3:",
     version: 5,
     fieldRevisions: {
@@ -357,7 +364,7 @@ export const initialMockTasks: TaskDto[] = [
     dueDate: "2026-11-15",
     estimatePoints: 3,
     labelIds: ["018f98a2-lbl-security"],
-    milestoneId: null,
+    milestoneId: MILESTONE_ENG_BETA_ID,
     rankKey: "0|hzzzzz5:",
     version: 1,
     fieldRevisions: {
@@ -423,7 +430,7 @@ export const initialMockTasks: TaskDto[] = [
     dueDate: "2026-11-09",
     estimatePoints: 3,
     labelIds: ["018f98a2-lbl-backend"],
-    milestoneId: null,
+    milestoneId: MILESTONE_GALA_TICKETS_ID,
     rankKey: "0|hzzzzz7:",
     version: 1,
     fieldRevisions: { title: 1, statusCategory: 1, priority: 1, dueDate: 1 },
