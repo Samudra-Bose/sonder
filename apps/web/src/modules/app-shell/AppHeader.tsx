@@ -22,6 +22,7 @@ import {
 import { useTheme } from "@/lib/theme";
 import { useWorkspace } from "@/modules/workspace";
 import { DesktopOmnibarTrigger, MobileOmnibarTrigger } from "@/modules/omnibar";
+import { NotificationBell } from "@/modules/notifications";
 import type { ApiSchema } from "@sonder/contracts";
 
 export type AuthUser = ApiSchema<"MeContextDto">["user"];
@@ -147,6 +148,9 @@ export function AppHeader({
             className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           />
         </Tooltip>
+
+        {/* In-App Notification Bell & Popover */}
+        <NotificationBell />
 
         {/* User Identity & Direct Sign Out */}
         {user && (
