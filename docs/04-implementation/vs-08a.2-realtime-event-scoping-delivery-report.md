@@ -126,8 +126,8 @@ Added tests covering all requirements from Section 4:
 
 ## 6. Milestone Transition & Next Steps
 
-1. **Active Branch:** `fix/FE-VS08A2-realtime-event-scope` merged into `develop`.
-2. **Merge Commit:** To be recorded upon merge.
+1. **Active Branch:** `fix/FE-VS08A2-realtime-event-scope` merged into `develop` via PR #34.
+2. **Merge Commit:** `develop @ 3cbbce2` (PR #34 squash merge).
 3. **Track B Status:** UI/UX workstream remains recorded as **PAUSED**.
 4. **Next Approved Engineering Milestone:**
    > **MILESTONE VS-08B / FEAT-F01a: SEGMENTED IN-APP NOTIFICATION CENTER (`FEAT-F01a`)**
