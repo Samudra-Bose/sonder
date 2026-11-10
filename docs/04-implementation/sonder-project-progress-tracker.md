@@ -41,15 +41,16 @@
 | **VS-07A.1**| Saved Views Contract Reconciliation & Sign-Off Packet | `FEAT-C04` | PR #30 | `2de4522`<br>`8fabfc2` | Delta spec verified | **MERGED & VERIFIED** (`vs-07a.1-saved-views-contract-signoff-report.md`) |
 | **VS-07A.2**| Roadmap Reconciliation & UI/UX Baseline Audit | Governance | PR #31 | `b003b9f` | Full audit suite | **MERGED & VERIFIED** (`vs-07a.2-roadmap-reconciliation-report.md`) |
 | **VS-08A** | Collaboration Spine: Comments, @Mentions & Task Watchers | `FEAT-A04` | PR #32 | `c2cbbe1` | 24 tests | **MERGED & VERIFIED** (`TaskCollaboration.test.tsx`, `markdown-ast.test.tsx`) |
-| **VS-08A.1**| Collaboration Contract & Integration Hardening | `FEAT-A04` | PR #33 | `1803f71` | 42 tests | **MERGED & VERIFIED** (`TaskCollaborationHardening.test.tsx`) |
-| **VS-08A.2**| Realtime Event Scoping Correction & Canonical Alignment | `FEAT-A04` | PR #34 | `3cbbce2` | 47 tests | **MERGED & VERIFIED** (`TaskCollaborationHardening.test.tsx`) |
+| **VS-08A.1**| Collaboration Contract & Integration Hardening | `FEAT-A04` | PR #33 | `1803f71` | 18 tests | **MERGED & VERIFIED** (`TaskCollaborationHardening.test.tsx` [18 tests], comments module [43 tests]) |
+| **VS-08A.2**| Realtime Event Scoping Correction & Canonical Alignment | `FEAT-A04` | PR #34 | `3cbbce2` | 22 tests | **MERGED & VERIFIED** (`TaskCollaborationHardening.test.tsx` [22 tests], comments module [47 tests], monorepo [487 tests]) |
+| **VS-08B**  | Segmented In-App Notification Center (PLAN & GRILL) | `FEAT-F01a` | PR #35 | Pending merge | Plan & Grill | **PLAN & GRILL READY FOR REVIEW** (`vs-08b-notification-center-plan.md`, `vs-08b-notification-center-grill-report.md`) |
 
 ### A.2 Current Engineering Status & Next Milestones
 
 ```mermaid
 flowchart TD
-    Current["VS-08A.2: Realtime Event Scoping (VERIFIED)"] --> Next["FEAT-F01a: In-App Notification Center"]
-    Next --> FollowUp["FEAT-A10a/b: 30-Day Task Trash & Recovery"]
+    Current["VS-08B: Notification Center (PLAN & GRILL COMPLETE)"] --> Impl["VS-08B Implementation (Awaiting User Review & Approval)"]
+    Impl --> FollowUp["FEAT-A10a/b: 30-Day Task Trash & Recovery"]
     
     subgraph Deferred ["Blocked / Deferred Track"]
         SV["VS-07B: Saved Views Implementation (BLOCKED on Decisions A-E)"]
@@ -59,12 +60,11 @@ flowchart TD
     end
 ```
 
-- **Completed Hardening Milestone:** `VS-08A.2` — Realtime Event Scoping Correction & Canonical Alignment (`FEAT-A04`).
-- **Next Approved Engineering Priority:**
-  > **MILESTONE VS-08B / FEAT-F01a: SEGMENTED IN-APP NOTIFICATION CENTER (`FEAT-F01a`)**
-  - **Scope:** In-app notification bell, popover inbox, unread counts, segmented filters (Mentions, Assigned, Watching), read/unread toggles, deep-linking to task drawer.
-  - **Prerequisite Met:** Successfully established by VS-08A / VS-08A.1 / VS-08A.2 comment, mention, and watcher domain models.
-  - **Contract Surface:** Candidate OpenAPI 0.3.20-draft (`/notifications` endpoints).
+- **Completed Planning Milestone:** `VS-08B` — Segmented In-App Notification Center PLAN & GRILL (`FEAT-F01a`).
+- **Next Engineering Action (Upon User Approval):**
+  > **MILESTONE VS-08B IMPLEMENTATION: SEGMENTED IN-APP NOTIFICATION CENTER (`FEAT-F01a`)**
+  - **Scope:** Header bell, popover quick triage, full `/inbox` view, `ACTION_REQUIRED` and `UPDATES` categories, client-side reason faceting, optimistic mark-read, bulk mark-all-read, task deep-linking, real-time unread count synchronization.
+  - **Contract Surface:** Canonical OpenAPI 0.3.20-draft (`/communities/{communityId}/notifications` routes).
 
 ### A.3 Pending Backend & Governance Dependencies
 
