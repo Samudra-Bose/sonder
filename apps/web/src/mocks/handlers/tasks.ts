@@ -20,6 +20,7 @@ import {
 import { mockWorkspacesCommunity1 } from "../data/workspaces.js";
 import { resetMockMilestones } from "../data/milestones.js";
 import { getMockTaskLinks, resetMockTaskLinks } from "../data/task-links.js";
+import { resetMockCommentsState, isUserWatchingTask } from "../data/comments.js";
 
 // In-memory mock task store mutable during tests
 let currentMockTasks: TaskDto[] = JSON.parse(JSON.stringify(initialMockTasks));
@@ -106,6 +107,7 @@ export function resetTaskMockState(): void {
   currentKeyAliases = { ...initialMockKeyAliases };
   resetMockMilestones();
   resetMockTaskLinks();
+  resetMockCommentsState();
   workspaceSeqCounters[WS_SHARED_ENG_ID] = 106;
   workspaceSeqCounters[WS_SHARED_GALA_ID] = 201;
   workspaceSeqCounters[WS_PERSONAL_ALEX_ID] = 2;
@@ -316,12 +318,16 @@ export const taskHandlers = [
         );
       }
 
-      return HttpResponse.json(task, {
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "private, no-store",
-        },
-      });
+      const isWatched = isUserWatchingTask(task.id, MOCK_USER_ID);
+      return HttpResponse.json(
+        { ...task, isWatched },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "private, no-store",
+          },
+        }
+      );
     }
   ),
 

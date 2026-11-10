@@ -1,8 +1,8 @@
 # SONDER — CANONICAL PROJECT PROGRESS TRACKER
 
-**Document Version:** 1.0.0  
-**Last Synchronized:** 2026-11-10  
-**Current Baseline Commit:** `b003b9f` (PR #31 merged)<br/>
+**Document Version:** 1.1.0<br/>
+**Last Synchronized:** 2026-11-10<br/>
+**Current Baseline Commit:** `develop @ 61c198f` (PR #31 merged, VS-08A feature branch active)<br/>
 **Governance Standard:** Dual-Track Engineering & UI/UX Governance (PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT)  
 **Maintenance Rule:** This tracker is updated upon the completion of every milestone or UI/UX slice. Never fabricate completion percentages. Every completed item must link to verified Git commits, PRs, or test suites.
 
@@ -40,27 +40,27 @@
 | **VS-07A** | Saved Views Product & API Contract Readiness | `FEAT-C04` | PR #29 | `fb45f66` | Contract audit | **MERGED & VERIFIED** (`vs-07a-saved-views-contract-readiness-report.md`) |
 | **VS-07A.1**| Saved Views Contract Reconciliation & Sign-Off Packet | `FEAT-C04` | PR #30 | `2de4522`<br>`8fabfc2` | Delta spec verified | **MERGED & VERIFIED** (`vs-07a.1-saved-views-contract-signoff-report.md`) |
 | **VS-07A.2**| Roadmap Reconciliation & UI/UX Baseline Audit | Governance | PR #31 | `b003b9f` | Full audit suite | **MERGED & VERIFIED** (`vs-07a.2-roadmap-reconciliation-report.md`) |
+| **VS-08A** | Collaboration Spine: Comments, @Mentions & Task Watchers | `FEAT-A04` | PR #32 | Pending merge | 24 tests | **IMPLEMENTED & VERIFIED** (`TaskCollaboration.test.tsx`, `markdown-ast.test.tsx`) |
 
 ### A.2 Current Engineering Status & Next Milestones
 
 ```mermaid
 flowchart TD
-    Current["VS-07A.2: Roadmap Reconciliation (COMPLETED & MERGED)"] --> Next["VS-08A: Collaboration Spine (RECOMMENDED NEXT)"]
-    Next --> FollowUp["VS-08B: In-App Notification Center"]
+    Current["VS-08A: Collaboration Spine (COMPLETED & READY FOR MERGE)"] --> Next["FEAT-F01a: In-App Notification Center"]
+    Next --> FollowUp["FEAT-A10a/b: 30-Day Task Trash & Recovery"]
     
     subgraph Deferred ["Blocked / Deferred Track"]
         SV["VS-07B: Saved Views Implementation (BLOCKED on Decisions A-E)"]
-        Trash["VS-09: 30-Day Task Trash & Purge (Gated on DEC-OPEN-03)"]
+        Trash["Purge API (Gated on DEC-OPEN-03 Owner-Only Purge Policy)"]
     end
 ```
 
-- **Completed Milestone:** `VS-07A.2` — Roadmap Reconciliation & Website-Wide UI/UX Baseline Audit (Merged PR #31, `b003b9f`).
-- **Next Approved Milestone (Recommended):**
-  > **MILESTONE VS-08A: COLLABORATION SPINE — THREADED COMMENTS, @MENTIONS & TASK WATCHERS (`FEAT-A04`)**
-  - **Scope:** Threaded Markdown comments (safe AST), @mention member picker, #KEY autolinking, and explicit task watcher toggle.
-  - **Target Location:** `apps/web/src/modules/tasks/TaskPeekDrawer.tsx` (Collaboration / Activity tab).
-  - **Contract Surface:** Canonical OpenAPI 0.3.20-draft (lines 2012–2140: `listTaskComments`, `createTaskComment`, `updateTaskComment`, `deleteTaskComment`, `setTaskWatchStatus`).
-  - **Readiness:** 100% frozen contract; decoupled from Saved Views; zero backend blocking.
+- **Completed Milestone:** `VS-08A` — Collaboration Spine: Comments, @Mentions & Task Watchers (`FEAT-A04`).
+- **Next Approved Engineering Priority:**
+  > **MILESTONE VS-08B / FEAT-F01a: SEGMENTED IN-APP NOTIFICATION CENTER (`FEAT-F01a`)**
+  - **Scope:** In-app notification bell, popover inbox, unread counts, segmented filters (Mentions, Assigned, Watching), read/unread toggles, deep-linking to task drawer.
+  - **Prerequisite Met:** Successfully established by VS-08A comment/mention/watcher domain events.
+  - **Contract Surface:** Candidate OpenAPI 0.3.20-draft (`/notifications` endpoints).
 
 ### A.3 Pending Backend & Governance Dependencies
 
@@ -70,10 +70,24 @@ flowchart TD
 | **DEP-TRASH-01** | `FEAT-A10b` (Task Trash) | Final resolution of DEC-OPEN-03 regarding explicit audited Owner purge policy vs legal hold. | Milestone VS-09 (Task Trash & Recovery) | Product Owner |
 | **DEP-ROLES-01** | `FEAT-G02b` (Custom Roles) | Finalization of custom role capability bundles and preview simulator contract. | Milestone VS-10 (Workspace Governance) | Backend Lead |
 
-### A.4 Deferred Capabilities (Roadmap Post-Phase 1)
+### A.4 Roadmap Scope Invariants & Excluded Capabilities
+
+1. **FEAT-A09 (Granular Time Tracking & Billable Worklogs):**
+   Explicitly **rejected and excluded from Phase 1 scope** to preserve lightweight simplicity. Bulk subtask operations belong to `FEAT-A06`.
+2. **FEAT-G02a (Core RBAC Engine & Default Roles):**
+   Represents core capability RBAC and system roles (Owner, Member, Viewer); distinct from standalone member directories.
+3. **Candidate Contract Distinction:**
+   OpenAPI 0.3.20-draft is a **documented candidate contract**, not a live backend-verified contract. Live backend implementation remains pending.
+4. **Canonical Entity Hierarchy:**
+   Strictly $\text{Community} \to \text{Workspace} \to \text{Task} \to \text{Subtask}$. Projects, Lists, and File Hub are obsolete historical artifacts.
+5. **Narrow Offline Task Editing:**
+   Narrow offline editing for existing cached tasks belongs under Phase 1 Milestone M1.3 (`FEAT-J02`).
+6. **Provisional Completion Metrics:**
+   Completion counts represent provisional frontend candidate coverage and must not be cited as global platform completion until live backend reconciliation occurs.
 
 | Feature ID | Feature Name | Planned Phase | Rationale |
 | :--- | :--- | :--- | :--- |
+| `FEAT-A09` | Granular Time Tracking / Billable Worklogs | Excluded | Explicitly rejected from Phase 1. |
 | `FEAT-B03` | Opt-In Timeboxed Iterations / Cycles | Phase 4 | Preserves low learning curve for non-agile community squads. |
 | `FEAT-E02` | Burndown, Velocity & Cumulative Flow Charts | Phase 4 | Dependent on timeboxed cycles. |
 | `FEAT-H01` | Declarative 1-Hop Workflow Automations | Phase 3 | Advanced automation engine deferred to maintain Day-1 simplicity. |
@@ -143,15 +157,16 @@ flowchart LR
 SONDER PLATFORM PROGRESS SUMMARY
 ================================================================================
 Monorepo Status:           Clean, 100% Green
-Active Baseline:           develop @ b003b9f (PR #31 merged)
-Total Passing Test Suites: 46 suites (apps/web + packages/contracts)
-Total Automated Tests:     440 tests (100% passing)
+Active Baseline:           feat/FE-VS08A-collaboration-spine (PR #32 pending merge)
+Total Passing Test Suites: 48 suites (apps/web + packages/contracts)
+Total Automated Tests:     464 tests (100% passing)
 Documentation Checks:      51 / 51 passed (pnpm validate:docs)
 
 Track A (Engineering):
-- Phase 1 Capabilities:   17 / 24 Implemented & Merged (~71%)
-- Contract Readiness:      Saved Views (FEAT-C04) Reconciled & Ready for Review
-- Next Implementation:     VS-08A: Collaboration Spine (Comments & Watchers)
+- Phase 1 Capabilities:   18 / 24 Provisional Frontend Candidate Coverage (~75%)
+- Contract Readiness:      Candidate OpenAPI 0.3.20-draft (Live Backend Pending)
+- Current Delivery:        VS-08A: Collaboration Spine (Comments, @Mentions & Watchers)
+- Next Engineering Target: FEAT-F01a: In-App Notification Center
 
 Track B (UI/UX Workstream):
 - Research & Principles:   Approved (PR #4, 92e984e)

@@ -170,3 +170,32 @@ Concurrent with roadmap reconciliation, two persistent governance artifacts have
 - **Automated Test Suite:** `pnpm run test` passed all 46 test suites and 440 unit/integration tests.
 - **Production Build:** `pnpm --filter @sonder/web build` built cleanly in 3.31 seconds.
 - **Git Whitespace & Formatting:** `git diff --check` reported zero warnings.
+
+---
+
+## 7. Canonical Specification Errata & Governance Addendum
+
+To ensure strict alignment with the Master Specification v1.5.0 and eliminate any ambiguity identified during subsequent feature reviews, the following authoritative corrections and clarifications govern this report and all downstream milestones:
+
+1. **FEAT-A09 Classification (Granular Time Tracking & Billable Worklogs):**
+   `FEAT-A09` represents Granular Time Tracking and Billable Worklogs. This feature was **explicitly rejected and excluded from Phase 1 scope** to preserve product focus on lightweight work management. Bulk subtask conversion and reordering belong strictly to `FEAT-A06` (Subtask Hierarchy) and must never be conflated with or mapped to `FEAT-A09`.
+
+2. **FEAT-G02a Classification (Core RBAC Engine & Default Roles):**
+   `FEAT-G02a` represents the core capability-based Role-Based Access Control (RBAC) engine and default workspace roles (Community Owner, Workspace Owner, Member, Viewer). It must **not** be confused with or described as the standalone Member Directory.
+
+3. **Candidate Contract Status (OpenAPI 0.3.20-draft):**
+   All references in this report to OpenAPI 0.3.20-draft represent a **documented candidate contract**, not a globally contract-frozen or live backend-verified specification. While frontend development targets these candidate interfaces, live backend implementation and verification remain pending.
+
+4. **Product Hierarchy Invariant:**
+   The canonical Sonder entity hierarchy is strictly:
+   $$\text{Community} \longrightarrow \text{Workspace} \longrightarrow \text{Task} \longrightarrow \text{Subtask}$$
+   Concepts such as "Projects", "Lists" (as independent container entities), file uploads/attachments, or a "File Hub" are obsolete historical artifacts and are strictly excluded from Phase 1 architecture.
+
+5. **Narrow Offline Task Editing Scope:**
+   Narrow offline editing for existing cached tasks (optimistic updates with conflict detection) is officially scheduled under **Phase 1 Milestone M1.3** (`FEAT-J02`), as specified in the governing main-body instructions of the Master Specification.
+
+6. **Provisional Completion Metric Notice:**
+   Any numerical metrics previously cited (such as "17 / 24 capabilities") represent **provisional frontend candidate coverage** and must not be treated as a validated global completion percentage until full end-to-end backend and product feature reconciliation is completed.
+
+7. **Contract vs. Live Backend Separation:**
+   All frontend milestone completions signify successful implementation, component testing, and MSW contract simulation against candidate OpenAPI 0.3.20-draft schemas. They do **not** imply live backend runtime completion, database migrations, or live environment deployment.
