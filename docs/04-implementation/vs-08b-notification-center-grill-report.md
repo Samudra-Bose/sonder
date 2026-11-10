@@ -56,11 +56,12 @@ Rather than simply approving the proposed architecture, this audit rigorously in
   - `category?: NotificationCategory` (`"ACTION_REQUIRED"` | `"UPDATES"`)
   - `unreadOnly?: boolean`
   - It does **NOT** accept a `reason` parameter (such as `reason=MENTION` or `reason=TASK_ASSIGNED`).
-- **Risk:** Attempting to pass `?reason=MENTION` to the server will result in unexpected query parameter handling or schema validation failure.
+- **Risk:** Attempting to pass `?reason=MENTION` to the server will result in unexpected query parameter handling or schema validation failure. Conversely, filtering only the currently loaded page in client memory produces false-empty or truncated results under cursor pagination.
 - **GRILL Verdict & Resolution:**
   1. Server queries handle top-level segmentation: `category=ACTION_REQUIRED` and `category=UPDATES`.
-  2. Sub-filtering by reason (`Mentions`, `Assigned`, `Watching`) MUST be executed client-side over the loaded page items.
-  3. The UI will clearly distinguish top-level category tabs from secondary reason filter chips.
+  2. Each notification card displays its canonical reason as metadata badge.
+  3. Client-side reason faceting across partial paginated cursor pages is strictly prohibited.
+  4. Global reason filtering (`?reason=...`) is recorded as an open contract enhancement proposal for backend and product evaluation.
 
 ---
 
@@ -83,11 +84,11 @@ Rather than simply approving the proposed architecture, this audit rigorously in
       reason: NotificationReason
   ```
 - **The Gap:** Sonder's deep-linking architecture ([`useTaskPeekDrawer.ts`](file:///home/samudra/Projects/VisualSCode/VisualCode/Vscoding/Sonder/apps/web/src/modules/tasks/useTaskPeekDrawer.ts)) operates on `taskKey` (e.g. `ENG-101`) to synchronize with URL `?task=KEY`. Furthermore, task lookups require `workspaceId`. `NotificationDto` does **NOT** include `taskKey` or `workspaceId`!
-- **Risk:** When a user clicks a notification to view the affected task, the client has only the task UUID (`resourceId`) and the notification title.
-- **GRILL Resolution & Fallback Hierarchy:**
-  1. **Primary Extraction:** Parse canonical task key from notification title via regex `\b([A-Z0-9]+-\d+)\b`. Backend titles follow standard templates (e.g. `Mentioned on ENG-101: ...` or `Assigned to FEST-14`).
-  2. **Workspace Derivation:** From the parsed task key, derive the workspace ID using the community prefix registry (`workspaces.find(w => w.keyPrefix === prefix)`).
-  3. **Handoff Request to Backend Lead:** Formally recommend adding `taskKey?: string` and `workspaceId?: Uuid` to `NotificationDto` in OpenAPI 0.3.21-draft to eliminate client-side regex parsing.
+- **Risk:** Without `taskKey` and `workspaceId`, the frontend cannot reliably construct a valid navigation route.
+- **Strict Prohibition & Handoff:**
+  1. **Strictly Prohibited:** Regular expression parsing of task keys from notification titles, guessing workspaces, or inventing task resolution endpoints.
+  2. **Navigation Deferral:** Notification rows will remain informational cards with mark-read actions only; deceptive or broken clickable links are strictly prohibited.
+  3. **Handoff Request to Backend Lead (`DEP-NOTIF-02`):** Formally submitted Proposal A (structured `target` object) and Proposal B (extending `workspaceId` and `taskKey` on `NotificationDto`) in `vs-08b-notification-backend-integration-contract.md`.
 
 ---
 
