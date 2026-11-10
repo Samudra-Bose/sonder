@@ -6,8 +6,8 @@ import { ThemeProvider } from "./lib/theme.js";
 import {
   AppShell,
   DashboardView,
-  InboxPlaceholderView,
 } from "./modules/app-shell/index.js";
+import { InboxView } from "./modules/notifications/index.js";
 import { MyWorkView } from "./modules/my-work/index.js";
 import { WorkspaceTasksView } from "./modules/tasks/index.js";
 
@@ -65,7 +65,7 @@ export function App({ initialEntries }: AppProps = {}): React.JSX.Element {
               >
                 <Route index element={<DashboardView />} />
                 <Route path="my-work" element={<MyWorkView />} />
-                <Route path="inbox" element={<InboxPlaceholderView />} />
+                <Route path="inbox" element={<InboxView />} />
                 <Route path="list" element={<WorkspaceTasksView defaultView="list" />} />
                 <Route path="board" element={<WorkspaceTasksView defaultView="board" />} />
                 <Route path="calendar" element={<WorkspaceTasksView defaultView="calendar" />} />
