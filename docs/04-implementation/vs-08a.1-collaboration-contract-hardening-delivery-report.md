@@ -191,8 +191,8 @@ Mention markdown tokens strictly require:
 
 ## 8. Milestone Transition & Next Steps
 
-1. **Active Branch:** `fix/FE-VS08A1-collaboration-contract-hardening` merged into `develop`.
-2. **Current Baseline Commit:** To be recorded upon squash merge.
+1. **Active Branch:** `fix/FE-VS08A1-collaboration-contract-hardening` merged into `develop` via PR #33.
+2. **Current Baseline Commit:** `develop @ 1803f71` (PR #33 squash merge).
 3. **Track B Status:** UI/UX workstream remains recorded as **PAUSED**.
 4. **Saved Views Status:** Decisions A–E remain delegated to Backend Lead and PO; implementation is paused.
 5. **Next Approved Engineering Milestone:**
