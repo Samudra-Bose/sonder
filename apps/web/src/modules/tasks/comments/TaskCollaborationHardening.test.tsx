@@ -455,16 +455,19 @@ describe("VS-08A.1 — Collaboration Contract & Integration Hardening", () => {
 
       // Must be filtered out because it is for a different task
       expect(invalidateSpy).not.toHaveBeenCalled();
+      // Monotonic sequence for the workspace stream still advances
+      expect(result.current.latestSequence).toBe(105);
     });
 
-    it("updates watcher state when a watcher.changed event for current user is received", () => {
+    it("1. ignores watcher.changed event for another task in the same workspace", () => {
       const queryClient = new QueryClient();
+      const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
       const taskId = "018f98a2-task-001-overdue-assigned";
 
-      // Initially watch state is false
+      // Pre-seed watch state
       queryClient.setQueryData(
         taskWatchQueryKey(MOCK_COMMUNITY_1_ID, WS_SHARED_ENG_ID, taskId),
-        false
+        true
       );
 
       const { result } = renderHook(
@@ -482,41 +485,99 @@ describe("VS-08A.1 — Collaboration Contract & Integration Hardening", () => {
         }
       );
 
-      const watcherEvent: WorkspaceEventEnvelope = {
+      const otherTaskWatcherEvent: WorkspaceEventEnvelope = {
         schemaVersion: 1,
         stream: "workspace",
         communityId: MOCK_COMMUNITY_1_ID,
         workspaceId: WS_SHARED_ENG_ID,
         workspaceSeq: 200,
-        eventId: "018f98a2-evt-watcher-change",
+        eventId: "018f98a2-evt-other-watcher-change",
         eventType: "watcher.changed",
         occurredAt: "2026-11-10T11:30:00Z",
-        actorId: MOCK_USER_ID,
-        entityId: taskId,
+        actorId: OTHER_USER_ID,
+        entityId: "018f98a2-task-099-different",
         payload: {
-          taskId,
-          userId: MOCK_USER_ID,
-          isWatching: true,
+          taskId: "018f98a2-task-099-different",
         },
       };
 
       act(() => {
-        result.current.handleWorkspaceEvent(watcherEvent);
+        result.current.handleWorkspaceEvent(otherTaskWatcherEvent);
       });
 
-      // Query cache for watch state should now be updated to true
+      // Must not invalidate queries for the active task
+      expect(invalidateSpy).not.toHaveBeenCalled();
+      // Must not alter active task's watch state in cache
       expect(
         queryClient.getQueryData(taskWatchQueryKey(MOCK_COMMUNITY_1_ID, WS_SHARED_ENG_ID, taskId))
       ).toBe(true);
+      // Monotonic sequence for the workspace stream is preserved
+      expect(result.current.latestSequence).toBe(200);
     });
 
-    it("does not alter current user's watch state when watcher.changed is for another user", () => {
+    it("2. handles a valid watcher.changed event for the active task per canonical schema", () => {
+      const queryClient = new QueryClient();
+      const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+      const taskId = "018f98a2-task-001-overdue-assigned";
+
+      const { result } = renderHook(
+        () =>
+          useTaskCollaborationRealtime({
+            communityId: MOCK_COMMUNITY_1_ID,
+            workspaceId: WS_SHARED_ENG_ID,
+            taskId,
+            currentUserId: MOCK_USER_ID,
+          }),
+        {
+          wrapper: ({ children }) => (
+            <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+          ),
+        }
+      );
+
+      // Canonical contract shape: entityId is taskId, payload contains only taskId and metadata
+      const canonicalWatcherEvent: WorkspaceEventEnvelope = {
+        schemaVersion: 1,
+        stream: "workspace",
+        communityId: MOCK_COMMUNITY_1_ID,
+        workspaceId: WS_SHARED_ENG_ID,
+        workspaceSeq: 205,
+        eventId: "018f98a2-evt-canonical-watcher",
+        eventType: "watcher.changed",
+        occurredAt: "2026-11-10T11:32:00Z",
+        actorId: OTHER_USER_ID,
+        entityId: taskId,
+        payload: {
+          taskId,
+        },
+      };
+
+      act(() => {
+        result.current.handleWorkspaceEvent(canonicalWatcherEvent);
+      });
+
+      // Invalidates task activity query and task query for the active task
+      expect(invalidateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          queryKey: expect.arrayContaining(["task-activity", MOCK_COMMUNITY_1_ID, WS_SHARED_ENG_ID, taskId]),
+        })
+      );
+      expect(invalidateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          queryKey: ["task", MOCK_COMMUNITY_1_ID, WS_SHARED_ENG_ID, taskId],
+        })
+      );
+      expect(result.current.latestSequence).toBe(205);
+    });
+
+    it("3. does not change the current user's watcher state when an event concerns another user", () => {
       const queryClient = new QueryClient();
       const taskId = "018f98a2-task-001-overdue-assigned";
 
+      // Pre-seed current user's watch state as true
       queryClient.setQueryData(
         taskWatchQueryKey(MOCK_COMMUNITY_1_ID, WS_SHARED_ENG_ID, taskId),
-        false
+        true
       );
 
       const { result } = renderHook(
@@ -534,21 +595,20 @@ describe("VS-08A.1 — Collaboration Contract & Integration Hardening", () => {
         }
       );
 
+      // Canonical event triggered by another actor
       const otherUserWatcherEvent: WorkspaceEventEnvelope = {
         schemaVersion: 1,
         stream: "workspace",
         communityId: MOCK_COMMUNITY_1_ID,
         workspaceId: WS_SHARED_ENG_ID,
-        workspaceSeq: 201,
-        eventId: "018f98a2-evt-other-watcher-change",
+        workspaceSeq: 210,
+        eventId: "018f98a2-evt-other-user-watcher",
         eventType: "watcher.changed",
-        occurredAt: "2026-11-10T11:31:00Z",
+        occurredAt: "2026-11-10T11:35:00Z",
         actorId: OTHER_USER_ID,
         entityId: taskId,
         payload: {
           taskId,
-          userId: OTHER_USER_ID,
-          isWatching: true,
         },
       };
 
@@ -556,10 +616,185 @@ describe("VS-08A.1 — Collaboration Contract & Integration Hardening", () => {
         result.current.handleWorkspaceEvent(otherUserWatcherEvent);
       });
 
-      // Current user's watch state remains false
+      // Current user's watch state remains completely intact (true)
       expect(
         queryClient.getQueryData(taskWatchQueryKey(MOCK_COMMUNITY_1_ID, WS_SHARED_ENG_ID, taskId))
-      ).toBe(false);
+      ).toBe(true);
+    });
+
+    it("4. completely ignores events from another workspace or community", () => {
+      const queryClient = new QueryClient();
+      const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+      const taskId = "018f98a2-task-001-overdue-assigned";
+
+      const { result } = renderHook(
+        () =>
+          useTaskCollaborationRealtime({
+            communityId: MOCK_COMMUNITY_1_ID,
+            workspaceId: WS_SHARED_ENG_ID,
+            taskId,
+            currentUserId: MOCK_USER_ID,
+          }),
+        {
+          wrapper: ({ children }) => (
+            <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+          ),
+        }
+      );
+
+      // Event from a different workspace
+      const wrongWorkspaceEvent: WorkspaceEventEnvelope = {
+        schemaVersion: 1,
+        stream: "workspace",
+        communityId: MOCK_COMMUNITY_1_ID,
+        workspaceId: "018f98a2-ws-999-different",
+        workspaceSeq: 500,
+        eventId: "018f98a2-evt-foreign-ws",
+        eventType: "comment.created",
+        occurredAt: "2026-11-10T11:40:00Z",
+        actorId: OTHER_USER_ID,
+        entityId: taskId,
+        payload: { taskId },
+      };
+
+      act(() => {
+        result.current.handleWorkspaceEvent(wrongWorkspaceEvent);
+      });
+
+      expect(invalidateSpy).not.toHaveBeenCalled();
+      // latestSequence must NOT advance for events from a different workspace stream
+      expect(result.current.latestSequence).toBe(0);
+
+      // Event from a different community
+      const wrongCommunityEvent: WorkspaceEventEnvelope = {
+        ...wrongWorkspaceEvent,
+        communityId: "018f98a2-comm-999-different",
+        workspaceId: WS_SHARED_ENG_ID,
+        eventId: "018f98a2-evt-foreign-comm",
+      };
+
+      act(() => {
+        result.current.handleWorkspaceEvent(wrongCommunityEvent);
+      });
+
+      expect(invalidateSpy).not.toHaveBeenCalled();
+      expect(result.current.latestSequence).toBe(0);
+    });
+
+    it("5. safely rejects events with missing or malformed task identity", () => {
+      const queryClient = new QueryClient();
+      const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+      const taskId = "018f98a2-task-001-overdue-assigned";
+
+      const { result } = renderHook(
+        () =>
+          useTaskCollaborationRealtime({
+            communityId: MOCK_COMMUNITY_1_ID,
+            workspaceId: WS_SHARED_ENG_ID,
+            taskId,
+            currentUserId: MOCK_USER_ID,
+          }),
+        {
+          wrapper: ({ children }) => (
+            <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+          ),
+        }
+      );
+
+      // Missing taskId and empty entityId
+      const missingTaskEvent: WorkspaceEventEnvelope = {
+        schemaVersion: 1,
+        stream: "workspace",
+        communityId: MOCK_COMMUNITY_1_ID,
+        workspaceId: WS_SHARED_ENG_ID,
+        workspaceSeq: 300,
+        eventId: "018f98a2-evt-missing-task",
+        eventType: "comment.created",
+        occurredAt: "2026-11-10T11:45:00Z",
+        actorId: OTHER_USER_ID,
+        entityId: "",
+        payload: {},
+      };
+
+      act(() => {
+        result.current.handleWorkspaceEvent(missingTaskEvent);
+      });
+
+      expect(invalidateSpy).not.toHaveBeenCalled();
+      // Sequence advances because the event belongs to this workspace stream
+      expect(result.current.latestSequence).toBe(300);
+    });
+
+    it("6. correctly scopes comment events and ignores comments for other tasks", () => {
+      const queryClient = new QueryClient();
+      const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+      const taskId = "018f98a2-task-001-overdue-assigned";
+
+      const { result } = renderHook(
+        () =>
+          useTaskCollaborationRealtime({
+            communityId: MOCK_COMMUNITY_1_ID,
+            workspaceId: WS_SHARED_ENG_ID,
+            taskId,
+            currentUserId: MOCK_USER_ID,
+          }),
+        {
+          wrapper: ({ children }) => (
+            <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+          ),
+        }
+      );
+
+      // Comment event for active task
+      const activeTaskCommentEvent: WorkspaceEventEnvelope = {
+        schemaVersion: 1,
+        stream: "workspace",
+        communityId: MOCK_COMMUNITY_1_ID,
+        workspaceId: WS_SHARED_ENG_ID,
+        workspaceSeq: 310,
+        eventId: "018f98a2-evt-active-comment",
+        eventType: "comment.created",
+        occurredAt: "2026-11-10T11:50:00Z",
+        actorId: OTHER_USER_ID,
+        entityId: "018f98a2-cmt-new-comment-uuid",
+        payload: {
+          taskId,
+          commentId: "018f98a2-cmt-new-comment-uuid",
+          version: 1,
+        },
+      };
+
+      act(() => {
+        result.current.handleWorkspaceEvent(activeTaskCommentEvent);
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          queryKey: expect.arrayContaining(["task-activity", MOCK_COMMUNITY_1_ID, WS_SHARED_ENG_ID, taskId]),
+        })
+      );
+
+      invalidateSpy.mockClear();
+
+      // Comment event for a different task
+      const otherTaskCommentEvent: WorkspaceEventEnvelope = {
+        ...activeTaskCommentEvent,
+        workspaceSeq: 311,
+        eventId: "018f98a2-evt-other-comment",
+        entityId: "018f98a2-cmt-other-comment-uuid",
+        payload: {
+          taskId: "018f98a2-task-099-different",
+          commentId: "018f98a2-cmt-other-comment-uuid",
+          version: 1,
+        },
+      };
+
+      act(() => {
+        result.current.handleWorkspaceEvent(otherTaskCommentEvent);
+      });
+
+      expect(invalidateSpy).not.toHaveBeenCalled();
+      expect(result.current.latestSequence).toBe(311);
     });
   });
 });
