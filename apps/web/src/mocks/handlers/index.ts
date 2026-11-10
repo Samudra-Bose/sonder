@@ -5,6 +5,7 @@ import { myWorkHandlers } from "./my-work.js";
 import { taskHandlers } from "./tasks.js";
 import { milestoneHandlers } from "./milestones.js";
 import { taskLinkHandlers } from "./task-links.js";
+import { commentHandlers } from "./comments.js";
 
 export const handlers = [
   ...healthHandlers,
@@ -14,4 +15,5 @@ export const handlers = [
   ...taskHandlers,
   ...milestoneHandlers,
   ...taskLinkHandlers,
+  ...commentHandlers,
 ];

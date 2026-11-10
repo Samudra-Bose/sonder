@@ -22,8 +22,10 @@ import { Skeleton } from "@/components/ui/Skeleton.js";
 import { Tooltip } from "@/components/ui/Tooltip.js";
 import { Separator } from "@/components/ui/Separator.js";
 import { Feedback } from "@/components/ui/Feedback.js";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs.js";
 import { WorkspaceBadge } from "@/modules/workspace/WorkspaceBadge.js";
 import { useWorkspace } from "@/modules/workspace/index.js";
+import { useAuth } from "@/modules/auth/index.js";
 import { useKeyboardShortcut, isInputElement } from "@/lib/keyboard.js";
 import { cn } from "@/lib/utils.js";
 import { getDefaultReferenceDate } from "@/modules/my-work/date-utils.js";
@@ -35,6 +37,8 @@ import { useWorkspaceTasks } from "./useWorkspaceTasks.js";
 import { SubtaskList } from "./SubtaskList.js";
 import { TaskDependencies } from "./TaskDependencies.js";
 import { ReparentTaskModal } from "./ReparentTaskModal.js";
+import { TaskActivityTab } from "./comments/TaskActivityTab.js";
+import { TaskWatchButton } from "./comments/TaskWatchButton.js";
 import type { TaskDto } from "./types.js";
 import {
   InlineTitleEditor,
@@ -92,6 +96,15 @@ export function TaskPeekDrawer({
 
   const [hasCopied, setHasCopied] = useState(false);
   const [isReparentOpen, setIsReparentOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("details");
+  const { user } = useAuth();
+  const currentUserId = user?.id ?? "";
+
+  // Reset to details tab when opening or switching tasks
+  useEffect(() => {
+    setActiveTab("details");
+  }, [taskKey]);
+
   const triggerRef = useRef<HTMLElement | null>(null);
   const titleRef = useRef<HTMLHeadingElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -171,6 +184,7 @@ export function TaskPeekDrawer({
   const isNotFound =
     (resolveQuery.error instanceof ApiProblemError && resolveQuery.error.status === 404) ||
     (taskQuery.error instanceof ApiProblemError && taskQuery.error.status === 404);
+  const isArchived = resolveQuery.data?.lifecycleState === "ARCHIVED" || Boolean(task?.archivedAt);
 
   // Locate associated workspace DTO for context display
   const targetWorkspace = useMemo(() => {
@@ -246,15 +260,32 @@ export function TaskPeekDrawer({
         </Tooltip>
       </div>
 
-      <IconButton
-        ref={closeButtonRef}
-        size="sm"
-        variant="ghost"
-        aria-label="Close task details"
-        icon={<X className="h-4 w-4" />}
-        onClick={() => closeTask()}
-        className="min-h-[44px] min-w-[44px] sm:min-h-[32px] sm:min-w-[32px] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-      />
+      <div className="flex items-center space-x-1.5 shrink-0">
+        {task && !isNotFound && !error && currentCommunityId && (
+          <TaskWatchButton
+            communityId={currentCommunityId}
+            workspaceId={task.workspaceId}
+            taskId={task.id}
+            isWatching={
+              (task as { isWatched?: boolean }).isWatched === true ||
+              (task as { watcherIds?: string[] }).watcherIds?.includes(currentUserId)
+            }
+            canWatch={Boolean(task.effectivePermissions?.canWatch && !isArchived)}
+            size="sm"
+            className="h-7 text-xs px-2"
+          />
+        )}
+
+        <IconButton
+          ref={closeButtonRef}
+          size="sm"
+          variant="ghost"
+          aria-label="Close task details"
+          icon={<X className="h-4 w-4" />}
+          onClick={() => closeTask()}
+          className="min-h-[44px] min-w-[44px] sm:min-h-[32px] sm:min-w-[32px] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+        />
+      </div>
     </div>
   );
 
@@ -343,23 +374,41 @@ export function TaskPeekDrawer({
       return null;
     }
 
-    const isArchived = resolveQuery.data?.lifecycleState === "ARCHIVED" || Boolean(task.archivedAt);
     const wasRedirected = resolveQuery.data?.resolvedFromAlias === true;
 
     return (
-      <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
-        {/* Informative Banners */}
-        {wasRedirected && (
-          <div
-            role="status"
-            className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs flex items-center gap-2"
-          >
-            <Sparkles className="h-4 w-4 shrink-0" />
-            <span>
-              Redirected from historical key <strong className="font-mono font-semibold">{resolveQuery.data?.requestedKey}</strong>
-            </span>
-          </div>
-        )}
+      <Tabs
+        value={activeTab}
+        onValueChange={(val) => setActiveTab(val as string)}
+        className="flex-1 flex flex-col min-h-0 overflow-hidden"
+      >
+        <div className="px-5 pt-3 pb-2 border-b border-[var(--border-subtle)] bg-[var(--surface-card)] shrink-0 select-none">
+          <TabsList className="w-full grid grid-cols-2">
+            <TabsTrigger value="details" data-testid="drawer-tab-details">
+              Details
+            </TabsTrigger>
+            <TabsTrigger value="activity" data-testid="drawer-tab-activity">
+              Activity & Comments
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent
+          value="details"
+          className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6 mt-0"
+        >
+          {/* Informative Banners */}
+          {wasRedirected && (
+            <div
+              role="status"
+              className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs flex items-center gap-2"
+            >
+              <Sparkles className="h-4 w-4 shrink-0" />
+              <span>
+                Redirected from historical key <strong className="font-mono font-semibold">{resolveQuery.data?.requestedKey}</strong>
+              </span>
+            </div>
+          )}
 
         {isArchived && (
           <div
@@ -541,9 +590,23 @@ export function TaskPeekDrawer({
             onClose={() => setIsReparentOpen(false)}
           />
         )}
-      </div>
-    );
-  };
+      </TabsContent>
+
+      <TabsContent
+        value="activity"
+        className="flex-1 overflow-y-auto mt-0 p-0 flex flex-col"
+      >
+        <TaskActivityTab
+          task={task}
+          communityId={currentCommunityId ?? ""}
+          workspaceId={task.workspaceId}
+          isArchived={isArchived}
+          onNavigateToTask={(key) => openTask(key, { workspaceId: task.workspaceId })}
+        />
+      </TabsContent>
+    </Tabs>
+  );
+};
 
   // --- 1. Desktop Mode (Non-modal right-docked panel beside canvas) ---
   if (isDesktop) {
