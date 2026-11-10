@@ -10,6 +10,7 @@
 **Target Repository:** `Samudra-Bose/sonder`  
 **Working Branch:** `docs/FE-VS08B01-notification-contract-alignment`  
 **Baseline Commit:** `develop @ e7ebb05`  
+**Merge Commit:** `develop @ 43282e0` (PR #36)
 **Normative Wire Contract:** OpenAPI 0.3.20-draft (`Community-Work-Management-v1.5/docs/contracts/openapi.yaml`) & `ws-events.schema.json`  
 
 ---
