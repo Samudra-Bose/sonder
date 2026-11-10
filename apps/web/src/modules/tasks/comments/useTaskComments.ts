@@ -15,6 +15,7 @@ import {
   fetchMentionCandidates,
 } from "./api.js";
 import type {
+  TaskDto,
   TaskActivityDto,
   CommentDto,
   CreateCommentRequest,
@@ -28,6 +29,17 @@ export const taskActivityQueryKey = (
   taskId?: string | null
 ): [string, string, string, string] => [
   "task-activity",
+  communityId ?? "",
+  workspaceId ?? "",
+  taskId ?? "",
+];
+
+export const taskWatchQueryKey = (
+  communityId?: string | null,
+  workspaceId?: string | null,
+  taskId?: string | null
+): [string, string, string, string] => [
+  "task-watch-state",
   communityId ?? "",
   workspaceId ?? "",
   taskId ?? "",
@@ -106,6 +118,11 @@ export function useCreateComment(): UseMutationResult<
       });
     },
     onSuccess: (newComment, { communityId, workspaceId, taskId }) => {
+      // Comment creation auto-follows the task per CR-08
+      queryClient.setQueryData(
+        taskWatchQueryKey(communityId, workspaceId, taskId),
+        true
+      );
       const qKey = taskActivityQueryKey(communityId, workspaceId, taskId);
       queryClient.setQueryData<TaskActivityDto>(qKey, (old) => {
         if (!old) {
@@ -239,13 +256,19 @@ export interface SetTaskWatchVariables {
   watching: boolean;
 }
 
+export interface SetTaskWatchContext {
+  previousWatchState?: boolean;
+}
+
 /**
  * Mutation hook to follow or unfollow a task for the authenticated actor.
+ * Includes optimistic query cache updates and rollback on error.
  */
 export function useSetTaskWatch(): UseMutationResult<
   void,
   Error,
-  SetTaskWatchVariables
+  SetTaskWatchVariables,
+  SetTaskWatchContext
 > {
   const queryClient = useQueryClient();
   const { csrfToken } = useAuth();
@@ -263,8 +286,24 @@ export function useSetTaskWatch(): UseMutationResult<
         csrfToken,
       });
     },
-    onSuccess: (_, { communityId, workspaceId, taskId }) => {
-      // Invalidate task queries and my-work
+    onMutate: async ({ communityId, workspaceId, taskId, watching }) => {
+      const qKey = taskWatchQueryKey(communityId, workspaceId, taskId);
+      await queryClient.cancelQueries({ queryKey: qKey });
+      const previousWatchState = queryClient.getQueryData<boolean>(qKey);
+      queryClient.setQueryData<boolean>(qKey, watching);
+      return { previousWatchState };
+    },
+    onError: (_err, { communityId, workspaceId, taskId }, context) => {
+      if (context?.previousWatchState !== undefined) {
+        queryClient.setQueryData(
+          taskWatchQueryKey(communityId, workspaceId, taskId),
+          context.previousWatchState
+        );
+      }
+    },
+    onSuccess: (_, { communityId, workspaceId, taskId, watching }) => {
+      const qKey = taskWatchQueryKey(communityId, workspaceId, taskId);
+      queryClient.setQueryData(qKey, watching);
       queryClient.invalidateQueries({
         queryKey: ["task", communityId, workspaceId, taskId],
       });
@@ -274,6 +313,41 @@ export function useSetTaskWatch(): UseMutationResult<
       });
     },
   });
+}
+
+/**
+ * Hook to retrieve the effective watcher state for the authenticated actor on a task.
+ * Resolves in order:
+ * 1. Explicit client cache state (set by useSetTaskWatch or realtime watcher.changed).
+ * 2. Canonical auto-follow relationship derived from TaskDto (creatorId or assigneeIds).
+ *
+ * NOTE: The canonical contract (OpenAPI 0.3.20-draft) does not expose an explicit `isWatched`
+ * or `watcherIds` field in TaskDto. Initial state is derived strictly from canonical fields per CR-08 auto-follow.
+ */
+export function useTaskWatchState(
+  communityId?: string | null,
+  workspaceId?: string | null,
+  task?: TaskDto | null,
+  currentUserId?: string | null
+): boolean {
+  const queryClient = useQueryClient();
+  const taskId = task?.id ?? null;
+  const qKey = taskWatchQueryKey(communityId, workspaceId, taskId);
+
+  // 1. Read from explicit client query cache if set during the session
+  const cachedState = queryClient.getQueryData<boolean>(qKey);
+  if (typeof cachedState === "boolean") {
+    return cachedState;
+  }
+
+  // 2. Derive from canonical TaskDto fields (Creator and Assignee auto-follow per CR-08)
+  if (task && currentUserId) {
+    const isCreator = task.creatorId === currentUserId;
+    const isAssignee = Boolean(task.assigneeIds?.includes(currentUserId));
+    return isCreator || isAssignee;
+  }
+
+  return false;
 }
 
 /**

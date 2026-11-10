@@ -1,6 +1,18 @@
 import { useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { taskActivityQueryKey } from "./useTaskComments.js";
+import { taskActivityQueryKey, taskWatchQueryKey } from "./useTaskComments.js";
+
+/**
+ * Transport Architecture Classification:
+ * STATUS: EVENT_CONSUMER_ABSTRACTION
+ *
+ * NOTE: This hook provides the contract-compliant domain event processing, bounded LRU deduplication,
+ * and TanStack Query cache invalidation for task collaboration events. It acts as an event-consumer
+ * abstraction. Live WebSocket transport integration (ticket issuance via POST /communities/{cid}/realtime-ticket,
+ * WebSocket handshake on subprotocol work-platform.v1, and control frame ping/pong per ws-protocol.schema.json)
+ * remains strictly pending backend transport gateway implementation.
+ */
+export const REALTIME_TRANSPORT_CLASSIFICATION = "EVENT_CONSUMER_ABSTRACTION" as const;
 
 export interface WorkspaceEventEnvelope {
   schemaVersion: 1;
@@ -21,6 +33,7 @@ export interface UseTaskCollaborationRealtimeOptions {
   communityId?: string | null;
   workspaceId?: string | null;
   taskId?: string | null;
+  currentUserId?: string | null;
 }
 
 /**
@@ -31,6 +44,7 @@ export function useTaskCollaborationRealtime({
   communityId,
   workspaceId,
   taskId,
+  currentUserId,
 }: UseTaskCollaborationRealtimeOptions) {
   const queryClient = useQueryClient();
   const processedEventIds = useRef<Set<string>>(new Set());
@@ -41,7 +55,14 @@ export function useTaskCollaborationRealtime({
       if (!communityId || !workspaceId || !taskId) return;
       if (event.communityId !== communityId || event.workspaceId !== workspaceId) return;
 
-      // 1. Deduplicate by eventId
+      // Ensure event pertains to the active task (by entityId or payload.taskId)
+      const eventTaskId =
+        (event.payload as { taskId?: string })?.taskId ?? event.entityId;
+      if (eventTaskId && eventTaskId !== taskId && event.eventType.startsWith("comment.")) {
+        return;
+      }
+
+      // 1. Deduplicate by eventId (LRU cache bounded to 500 events)
       if (processedEventIds.current.has(event.eventId)) {
         return;
       }
@@ -70,6 +91,21 @@ export function useTaskCollaborationRealtime({
         }
 
         case "watcher.changed": {
+          const watcherUserId = (event.payload as { userId?: string })?.userId;
+          const payloadObj = event.payload as { watching?: boolean; isWatching?: boolean } | undefined;
+          const isWatching = payloadObj?.watching ?? payloadObj?.isWatching;
+          if (
+            typeof isWatching === "boolean" &&
+            (!watcherUserId || !currentUserId || watcherUserId === currentUserId)
+          ) {
+            queryClient.setQueryData(
+              taskWatchQueryKey(communityId, workspaceId, taskId),
+              isWatching
+            );
+          }
+          queryClient.invalidateQueries({
+            queryKey: taskWatchQueryKey(communityId, workspaceId, taskId),
+          });
           queryClient.invalidateQueries({
             queryKey: ["task", communityId, workspaceId, taskId],
           });
@@ -84,11 +120,12 @@ export function useTaskCollaborationRealtime({
           break;
       }
     },
-    [communityId, workspaceId, taskId, queryClient]
+    [communityId, workspaceId, taskId, currentUserId, queryClient]
   );
 
   return {
     handleWorkspaceEvent,
     latestSequence: latestSequence.current,
+    transportClassification: REALTIME_TRANSPORT_CLASSIFICATION,
   };
 }

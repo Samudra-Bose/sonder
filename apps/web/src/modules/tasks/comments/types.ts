@@ -1,5 +1,6 @@
 import type { ApiSchema } from "@sonder/contracts";
 
+export type TaskDto = ApiSchema<"TaskDto">;
 export type CommentDto = ApiSchema<"CommentDto">;
 export type TaskActivityDto = ApiSchema<"TaskActivityDto">;
 export type ActivityEntryDto = ApiSchema<"ActivityEntryDto">;

@@ -9,6 +9,7 @@ import { CommentList } from "./CommentList.js";
 import {
   useTaskActivity,
   useCreateComment,
+  useTaskWatchState,
 } from "./useTaskComments.js";
 import { useTaskCollaborationRealtime } from "./useTaskCollaborationRealtime.js";
 import type { TaskDto } from "../types.js";
@@ -56,6 +57,7 @@ export function TaskActivityTab({
     communityId,
     workspaceId,
     taskId: task.id,
+    currentUserId,
   });
 
   const comments = activityData?.comments ?? [];
@@ -66,10 +68,13 @@ export function TaskActivityTab({
   const canArchive = Boolean(effectivePermissions?.canArchive);
   const canWatch = Boolean(effectivePermissions?.canWatch && !isArchived);
 
-  // Check if current user is watching this task
-  const isWatching =
-    (task as { isWatched?: boolean }).isWatched === true ||
-    (task as { watcherIds?: string[] }).watcherIds?.includes(currentUserId);
+  // Derive canonical watch state without undeclared TaskDto properties or type casts
+  const isWatching = useTaskWatchState(
+    communityId,
+    workspaceId,
+    task,
+    currentUserId
+  );
 
   const handleCreateComment = async (
     body: string,

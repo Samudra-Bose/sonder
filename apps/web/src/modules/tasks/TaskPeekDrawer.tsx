@@ -39,6 +39,7 @@ import { TaskDependencies } from "./TaskDependencies.js";
 import { ReparentTaskModal } from "./ReparentTaskModal.js";
 import { TaskActivityTab } from "./comments/TaskActivityTab.js";
 import { TaskWatchButton } from "./comments/TaskWatchButton.js";
+import { useTaskWatchState } from "./comments/useTaskComments.js";
 import type { TaskDto } from "./types.js";
 import {
   InlineTitleEditor,
@@ -192,6 +193,14 @@ export function TaskPeekDrawer({
     return workspaces.find((w) => w.id === wsId);
   }, [workspaces, task?.workspaceId, effectiveWorkspaceId]);
 
+  // Derive canonical watch state without undeclared TaskDto properties or type casts
+  const isWatching = useTaskWatchState(
+    currentCommunityId,
+    task?.workspaceId ?? effectiveWorkspaceId,
+    task,
+    currentUserId
+  );
+
   const { data: workspaceTasksData } = useWorkspaceTasks({
     communityId: currentCommunityId,
     workspaceId: effectiveWorkspaceId,
@@ -266,10 +275,7 @@ export function TaskPeekDrawer({
             communityId={currentCommunityId}
             workspaceId={task.workspaceId}
             taskId={task.id}
-            isWatching={
-              (task as { isWatched?: boolean }).isWatched === true ||
-              (task as { watcherIds?: string[] }).watcherIds?.includes(currentUserId)
-            }
+            isWatching={isWatching}
             canWatch={Boolean(task.effectivePermissions?.canWatch && !isArchived)}
             size="sm"
             className="h-7 text-xs px-2"

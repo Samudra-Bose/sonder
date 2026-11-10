@@ -207,7 +207,8 @@ export const commentHandlers = [
       // Parse AST and mentions
       const parsedAst = parseMarkdownToAst(body.body);
       const mentionTokens: ApiSchema<"CommentMentionDto">[] = [];
-      const mentionRegex = /@\[([^\]]+)\]\(user:([^)]+)\)/g;
+      const mentionRegex =
+        /@\[([^\]]+)\]\(user:([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\)/g;
       let match: RegExpExecArray | null;
       while ((match = mentionRegex.exec(body.body)) !== null) {
         const displayName = match[1];

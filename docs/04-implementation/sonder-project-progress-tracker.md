@@ -41,31 +41,36 @@
 | **VS-07A.1**| Saved Views Contract Reconciliation & Sign-Off Packet | `FEAT-C04` | PR #30 | `2de4522`<br>`8fabfc2` | Delta spec verified | **MERGED & VERIFIED** (`vs-07a.1-saved-views-contract-signoff-report.md`) |
 | **VS-07A.2**| Roadmap Reconciliation & UI/UX Baseline Audit | Governance | PR #31 | `b003b9f` | Full audit suite | **MERGED & VERIFIED** (`vs-07a.2-roadmap-reconciliation-report.md`) |
 | **VS-08A** | Collaboration Spine: Comments, @Mentions & Task Watchers | `FEAT-A04` | PR #32 | `c2cbbe1` | 24 tests | **MERGED & VERIFIED** (`TaskCollaboration.test.tsx`, `markdown-ast.test.tsx`) |
+| **VS-08A.1**| Collaboration Contract & Integration Hardening | `FEAT-A04` | PR #33 | Pending merge | 42 tests | **VERIFIED & READY FOR MERGE** (`TaskCollaborationHardening.test.tsx`) |
 
 ### A.2 Current Engineering Status & Next Milestones
 
 ```mermaid
 flowchart TD
-    Current["VS-08A: Collaboration Spine (COMPLETED & MERGED)"] --> Next["FEAT-F01a: In-App Notification Center"]
+    Current["VS-08A.1: Collaboration Contract Hardening (VERIFIED)"] --> Next["FEAT-F01a: In-App Notification Center"]
     Next --> FollowUp["FEAT-A10a/b: 30-Day Task Trash & Recovery"]
     
     subgraph Deferred ["Blocked / Deferred Track"]
         SV["VS-07B: Saved Views Implementation (BLOCKED on Decisions A-E)"]
         Trash["Purge API (Gated on DEC-OPEN-03 Owner-Only Purge Policy)"]
+        RealtimeLive["Live WebSocket Transport (Pending Gateway & Ticket Endpoints)"]
+        WatcherPersist["Cross-Session Watcher Persistence (Pending Schema Addition)"]
     end
 ```
 
-- **Completed Milestone:** `VS-08A` — Collaboration Spine: Comments, @Mentions & Task Watchers (`FEAT-A04`).
+- **Completed Hardening Milestone:** `VS-08A.1` — Collaboration Contract & Integration Hardening (`FEAT-A04`).
 - **Next Approved Engineering Priority:**
   > **MILESTONE VS-08B / FEAT-F01a: SEGMENTED IN-APP NOTIFICATION CENTER (`FEAT-F01a`)**
   - **Scope:** In-app notification bell, popover inbox, unread counts, segmented filters (Mentions, Assigned, Watching), read/unread toggles, deep-linking to task drawer.
-  - **Prerequisite Met:** Successfully established by VS-08A comment/mention/watcher domain events.
+  - **Prerequisite Met:** Successfully established by VS-08A / VS-08A.1 comment, mention, and watcher domain models.
   - **Contract Surface:** Candidate OpenAPI 0.3.20-draft (`/notifications` endpoints).
 
 ### A.3 Pending Backend & Governance Dependencies
 
 | Dependency ID | Governing Feature | Description | Blocker For | Owner |
 | :--- | :--- | :--- | :--- | :--- |
+| **DEP-COLLAB-01** | `FEAT-A04` (Collaboration) | Cross-session watcher preference persistence (`isWatching: boolean` on `TaskDto` / `TaskActivityDto`). | Cross-session watch/unwatch persistence | Backend Lead |
+| **DEP-REALTIME-01** | `FEAT-A04` / Realtime | Live WebSocket gateway (`wss://...`), auth ticket (`POST /realtime-ticket`), `work-platform.v1` protocol frames. | Live multi-client synchronization (currently event consumer abstraction) | Backend Lead & Platform Infra |
 | **DEP-SV-01** | `FEAT-C04` (Saved Views) | PO & Backend Lead sign-off on Product Decisions A–E (Default View, Quotas, Normalization, Display Options, Default View API). | Milestone VS-07B (Saved Views Implementation) | Backend Lead & Product Owner |
 | **DEP-TRASH-01** | `FEAT-A10b` (Task Trash) | Final resolution of DEC-OPEN-03 regarding explicit audited Owner purge policy vs legal hold. | Milestone VS-09 (Task Trash & Recovery) | Product Owner |
 | **DEP-ROLES-01** | `FEAT-G02b` (Custom Roles) | Finalization of custom role capability bundles and preview simulator contract. | Milestone VS-10 (Workspace Governance) | Backend Lead |
@@ -157,18 +162,18 @@ flowchart LR
 SONDER PLATFORM PROGRESS SUMMARY
 ================================================================================
 Monorepo Status:           Clean, 100% Green
-Active Baseline:           develop @ c2cbbe1 (PR #32 merged)
-Total Passing Test Suites: 48 suites (apps/web + packages/contracts)
-Total Automated Tests:     464 tests (100% passing)
+Active Baseline:           develop @ cee7ff0 (PR #32 merged & synced)
+Total Passing Test Suites: 49 suites (apps/web + packages/contracts)
+Total Automated Tests:     483 tests (100% passing)
 Documentation Checks:      51 / 51 passed (pnpm validate:docs)
 
 Track A (Engineering):
 - Phase 1 Capabilities:   18 / 24 Provisional Frontend Candidate Coverage (~75%)
 - Contract Readiness:      Candidate OpenAPI 0.3.20-draft (Live Backend Pending)
-- Merged Milestone:        VS-08A: Collaboration Spine (Comments, @Mentions & Watchers)
+- Hardened Milestone:      VS-08A.1: Collaboration Contract Hardening
 - Next Engineering Target: FEAT-F01a: In-App Notification Center
 
-Track B (UI/UX Workstream):
+Track B (UI/UX Workstream - PAUSED):
 - Research & Principles:   Approved (PR #4, 92e984e)
 - Screens Audited:         10 / 10 Core Views & Shell Modules (100%)
 - Identified Findings:     14 Findings (0 Critical, 2 High, 5 Medium, 7 Low)

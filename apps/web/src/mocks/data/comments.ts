@@ -28,8 +28,8 @@ export const initialMockMentionCandidates: MentionCandidateDto[] = [
   },
 ];
 
-export const COMMENT_1_ID = "018f98a2-comm-001-jordan-analysis";
-export const COMMENT_2_ID = "018f98a2-comm-002-alex-reply";
+export const COMMENT_1_ID = "018f98a2-3f12-7890-c001-456789abcdef";
+export const COMMENT_2_ID = "018f98a2-3f12-7890-c002-456789abcdef";
 
 const comment1Body = "Identified root cause in token-renewal.ts: parallel requests trigger duplicate refresh calls. CC @[Alex Morgan](user:018f98a2-3f12-7890-a123-456789abcdef)";
 const comment2Body = "Agreed. Will also check #ENG-102 to make sure regression tests cover this flow.";
@@ -85,7 +85,7 @@ export const initialMockComments: CommentDto[] = [
 
 export const initialMockActivity: ActivityEntryDto[] = [
   {
-    id: "018f98a2-act-001-created",
+    id: "018f98a2-3f12-7890-e001-456789abcdef",
     eventType: "task.created",
     actor: {
       id: OTHER_USER_ID,
@@ -96,7 +96,7 @@ export const initialMockActivity: ActivityEntryDto[] = [
     summary: "created task ENG-101",
   },
   {
-    id: "018f98a2-act-002-status",
+    id: "018f98a2-3f12-7890-e002-456789abcdef",
     eventType: "task.updated",
     actor: {
       id: MOCK_USER_ID,

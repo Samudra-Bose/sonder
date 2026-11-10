@@ -151,14 +151,26 @@ describe("Safe Markdown AST Parser & Renderer", () => {
       expect(screen.getByText("bold text")).toBeInTheDocument();
     });
 
-    it("renders mentions as styled badge pills", () => {
-      const ast = parseMarkdownToAst("Ping @[Alex Morgan](user:018f98a2-user-1)");
+    it("renders mentions as styled badge pills with valid canonical UUID", () => {
+      const validUserId = "018f98a2-3f12-7890-a123-456789abcdef";
+      const ast = parseMarkdownToAst(`Ping @[Alex Morgan](user:${validUserId})`);
 
       render(<CommentAstRenderer ast={ast} />);
 
       const mention = screen.getByText("@Alex Morgan");
       expect(mention).toBeInTheDocument();
-      expect(mention).toHaveAttribute("data-user-id", "018f98a2-user-1");
+      expect(mention).toHaveAttribute("data-user-id", validUserId);
+    });
+
+    it("rejects invalid non-UUID mention tokens and preserves them as literal text", () => {
+      // Non-UUID identifier should NOT match the strict canonical mention regex
+      const ast = parseMarkdownToAst("Ping @[Fake User](user:018f98a2-user-1)");
+
+      const { container } = render(<CommentAstRenderer ast={ast} />);
+
+      // Must not render a mention node/badge
+      expect(container.querySelector('[data-user-id]')).toBeNull();
+      expect(screen.getByText(/Ping @\[Fake User\]\(user:018f98a2-user-1\)/)).toBeInTheDocument();
     });
 
     it("renders task keys as interactive buttons calling onTaskKeyClick", async () => {
