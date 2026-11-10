@@ -42,12 +42,13 @@
 | **VS-07A.2**| Roadmap Reconciliation & UI/UX Baseline Audit | Governance | PR #31 | `b003b9f` | Full audit suite | **MERGED & VERIFIED** (`vs-07a.2-roadmap-reconciliation-report.md`) |
 | **VS-08A** | Collaboration Spine: Comments, @Mentions & Task Watchers | `FEAT-A04` | PR #32 | `c2cbbe1` | 24 tests | **MERGED & VERIFIED** (`TaskCollaboration.test.tsx`, `markdown-ast.test.tsx`) |
 | **VS-08A.1**| Collaboration Contract & Integration Hardening | `FEAT-A04` | PR #33 | `1803f71` | 42 tests | **MERGED & VERIFIED** (`TaskCollaborationHardening.test.tsx`) |
+| **VS-08A.2**| Realtime Event Scoping Correction & Canonical Alignment | `FEAT-A04` | PR #34 | Pending merge | 47 tests | **VERIFIED & READY FOR MERGE** (`TaskCollaborationHardening.test.tsx`) |
 
 ### A.2 Current Engineering Status & Next Milestones
 
 ```mermaid
 flowchart TD
-    Current["VS-08A.1: Collaboration Contract Hardening (VERIFIED)"] --> Next["FEAT-F01a: In-App Notification Center"]
+    Current["VS-08A.2: Realtime Event Scoping (VERIFIED)"] --> Next["FEAT-F01a: In-App Notification Center"]
     Next --> FollowUp["FEAT-A10a/b: 30-Day Task Trash & Recovery"]
     
     subgraph Deferred ["Blocked / Deferred Track"]
@@ -58,11 +59,11 @@ flowchart TD
     end
 ```
 
-- **Completed Hardening Milestone:** `VS-08A.1` — Collaboration Contract & Integration Hardening (`FEAT-A04`).
+- **Completed Hardening Milestone:** `VS-08A.2` — Realtime Event Scoping Correction & Canonical Alignment (`FEAT-A04`).
 - **Next Approved Engineering Priority:**
   > **MILESTONE VS-08B / FEAT-F01a: SEGMENTED IN-APP NOTIFICATION CENTER (`FEAT-F01a`)**
   - **Scope:** In-app notification bell, popover inbox, unread counts, segmented filters (Mentions, Assigned, Watching), read/unread toggles, deep-linking to task drawer.
-  - **Prerequisite Met:** Successfully established by VS-08A / VS-08A.1 comment, mention, and watcher domain models.
+  - **Prerequisite Met:** Successfully established by VS-08A / VS-08A.1 / VS-08A.2 comment, mention, and watcher domain models.
   - **Contract Surface:** Candidate OpenAPI 0.3.20-draft (`/notifications` endpoints).
 
 ### A.3 Pending Backend & Governance Dependencies
@@ -164,13 +165,13 @@ SONDER PLATFORM PROGRESS SUMMARY
 Monorepo Status:           Clean, 100% Green
 Active Baseline:           develop @ 1803f71 (PR #33 merged)
 Total Passing Test Suites: 49 suites (apps/web + packages/contracts)
-Total Automated Tests:     483 tests (100% passing)
+Total Automated Tests:     487 tests (100% passing)
 Documentation Checks:      51 / 51 passed (pnpm validate:docs)
 
 Track A (Engineering):
 - Phase 1 Capabilities:   18 / 24 Provisional Frontend Candidate Coverage (~75%)
 - Contract Readiness:      Candidate OpenAPI 0.3.20-draft (Live Backend Pending)
-- Hardened Milestone:      VS-08A.1: Collaboration Contract Hardening
+- Hardened Milestone:      VS-08A.2: Realtime Event Scoping Correction
 - Next Engineering Target: FEAT-F01a: In-App Notification Center
 
 Track B (UI/UX Workstream - PAUSED):

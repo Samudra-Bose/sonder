@@ -1,6 +1,6 @@
 import { useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { taskActivityQueryKey, taskWatchQueryKey } from "./useTaskComments.js";
+import { taskActivityQueryKey } from "./useTaskComments.js";
 
 /**
  * Transport Architecture Classification:
@@ -37,6 +37,27 @@ export interface UseTaskCollaborationRealtimeOptions {
 }
 
 /**
+ * Resolves the canonical task ID associated with a workspace event.
+ * Per ws-events.schema.json, OpenAPI 0.3.20-draft, and Master Spec §8:
+ * - For comment events (comment.created, comment.updated, comment.deleted),
+ *   payload.taskId explicitly identifies the parent task, while entityId identifies the comment.
+ * - For task-level events and watcher.changed, entityId identifies the task, and payload.taskId
+ *   may also mirror the task ID.
+ * Returns null if no valid task identity is present.
+ */
+function resolveEventTaskId(event: WorkspaceEventEnvelope): string | null {
+  const payloadTaskId =
+    typeof event.payload?.taskId === "string" ? event.payload.taskId.trim() : null;
+  if (payloadTaskId) {
+    return payloadTaskId;
+  }
+  if (typeof event.entityId === "string" && event.entityId.trim().length > 0) {
+    return event.entityId.trim();
+  }
+  return null;
+}
+
+/**
  * Handles incoming workspace events (comment.created, comment.updated, comment.deleted, watcher.changed)
  * with event deduplication by eventId and monotonic sequence ordering, updating the TanStack query cache.
  */
@@ -44,7 +65,7 @@ export function useTaskCollaborationRealtime({
   communityId,
   workspaceId,
   taskId,
-  currentUserId,
+  currentUserId: _currentUserId,
 }: UseTaskCollaborationRealtimeOptions) {
   const queryClient = useQueryClient();
   const processedEventIds = useRef<Set<string>>(new Set());
@@ -52,18 +73,16 @@ export function useTaskCollaborationRealtime({
 
   const handleWorkspaceEvent = useCallback(
     (event: WorkspaceEventEnvelope) => {
+      // 1. Guard active hook options
       if (!communityId || !workspaceId || !taskId) return;
-      if (event.communityId !== communityId || event.workspaceId !== workspaceId) return;
 
-      // Ensure event pertains to the active task (by entityId or payload.taskId)
-      const eventTaskId =
-        (event.payload as { taskId?: string })?.taskId ?? event.entityId;
-      if (eventTaskId && eventTaskId !== taskId && event.eventType.startsWith("comment.")) {
+      // 2. Reject events from other communities or workspaces without advancing stream state
+      if (event.communityId !== communityId || event.workspaceId !== workspaceId) {
         return;
       }
 
-      // 1. Deduplicate by eventId (LRU cache bounded to 500 events)
-      if (processedEventIds.current.has(event.eventId)) {
+      // 3. Deduplicate by eventId (LRU cache bounded to 500 events)
+      if (!event.eventId || processedEventIds.current.has(event.eventId)) {
         return;
       }
       processedEventIds.current.add(event.eventId);
@@ -74,12 +93,20 @@ export function useTaskCollaborationRealtime({
         if (firstEntry) processedEventIds.current.delete(firstEntry);
       }
 
-      // 2. Track monotonic sequence
-      if (event.workspaceSeq > latestSequence.current) {
+      // 4. Track monotonic workspace sequence for all valid events on this stream
+      if (typeof event.workspaceSeq === "number" && event.workspaceSeq > latestSequence.current) {
         latestSequence.current = event.workspaceSeq;
       }
 
-      // 3. Handle relevant collaboration events
+      // 5. Strict task-level event isolation:
+      // Every task-scoped event handled by the active task context must match the canonical task identity.
+      // Events for other tasks or missing valid task identity must never invalidate or modify active task data.
+      const eventTaskId = resolveEventTaskId(event);
+      if (!eventTaskId || eventTaskId !== taskId) {
+        return;
+      }
+
+      // 6. Handle relevant collaboration events
       switch (event.eventType) {
         case "comment.created":
         case "comment.updated":
@@ -91,26 +118,17 @@ export function useTaskCollaborationRealtime({
         }
 
         case "watcher.changed": {
-          const watcherUserId = (event.payload as { userId?: string })?.userId;
-          const payloadObj = event.payload as { watching?: boolean; isWatching?: boolean } | undefined;
-          const isWatching = payloadObj?.watching ?? payloadObj?.isWatching;
-          if (
-            typeof isWatching === "boolean" &&
-            (!watcherUserId || !currentUserId || watcherUserId === currentUserId)
-          ) {
-            queryClient.setQueryData(
-              taskWatchQueryKey(communityId, workspaceId, taskId),
-              isWatching
-            );
-          }
+          // Canonical watcher.changed payload per ws-events.schema.json, OpenAPI 0.3.20-draft,
+          // and Master Spec §8 contains only taskId and event metadata.
+          // It does NOT declare watching, isWatching, or target userId properties.
+          // In accordance with contract governance, we do not fabricate missing payload fields
+          // or mutate the current user's watcher state using undeclared properties.
+          // We invalidate task queries and activity history so server-rendered activity entries refresh.
           queryClient.invalidateQueries({
-            queryKey: taskWatchQueryKey(communityId, workspaceId, taskId),
+            queryKey: taskActivityQueryKey(communityId, workspaceId, taskId),
           });
           queryClient.invalidateQueries({
             queryKey: ["task", communityId, workspaceId, taskId],
-          });
-          queryClient.invalidateQueries({
-            queryKey: taskActivityQueryKey(communityId, workspaceId, taskId),
           });
           queryClient.invalidateQueries({ queryKey: ["my-work"] });
           break;
@@ -120,12 +138,14 @@ export function useTaskCollaborationRealtime({
           break;
       }
     },
-    [communityId, workspaceId, taskId, currentUserId, queryClient]
+    [communityId, workspaceId, taskId, queryClient]
   );
 
   return {
     handleWorkspaceEvent,
-    latestSequence: latestSequence.current,
+    get latestSequence() {
+      return latestSequence.current;
+    },
     transportClassification: REALTIME_TRANSPORT_CLASSIFICATION,
   };
 }
