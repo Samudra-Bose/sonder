@@ -2,8 +2,8 @@
 
 **Document Version:** 1.1.0<br/>
 **Last Synchronized:** 2026-11-10<br/>
-**Current Baseline Commit:** `develop @ 61c198f` (PR #31 merged, VS-08A feature branch active)<br/>
-**Governance Standard:** Dual-Track Engineering & UI/UX Governance (PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT)  
+**Current Baseline Commit:** `develop @ c2cbbe1` (PR #32 merged)<br/>
+**Governance Standard:** Dual-Track Engineering & UI/UX Governance (PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT)<br/>
 **Maintenance Rule:** This tracker is updated upon the completion of every milestone or UI/UX slice. Never fabricate completion percentages. Every completed item must link to verified Git commits, PRs, or test suites.
 
 ---
@@ -40,13 +40,13 @@
 | **VS-07A** | Saved Views Product & API Contract Readiness | `FEAT-C04` | PR #29 | `fb45f66` | Contract audit | **MERGED & VERIFIED** (`vs-07a-saved-views-contract-readiness-report.md`) |
 | **VS-07A.1**| Saved Views Contract Reconciliation & Sign-Off Packet | `FEAT-C04` | PR #30 | `2de4522`<br>`8fabfc2` | Delta spec verified | **MERGED & VERIFIED** (`vs-07a.1-saved-views-contract-signoff-report.md`) |
 | **VS-07A.2**| Roadmap Reconciliation & UI/UX Baseline Audit | Governance | PR #31 | `b003b9f` | Full audit suite | **MERGED & VERIFIED** (`vs-07a.2-roadmap-reconciliation-report.md`) |
-| **VS-08A** | Collaboration Spine: Comments, @Mentions & Task Watchers | `FEAT-A04` | PR #32 | Pending merge | 24 tests | **IMPLEMENTED & VERIFIED** (`TaskCollaboration.test.tsx`, `markdown-ast.test.tsx`) |
+| **VS-08A** | Collaboration Spine: Comments, @Mentions & Task Watchers | `FEAT-A04` | PR #32 | `c2cbbe1` | 24 tests | **MERGED & VERIFIED** (`TaskCollaboration.test.tsx`, `markdown-ast.test.tsx`) |
 
 ### A.2 Current Engineering Status & Next Milestones
 
 ```mermaid
 flowchart TD
-    Current["VS-08A: Collaboration Spine (COMPLETED & READY FOR MERGE)"] --> Next["FEAT-F01a: In-App Notification Center"]
+    Current["VS-08A: Collaboration Spine (COMPLETED & MERGED)"] --> Next["FEAT-F01a: In-App Notification Center"]
     Next --> FollowUp["FEAT-A10a/b: 30-Day Task Trash & Recovery"]
     
     subgraph Deferred ["Blocked / Deferred Track"]
@@ -157,7 +157,7 @@ flowchart LR
 SONDER PLATFORM PROGRESS SUMMARY
 ================================================================================
 Monorepo Status:           Clean, 100% Green
-Active Baseline:           feat/FE-VS08A-collaboration-spine (PR #32 pending merge)
+Active Baseline:           develop @ c2cbbe1 (PR #32 merged)
 Total Passing Test Suites: 48 suites (apps/web + packages/contracts)
 Total Automated Tests:     464 tests (100% passing)
 Documentation Checks:      51 / 51 passed (pnpm validate:docs)
@@ -165,7 +165,7 @@ Documentation Checks:      51 / 51 passed (pnpm validate:docs)
 Track A (Engineering):
 - Phase 1 Capabilities:   18 / 24 Provisional Frontend Candidate Coverage (~75%)
 - Contract Readiness:      Candidate OpenAPI 0.3.20-draft (Live Backend Pending)
-- Current Delivery:        VS-08A: Collaboration Spine (Comments, @Mentions & Watchers)
+- Merged Milestone:        VS-08A: Collaboration Spine (Comments, @Mentions & Watchers)
 - Next Engineering Target: FEAT-F01a: In-App Notification Center
 
 Track B (UI/UX Workstream):

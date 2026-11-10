@@ -1,13 +1,13 @@
 # SONDER — VS-08A DELIVERY REPORT: COLLABORATION SPINE (COMMENTS, @MENTIONS & TASK WATCHERS)
 
-**Baseline Branch**: `develop` at `61c198f`  
-**Active Working Branch**: `feat/FE-VS08A-collaboration-spine`  
-**Target Branch**: `develop`  
-**Pull Request**: Pending creation / merge  
-**Final Merge Commit**: (Pending squash-merge)  
-**Status**: CODE COMPLETE, VERIFIED & GATED — AST-Safe Markdown Comments, Threaded Replies (Max Depth 5), @Mention Autocomplete, Safe URL Schemes, Task Watcher Toggle, Realtime Stream Deduplication, Multi-Viewport QA  
-**Date**: November 10, 2026  
-**Author**: Antigravity Pair Programming Agent  
+**Baseline Branch**: `develop` at `61c198f`<br/>
+**Active Working Branch**: `feat/FE-VS08A-collaboration-spine` (merged into `develop`)<br/>
+**Target Branch**: `develop`<br/>
+**Pull Request**: [#32](https://github.com/Samudra-Bose/sonder/pull/32)<br/>
+**Final Merge Commit**: `c2cbbe1`<br/>
+**Status**: MERGED & VERIFIED — AST-Safe Markdown Comments, Threaded Replies (Max Depth 5), @Mention Autocomplete, Safe URL Schemes, Task Watcher Toggle, Realtime Stream Deduplication, Multi-Viewport QA<br/>
+**Date**: November 10, 2026<br/>
+**Author**: Antigravity Pair Programming Agent<br/>
 
 ---
 
