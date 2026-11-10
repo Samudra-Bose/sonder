@@ -92,17 +92,17 @@ Per Master Specification §5.3 and CR-10:
     - `COMMENT_UPDATE` $\to$ `UPDATES`
 
 ### 4.2 Segmentation Strategy in Frontend UI
-Because the canonical API parameter is `category?: NotificationCategory` and does not accept `reason`, the UI will provide:
-1. **Primary Tabs:**
+Because the canonical API parameter is `category?: NotificationCategory` and does not accept `reason`, the UI provides:
+1. **Primary Tabs (Server-Side Category Filtering):**
    - **All Notifications:** No `category` filter (fetches entire community inbox).
    - **Action Required:** `category=ACTION_REQUIRED`.
    - **Updates:** `category=UPDATES`.
-2. **Secondary Reason Chips (Client-Side Filter):**
-   - **Mentions:** Sub-filters for `item.reason === "MENTION"`.
-   - **Assigned:** Sub-filters for `item.reason === "TASK_ASSIGNED"`.
-   - **Watching:** Sub-filters for `item.reason === "COMMENT_UPDATE"`.
-3. **Unread Filter Toggle:**
+2. **Canonical Unread Filter Toggle:**
    - Toggle button applying `unreadOnly=true` to the active query.
+3. **Reason Metadata Display:**
+   - Each notification card clearly displays its canonical `reason` (e.g., Mention, Assigned, Overdue, Comment) via a dedicated badge.
+   - **Prohibition on Client-Side Reason Faceting:** The frontend will **NOT** implement global reason chips (e.g., Mentions-only, Assigned-only) by filtering only the currently loaded page in memory. Under cursor pagination, client-side filtering across partial pages produces misleading, incomplete inboxes and false empty states.
+   - **Future Contract Proposal:** Global reason filtering requires adding `reason?: NotificationReason` to `GET /notifications`, submitted to the Backend Lead as a proposed contract enhancement.
 
 ---
 
@@ -220,13 +220,23 @@ export const notificationQueryKeys = {
    - `onError`: Reverts query cache to snapshot.
    - `onSettled`: Invalidates all notification lists.
 
-### 7.3 Task Deep-Link Strategy
-`NotificationDto` provides `resourceType: "task"` and `resourceId: string` (task UUID).
-When clicked:
-1. If the notification title embeds a task key (e.g. `[ENG-101] Fix leak` or `Mentioned on ENG-101`), extract the key via regex.
-2. If task key extraction succeeds, invoke `openTask(taskKey)`.
-3. If title does not contain the key, navigate to `/inbox?task=${resourceId}` or resolve via `getTaskById`.
-4. Automatically trigger `markNotificationRead(notification.id)` upon navigation.
+### 7.3 Task Deep-Link Boundary & Backend Handoff (`DEP-NOTIF-02`)
+`NotificationDto` provides `resourceType: "task"` and `resourceId: string` (task UUID), but lacks `taskKey` and `workspaceId` needed by the application shell's task drawer (`/workspaces/:workspaceId/list?task=KEY`).
+
+**Strict Architectural Prohibition:**
+- The frontend will **NOT** extract task keys from notification titles using regular expressions.
+- The frontend will **NOT** guess workspace IDs or invent unapproved task-resolution endpoints.
+- The frontend will **NOT** render misleading clickable notification rows until a reliable, typed canonical navigation target is provided by the backend contract.
+
+**Contract Handoff (`DEP-NOTIF-02`):**
+In accordance with `vs-08b-notification-backend-integration-contract.md`, task deep-linking is explicitly deferred. The Backend Lead and Product Owner will review Proposal A (structured `target` object) versus Proposal B (extending `workspaceId` and `taskKey` on `NotificationDto`). Until approved, notifications remain informational cards with mark-read capability.
+
+### 7.4 Realtime Invalidation & Transport Boundary (`DEP-NOTIF-03`)
+In accordance with CR-09 and CR-10:
+- Live WebSocket transport and ticket issuance are backend dependencies.
+- The frontend will not establish an unapproved WebSocket connection or invent a polling fallback interval.
+- Notifications are retrieved via canonical REST endpoints (`/communities/{communityId}/notifications`).
+- When backend realtime transport is deployed under `DEP-NOTIF-03`, incoming `notification.created` events will update the unread count badge and invalidate TanStack Query cache to securely hydrate the full DTO via REST.
 
 ---
 

@@ -44,27 +44,37 @@
 | **VS-08A.1**| Collaboration Contract & Integration Hardening | `FEAT-A04` | PR #33 | `1803f71` | 18 tests | **MERGED & VERIFIED** (`TaskCollaborationHardening.test.tsx` [18 tests], comments module [43 tests]) |
 | **VS-08A.2**| Realtime Event Scoping Correction & Canonical Alignment | `FEAT-A04` | PR #34 | `3cbbce2` | 22 tests | **MERGED & VERIFIED** (`TaskCollaborationHardening.test.tsx` [22 tests], comments module [47 tests], monorepo [487 tests]) |
 | **VS-08B**  | Segmented In-App Notification Center (PLAN & GRILL) | `FEAT-F01a` | PR #35 | `1ac051f` | Plan & Grill | **MERGED & VERIFIED** (`vs-08b-notification-center-plan.md`, `vs-08b-notification-center-grill-report.md`) |
+| **VS-08B.0.1**| Notification API Contract Alignment & Backend Handoff | `FEAT-F01a` | PR #36 | Pending merge | Contract alignment | **READY FOR REVIEW** (`vs-08b-notification-backend-integration-contract.md`) |
 
 ### A.2 Current Engineering Status & Next Milestones
 
 ```mermaid
 flowchart TD
-    Current["VS-08B: Notification Center (PLAN & GRILL COMPLETE)"] --> Impl["VS-08B Implementation (Awaiting User Review & Approval)"]
-    Impl --> FollowUp["FEAT-A10a/b: 30-Day Task Trash & Recovery"]
-    
+    Current["VS-08B.0.1: Notification Contract Alignment & Handoff (COMPLETED)"] --> Parallel["Parallel Independent FE/BE Track"]
+
+    subgraph Parallel ["Parallel Development Track"]
+        FE_Work["VS-08B.1: Frontend REST Vertical Slice & Inbox"]
+        BE_Work["Backend Notification Service & Outbox Implementation"]
+    end
+
+    Parallel --> JointIntegration["Joint Smoke Test & Staging Verification"]
+    JointIntegration --> FollowUp["FEAT-A10a/b: 30-Day Task Trash & Recovery"]
+
     subgraph Deferred ["Blocked / Deferred Track"]
         SV["VS-07B: Saved Views Implementation (BLOCKED on Decisions A-E)"]
         Trash["Purge API (Gated on DEC-OPEN-03 Owner-Only Purge Policy)"]
         RealtimeLive["Live WebSocket Transport (Pending Gateway & Ticket Endpoints)"]
         WatcherPersist["Cross-Session Watcher Persistence (Pending Schema Addition)"]
+        NotifNav["Task Deep-Linking from Notifications (Pending DEP-NOTIF-02 Sign-Off)"]
     end
 ```
 
-- **Completed Planning Milestone:** `VS-08B` — Segmented In-App Notification Center PLAN & GRILL (`FEAT-F01a`).
-- **Next Engineering Action (Upon User Approval):**
-  > **MILESTONE VS-08B IMPLEMENTATION: SEGMENTED IN-APP NOTIFICATION CENTER (`FEAT-F01a`)**
-  - **Scope:** Header bell, popover quick triage, full `/inbox` view, `ACTION_REQUIRED` and `UPDATES` categories, client-side reason faceting, optimistic mark-read, bulk mark-all-read, task deep-linking, real-time unread count synchronization.
+- **Completed Contract Alignment Milestone:** `VS-08B.0.1` — Notification API Contract Alignment & Backend Handoff (`FEAT-F01a`).
+- **Next Controlled Implementation Action (Frontend Workstream):**
+  > **MILESTONE VS-08B.1: NOTIFICATION REST VERTICAL SLICE & FUNCTIONAL INBOX (`FEAT-F01a`)**
+  - **Scope:** Header bell, global unread badge from canonical API, `/inbox` route, category filtering (`ACTION_REQUIRED` vs `UPDATES`), unread-only toggle, optimistic single mark-read and mark-all-read mutations, MSW mock fixtures.
   - **Contract Surface:** Canonical OpenAPI 0.3.20-draft (`/communities/{communityId}/notifications` routes).
+  - **Strict Boundaries:** No mark-as-unread, no regex deep linking (informational cards only), no client-side partial reason faceting, no WebSocket connection (REST only).
 
 ### A.3 Pending Backend & Governance Dependencies
 
@@ -73,6 +83,9 @@ flowchart TD
 | **DEP-COLLAB-01** | `FEAT-A04` (Collaboration) | Cross-session watcher preference persistence (`isWatching: boolean` on `TaskDto` / `TaskActivityDto`). | Cross-session watch/unwatch persistence | Backend Lead |
 | **DEP-REALTIME-01** | `FEAT-A04` / Realtime | Live WebSocket gateway (`wss://...`), auth ticket (`POST /realtime-ticket`), `work-platform.v1` protocol frames. | Live multi-client synchronization (currently event consumer abstraction) | Backend Lead & Platform Infra |
 | **DEP-SV-01** | `FEAT-C04` (Saved Views) | PO & Backend Lead sign-off on Product Decisions A–E (Default View, Quotas, Normalization, Display Options, Default View API). | Milestone VS-07B (Saved Views Implementation) | Backend Lead & Product Owner |
+| **DEP-NOTIF-01** | `FEAT-F01a` (Notifications) | Clarify whether "Mark as Unread" is deferred post-v1.5.0 or requires an approved OpenAPI addition. | Mark-as-unread capability | Backend Lead & Product Owner |
+| **DEP-NOTIF-02** | `FEAT-F01a` (Notifications) | Joint sign-off on Proposal A (Structured `target` object) vs Proposal B (Extending `workspaceId` and `taskKey` on `NotificationDto`). | Notification-to-task deep-link navigation in `TaskPeekDrawer` | Backend Lead & Product Owner |
+| **DEP-NOTIF-03** | `FEAT-F01a` (Notifications) | Deployment of live `user-community` realtime stream and ticket validation. | Live WebSocket unread badge synchronization | Backend Lead & Platform Infra |
 | **DEP-TRASH-01** | `FEAT-A10b` (Task Trash) | Final resolution of DEC-OPEN-03 regarding explicit audited Owner purge policy vs legal hold. | Milestone VS-09 (Task Trash & Recovery) | Product Owner |
 | **DEP-ROLES-01** | `FEAT-G02b` (Custom Roles) | Finalization of custom role capability bundles and preview simulator contract. | Milestone VS-10 (Workspace Governance) | Backend Lead |
 
