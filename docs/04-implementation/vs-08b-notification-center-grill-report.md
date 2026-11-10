@@ -6,6 +6,7 @@
 **Target Repository:** `Samudra-Bose/sonder`  
 **Working Branch:** `plan/FE-VS08B-notification-center`  
 **Baseline Commit:** `develop @ 658e807`  
+**Merge Commit:** `develop @ 1ac051f` (PR #35)  
 
 ---
 
