@@ -31,9 +31,18 @@ export function escapeRawHtml(text: string): string {
 }
 
 /**
- * Regex for mention token: @[Display Name](user:uuid)
+ * Canonical UUID pattern (RFC 4122 / RFC 9562): 8-4-4-4-12 hexadecimal characters
  */
-const MENTION_REGEX = /^@\[([^\]]+)\]\(user:([^)]+)\)/;
+export const CANONICAL_UUID_PATTERN =
+  "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
+
+/**
+ * Regex for mention token: @[Display Name](user:uuid)
+ * Strictly requires a canonical 36-char hyphenated UUID to satisfy the canonical OpenAPI schema
+ * and prevent arbitrary string or malicious protocol injection into mention nodes.
+ */
+const MENTION_REGEX =
+  /^@\[([^\]]+)\]\(user:([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\)/;
 
 /**
  * Regex for task key token: #PREFIX-123
