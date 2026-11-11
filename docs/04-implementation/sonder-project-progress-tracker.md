@@ -16,7 +16,7 @@
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **VS-00** | Monorepo Tooling, ESLint, TypeScript & Vitest | — | PR #1 | `216d464` | Monorepo setup | **MERGED & VERIFIED** |
 | **VS-01** | Auth & Session Spine, Host Cookies, Fail-Closed CSRF | `FEAT-G01` | PR #2 | `9915196` | 25 tests | **MERGED & VERIFIED** (`AuthFlow.test.tsx`) |
-| **VS-02A** | Accessible Design System Primitives & Tokens | `FEAT-J03` | PR #5 | `3c4ddc7` | 16 tests | **MERGED & VERIFIED** (`design-tokens.test.ts`) |
+| **VS-02A** | Accessible Design System Primitives & Tokens | `FEAT-J03` | PR #5 | `3c4ddc7` | 24 tests | **MERGED & VERIFIED** (4 foundation suites [24 tests, 70 assertions]: `design-tokens.test.ts` [6 tests, 27 assertions], `keyboard.test.tsx` [10], `theme.test.tsx` [5], `reduced-motion.test.ts` [3]; corrects historical 16-test citation) |
 | **VS-02B** | Application Shell, Responsive Navigation Rail, Header | `FEAT-B01` | PR #6 | `8a04498` | 14 tests | **MERGED & VERIFIED** (`AppShell.test.tsx`) |
 | **VS-02C** | Workspace Context, Personal/Shared Switcher Popover | `FEAT-B01` | PR #8 | `52c30b6` | 22 tests | **MERGED & VERIFIED** (`WorkspaceSwitcher.test.tsx`) |
 | **VS-02D** | Omnibar Command Palette (`Cmd+K`), Search Results | `FEAT-C05` | PR #9 | `ab116da` | 18 tests | **MERGED & VERIFIED** (`OmnibarModal.test.tsx`) |
@@ -88,7 +88,7 @@ flowchart TD
   - **Frontend Scope vs. Production Acceptance Distinction:**
     - The 17 DONE capabilities reflect verified frontend candidate implementations operating against local mock handlers (MSW) in Vitest.
     - Passing frontend tests does NOT certify live backend availability, database ACID guarantees, production rate limits, server backups/PITR, or production acceptance.
-    - `FEAT-J03` covers accessible design system primitives, tokens, and WCAG 2.2 AA compliance on the frontend; backend edge rate limits and backup/PITR drills remain separate pending operational gates.
+    - `FEAT-J03` covers accessible design system primitives, tokens, and WCAG 2.2 AA compliance on the frontend across 4 foundation suites (24 test cases, 70 assertions: `design-tokens.test.ts` [6 tests, 27 assertions], `keyboard.test.tsx` [10], `theme.test.tsx` [5], `reduced-motion.test.ts` [3]; corrects historical 16-test citation); backend edge rate limits and backup/PITR drills remain separate pending operational gates.
     - `FEAT-G01`, `FEAT-A04`, and `FEAT-F01a` verify client-side session, collaboration, and notification center flows; live auth services, watcher DB persistence (`DEP-COLLAB-01`), live WebSocket transport (`DEP-REALTIME-01`), and live notification outbox integration remain pending backend engineering milestones.
   - **Canonical Entity Hierarchy:**
     - Strictly $\text{Community} \to \text{Workspace} \to \text{Task} \to \text{Subtask}$. Projects and Lists (as intermediate container entities) are obsolete historical artifacts.
@@ -139,7 +139,7 @@ flowchart TD
 6. **Provisional Completion Metrics:**
    Completion counts represent provisional frontend candidate coverage and must not be cited as global platform completion until live backend reconciliation occurs.
 7. **Production Security, Rate Limits & Operational Acceptance Separation (FEAT-J03):**
-   `FEAT-J03` reflects frontend accessible design system primitives, tokens, and WCAG 2.2 AA contrast/keyboard compliance. Production edge rate limiting, server backup/PITR drills, security hardening, and operational disaster rehearsals remain distinct operational gates pending backend infrastructure deployment.
+   `FEAT-J03` reflects frontend accessible design system primitives, tokens, and WCAG 2.2 AA contrast/keyboard compliance verified across 4 foundation test files (24 test cases, 70 assertions: `design-tokens.test.ts` [6 test cases, 27 assertions], `keyboard.test.tsx` [10 test cases, 23 assertions], `theme.test.tsx` [5 test cases, 16 assertions], `reduced-motion.test.ts` [3 test cases, 4 assertions]). Historical citations attributing 16 tests to `design-tokens.test.ts` alone are corrected. Production edge rate limiting, server backup/PITR drills, security hardening, and operational disaster rehearsals remain distinct operational gates pending backend infrastructure deployment.
 8. **Authentication, Notification & Collaboration Backend Separation (FEAT-G01, FEAT-A04, FEAT-F01a):**
    Frontend client state machines and UI components operate against local MSW mock fixtures. Live backend authentication services, production cookie domain infrastructure, cross-session watcher database persistence (`DEP-COLLAB-01`), live WebSocket gateways (`DEP-REALTIME-01`), and live notification event outboxes remain pending backend engineering milestones.
 
