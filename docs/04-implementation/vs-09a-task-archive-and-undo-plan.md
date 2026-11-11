@@ -178,28 +178,40 @@ Both `archiveTask` and `restoreTask` require:
 
 ## 4. Toast Lifecycle, Clock Calibration & Concurrency Protection
 
-### 4.1 Server Expiry, Clock Drift & API Header Limitations
+### 4.1 Server Expiry, Clock Drift & Advisory Countdown Limitations
 - `ArchiveTaskResultDto` provides `undoExpiresAt` (ISO 8601 UTC timestamp).
-- **Client Countdown Derivation:**
+- **Client Countdown Derivation (Advisory Only):**
   $$\text{remainingMs} = \max\left(0, \text{Date.parse}(result.undoExpiresAt) - \text{Date.now()}\right)$$
-- **API Response Header Limitation & Clock Skew:**
-  - Inspection of [`apps/web/src/lib/api-client.ts` (lines 70–110)](file:///home/samudra/Projects/VisualSCode/VisualCode/Vscoding/Sonder/apps/web/src/lib/api-client.ts#L70-L110) confirms that `apiRequest<T>` returns `(await response.json()) as T`, discarding the underlying HTTP `Response` object and its response headers (`Date`, `X-Workspace-Seq`).
-  - Consequently, client code cannot read `response.headers.get("Date")` through the standard `apiRequest` wrapper without modifying core client infrastructure.
+- **Advisory Countdown & Server Authority:**
+  - The client countdown displayed in `TaskUndoToast` is strictly **advisory** whenever client local time differs from server time.
+  - The **server remains solely authoritative** for evaluating and accepting/rejecting token validity during `POST /restore`.
+  - **Fast Client Clock Limitation:**
+    - If the client's local system clock is skewed ahead of the server clock, the local countdown will expire early while the server token is still valid.
+    - **Invariant:** A fast client clock must **not** silently be presented as proof that the server token has actually expired. It represents only an advisory local UI timeout. If the user triggers an undo action prior to local expiration, the server will evaluate and accept it authoritatively.
+  - **Slow Client Clock & Safe Rejection Handling:**
+    - If the client's system clock is skewed behind the server clock, the toast may show a positive remaining countdown after the server has already expired the token.
+    - When the user triggers Undo under this condition, the server authoritatively rejects the request with HTTP Problem Details (`409 Conflict` or `404 Not Found`).
+    - The client must handle this rejection safely: catch `ApiProblemError`, transition the toast item to `"expired"`, re-evict the task from active queries, and politely inform the user via toast/Problem Details feedback without crashing.
+  - **API Client & Header Limitations (No Unapproved Mechanisms):**
+    - Inspection of [`apps/web/src/lib/api-client.ts` (lines 70–110)](file:///home/samudra/Projects/VisualSCode/VisualCode/Vscoding/Sonder/apps/web/src/lib/api-client.ts#L70-L110) confirms that `apiRequest<T>` returns `(await response.json()) as T`, discarding the underlying HTTP `Response` object and its response headers (`Date`, `X-Workspace-Seq`).
+    - Consequently, the plan explicitly refrains from claiming exact client-side clock calibration. Exposing the HTTP `Date` header via CORS `Access-Control-Expose-Headers: Date` or modifying OpenAPI schemas to include `serverTime` metadata would require a separate approved API-client/contract RFC and is strictly deferred.
+    - `api-client.ts`, OpenAPI contracts, and generated types remain **100% untouched** in this milestone.
   - *Candidate Test Environment:* In Vitest with MSW mock handlers, MSW and the test harness execute in the same Node.js/jsdom runtime process, guaranteeing client-server clock skew is exactly zero ($\Delta t = 0$).
-  - *Production Limitation:* If client system clocks drift significantly in production:
-    - The client countdown is inherently an **approximation** whenever client clock disagrees with server time.
-    - The **server remains authoritative** when evaluating token validity.
-    - A client clock skewed ahead will cause premature local toast expiration.
-    - A client clock skewed behind will attempt restoration with an expired token, receiving Problem Details rejection (`409` or `404`). Expired-token failures must be handled safely by displaying Problem Details feedback and clearing the expired undo item.
-    - Modifying `api-client.ts` to expose the HTTP `Date` header or altering OpenAPI schemas to add a `serverTime` metadata payload would require a separate approved API-client/contract RFC and is explicitly out of scope for this plan.
 - **Background Tab Suspension Handling:**
   - When the browser tab is backgrounded, `setInterval` and `requestAnimationFrame` are throttled or frozen by browsers.
   - `TaskUndoToast.tsx` registers a `visibilitychange` event listener on `document`. When `document.visibilityState === "visible"`, `remainingMs` is immediately re-calculated against `Date.now()`, ensuring the countdown snaps accurately to true wall-clock time rather than resuming from frozen ticks.
 
 ### 4.2 Independent Undo Queue Concurrency & Concurrency Scenarios
 - **Preservation Policy:** Independent undo opportunities are strictly preserved. Sequential archives do not discard or overwrite previous undo opportunities.
-- **Queue State Registry:**
+- **Queue State Registry & Anchor Data Structure:**
   ```typescript
+  interface QueryMembershipAnchor {
+    existed: boolean;
+    recordedIndex: number;
+    prevTaskId: string | null;
+    nextTaskId: string | null;
+  }
+
   interface UndoItemState {
     taskId: string;
     taskKey: string;
@@ -207,7 +219,7 @@ Both `archiveTask` and `restoreTask` require:
     undoExpiresAt: string;
     status: "idle" | "restoring" | "restored" | "expired" | "error";
     taskSnapshot: TaskDto;
-    queryMemberships: Map<string, { existed: boolean; index: number }>;
+    queryMemberships: Map<string, QueryMembershipAnchor>;
   }
   ```
 - **Concurrency Scenarios & Deterministic Rules:**
@@ -298,18 +310,23 @@ sequenceDiagram
 ### 6.1 Multi-View Membership Tracking Across Query Specifications
 In Sonder, the four presentation views (List, Board, Calendar, Timeline) and active filters (status, assignee, priority, search text) use different `querySpecJson` parameters:
 - `["communities", communityId, "workspaces", workspaceId, "tasks", "query", querySpecJson]`
-- Assuming a single array index or global membership is fundamentally invalid because:
+- Assuming a single array index or global membership across views is fundamentally invalid because:
   - A task may be at index 4 in List View, in the second lane of Board View, and completely absent from a filtered view (e.g. `statusCategory: "IN_PROGRESS"`).
-- **Per-Query Membership Tracking Algorithm:**
+- **Per-Query Membership & Anchor Tracking Algorithm:**
   1. At archive invocation, locate all active queries matching prefix `["communities", communityId, "workspaces", workspaceId, "tasks", "query"]`.
   2. For each query cache entry `[queryKey, data]`:
      - Search `data.items` for `task.id === targetTaskId`.
      - Record in `queryMemberships`:
        ```typescript
        const index = data.items.findIndex(t => t.id === targetTaskId);
+       const prevTask = index > 0 ? data.items[index - 1] : null;
+       const nextTask = index >= 0 && index < data.items.length - 1 ? data.items[index + 1] : null;
+
        queryMemberships.set(JSON.stringify(queryKey), {
          existed: index !== -1,
-         index: index !== -1 ? index : -1,
+         recordedIndex: index,
+         prevTaskId: prevTask ? prevTask.id : null,
+         nextTaskId: nextTask ? nextTask.id : null,
        });
        ```
      - If `existed` is `true`, optimistically filter out the target task. If `false`, leave the query cache untouched.
@@ -319,24 +336,33 @@ In Sonder, the four presentation views (List, Board, Calendar, Timeline) and act
 
 ### 6.2 Differentiating Archive Failure from Restore Failure
 1. **Archive Mutation Failure (Rollback of Optimistic Archive):**
-   - If `POST /archive` fails:
-     - For each cached query:
-       - If `queryMemberships.get(key)?.existed === true`:
-         - Read *current* query items.
-         - Check if the task is already present (e.g. from a concurrent background fetch).
-         - If absent, surgically re-insert `taskSnapshot` at `Math.min(recordedIndex, currentItems.length)`.
-         - **Preserves concurrent changes to other tasks:** Other tasks in the array are untouched.
-         - **Avoids overwriting newer edits to target task:** If current query already contains a newer version of the task, do not overwrite it.
-       - If `existed === false`: Do NOT insert the task into a query where it did not belong.
-     - Restore single-task query to `singleTaskSnapshot`.
-     - Invalidate workspace task queries to ensure eventual consistency.
+   - Triggered when `POST /archive` fails (network error, 4xx/5xx).
+   - For each cached query:
+     - If `queryMemberships.get(key)?.existed === true`:
+       - Read *current* query items.
+       - Check if the task is already present (e.g. from a concurrent background fetch). If already present, do not duplicate.
+       - **Anchor-Based Surgical Insertion (Preserving Order under Concurrent Updates):**
+         1. Check if `prevTaskId` still exists in current items: if so, insert immediately after `prevTaskId`.
+         2. Else check if `nextTaskId` still exists in current items: if so, insert immediately before `nextTaskId`.
+         3. If neither neighbor anchor is found (e.g. due to concurrent inserts, deletes, or heavy reordering), insert at clamped `Math.min(recordedIndex, currentItems.length)` AND mark the query for **immediate background invalidation/refetch** (`queryClient.invalidateQueries({ queryKey })`) so authoritative server ordering is reconstructed cleanly.
+       - **Preserves concurrent changes to other tasks:** Other tasks in the array are untouched.
+       - **Avoids overwriting newer edits to target task:** If current query already contains a newer version of the task, do not overwrite it.
+     - If `existed === false`: Do NOT insert the task into a query where it did not belong (strictly preserving filtered query semantics).
+   - Restore single-task query to `singleTaskSnapshot`.
+   - Invalidate workspace task queries to ensure eventual consistency.
 2. **Restore Mutation Failure (Rollback of Optimistic Un-Archive):**
-   - If `POST /restore` fails (e.g., expired token, network failure):
-     - The optimistic un-archive temporarily re-inserted the task into queries.
-     - The rollback must re-evict the task from all active view queries.
-     - Single-task query is reset to `ARCHIVED`.
-     - Display Problem Details error ("Undo failed: token expired").
-     - Invalidate affected queries.
+   - Triggered when user clicked "Undo" (or pressed `Z`), the task was optimistically re-inserted, but `POST /restore` failed (e.g., token expired `409 Problem`, network drop).
+   - **Rollback Action:** The optimistic un-archive must be rolled back by re-evicting the task from all active view queries to prevent leaving it incorrectly visible.
+   - Single-task query is reset to `lifecycleState: "ARCHIVED"`.
+   - Display Problem Details feedback ("Undo failed: token expired" or network error).
+   - Invalidate affected queries.
+3. **Successful Undo Restoration Semantics:**
+   - When `POST /restore` succeeds (`200 OK`), the server returns the authoritative `TaskDto` (`lifecycleState: "ACTIVE"`, `archivedAt: null`).
+   - The client uses this **returned server `TaskDto`** (rather than a stale local snapshot).
+   - For each matching view query:
+     - Evaluate whether the restored task matches the query's actual filtering specification (e.g. status, assignee).
+     - If it matches, insert it into the view query cache using neighbor anchors or sorting rules, and trigger background `invalidateQueries` to ensure exact, authoritative server-calculated rank and layout placement.
+     - If it does not match (e.g. filtered out by status), do not insert it.
 
 ---
 
