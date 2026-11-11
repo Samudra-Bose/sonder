@@ -1,11 +1,11 @@
 # SONDER — FRONTEND COMPLETION TRACKER & FIRST-LOOK READINESS
 
-**Document Version:** 1.4.0<br/>
+**Document Version:** 1.5.0<br/>
 **Last Synchronized:** 2026-11-11<br/>
-**Current Baseline Commit:** `develop @ 8f887de` (with PR #37 Notification Center merge commit `1b88e60`)<br/>
+**Current Baseline Commit:** `develop @ a9b093c` (PR #39 merged)<br/>
 **Governance Standard:** Dual-Track Engineering & UI/UX Governance (PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT)<br/>
 **Milestone:** VS-09.0 — Complete Frontend Audit, Feature Inventory & First-Look Readiness<br/>
-**Status Recommendation:** `BACKEND-INDEPENDENT WORK REMAINS — IMPLEMENTATION REQUIRED.`
+**Status Recommendation:** `BACKEND-INDEPENDENT WORK REMAINS — IMPLEMENTATION REQUIRED (MERGED, VERIFIED & LOCKED in PR #39).`
 
 ---
 
@@ -35,12 +35,12 @@ Milestone **VS-09.0** provides a complete, read-only audit of the entire Sonder 
    In accordance with our contract-first dual-track engineering model:
    - **Provisional Frontend Candidate Coverage:** Capabilities marked as **DONE** represent verified frontend client implementations operating against local mock handlers (MSW) in Vitest.
    - **Backend & Infrastructure Distinction:** Passing frontend unit, integration, and mock tests does NOT certify live backend availability, database ACID guarantees, production rate limits, server backup/PITR recovery, or production acceptance.
-   - **`FEAT-J03` Scope Clarification & Test Evidence Breakdown:** `FEAT-J03` covers accessible design system primitives, tokens, and WCAG 2.2 AA contrast/keyboard standards on the frontend. Automated test evidence spans 4 foundation test files totaling 24 test cases (70 assertions):
-     - `apps/web/src/lib/design-tokens.test.ts`: 6 test cases (27 assertions) verifying component corner radius scale in `@theme`, light and dark status border tokens, brand accent button contrast, danger button contrast $\ge$ 4.5:1, and semantic `.focus-ring` utility tokens.
-     - `apps/web/src/lib/keyboard.test.tsx`: 10 test cases (23 assertions) verifying shortcut dispatch, required modifiers, strict modifier exclusion, duplicate registrations (LIFO and priority), input element suppression, and unmount cleanup.
-     - `apps/web/src/lib/theme.test.tsx`: 5 test cases (16 assertions) verifying `ThemeProvider` / `useTheme` default resolution, dark/light toggle, localStorage persistence, system preference synchronization, and provider boundary validation.
-     - `apps/web/src/lib/reduced-motion.test.ts`: 3 test cases (4 assertions) verifying `usePrefersReducedMotion` false/true states and dynamic matchMedia listener updates.
-     - *Historical Citation Correction:* Historical project documentation (PR #5, PR #31) cited "16 tests" for `design-tokens.test.ts`. Direct execution confirms `design-tokens.test.ts` contains exactly 6 test cases (27 assertions); the historical "16" conflated combined foundation suite counts (such as 6 design-token + 10 keyboard test cases, or the 16 assertions in `theme.test.tsx`).
+   - **`FEAT-J03` Scope Clarification & Test Evidence Breakdown:** `FEAT-J03` covers accessible design system primitives, tokens, and WCAG 2.2 AA contrast/keyboard standards on the frontend. Automated test evidence spans 4 foundation test files totaling 24 Vitest tests across 70 static `expect()` call sites (not 70 runtime assertions):
+     - `apps/web/src/lib/design-tokens.test.ts`: 6 test cases (27 static `expect()` call sites) verifying component corner radius scale in `@theme`, light and dark status border tokens, brand accent button contrast, danger button contrast $\ge$ 4.5:1, and semantic `.focus-ring` utility tokens.
+     - `apps/web/src/lib/keyboard.test.tsx`: 10 test cases (23 static `expect()` call sites) verifying shortcut dispatch, required modifiers, strict modifier exclusion, duplicate registrations (LIFO and priority), input element suppression, and unmount cleanup.
+     - `apps/web/src/lib/theme.test.tsx`: 5 test cases (16 static `expect()` call sites) verifying `ThemeProvider` / `useTheme` default resolution, dark/light toggle, localStorage persistence, system preference synchronization, and provider boundary validation.
+     - `apps/web/src/lib/reduced-motion.test.ts`: 3 test cases (4 static `expect()` call sites) verifying `usePrefersReducedMotion` false/true states and dynamic matchMedia listener updates.
+     - *Historical Citation Correction:* Historical project documentation (PR #5, PR #31) cited "16 tests" for `design-tokens.test.ts`. Direct execution confirms `design-tokens.test.ts` contains exactly 6 test cases (27 static `expect()` call sites); the historical "16" conflated combined foundation suite counts (such as 6 design-token + 10 keyboard test cases, or the 16 assertions in `theme.test.tsx`).
      - *Production Acceptance Distinction:* These frontend test suites verify UI component styling and browser token behavior; they do NOT test or prove backend security, edge rate limits, server backups/PITR drills, or production disaster recovery, which remain distinct platform engineering gates pending backend infrastructure deployment.
    - **`FEAT-G01` Scope Clarification:** `FEAT-G01` verifies frontend session state, CSRF fail-closed client headers, cookie lifecycle, and auto-refresh against MSW. Live backend authentication services, production cookie domain infrastructure, and OAuth provider integrations remain pending.
    - **`FEAT-A04` Scope Clarification:** `FEAT-A04` verifies the collaboration UI, threaded comments, AST-safe markdown, @mentions, and optimistic watcher toggle. Cross-session watcher persistence (`DEP-COLLAB-01`) and live WebSocket synchronization (`DEP-REALTIME-01`) remain pending backend engineering milestones.
@@ -167,7 +167,7 @@ Below is the definitive enumeration of all 70 canonical FEAT patterns. Every act
 | **FEAT-J01a**| Filtered View UTF-8 CSV Export | M1.2 | **NOT STARTED** | None | None | "Export CSV" trigger on `TaskViewToolbar.tsx`. |
 | **FEAT-J01b**| Guided CSV Import Wizard with Dry-Run Validation | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2. |
 | **FEAT-J02** | Selected-Field Offline Task Editing & Queued Sync | M1.3 | **NOT STARTED** | None | None | IndexedDB queue, 14-day expiry, FIFO replay (CR-15). |
-| **FEAT-J03** | Accessible Design System Primitives & Tokens (WCAG 2.2 AA) | M1.1 | **DONE** | `index.css`, `design-tokens.ts`, `keyboard.ts`, `theme.tsx`, `reduced-motion.ts` | `design-tokens.test.ts` (6), `keyboard.test.tsx` (10), `theme.test.tsx` (5), `reduced-motion.test.ts` (3) | Frontend design system tokens, WCAG 2.2 AA contrast, semantic focus rings, keyboard conflict resolution, theme provider, and reduced motion verified across 4 foundation suites (24 test cases, 70 assertions: `design-tokens.test.ts` [6 tests, 27 assertions], `keyboard.test.tsx` [10 tests, 23 assertions], `theme.test.tsx` [5 tests, 16 assertions], `reduced-motion.test.ts` [3 tests, 4 assertions]; corrects historical 16-test citation). Production backend edge rate limiting, server backup/PITR drills, and operational infrastructure acceptance remain separate pending operational gates. |
+| **FEAT-J03** | Accessible Design System Primitives & Tokens (WCAG 2.2 AA) | M1.1 | **DONE** | `index.css`, `design-tokens.ts`, `keyboard.ts`, `theme.tsx`, `reduced-motion.ts` | `design-tokens.test.ts` (6), `keyboard.test.tsx` (10), `theme.test.tsx` (5), `reduced-motion.test.ts` (3) | Frontend design system tokens, WCAG 2.2 AA contrast, semantic focus rings, keyboard conflict resolution, theme provider, and reduced motion verified across 4 foundation suites (24 Vitest tests, 70 static `expect()` call sites: `design-tokens.test.ts` [6 tests, 27 expect() sites], `keyboard.test.tsx` [10 tests, 23 expect() sites], `theme.test.tsx` [5 tests, 16 expect() sites], `reduced-motion.test.ts` [3 tests, 4 expect() sites]; corrects historical 16-test citation). Production backend edge rate limiting, server backup/PITR drills, and operational infrastructure acceptance remain separate pending operational gates. |
 | **FEAT-K01** | External Smart URL Metadata Chips (GitHub, Figma, Docs) | M1.2 | **PARTIAL** | Plain URLs render safely in markdown | `markdown-ast.test.tsx` (25) | Rich OpenGraph preview chips in task drawer. |
 | **FEAT-L01** | Optional AI Task Breakdown & Thread Summarization | Phase 4 | **DEFERRED** | None | None | Deferred to Phase 4. |
 

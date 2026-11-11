@@ -1,8 +1,8 @@
 # SONDER — CANONICAL PROJECT PROGRESS TRACKER
 
-**Document Version:** 1.4.0<br/>
+**Document Version:** 1.5.0<br/>
 **Last Synchronized:** 2026-11-11<br/>
-**Current Baseline Commit:** `develop @ 8f887de` (with PR #37 merge commit `1b88e60`)<br/>
+**Current Baseline Commit:** `develop @ a9b093c` (PR #39 merged)<br/>
 **Governance Standard:** Dual-Track Engineering & UI/UX Governance (PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT)<br/>
 **Maintenance Rule:** This tracker is updated upon the completion of every milestone or UI/UX slice. Never fabricate completion percentages. Every completed item must link to verified Git commits, PRs, or test suites.
 
@@ -16,7 +16,7 @@
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **VS-00** | Monorepo Tooling, ESLint, TypeScript & Vitest | — | PR #1 | `216d464` | Monorepo setup | **MERGED & VERIFIED** |
 | **VS-01** | Auth & Session Spine, Host Cookies, Fail-Closed CSRF | `FEAT-G01` | PR #2 | `9915196` | 25 tests | **MERGED & VERIFIED** (`AuthFlow.test.tsx`) |
-| **VS-02A** | Accessible Design System Primitives & Tokens | `FEAT-J03` | PR #5 | `3c4ddc7` | 24 tests | **MERGED & VERIFIED** (4 foundation suites [24 tests, 70 assertions]: `design-tokens.test.ts` [6 tests, 27 assertions], `keyboard.test.tsx` [10], `theme.test.tsx` [5], `reduced-motion.test.ts` [3]; corrects historical 16-test citation) |
+| **VS-02A** | Accessible Design System Primitives & Tokens | `FEAT-J03` | PR #5 | `3c4ddc7` | 24 tests | **MERGED & VERIFIED** (4 foundation suites [24 Vitest tests, 70 static `expect()` call sites]: `design-tokens.test.ts` [6 tests, 27 expect() sites], `keyboard.test.tsx` [10], `theme.test.tsx` [5], `reduced-motion.test.ts` [3]; corrects historical 16-test citation) |
 | **VS-02B** | Application Shell, Responsive Navigation Rail, Header | `FEAT-B01` | PR #6 | `8a04498` | 14 tests | **MERGED & VERIFIED** (`AppShell.test.tsx`) |
 | **VS-02C** | Workspace Context, Personal/Shared Switcher Popover | `FEAT-B01` | PR #8 | `52c30b6` | 22 tests | **MERGED & VERIFIED** (`WorkspaceSwitcher.test.tsx`) |
 | **VS-02D** | Omnibar Command Palette (`Cmd+K`), Search Results | `FEAT-C05` | PR #9 | `ab116da` | 18 tests | **MERGED & VERIFIED** (`OmnibarModal.test.tsx`) |
@@ -46,13 +46,13 @@
 | **VS-08B**  | Segmented In-App Notification Center (PLAN & GRILL) | `FEAT-F01a` | PR #35 | `1ac051f` | Plan & Grill | **MERGED & VERIFIED** (`vs-08b-notification-center-plan.md`, `vs-08b-notification-center-grill-report.md`) |
 | **VS-08B.0.1**| Notification API Contract Alignment & Backend Handoff | `FEAT-F01a` | PR #36 | `43282e0` | Contract alignment | **MERGED & VERIFIED** (`vs-08b-notification-backend-integration-contract.md`) |
 | **VS-08B.1** | Notification REST Vertical Slice & Functional Inbox | `FEAT-F01a` | PR #37 | `1b88e60` | 19 tests | **MERGED & VERIFIED** (`Notifications.test.tsx` [19 tests], monorepo [506 tests]) |
-| **VS-09.0**  | Complete Frontend Audit, Feature Inventory & First-Look Readiness | Governance / Audit | PR #38 (Initial audit `5ca384b`), New PR pending review | `develop @ 8f887de` | 506 tests | **REVISED AUDIT AWAITING REVIEW** (`sonder-frontend-completion-tracker.md`) |
+| **VS-09.0**  | Complete Frontend Audit, Feature Inventory & First-Look Readiness | Governance / Audit | PR #38 (Initial audit `5ca384b`), PR #39 (Reconciled audit `a9b093c`) | `a9b093c` | 506 tests | **MERGED, VERIFIED & LOCKED** (`sonder-frontend-completion-tracker.md`, `vs-09.0-delivery-report.md`) |
 
 ### A.2 Current Engineering Status & Next Milestones
 
 ```mermaid
 flowchart TD
-    Current["VS-09.0: Complete Frontend Audit & Inventory (REVISED - AWAITING REVIEW)"] --> InventoryA["Inventory A: Backend-Independent Backlog (8 Milestones)"]
+    Current["VS-09.0: Complete Frontend Audit & Inventory (MERGED & LOCKED)"] --> InventoryA["Inventory A: Backend-Independent Backlog (8 Milestones)"]
 
     subgraph InventoryA ["Ready for Implementation (MSW / Candidate OpenAPI)"]
         VS09A["VS-09A: Single-Item Archive & 10s Undo (FEAT-A10a)"]
@@ -80,15 +80,15 @@ flowchart TD
     end
 ```
 
-- **Current Audit Milestone:** `VS-09.0` — Complete Frontend Audit, Feature Inventory & First-Look Readiness (documented in `docs/04-implementation/sonder-frontend-completion-tracker.md`).
-  - **Audit Revision Status:** The original PR #38 merged with the earlier audit version. The corrected audit revision is based on commit `e4a9ab0` + follow-up refinements, with the corrected documentation awaiting review in a new pull request (PR #39). It is not locked or fully accepted yet.
+- **Completed Audit & Reconciliation Milestone:** `VS-09.0` — Complete Frontend Audit, Feature Inventory & First-Look Readiness (documented in `docs/04-implementation/sonder-frontend-completion-tracker.md`).
+  - **Audit Status:** **MERGED, VERIFIED & LOCKED** on `develop @ a9b093c`. Initial audit PR #38 merged at `5ca384b`; reconciled canonical audit PR #39 merged at `a9b093c`. Full verification evidence recorded in `docs/04-implementation/vs-09.0-delivery-report.md`.
   - **Reconciled Feature Accounting:**
     - 70 canonical `FEAT-` patterns surveyed: 53 actionable concrete capabilities + 7 composite parents + 10 research family boundary markers.
     - Status distribution across 53 actionable capabilities: **17 DONE**, **3 PARTIAL**, **10 NOT STARTED (Phase 1)**, **3 DECISION BLOCKED** (`FEAT-C04`, `FEAT-C06`, `FEAT-G02b`), **1 BACKEND DEPENDENT** (`FEAT-F02`), **12 DEFERRED (Phases 2–4)**, **7 REJECTED / OUT OF SCOPE** (Sum: $17 + 3 + 10 + 3 + 1 + 12 + 7 = 53$).
   - **Frontend Scope vs. Production Acceptance Distinction:**
     - The 17 DONE capabilities reflect verified frontend candidate implementations operating against local mock handlers (MSW) in Vitest.
     - Passing frontend tests does NOT certify live backend availability, database ACID guarantees, production rate limits, server backups/PITR, or production acceptance.
-    - `FEAT-J03` covers accessible design system primitives, tokens, and WCAG 2.2 AA compliance on the frontend across 4 foundation suites (24 test cases, 70 assertions: `design-tokens.test.ts` [6 tests, 27 assertions], `keyboard.test.tsx` [10], `theme.test.tsx` [5], `reduced-motion.test.ts` [3]; corrects historical 16-test citation); backend edge rate limits and backup/PITR drills remain separate pending operational gates.
+    - `FEAT-J03` covers accessible design system primitives, tokens, and WCAG 2.2 AA compliance on the frontend across 4 foundation suites (24 Vitest tests, 70 static `expect()` call sites: `design-tokens.test.ts` [6 tests, 27 expect() sites], `keyboard.test.tsx` [10], `theme.test.tsx` [5], `reduced-motion.test.ts` [3]; corrects historical 16-test citation); backend edge rate limits and backup/PITR drills remain separate pending operational gates.
     - `FEAT-G01`, `FEAT-A04`, and `FEAT-F01a` verify client-side session, collaboration, and notification center flows; live auth services, watcher DB persistence (`DEP-COLLAB-01`), live WebSocket transport (`DEP-REALTIME-01`), and live notification outbox integration remain pending backend engineering milestones.
   - **Canonical Entity Hierarchy:**
     - Strictly $\text{Community} \to \text{Workspace} \to \text{Task} \to \text{Subtask}$. Projects and Lists (as intermediate container entities) are obsolete historical artifacts.
@@ -109,7 +109,7 @@ flowchart TD
     - Dev command: `pnpm --filter @sonder/web dev` (Port 3000). Active mock user: Alex Morgan (`alex.morgan@example.com`).
   - **UI/UX Track B Governance:** UI/UX Track B remains strictly **PAUSED** until remaining Phase 1 backend-independent features are implemented and locked.
 - **Next Engineering Action:**
-  - Await review and merge of the new VS-09.0 pull request (PR #39), then begin Phase 1 milestone **VS-09A: Single-Item Task Archive & 10-Second Undo Toast (`FEAT-A10a`)** upon approval, following PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT.
+  - Complete post-merge documentation synchronization and present the **VS-09A PLAN** (Single-Item Task Archive & 10-Second Undo Toast, `FEAT-A10a`) for human review and GRILL before proceeding to implementation.
 
 ### A.3 Pending Backend & Governance Dependencies
 
@@ -139,7 +139,7 @@ flowchart TD
 6. **Provisional Completion Metrics:**
    Completion counts represent provisional frontend candidate coverage and must not be cited as global platform completion until live backend reconciliation occurs.
 7. **Production Security, Rate Limits & Operational Acceptance Separation (FEAT-J03):**
-   `FEAT-J03` reflects frontend accessible design system primitives, tokens, and WCAG 2.2 AA contrast/keyboard compliance verified across 4 foundation test files (24 test cases, 70 assertions: `design-tokens.test.ts` [6 test cases, 27 assertions], `keyboard.test.tsx` [10 test cases, 23 assertions], `theme.test.tsx` [5 test cases, 16 assertions], `reduced-motion.test.ts` [3 test cases, 4 assertions]). Historical citations attributing 16 tests to `design-tokens.test.ts` alone are corrected. Production edge rate limiting, server backup/PITR drills, security hardening, and operational disaster rehearsals remain distinct operational gates pending backend infrastructure deployment.
+   `FEAT-J03` reflects frontend accessible design system primitives, tokens, and WCAG 2.2 AA contrast/keyboard compliance verified across 4 foundation test files (24 Vitest tests, 70 static `expect()` call sites: `design-tokens.test.ts` [6 test cases, 27 expect() sites], `keyboard.test.tsx` [10 test cases, 23 expect() sites], `theme.test.tsx` [5 test cases, 16 expect() sites], `reduced-motion.test.ts` [3 test cases, 4 expect() sites]). Historical citations attributing 16 tests to `design-tokens.test.ts` alone are corrected. Production edge rate limiting, server backup/PITR drills, security hardening, and operational disaster rehearsals remain distinct operational gates pending backend infrastructure deployment.
 8. **Authentication, Notification & Collaboration Backend Separation (FEAT-G01, FEAT-A04, FEAT-F01a):**
    Frontend client state machines and UI components operate against local MSW mock fixtures. Live backend authentication services, production cookie domain infrastructure, cross-session watcher database persistence (`DEP-COLLAB-01`), live WebSocket gateways (`DEP-REALTIME-01`), and live notification event outboxes remain pending backend engineering milestones.
 
