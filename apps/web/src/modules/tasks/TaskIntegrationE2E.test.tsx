@@ -769,9 +769,9 @@ describe("VS-03 Stage 6: Integration QA & End-to-End Regression Hardening", () =
         expect(result.current.isSuccess).toBe(true);
       });
 
-      // Engineering Platform has 7 tasks in mock store:
-      // (ENG-101, ENG-105, ENG-106, ENG-102, ENG-099, READ-ONLY task, ENG-088)
-      expect(result.current.data?.items.length).toBe(7);
+      // Engineering Platform has 6 active tasks in mock store (ENG-088 is archived and excluded):
+      // (ENG-101, ENG-105, ENG-106, ENG-102, ENG-099, READ-ONLY task)
+      expect(result.current.data?.items.length).toBe(6);
       expect(result.current.data?.nextCursor).toBeNull();
     });
 
@@ -806,8 +806,8 @@ describe("VS-03 Stage 6: Integration QA & End-to-End Regression Hardening", () =
         expect(result.current.isSuccess).toBe(true);
       });
 
-      // Recovers by restarting from page 1 and loads all 7 tasks
-      expect(result.current.data?.items.length).toBe(7);
+      // Recovers by restarting from page 1 and loads all 6 active tasks (excluding archived ENG-088)
+      expect(result.current.data?.items.length).toBe(6);
     });
 
     it("displays partial-warning banner in SubtaskList when continuation cursor exceeds bounded maxPages", async () => {

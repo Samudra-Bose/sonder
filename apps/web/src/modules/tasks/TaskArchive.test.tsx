@@ -955,3 +955,136 @@ describe("VS-09A: Single-Item Task Archive & 10-Second Undo Toast (ARCH-01 to AR
     expect(screen.getByTestId("undo-toast-ENG-101")).toBeInTheDocument();
   });
 });
+
+describe("VS-09A Regression Suite: Archive Exclusion, Deep-Linking & Cache Invalidation", () => {
+  beforeEach(() => {
+    resetTaskMockState();
+    clearShortcutRegistry();
+  });
+
+  afterEach(() => {
+    clearShortcutRegistry();
+  });
+
+  // 1. An initially archived task is excluded from active task queries
+  it("REG-01: initially archived task (ENG-088) is excluded from active workspace task queries", async () => {
+    renderTaskTestEnvironment();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("task-list-row-ENG-101")).toBeInTheDocument();
+    });
+
+    // Active query must not include ENG-088
+    expect(screen.queryByTestId("task-list-row-ENG-088")).not.toBeInTheDocument();
+  });
+
+  // 2. A dynamically archived task remains excluded after a fresh query
+  it("REG-02: dynamically archived task remains excluded after a fresh query", async () => {
+    const user = userEvent.setup();
+    const { queryClient } = renderTaskTestEnvironment();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("task-list-row-ENG-101")).toBeInTheDocument();
+    });
+
+    // Archive ENG-101
+    await user.click(screen.getByTestId("task-actions-trigger-ENG-101"));
+    await user.click(await screen.findByTestId("task-action-archive-ENG-101"));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("task-list-row-ENG-101")).not.toBeInTheDocument();
+    });
+
+    // Trigger fresh server query refetch
+    await act(async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["communities", MOCK_COMMUNITY_1_ID, "workspaces", WS_SHARED_ENG_ID, "tasks", "query"],
+      });
+    });
+
+    // ENG-101 remains excluded on fresh query
+    await waitFor(() => {
+      expect(screen.queryByTestId("task-list-row-ENG-101")).not.toBeInTheDocument();
+    });
+  });
+
+  // 3. An archived task can still be opened through its supported detail/deep-link path
+  it("REG-03: archived task (ENG-088) can still be opened through supported detail/deep-link path", async () => {
+    renderTaskTestEnvironment({
+      initialEntries: ["/?task=ENG-088"],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("task-peek-drawer-desktop")).toBeInTheDocument();
+      expect(screen.getByText("ENG-088")).toBeInTheDocument();
+    });
+  });
+
+  // 4. The archived drawer remains read-only
+  it("REG-04: archived drawer displays archived notice and remains read-only with no archive button", async () => {
+    renderTaskTestEnvironment({
+      initialEntries: ["/?task=ENG-088"],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("task-peek-drawer-desktop")).toBeInTheDocument();
+      expect(screen.getByText("ENG-088")).toBeInTheDocument();
+    });
+
+    // Verify archived banner notice is present
+    await waitFor(() => {
+      expect(
+        screen.getByText("This task is archived. Active triage and editing are disabled.")
+      ).toBeInTheDocument();
+    });
+
+    // Verify archive action is NOT exposed
+    expect(screen.queryByTestId("archive-task-button")).not.toBeInTheDocument();
+  });
+
+  // 5. List and Board do not reintroduce archived tasks after cache invalidation or refetch
+  it("REG-05: List and Board views do not reintroduce archived tasks after cache invalidation or refetch", async () => {
+    const user = userEvent.setup();
+    const { queryClient } = renderTaskTestEnvironment({
+      children: <WorkspaceTasksView defaultView="board" />,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("task-board-card-ENG-101")).toBeInTheDocument();
+    });
+
+    // Archive ENG-101 from board
+    await user.click(screen.getByTestId("task-actions-trigger-ENG-101"));
+    await user.click(await screen.findByTestId("task-action-archive-ENG-101"));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("task-board-card-ENG-101")).not.toBeInTheDocument();
+    });
+
+    // Invalidate and refetch queries
+    await act(async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["communities", MOCK_COMMUNITY_1_ID, "workspaces", WS_SHARED_ENG_ID, "tasks", "query"],
+      });
+    });
+
+    // Verify card is NOT reintroduced
+    await waitFor(() => {
+      expect(screen.queryByTestId("task-board-card-ENG-101")).not.toBeInTheDocument();
+    });
+  });
+
+  // 6. Restore fails closed if undoToken is missing
+  it("REG-06: restoreTask fails closed when undoToken is empty or missing", async () => {
+    const { restoreTask } = await import("./api.js");
+
+    await expect(
+      restoreTask({
+        communityId: MOCK_COMMUNITY_1_ID,
+        workspaceId: WS_SHARED_ENG_ID,
+        taskId: "task-test-id",
+        undoToken: "",
+      })
+    ).rejects.toThrow("Missing undoToken");
+  });
+});
