@@ -1,11 +1,11 @@
 # SONDER — FRONTEND COMPLETION TRACKER & FIRST-LOOK READINESS
 
-**Document Version:** 1.5.0<br/>
+**Document Version:** 1.6.0<br/>
 **Last Synchronized:** 2026-11-11<br/>
-**Current Baseline Commit:** `develop @ a9b093c` (PR #39 merged)<br/>
+**Current Baseline Commit:** `develop @ 26bd662` (with PR #39 audit merge `a9b093c` and PR #40 documentation lock `26bd662`)<br/>
 **Governance Standard:** Dual-Track Engineering & UI/UX Governance (PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT)<br/>
 **Milestone:** VS-09.0 — Complete Frontend Audit, Feature Inventory & First-Look Readiness<br/>
-**Status Recommendation:** `BACKEND-INDEPENDENT WORK REMAINS — IMPLEMENTATION REQUIRED (MERGED, VERIFIED & LOCKED in PR #39).`
+**Status Recommendation:** `BACKEND-INDEPENDENT WORK REMAINS — IMPLEMENTATION REQUIRED (MERGED, VERIFIED & LOCKED in PR #39 @ a9b093c, locked in PR #40 @ 26bd662).`
 
 ---
 
