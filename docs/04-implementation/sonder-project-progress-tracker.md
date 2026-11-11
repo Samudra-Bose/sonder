@@ -1,8 +1,8 @@
 # SONDER — CANONICAL PROJECT PROGRESS TRACKER
 
-**Document Version:** 1.2.0<br/>
+**Document Version:** 1.3.0<br/>
 **Last Synchronized:** 2026-11-11<br/>
-**Current Baseline Commit:** `develop @ 1b88e60` (PR #37 merged)<br/>
+**Current Baseline Commit:** `develop @ 8f887de` (with PR #37 merge commit `1b88e60`)<br/>
 **Governance Standard:** Dual-Track Engineering & UI/UX Governance (PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT)<br/>
 **Maintenance Rule:** This tracker is updated upon the completion of every milestone or UI/UX slice. Never fabricate completion percentages. Every completed item must link to verified Git commits, PRs, or test suites.
 
@@ -46,38 +46,61 @@
 | **VS-08B**  | Segmented In-App Notification Center (PLAN & GRILL) | `FEAT-F01a` | PR #35 | `1ac051f` | Plan & Grill | **MERGED & VERIFIED** (`vs-08b-notification-center-plan.md`, `vs-08b-notification-center-grill-report.md`) |
 | **VS-08B.0.1**| Notification API Contract Alignment & Backend Handoff | `FEAT-F01a` | PR #36 | `43282e0` | Contract alignment | **MERGED & VERIFIED** (`vs-08b-notification-backend-integration-contract.md`) |
 | **VS-08B.1** | Notification REST Vertical Slice & Functional Inbox | `FEAT-F01a` | PR #37 | `1b88e60` | 19 tests | **MERGED & VERIFIED** (`Notifications.test.tsx` [19 tests], monorepo [506 tests]) |
+| **VS-09.0**  | Complete Frontend Audit, Feature Inventory & First-Look Readiness | Governance / Audit | Pending PR #38 | `develop @ 8f887de` | 506 tests | **DOCUMENTATION COMPLETE (PR PENDING)** (`sonder-frontend-completion-tracker.md`) |
 
 ### A.2 Current Engineering Status & Next Milestones
 
 ```mermaid
 flowchart TD
-    Current["VS-08B.1: Notification REST Vertical Slice & Inbox (COMPLETED)"] --> Parallel["Parallel Independent FE/BE Track"]
+    Current["VS-09.0: Complete Frontend Audit & Inventory (DOC COMPLETE - PR PENDING)"] --> InventoryA["Inventory A: Backend-Independent Backlog (8 Milestones)"]
 
-    subgraph Parallel ["Parallel Development Track"]
-        FE_Work["Frontend Notification Center Ready (Candidate Contract Validated)"]
-        BE_Work["Backend Notification Service & Outbox Implementation"]
+    subgraph InventoryA ["Ready for Implementation (MSW / Candidate OpenAPI)"]
+        VS09A["VS-09A: Single-Item Archive & 10s Undo (FEAT-A10a)"]
+        VS09B["VS-09B: 30-Day Trash & Bulk Action Bar (FEAT-A10b)"]
+        VS09C["VS-09C: Starter Templates Picker UI (FEAT-D05a)"]
+        VS09D["VS-09D: Work-Item Archetypes (FEAT-A01)"]
+        VS09E["VS-09E: Task Cloning (FEAT-A07)"]
+        VS09F["VS-09F: Filtered CSV Export (FEAT-J01a)"]
+        VS09G["VS-09G: Collapsible Backlog Tray (FEAT-B02)"]
+        VS09H["VS-09H: Workspace Settings Shell & Fields (FEAT-D01/D04a)"]
     end
 
-    Parallel --> JointIntegration["Joint Smoke Test & Staging Verification"]
-    JointIntegration --> FollowUp["FEAT-A10a/b: 30-Day Task Trash & Recovery"]
+    InventoryA --> FirstLook["First-Look Functional Experience Complete"]
+    FirstLook --> UnfreezeUX["Evaluate Unfreezing UI/UX Track B (Slices UX-1 - UX-4)"]
 
-    subgraph Deferred ["Blocked / Deferred Track"]
-        SV["VS-07B: Saved Views Implementation (BLOCKED on Decisions A-E)"]
-        Trash["Purge API (Gated on DEC-OPEN-03 Owner-Only Purge Policy)"]
-        RealtimeLive["Live WebSocket Transport (Pending Gateway & Ticket Endpoints)"]
-        WatcherPersist["Cross-Session Watcher Persistence (Pending Schema Addition)"]
-        NotifNav["Task Deep-Linking from Notifications (Pending DEP-NOTIF-02 Sign-Off)"]
+    subgraph BlockedDeferred ["Blocked / Backend Dependent Track"]
+        SV["VS-07B: Saved Views (BLOCKED on Decisions A-E)"]
+        Swimlanes["Board Swimlanes & Display Options (FEAT-C06 - BLOCKED on Decision D)"]
+        CustomRoles["Custom Roles Builder (FEAT-G02b - BLOCKED on DEP-ROLES-01)"]
+        Purge["Hard Purge API (Gated on DEC-OPEN-03 Owner Policy)"]
+        RealtimeLive["Live WebSocket Gateway (DEP-REALTIME-01)"]
+        WatcherPersist["Cross-Session Watchers (DEP-COLLAB-01)"]
+        NotifDeepLink["Notification Task Deep-Linking (DEP-NOTIF-02)"]
+        OfflineTask["Offline Task Editing (FEAT-J02 / M1.3)"]
     end
 ```
 
-- **Completed Implementation Milestone:** `VS-08B.1` — Notification REST Vertical Slice & Functional Inbox (`FEAT-F01a`), PR #37 (`1b88e60`).
-  - **Scope:** Header bell with unread badge and quick preview popover, full `/inbox` route with category tabs (`All`, `Action Required`, `Updates`), unread-only switch, cursor pagination, guarded optimistic single mark-read (only decrements unread count if item is confirmed unread in cache) and mark-all-read mutations with snapshot rollback, MSW mock fixtures.
-  - **Contract Surface:** Canonical OpenAPI 0.3.20-draft (`/communities/{communityId}/notifications` routes).
-  - **Strict Boundaries:** No mark-as-unread, no regex deep linking (informational cards only pending `DEP-NOTIF-02`), no client-side partial reason faceting, no WebSocket connection (REST only).
-  - **Quality Gates:** 19/19 focused tests, 506/506 monorepo tests, zero TypeScript errors, production build verified, 51/51 documentation checks passed.
-  - **Status:** Frontend REST vertical slice complete. Live backend implementation and contract sign-off for deep-link navigation fields (`DEP-NOTIF-02`) remain pending with Backend Lead and Product Owner.
+- **Current Audit Milestone:** `VS-09.0` — Complete Frontend Audit, Feature Inventory & First-Look Readiness (documented in `docs/04-implementation/sonder-frontend-completion-tracker.md`).
+  - **Reconciled Feature Accounting:**
+    - 70 canonical `FEAT-` patterns surveyed: 53 actionable concrete capabilities + 7 composite parents + 10 research family boundary markers.
+    - Status distribution across 53 actionable capabilities: **17 DONE**, **3 PARTIAL**, **10 NOT STARTED (Phase 1)**, **3 DECISION BLOCKED** (`FEAT-C04`, `FEAT-C06`, `FEAT-G02b`), **1 BACKEND DEPENDENT** (`FEAT-F02`), **12 DEFERRED (Phases 2–4)**, **7 REJECTED / OUT OF SCOPE** (Sum: $17 + 3 + 10 + 3 + 1 + 12 + 7 = 53$).
+  - **Offline Editing Classification:**
+    - Reconciled discrepancy between historical Master Spec draft (labeled Phase 3) and approved Master PRD (§2.1 M1.3 and §2.2).
+    - Preserved approved product direction: `FEAT-J02` belongs to **Milestone M1.3 (Phase 1)**, bounded to cached tasks with 14-day queue age, FIFO replay, CR-15 allow-list, and per-field conflict detection.
+  - **Tightened VS-09A Scope:**
+    - Separates single-item archive & 10s undo toast (`FEAT-A10a`, hotkey `Z`) from bulk archive and Trash recovery view (`FEAT-A10b`).
+    - Preserves 30-day soft-delete restoration.
+    - Automatic permanent deletion is strictly prohibited.
+    - Permanent purge remains Owner-authorized, explicitly audited, and disabled until `DEC-OPEN-03` is resolved.
+    - MSW mock fixtures operate strictly in browser memory, not production persistence.
+  - **Core Audit Finding:** `BACKEND-INDEPENDENT WORK REMAINS — IMPLEMENTATION REQUIRED.`
+  - **First-Look Runtime Status:**
+    - 50 test files and 506 tests passing in Vitest (`jsdom`).
+    - Development server was **not launched** during this documentation audit pass.
+    - Dev command: `pnpm --filter @sonder/web dev` (Port 3000). Active mock user: Alex Morgan (`alex.morgan@example.com`).
+  - **UI/UX Track B Governance:** UI/UX Track B remains strictly **PAUSED** until remaining Phase 1 backend-independent features are implemented and locked.
 - **Next Engineering Action:**
-  - Await joint sign-off on `DEP-NOTIF-02` (Proposal A vs Proposal B for task deep-linking) or begin next approved independent frontend vertical slice as directed by maintainer.
+  - Begin Phase 1 milestone **VS-09A: Single-Item Task Archive & 10-Second Undo Toast (`FEAT-A10a`)** upon approval, following PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT.
 
 ### A.3 Pending Backend & Governance Dependencies
 
@@ -179,19 +202,26 @@ flowchart LR
 SONDER PLATFORM PROGRESS SUMMARY
 ================================================================================
 Monorepo Status:           Clean, 100% Green
-Active Baseline:           develop @ 1b88e60 (PR #37 merged)
+Active Baseline:           develop @ 8f887de (with PR #37 merge commit 1b88e60)
 Total Passing Test Suites: 50 suites (apps/web + packages/contracts)
 Total Automated Tests:     506 tests (100% passing)
 Documentation Checks:      51 / 51 passed (pnpm validate:docs)
 
 Track A (Engineering):
-- Phase 1 Capabilities:   19 / 24 Provisional Frontend Candidate Coverage (~79%)
+- Canonical Feature Audit: 70 canonical FEAT patterns accounted for in sonder-frontend-completion-tracker.md:
+                           - 53 Actionable Concrete Capabilities
+                           - 7 Composite Parent Identifiers
+                           - 10 Research Family Range Bounds
+- Actionable Status (53):  17 DONE, 3 PARTIAL, 10 NOT STARTED (Phase 1), 3 DECISION BLOCKED,
+                           1 BACKEND DEPENDENT, 12 DEFERRED, 7 REJECTED (Total: 53)
 - Contract Readiness:      Candidate OpenAPI 0.3.20-draft (Live Backend Pending)
-- Hardened Milestone:      VS-08B.1: Notification REST Vertical Slice & Functional Inbox
-- Next Engineering Target: DEP-NOTIF-02 Joint Sign-Off / Backend Verification
+- Latest Hardened Feature: VS-08B.1: Notification REST Vertical Slice & Functional Inbox
+- Current Milestone:       VS-09.0: Complete Frontend Audit & Inventory (DOC COMPLETE - PR PENDING)
+- Next Engineering Target: VS-09A: Single-Item Task Archive & 10s Undo Toast (FEAT-A10a)
 
 Track B (UI/UX Workstream - PAUSED):
 - Research & Principles:   Approved (PR #4, 92e984e)
+- Status:                  Strictly PAUSED pending completion of Inventory A backlog
 - Screens Audited:         10 / 10 Core Views & Shell Modules (100%)
 - Identified Findings:     14 Findings (0 Critical, 2 High, 5 Medium, 7 Low)
 - Execution Plan:          4 Independent Slices (UX-1 through UX-4)
