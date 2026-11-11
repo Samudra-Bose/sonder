@@ -1,8 +1,8 @@
 # SONDER — CANONICAL PROJECT PROGRESS TRACKER
 
-**Document Version:** 1.5.0<br/>
+**Document Version:** 1.6.0<br/>
 **Last Synchronized:** 2026-11-11<br/>
-**Current Baseline Commit:** `develop @ a9b093c` (PR #39 merged)<br/>
+**Current Baseline Commit:** `develop @ 26bd662` (with PR #39 audit merge `a9b093c` and PR #40 documentation lock `26bd662`)<br/>
 **Governance Standard:** Dual-Track Engineering & UI/UX Governance (PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT)<br/>
 **Maintenance Rule:** This tracker is updated upon the completion of every milestone or UI/UX slice. Never fabricate completion percentages. Every completed item must link to verified Git commits, PRs, or test suites.
 
@@ -46,7 +46,7 @@
 | **VS-08B**  | Segmented In-App Notification Center (PLAN & GRILL) | `FEAT-F01a` | PR #35 | `1ac051f` | Plan & Grill | **MERGED & VERIFIED** (`vs-08b-notification-center-plan.md`, `vs-08b-notification-center-grill-report.md`) |
 | **VS-08B.0.1**| Notification API Contract Alignment & Backend Handoff | `FEAT-F01a` | PR #36 | `43282e0` | Contract alignment | **MERGED & VERIFIED** (`vs-08b-notification-backend-integration-contract.md`) |
 | **VS-08B.1** | Notification REST Vertical Slice & Functional Inbox | `FEAT-F01a` | PR #37 | `1b88e60` | 19 tests | **MERGED & VERIFIED** (`Notifications.test.tsx` [19 tests], monorepo [506 tests]) |
-| **VS-09.0**  | Complete Frontend Audit, Feature Inventory & First-Look Readiness | Governance / Audit | PR #38 (Initial audit `5ca384b`), PR #39 (Reconciled audit `a9b093c`) | `a9b093c` | 506 tests | **MERGED, VERIFIED & LOCKED** (`sonder-frontend-completion-tracker.md`, `vs-09.0-delivery-report.md`) |
+| **VS-09.0**  | Complete Frontend Audit, Feature Inventory & First-Look Readiness | Governance / Audit | PR #38 (`5ca384b`), PR #39 (`a9b093c`), PR #40 (`26bd662`) | `a9b093c`<br>`26bd662` | 506 tests | **MERGED, VERIFIED & LOCKED** (`sonder-frontend-completion-tracker.md`, `vs-09.0-delivery-report.md`) |
 
 ### A.2 Current Engineering Status & Next Milestones
 
@@ -81,7 +81,7 @@ flowchart TD
 ```
 
 - **Completed Audit & Reconciliation Milestone:** `VS-09.0` — Complete Frontend Audit, Feature Inventory & First-Look Readiness (documented in `docs/04-implementation/sonder-frontend-completion-tracker.md`).
-  - **Audit Status:** **MERGED, VERIFIED & LOCKED** on `develop @ a9b093c`. Initial audit PR #38 merged at `5ca384b`; reconciled canonical audit PR #39 merged at `a9b093c`. Full verification evidence recorded in `docs/04-implementation/vs-09.0-delivery-report.md`.
+  - **Audit Status:** **MERGED, VERIFIED & LOCKED** on `develop @ 26bd662`. Initial audit PR #38 merged at `5ca384b`; reconciled canonical audit PR #39 merged at `a9b093c`; canonical post-merge documentation lock PR #40 merged at `26bd662`. Full verification evidence recorded in `docs/04-implementation/vs-09.0-delivery-report.md`.
   - **Reconciled Feature Accounting:**
     - 70 canonical `FEAT-` patterns surveyed: 53 actionable concrete capabilities + 7 composite parents + 10 research family boundary markers.
     - Status distribution across 53 actionable capabilities: **17 DONE**, **3 PARTIAL**, **10 NOT STARTED (Phase 1)**, **3 DECISION BLOCKED** (`FEAT-C04`, `FEAT-C06`, `FEAT-G02b`), **1 BACKEND DEPENDENT** (`FEAT-F02`), **12 DEFERRED (Phases 2–4)**, **7 REJECTED / OUT OF SCOPE** (Sum: $17 + 3 + 10 + 3 + 1 + 12 + 7 = 53$).
@@ -215,7 +215,7 @@ flowchart LR
 SONDER PLATFORM PROGRESS SUMMARY
 ================================================================================
 Monorepo Status:           Clean, 100% Green
-Active Baseline:           develop @ a9b093c (PR #39 merged)
+Active Baseline:           develop @ 26bd662 (PR #40 merged)
 Total Passing Test Suites: 50 suites (apps/web + packages/contracts)
 Total Automated Tests:     506 tests (100% passing)
 Documentation Checks:      51 / 51 passed (pnpm validate:docs)
