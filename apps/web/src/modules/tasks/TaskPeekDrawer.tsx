@@ -9,6 +9,7 @@ import {
   Hash,
   Lock,
   ArrowRightLeft,
+  Archive,
 } from "lucide-react";
 import {
   Dialog,

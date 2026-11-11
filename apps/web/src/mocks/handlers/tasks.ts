@@ -56,6 +56,25 @@ const querySnapshots = new Map<string, QuerySnapshotRecord>();
 let forceSnapshotExpired = false;
 let forceSnapshotExpiredOnce = false;
 
+export interface MockUndoTokenRecord {
+  taskId: string;
+  workspaceId: string;
+  undoExpiresAt: string;
+  trashExpiresAt: string;
+}
+const mockUndoTokens = new Map<string, MockUndoTokenRecord>();
+
+export function getMockUndoTokens(): Map<string, MockUndoTokenRecord> {
+  return mockUndoTokens;
+}
+
+export function expireMockUndoToken(undoToken: string): void {
+  const record = mockUndoTokens.get(undoToken);
+  if (record) {
+    record.undoExpiresAt = new Date(Date.now() - 1000).toISOString();
+  }
+}
+
 export function setForceExpireSnapshot(expired: boolean, once = false): void {
   forceSnapshotExpired = expired;
   forceSnapshotExpiredOnce = once;
@@ -113,6 +132,7 @@ export function resetTaskMockState(): void {
   workspaceSeqCounters[WS_PERSONAL_ALEX_ID] = 2;
   processedTaskMutations.clear();
   querySnapshots.clear();
+  mockUndoTokens.clear();
   forceSnapshotExpired = false;
   forceSnapshotExpiredOnce = false;
   tasksDelayMs = 0;
@@ -1158,7 +1178,9 @@ export const taskHandlers = [
 
       // Initial query without existing valid snapshot - create new snapshot
       if (!snapshot) {
-        let allFiltered = currentMockTasks.filter((t) => t.workspaceId === workspaceId);
+        let allFiltered = currentMockTasks.filter(
+          (t) => t.workspaceId === workspaceId && !t.archivedAt
+        );
 
         const subtaskMode = body.querySpec?.subtaskMode ?? "NESTED";
         if (subtaskMode === "TOP_LEVEL_ONLY") {
@@ -1745,6 +1767,254 @@ export const taskHandlers = [
       };
 
       return HttpResponse.json(result, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "private, no-store",
+          "X-Workspace-Seq": String(newSeq),
+        },
+      });
+    }
+  ),
+
+  // 7. POST /api/v1/communities/:communityId/workspaces/:workspaceId/tasks/:taskId/archive
+  http.post(
+    "/api/v1/communities/:communityId/workspaces/:workspaceId/tasks/:taskId/archive",
+    async ({ params }) => {
+      if (tasksDelayMs > 0) {
+        await delay(tasksDelayMs);
+      }
+
+      if (matchesErrorOverride("POST")) {
+        return HttpResponse.json(tasksErrorOverride!.problem, {
+          status: tasksErrorOverride!.status,
+          headers: { "Content-Type": "application/problem+json" },
+        });
+      }
+
+      const { workspaceId, taskId } = params as {
+        communityId: string;
+        workspaceId: string;
+        taskId: string;
+      };
+
+      const workspace = mockWorkspacesCommunity1.find((w) => w.id === workspaceId);
+      if (!workspace) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/workspace-not-found",
+            title: "Workspace Not Found",
+            status: 404,
+            detail: `Workspace '${workspaceId}' not found.`,
+            code: "WORKSPACE_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      const task = currentMockTasks.find(
+        (t) => t.id === taskId && t.workspaceId === workspaceId
+      );
+      if (!task) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/task-not-found",
+            title: "Task Not Found",
+            status: 404,
+            detail: `Task '${taskId}' was not found in workspace '${workspaceId}'.`,
+            code: "TASK_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      // Check permission (fail-closed)
+      if (!task.effectivePermissions || !task.effectivePermissions.canArchive) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/forbidden",
+            title: "Forbidden",
+            status: 403,
+            detail: "You do not have permission to archive this task.",
+            code: "FORBIDDEN",
+          },
+          { status: 403, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      // Already archived
+      if (task.archivedAt) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/task-already-archived",
+            title: "Task Already Archived",
+            status: 409,
+            detail: `Task '${taskId}' is already archived.`,
+            code: "TASK_ALREADY_ARCHIVED",
+          },
+          { status: 409, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      const undoToken = `ut_${task.id.replace(/-/g, "")}_${generateUuidV7().replace(/-/g, "")}`;
+      const undoExpiresAt = new Date(Date.now() + 10000).toISOString();
+      const trashExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+      mockUndoTokens.set(undoToken, {
+        taskId: task.id,
+        workspaceId,
+        undoExpiresAt,
+        trashExpiresAt,
+      });
+
+      task.archivedAt = new Date().toISOString();
+      task.lifecycleState = "ARCHIVED";
+      task.updatedAt = new Date().toISOString();
+      task.version += 1;
+
+      // Invalidate existing query snapshots
+      querySnapshots.clear();
+
+      const newSeq = (workspaceSeqCounters[workspaceId] ?? 100) + 1;
+      workspaceSeqCounters[workspaceId] = newSeq;
+
+      const result: ApiSchema<"ArchiveTaskResultDto"> = {
+        taskId: task.id,
+        undoToken,
+        undoExpiresAt,
+        trashExpiresAt,
+      };
+
+      return HttpResponse.json(result, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "private, no-store",
+          "X-Workspace-Seq": String(newSeq),
+        },
+      });
+    }
+  ),
+
+  // 8. POST /api/v1/communities/:communityId/workspaces/:workspaceId/tasks/:taskId/restore
+  http.post(
+    "/api/v1/communities/:communityId/workspaces/:workspaceId/tasks/:taskId/restore",
+    async ({ params, request }) => {
+      if (tasksDelayMs > 0) {
+        await delay(tasksDelayMs);
+      }
+
+      if (matchesErrorOverride("POST")) {
+        return HttpResponse.json(tasksErrorOverride!.problem, {
+          status: tasksErrorOverride!.status,
+          headers: { "Content-Type": "application/problem+json" },
+        });
+      }
+
+      const { workspaceId, taskId } = params as {
+        communityId: string;
+        workspaceId: string;
+        taskId: string;
+      };
+
+      const workspace = mockWorkspacesCommunity1.find((w) => w.id === workspaceId);
+      if (!workspace) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/workspace-not-found",
+            title: "Workspace Not Found",
+            status: 404,
+            detail: `Workspace '${workspaceId}' not found.`,
+            code: "WORKSPACE_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      const task = currentMockTasks.find(
+        (t) => t.id === taskId && t.workspaceId === workspaceId
+      );
+      if (!task) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/task-not-found",
+            title: "Task Not Found",
+            status: 404,
+            detail: `Task '${taskId}' was not found in workspace '${workspaceId}'.`,
+            code: "TASK_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      const rawBody = await request.text().catch(() => "{}");
+      let body: Partial<ApiSchema<"RestoreTaskRequest">> = {};
+      try {
+        if (rawBody) body = JSON.parse(rawBody);
+      } catch {
+        // empty body ok
+      }
+
+      // Check undoToken if provided
+      if (body.undoToken) {
+        const record = mockUndoTokens.get(body.undoToken);
+        if (!record || record.taskId !== taskId) {
+          return HttpResponse.json(
+            {
+              type: "https://errors.sonder.platform/undo-token-invalid",
+              title: "Invalid Undo Token",
+              status: 409,
+              detail: "The provided undo token is invalid or has already been used.",
+              code: "UNDO_TOKEN_INVALID",
+            },
+            { status: 409, headers: { "Content-Type": "application/problem+json" } }
+          );
+        }
+
+        if (Date.now() > Date.parse(record.undoExpiresAt)) {
+          mockUndoTokens.delete(body.undoToken);
+          return HttpResponse.json(
+            {
+              type: "https://errors.sonder.platform/undo-token-expired",
+              title: "Undo Token Expired",
+              status: 409,
+              detail: "The 10-second undo window has expired.",
+              code: "UNDO_TOKEN_EXPIRED",
+            },
+            { status: 409, headers: { "Content-Type": "application/problem+json" } }
+          );
+        }
+
+        // Token consumed atomically
+        mockUndoTokens.delete(body.undoToken);
+      } else {
+        // Missing undo token in VS-09A context: verify restore permissions
+        if (!task.effectivePermissions || !task.effectivePermissions.canRestore) {
+          return HttpResponse.json(
+            {
+              type: "https://errors.sonder.platform/undo-token-required",
+              title: "Undo Token Required",
+              status: 400,
+              detail: "An undo token is required for immediate task restoration.",
+              code: "UNDO_TOKEN_REQUIRED",
+            },
+            { status: 400, headers: { "Content-Type": "application/problem+json" } }
+          );
+        }
+      }
+
+      task.archivedAt = null;
+      task.lifecycleState = "ACTIVE";
+      task.updatedAt = new Date().toISOString();
+      task.version += 1;
+
+      // Invalidate existing query snapshots
+      querySnapshots.clear();
+
+      const newSeq = (workspaceSeqCounters[workspaceId] ?? 100) + 1;
+      workspaceSeqCounters[workspaceId] = newSeq;
+
+      return HttpResponse.json(task, {
         status: 200,
         headers: {
           "Content-Type": "application/json",

@@ -11,6 +11,9 @@ import type {
   MoveTaskParams,
   TaskMoveResultDto,
   TaskViewQueryRequest,
+  ArchiveTaskResultDto,
+  ArchiveTaskParams,
+  RestoreTaskParams,
 } from "./types.js";
 
 /**
@@ -142,6 +145,52 @@ export async function moveTask({
     {
       method: "POST",
       body: JSON.stringify(data),
+      csrfToken,
+      mutationId,
+    }
+  );
+}
+
+/**
+ * Archives a single task with a 10-second undo token and 30-day trash retention.
+ * Requires fail-closed canArchive authorization and UUIDv7 idempotency key.
+ */
+export async function archiveTask({
+  communityId,
+  workspaceId,
+  taskId,
+  reason,
+  csrfToken,
+  mutationId,
+}: ArchiveTaskParams): Promise<ArchiveTaskResultDto> {
+  return apiRequest<ArchiveTaskResultDto>(
+    `/communities/${encodeURIComponent(communityId)}/workspaces/${encodeURIComponent(workspaceId)}/tasks/${encodeURIComponent(taskId)}/archive`,
+    {
+      method: "POST",
+      body: JSON.stringify(reason ? { reason } : {}),
+      csrfToken,
+      mutationId,
+    }
+  );
+}
+
+/**
+ * Restores an archived task using the server-issued undo token.
+ * Validates undo token within the 10-second advisory window.
+ */
+export async function restoreTask({
+  communityId,
+  workspaceId,
+  taskId,
+  undoToken,
+  csrfToken,
+  mutationId,
+}: RestoreTaskParams): Promise<TaskDto> {
+  return apiRequest<TaskDto>(
+    `/communities/${encodeURIComponent(communityId)}/workspaces/${encodeURIComponent(workspaceId)}/tasks/${encodeURIComponent(taskId)}/restore`,
+    {
+      method: "POST",
+      body: JSON.stringify(undoToken ? { undoToken } : {}),
       csrfToken,
       mutationId,
     }

@@ -18,6 +18,9 @@ export type QuerySortTerm = ApiSchema<"QuerySortTerm">;
 export type QueryDateWindow = ApiSchema<"QueryDateWindow">;
 export type MoveTaskRequest = ApiSchema<"MoveTaskRequest">;
 export type TaskMoveResultDto = ApiSchema<"TaskMoveResultDto">;
+export type ArchiveRequest = ApiSchema<"ArchiveRequest">;
+export type ArchiveTaskResultDto = ApiSchema<"ArchiveTaskResultDto">;
+export type RestoreTaskRequest = ApiSchema<"RestoreTaskRequest">;
 
 export interface GetTaskParams {
   communityId: string;
@@ -61,6 +64,24 @@ export interface MoveTaskParams {
   taskId: string;
   data: MoveTaskRequest;
   csrfToken: string;
+  mutationId?: string;
+}
+
+export interface ArchiveTaskParams {
+  communityId: string;
+  workspaceId: string;
+  taskId: string;
+  reason?: string;
+  csrfToken?: string;
+  mutationId?: string;
+}
+
+export interface RestoreTaskParams {
+  communityId: string;
+  workspaceId: string;
+  taskId: string;
+  undoToken?: string;
+  csrfToken?: string;
   mutationId?: string;
 }
 
