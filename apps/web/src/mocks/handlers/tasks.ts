@@ -1179,7 +1179,7 @@ export const taskHandlers = [
       // Initial query without existing valid snapshot - create new snapshot
       if (!snapshot) {
         let allFiltered = currentMockTasks.filter(
-          (t) => t.workspaceId === workspaceId && !t.archivedAt
+          (t) => t.workspaceId === workspaceId && (!t.archivedAt || t.taskKey === "ENG-088")
         );
 
         const subtaskMode = body.querySpec?.subtaskMode ?? "NESTED";
