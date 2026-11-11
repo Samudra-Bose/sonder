@@ -1,8 +1,8 @@
 # SONDER — CANONICAL PROJECT PROGRESS TRACKER
 
-**Document Version:** 1.1.0<br/>
-**Last Synchronized:** 2026-11-10<br/>
-**Current Baseline Commit:** `develop @ 3cbbce2` (PR #34 merged)<br/>
+**Document Version:** 1.2.0<br/>
+**Last Synchronized:** 2026-11-11<br/>
+**Current Baseline Commit:** `develop @ 1b88e60` (PR #37 merged)<br/>
 **Governance Standard:** Dual-Track Engineering & UI/UX Governance (PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT)<br/>
 **Maintenance Rule:** This tracker is updated upon the completion of every milestone or UI/UX slice. Never fabricate completion percentages. Every completed item must link to verified Git commits, PRs, or test suites.
 
@@ -45,15 +45,16 @@
 | **VS-08A.2**| Realtime Event Scoping Correction & Canonical Alignment | `FEAT-A04` | PR #34 | `3cbbce2` | 22 tests | **MERGED & VERIFIED** (`TaskCollaborationHardening.test.tsx` [22 tests], comments module [47 tests], monorepo [487 tests]) |
 | **VS-08B**  | Segmented In-App Notification Center (PLAN & GRILL) | `FEAT-F01a` | PR #35 | `1ac051f` | Plan & Grill | **MERGED & VERIFIED** (`vs-08b-notification-center-plan.md`, `vs-08b-notification-center-grill-report.md`) |
 | **VS-08B.0.1**| Notification API Contract Alignment & Backend Handoff | `FEAT-F01a` | PR #36 | `43282e0` | Contract alignment | **MERGED & VERIFIED** (`vs-08b-notification-backend-integration-contract.md`) |
+| **VS-08B.1** | Notification REST Vertical Slice & Functional Inbox | `FEAT-F01a` | PR #37 | `1b88e60` | 19 tests | **MERGED & VERIFIED** (`Notifications.test.tsx` [19 tests], monorepo [506 tests]) |
 
 ### A.2 Current Engineering Status & Next Milestones
 
 ```mermaid
 flowchart TD
-    Current["VS-08B.0.1: Notification Contract Alignment & Handoff (COMPLETED)"] --> Parallel["Parallel Independent FE/BE Track"]
+    Current["VS-08B.1: Notification REST Vertical Slice & Inbox (COMPLETED)"] --> Parallel["Parallel Independent FE/BE Track"]
 
     subgraph Parallel ["Parallel Development Track"]
-        FE_Work["VS-08B.1: Frontend REST Vertical Slice & Inbox"]
+        FE_Work["Frontend Notification Center Ready (Candidate Contract Validated)"]
         BE_Work["Backend Notification Service & Outbox Implementation"]
     end
 
@@ -69,12 +70,14 @@ flowchart TD
     end
 ```
 
-- **Completed Contract Alignment Milestone:** `VS-08B.0.1` — Notification API Contract Alignment & Backend Handoff (`FEAT-F01a`).
-- **Next Controlled Implementation Action (Frontend Workstream):**
-  > **MILESTONE VS-08B.1: NOTIFICATION REST VERTICAL SLICE & FUNCTIONAL INBOX (`FEAT-F01a`)**
-  - **Scope:** Header bell, global unread badge from canonical API, `/inbox` route, category filtering (`ACTION_REQUIRED` vs `UPDATES`), unread-only toggle, optimistic single mark-read and mark-all-read mutations, MSW mock fixtures.
+- **Completed Implementation Milestone:** `VS-08B.1` — Notification REST Vertical Slice & Functional Inbox (`FEAT-F01a`), PR #37 (`1b88e60`).
+  - **Scope:** Header bell with unread badge and quick preview popover, full `/inbox` route with category tabs (`All`, `Action Required`, `Updates`), unread-only switch, cursor pagination, guarded optimistic single mark-read (only decrements unread count if item is confirmed unread in cache) and mark-all-read mutations with snapshot rollback, MSW mock fixtures.
   - **Contract Surface:** Canonical OpenAPI 0.3.20-draft (`/communities/{communityId}/notifications` routes).
-  - **Strict Boundaries:** No mark-as-unread, no regex deep linking (informational cards only), no client-side partial reason faceting, no WebSocket connection (REST only).
+  - **Strict Boundaries:** No mark-as-unread, no regex deep linking (informational cards only pending `DEP-NOTIF-02`), no client-side partial reason faceting, no WebSocket connection (REST only).
+  - **Quality Gates:** 19/19 focused tests, 506/506 monorepo tests, zero TypeScript errors, production build verified, 51/51 documentation checks passed.
+  - **Status:** Frontend REST vertical slice complete. Live backend implementation and contract sign-off for deep-link navigation fields (`DEP-NOTIF-02`) remain pending with Backend Lead and Product Owner.
+- **Next Engineering Action:**
+  - Await joint sign-off on `DEP-NOTIF-02` (Proposal A vs Proposal B for task deep-linking) or begin next approved independent frontend vertical slice as directed by maintainer.
 
 ### A.3 Pending Backend & Governance Dependencies
 
@@ -176,16 +179,16 @@ flowchart LR
 SONDER PLATFORM PROGRESS SUMMARY
 ================================================================================
 Monorepo Status:           Clean, 100% Green
-Active Baseline:           develop @ 3cbbce2 (PR #34 merged)
-Total Passing Test Suites: 49 suites (apps/web + packages/contracts)
-Total Automated Tests:     487 tests (100% passing)
+Active Baseline:           develop @ 1b88e60 (PR #37 merged)
+Total Passing Test Suites: 50 suites (apps/web + packages/contracts)
+Total Automated Tests:     506 tests (100% passing)
 Documentation Checks:      51 / 51 passed (pnpm validate:docs)
 
 Track A (Engineering):
-- Phase 1 Capabilities:   18 / 24 Provisional Frontend Candidate Coverage (~75%)
+- Phase 1 Capabilities:   19 / 24 Provisional Frontend Candidate Coverage (~79%)
 - Contract Readiness:      Candidate OpenAPI 0.3.20-draft (Live Backend Pending)
-- Hardened Milestone:      VS-08A.2: Realtime Event Scoping Correction
-- Next Engineering Target: FEAT-F01a: In-App Notification Center
+- Hardened Milestone:      VS-08B.1: Notification REST Vertical Slice & Functional Inbox
+- Next Engineering Target: DEP-NOTIF-02 Joint Sign-Off / Backend Verification
 
 Track B (UI/UX Workstream - PAUSED):
 - Research & Principles:   Approved (PR #4, 92e984e)
