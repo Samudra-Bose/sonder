@@ -32,6 +32,22 @@ export function useMarkNotificationRead() {
         notificationKeys.unreadCount(communityId)
       );
 
+      // Check whether the targeted notification exists and is unread in the cached pages
+      let isTargetUnread = false;
+      for (const [, queryData] of previousQueries) {
+        if (!queryData) continue;
+        for (const page of queryData.pages) {
+          for (const item of page.items) {
+            if (item.id === notificationId && !item.isRead) {
+              isTargetUnread = true;
+              break;
+            }
+          }
+          if (isTargetUnread) break;
+        }
+        if (isTargetUnread) break;
+      }
+
       // 3. Optimistically update all cached list pages
       queryClient.setQueriesData<InfiniteData<NotificationListDto>>(
         { queryKey: notificationKeys.lists(communityId) },
@@ -44,14 +60,16 @@ export function useMarkNotificationRead() {
               items: page.items.map((item) =>
                 item.id === notificationId ? { ...item, isRead: true } : item
               ),
-              unreadCount: Math.max(0, (page.unreadCount ?? 1) - 1),
+              unreadCount: isTargetUnread
+                ? Math.max(0, (page.unreadCount ?? 0) - 1)
+                : page.unreadCount,
             })),
           };
         }
       );
 
-      // 4. Optimistically update global unread count
-      if (previousUnreadCount !== undefined) {
+      // 4. Optimistically update global unread count only if the target notification was known to be unread
+      if (isTargetUnread && previousUnreadCount !== undefined) {
         queryClient.setQueryData<number>(
           notificationKeys.unreadCount(communityId),
           Math.max(0, previousUnreadCount - 1)

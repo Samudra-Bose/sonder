@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor, within, renderHook, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, type InfiniteData } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { AuthContext, type AuthContextType } from "@/modules/auth/AuthContext.js";
 import { WorkspaceProvider } from "@/modules/workspace/WorkspaceContext.js";
@@ -13,15 +13,18 @@ import {
 } from "@/mocks/data/my-work.js";
 import {
   resetMockNotifications,
-  getMockNotifications,
   NOTIF_1_ID,
-  NOTIF_2_ID,
   NOTIF_7_ID,
 } from "@/mocks/data/notifications.js";
 import { setMockNotificationsError } from "@/mocks/handlers/notifications.js";
 import { App } from "@/App.js";
 import { NotificationBell } from "./NotificationBell.js";
 import { InboxView } from "./InboxView.js";
+import { useNotifications } from "./useNotifications.js";
+import { useUnreadNotificationCount } from "./useUnreadNotificationCount.js";
+import { useMarkNotificationRead } from "./useMarkNotificationRead.js";
+import { notificationKeys } from "./query-keys.js";
+import type { NotificationListDto } from "./types.js";
 
 const testAuthUser = {
   id: MOCK_USER_ID,
@@ -205,7 +208,6 @@ describe("VS-08B.1: Notification REST Vertical Slice & Functional Inbox", () => 
 
   describe("4. Cursor Pagination and Deduplication", () => {
     it("handles pagination via Load More button and deduplicates overlapping entries", async () => {
-      const user = userEvent.setup();
       render(
         <TestWrapper>
           <InboxView />
@@ -525,6 +527,239 @@ describe("VS-08B.1: Notification REST Vertical Slice & Functional Inbox", () => 
       await waitFor(() => {
         expect(screen.getByTestId("notification-bell-trigger")).toBeInTheDocument();
       });
+    });
+  });
+
+  describe("13. Optimistic Unread Count Regression Guard (P2)", () => {
+    it("marking an unread notification optimistically decrements the global unread count exactly once", async () => {
+      const queryClient = createTestQueryClient();
+      const { result } = renderHook(
+        () => ({
+          list: useNotifications({ communityId: MOCK_COMMUNITY_1_ID }),
+          count: useUnreadNotificationCount(MOCK_COMMUNITY_1_ID),
+          markRead: useMarkNotificationRead(),
+        }),
+        {
+          wrapper: ({ children }) => (
+            <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
+          ),
+        }
+      );
+
+      // Wait for initial query load
+      await waitFor(() => {
+        expect(result.current.list.items.length).toBeGreaterThan(0);
+        expect(result.current.count.unreadCount).toBe(6);
+      });
+
+      // Target unread NOTIF_1_ID
+      const initialItem = result.current.list.items.find((n) => n.id === NOTIF_1_ID);
+      expect(initialItem?.isRead).toBe(false);
+
+      // Mutate
+      await act(async () => {
+        await result.current.markRead.mutateAsync({
+          communityId: MOCK_COMMUNITY_1_ID,
+          notificationId: NOTIF_1_ID,
+        });
+      });
+
+      // Optimistic decrement: from 6 to 5
+      await waitFor(() => {
+        expect(result.current.count.unreadCount).toBe(5);
+      });
+
+      const updatedItem = result.current.list.items.find((n) => n.id === NOTIF_1_ID);
+      expect(updatedItem?.isRead).toBe(true);
+
+      // A second mutate on the now-read notification does NOT decrement the count further
+      await act(async () => {
+        await result.current.markRead.mutateAsync({
+          communityId: MOCK_COMMUNITY_1_ID,
+          notificationId: NOTIF_1_ID,
+        });
+      });
+
+      expect(result.current.count.unreadCount).toBe(5);
+    });
+
+    it("marking an already-read notification does not decrement the count", async () => {
+      const queryClient = createTestQueryClient();
+      const { result } = renderHook(
+        () => ({
+          list: useNotifications({ communityId: MOCK_COMMUNITY_1_ID }),
+          count: useUnreadNotificationCount(MOCK_COMMUNITY_1_ID),
+          markRead: useMarkNotificationRead(),
+        }),
+        {
+          wrapper: ({ children }) => (
+            <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
+          ),
+        }
+      );
+
+      await waitFor(() => {
+        expect(result.current.list.items.length).toBeGreaterThan(0);
+        expect(result.current.count.unreadCount).toBe(6);
+      });
+
+      // NOTIF_7_ID is already read in fixtures
+      const readItem = result.current.list.items.find((n) => n.id === NOTIF_7_ID);
+      expect(readItem?.isRead).toBe(true);
+
+      // Mark the already-read item as read
+      await act(async () => {
+        await result.current.markRead.mutateAsync({
+          communityId: MOCK_COMMUNITY_1_ID,
+          notificationId: NOTIF_7_ID,
+        });
+      });
+
+      // Unread count must stay 6
+      expect(result.current.count.unreadCount).toBe(6);
+
+      const cachedPages = queryClient.getQueryData<InfiniteData<NotificationListDto>>(
+        notificationKeys.list(MOCK_COMMUNITY_1_ID, {
+          category: undefined,
+          unreadOnly: false,
+          limit: 20,
+        })
+      );
+      expect(cachedPages?.pages[0]?.unreadCount).toBe(6);
+    });
+
+    it("an unknown or uncached notification does not produce an assumed optimistic decrement", async () => {
+      const queryClient = createTestQueryClient();
+      const { result } = renderHook(
+        () => ({
+          list: useNotifications({ communityId: MOCK_COMMUNITY_1_ID }),
+          count: useUnreadNotificationCount(MOCK_COMMUNITY_1_ID),
+          markRead: useMarkNotificationRead(),
+        }),
+        {
+          wrapper: ({ children }) => (
+            <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
+          ),
+        }
+      );
+
+      await waitFor(() => {
+        expect(result.current.count.unreadCount).toBe(6);
+      });
+
+      const unknownId = "unknown-notification-id-999";
+
+      await act(async () => {
+        try {
+          await result.current.markRead.mutateAsync({
+            communityId: MOCK_COMMUNITY_1_ID,
+            notificationId: unknownId,
+          });
+        } catch {
+          // Expected 404 from server/mock
+        }
+      });
+
+      // Count must remain 6 without assumed decrement
+      expect(result.current.count.unreadCount).toBe(6);
+      const cachedCount = queryClient.getQueryData<number>(
+        notificationKeys.unreadCount(MOCK_COMMUNITY_1_ID)
+      );
+      expect(cachedCount).toBe(6);
+    });
+
+    it("a failed mutation restores the original read state and unread count", async () => {
+      const queryClient = createTestQueryClient();
+      const { result } = renderHook(
+        () => ({
+          list: useNotifications({ communityId: MOCK_COMMUNITY_1_ID }),
+          count: useUnreadNotificationCount(MOCK_COMMUNITY_1_ID),
+          markRead: useMarkNotificationRead(),
+        }),
+        {
+          wrapper: ({ children }) => (
+            <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
+          ),
+        }
+      );
+
+      await waitFor(() => {
+        expect(result.current.count.unreadCount).toBe(6);
+      });
+
+      // Inject server error
+      setMockNotificationsError({
+        status: 500,
+        problem: {
+          type: "https://errors.sonder.platform/server-error",
+          title: "Internal Error",
+          status: 500,
+          detail: "Database transaction failed",
+        },
+        endpoint: "read",
+      });
+
+      await act(async () => {
+        try {
+          await result.current.markRead.mutateAsync({
+            communityId: MOCK_COMMUNITY_1_ID,
+            notificationId: NOTIF_1_ID,
+          });
+        } catch {
+          // Expected error
+        }
+      });
+
+      // Cache rollback restores unread count to 6 and item isRead to false
+      await waitFor(() => {
+        expect(result.current.count.unreadCount).toBe(6);
+      });
+
+      const restoredItem = result.current.list.items.find((n) => n.id === NOTIF_1_ID);
+      expect(restoredItem?.isRead).toBe(false);
+    });
+
+    it("re-fetching canonical server data reconciles the optimistic cache state", async () => {
+      const queryClient = createTestQueryClient();
+      const { result } = renderHook(
+        () => ({
+          list: useNotifications({ communityId: MOCK_COMMUNITY_1_ID }),
+          count: useUnreadNotificationCount(MOCK_COMMUNITY_1_ID),
+          markRead: useMarkNotificationRead(),
+        }),
+        {
+          wrapper: ({ children }) => (
+            <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
+          ),
+        }
+      );
+
+      await waitFor(() => {
+        expect(result.current.count.unreadCount).toBe(6);
+      });
+
+      // Successfully mark NOTIF_1_ID read
+      await act(async () => {
+        await result.current.markRead.mutateAsync({
+          communityId: MOCK_COMMUNITY_1_ID,
+          notificationId: NOTIF_1_ID,
+        });
+      });
+
+      // Invalidate queries to trigger canonical refetch
+      await act(async () => {
+        await queryClient.refetchQueries({
+          queryKey: notificationKeys.all(MOCK_COMMUNITY_1_ID),
+        });
+      });
+
+      // Canonical server state reconciles with 5 unread items
+      await waitFor(() => {
+        expect(result.current.count.unreadCount).toBe(5);
+      });
+
+      const reconciledItem = result.current.list.items.find((n) => n.id === NOTIF_1_ID);
+      expect(reconciledItem?.isRead).toBe(true);
     });
   });
 });
