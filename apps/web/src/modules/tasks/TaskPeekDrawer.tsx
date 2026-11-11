@@ -35,6 +35,7 @@ import { useTaskPeekDrawer } from "./useTaskPeekDrawer.js";
 import { useResolveTaskKey } from "./useResolveTaskKey.js";
 import { useTask } from "./useTask.js";
 import { useWorkspaceTasks } from "./useWorkspaceTasks.js";
+import { useTaskUndo } from "./TaskUndoContext.js";
 import { SubtaskList } from "./SubtaskList.js";
 import { TaskDependencies } from "./TaskDependencies.js";
 import { ReparentTaskModal } from "./ReparentTaskModal.js";
@@ -188,6 +189,36 @@ export function TaskPeekDrawer({
     (taskQuery.error instanceof ApiProblemError && taskQuery.error.status === 404);
   const isArchived = resolveQuery.data?.lifecycleState === "ARCHIVED" || Boolean(task?.archivedAt);
 
+  const { archiveTask } = useTaskUndo();
+  // Fail-closed permission check strictly conforming to Section 2.1
+  const canArchive = Boolean(task?.effectivePermissions?.canArchive && !isArchived);
+
+  const handleArchiveTask = async () => {
+    if (!task || !canArchive) return;
+
+    // Focus management (Non-Stealing Invariant): transfer focus to nearest surviving element
+    const nextTarget =
+      document.querySelector<HTMLElement>(
+        `[data-testid^="task-list-row-"]:not([data-testid="task-list-row-${task.taskKey}"])`
+      ) ||
+      document.querySelector<HTMLElement>(
+        `[data-testid^="task-board-card-"]:not([data-testid="task-board-card-${task.taskKey}"])`
+      ) ||
+      document.querySelector<HTMLElement>('[data-testid="task-list-view"]') ||
+      document.querySelector<HTMLElement>('[data-testid="task-board-view"]');
+
+    closeTask();
+    try {
+      await archiveTask(task, {
+        communityId: currentCommunityId ?? undefined,
+        workspaceId: effectiveWorkspaceId ?? task.workspaceId,
+      });
+      nextTarget?.focus();
+    } catch {
+      // Handled in context
+    }
+  };
+
   // Locate associated workspace DTO for context display
   const targetWorkspace = useMemo(() => {
     const wsId = task?.workspaceId ?? effectiveWorkspaceId;
@@ -281,6 +312,20 @@ export function TaskPeekDrawer({
             size="sm"
             className="h-7 text-xs px-2"
           />
+        )}
+
+        {task && !isNotFound && !error && canArchive && (
+          <Tooltip content="Archive task">
+            <IconButton
+              size="sm"
+              variant="ghost"
+              aria-label="Archive task"
+              data-testid="archive-task-button"
+              icon={<Archive className="h-3.5 w-3.5" />}
+              onClick={handleArchiveTask}
+              className="h-7 w-7 text-[var(--text-muted)] hover:text-[var(--feedback-danger-text)] focus-ring rounded"
+            />
+          </Tooltip>
         )}
 
         <IconButton
