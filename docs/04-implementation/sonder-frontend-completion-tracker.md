@@ -27,7 +27,7 @@ Milestone **VS-09.0** provides a complete, read-only audit of the entire Sonder 
    - Synchronized List and Kanban Board views with fractional ranking (`FEAT-C01`, `FEAT-A08`).
    - Calendar View with month/week grids and unscheduled task tray (`FEAT-C02`).
    - Timeline View with Gantt bars, milestones (`FEAT-B04`), and BLOCKS DAG dependency conflict lines (`FEAT-A06`).
-   - Collaboration spine with threaded comments, AST-safe markdown (`FEAT-K02`), `@mentions`, and task watchers (`FEAT-A04`).
+   - Collaboration spine with threaded comments, AST-safe markdown, `@mentions`, and task watchers (`FEAT-A04`).
    - In-app Notification Center with unread bell counter, popover preview, and `/inbox` route (`FEAT-F01a`).
 
 2. **First-Look Experience Requires Remaining Phase 1 Features:**<br/>

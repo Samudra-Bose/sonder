@@ -46,13 +46,13 @@
 | **VS-08B**  | Segmented In-App Notification Center (PLAN & GRILL) | `FEAT-F01a` | PR #35 | `1ac051f` | Plan & Grill | **MERGED & VERIFIED** (`vs-08b-notification-center-plan.md`, `vs-08b-notification-center-grill-report.md`) |
 | **VS-08B.0.1**| Notification API Contract Alignment & Backend Handoff | `FEAT-F01a` | PR #36 | `43282e0` | Contract alignment | **MERGED & VERIFIED** (`vs-08b-notification-backend-integration-contract.md`) |
 | **VS-08B.1** | Notification REST Vertical Slice & Functional Inbox | `FEAT-F01a` | PR #37 | `1b88e60` | 19 tests | **MERGED & VERIFIED** (`Notifications.test.tsx` [19 tests], monorepo [506 tests]) |
-| **VS-09.0**  | Complete Frontend Audit, Feature Inventory & First-Look Readiness | Governance / Audit | Pending PR #38 | `develop @ 8f887de` | 506 tests | **DOCUMENTATION COMPLETE (PR PENDING)** (`sonder-frontend-completion-tracker.md`) |
+| **VS-09.0**  | Complete Frontend Audit, Feature Inventory & First-Look Readiness | Governance / Audit | PR #38 (Initial audit `5ca384b`), New PR pending review | `develop @ 8f887de` | 506 tests | **REVISED AUDIT AWAITING REVIEW** (`sonder-frontend-completion-tracker.md`) |
 
 ### A.2 Current Engineering Status & Next Milestones
 
 ```mermaid
 flowchart TD
-    Current["VS-09.0: Complete Frontend Audit & Inventory (DOC COMPLETE - PR PENDING)"] --> InventoryA["Inventory A: Backend-Independent Backlog (8 Milestones)"]
+    Current["VS-09.0: Complete Frontend Audit & Inventory (REVISED - AWAITING REVIEW)"] --> InventoryA["Inventory A: Backend-Independent Backlog (8 Milestones)"]
 
     subgraph InventoryA ["Ready for Implementation (MSW / Candidate OpenAPI)"]
         VS09A["VS-09A: Single-Item Archive & 10s Undo (FEAT-A10a)"]
@@ -81,6 +81,7 @@ flowchart TD
 ```
 
 - **Current Audit Milestone:** `VS-09.0` — Complete Frontend Audit, Feature Inventory & First-Look Readiness (documented in `docs/04-implementation/sonder-frontend-completion-tracker.md`).
+  - **Audit Revision Status:** The original PR #38 merged with the earlier audit version. The corrected audit revision is based on commit `e4a9ab0`, with the corrected documentation awaiting review in a new pull request (PR #39). It is not locked or fully accepted yet.
   - **Reconciled Feature Accounting:**
     - 70 canonical `FEAT-` patterns surveyed: 53 actionable concrete capabilities + 7 composite parents + 10 research family boundary markers.
     - Status distribution across 53 actionable capabilities: **17 DONE**, **3 PARTIAL**, **10 NOT STARTED (Phase 1)**, **3 DECISION BLOCKED** (`FEAT-C04`, `FEAT-C06`, `FEAT-G02b`), **1 BACKEND DEPENDENT** (`FEAT-F02`), **12 DEFERRED (Phases 2–4)**, **7 REJECTED / OUT OF SCOPE** (Sum: $17 + 3 + 10 + 3 + 1 + 12 + 7 = 53$).
@@ -100,7 +101,7 @@ flowchart TD
     - Dev command: `pnpm --filter @sonder/web dev` (Port 3000). Active mock user: Alex Morgan (`alex.morgan@example.com`).
   - **UI/UX Track B Governance:** UI/UX Track B remains strictly **PAUSED** until remaining Phase 1 backend-independent features are implemented and locked.
 - **Next Engineering Action:**
-  - Begin Phase 1 milestone **VS-09A: Single-Item Task Archive & 10-Second Undo Toast (`FEAT-A10a`)** upon approval, following PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT.
+  - Await review and merge of the new VS-09.0 pull request (PR #39), then begin Phase 1 milestone **VS-09A: Single-Item Task Archive & 10-Second Undo Toast (`FEAT-A10a`)** upon approval, following PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT.
 
 ### A.3 Pending Backend & Governance Dependencies
 
@@ -216,7 +217,7 @@ Track A (Engineering):
                            1 BACKEND DEPENDENT, 12 DEFERRED, 7 REJECTED (Total: 53)
 - Contract Readiness:      Candidate OpenAPI 0.3.20-draft (Live Backend Pending)
 - Latest Hardened Feature: VS-08B.1: Notification REST Vertical Slice & Functional Inbox
-- Current Milestone:       VS-09.0: Complete Frontend Audit & Inventory (DOC COMPLETE - PR PENDING)
+- Current Milestone:       VS-09.0: Frontend Audit Revision (AWAITING REVIEW IN NEW PR)
 - Next Engineering Target: VS-09A: Single-Item Task Archive & 10s Undo Toast (FEAT-A10a)
 
 Track B (UI/UX Workstream - PAUSED):
