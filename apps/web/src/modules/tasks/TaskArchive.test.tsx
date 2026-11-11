@@ -18,16 +18,13 @@ import {
 import {
   resetTaskMockState,
   getMockUndoTokens,
-  expireMockUndoToken,
 } from "@/mocks/handlers/tasks.js";
 import { clearShortcutRegistry } from "@/lib/keyboard.js";
 import { TaskPeekDrawer } from "./TaskPeekDrawer.js";
-import { useTaskPeekDrawer } from "./useTaskPeekDrawer.js";
 import { QuickTaskComposerProvider } from "./QuickTaskComposerContext.js";
 import { WorkspaceTasksView } from "./views/WorkspaceTasksView.js";
-import { TaskUndoProvider, useTaskUndo } from "./TaskUndoContext.js";
+import { TaskUndoProvider } from "./TaskUndoContext.js";
 import { TaskUndoToast } from "./TaskUndoToast.js";
-import { TaskActionsMenu } from "./TaskActionsMenu.js";
 import type { TaskDto, TaskQueryResult } from "./types.js";
 
 const testAuthUser = {
@@ -140,7 +137,7 @@ describe("VS-09A: Single-Item Task Archive & 10-Second Undo Toast (ARCH-01 to AR
 
     // Drawer should open with ENG-101 details
     await waitFor(() => {
-      expect(screen.getByRole("dialog")).toBeInTheDocument();
+      expect(screen.getByTestId("task-peek-drawer-desktop")).toBeInTheDocument();
       expect(screen.getByTestId("archive-task-button")).toBeInTheDocument();
     });
 
@@ -149,7 +146,7 @@ describe("VS-09A: Single-Item Task Archive & 10-Second Undo Toast (ARCH-01 to AR
 
     // Verify drawer closed
     await waitFor(() => {
-      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("task-peek-drawer-desktop")).not.toBeInTheDocument();
     });
 
     // Verify ?task= cleared from URL
@@ -369,8 +366,7 @@ describe("VS-09A: Single-Item Task Archive & 10-Second Undo Toast (ARCH-01 to AR
       renderTaskTestEnvironment();
 
       // Find an active undo item and manually inject or test timer transition
-      // We can test via mock UndoTokens
-      const tokens = getMockUndoTokens();
+      expect(getMockUndoTokens()).toBeDefined();
       // Fast-forward fake time past 10 seconds
       act(() => {
         vi.advanceTimersByTime(11000);
@@ -515,14 +511,27 @@ describe("VS-09A: Single-Item Task Archive & 10-Second Undo Toast (ARCH-01 to AR
     ];
 
     queryClient.setQueryData<TaskQueryResult>(secondQueryKey, {
+      projection: "LIST",
+      pageScope: "PRIMARY",
+      querySnapshotId: "snap-2",
+      snapshotSequence: 100,
+      snapshotAt: new Date().toISOString(),
+      snapshotExpiresAt: new Date().toISOString(),
       items: [
         { ...mockTasksCommunity1[1]!, id: "task-other-1", taskKey: "ENG-201" },
         mockTasksCommunity1[0]!, // ENG-101 is at index 1 here
       ],
       primaryCount: 2,
       total: 2,
+      backlogCount: 0,
+      backlogPreview: [],
+      backlogNextCursor: null,
+      unscheduledCount: 0,
+      unscheduledPreview: [],
+      unscheduledNextCursor: null,
       nextCursor: null,
-      workspaceSeq: 100,
+      groups: [],
+      dependencyEdges: [],
     });
 
     // Archive ENG-101
@@ -557,11 +566,24 @@ describe("VS-09A: Single-Item Task Archive & 10-Second Undo Toast (ARCH-01 to AR
     ];
 
     queryClient.setQueryData<TaskQueryResult>(doneQueryKey, {
+      projection: "LIST",
+      pageScope: "PRIMARY",
+      querySnapshotId: "snap-done",
+      snapshotSequence: 100,
+      snapshotAt: new Date().toISOString(),
+      snapshotExpiresAt: new Date().toISOString(),
       items: [{ ...mockTasksCommunity1[2]!, id: "task-done", taskKey: "ENG-300" }],
       primaryCount: 1,
       total: 1,
+      backlogCount: 0,
+      backlogPreview: [],
+      backlogNextCursor: null,
+      unscheduledCount: 0,
+      unscheduledPreview: [],
+      unscheduledNextCursor: null,
       nextCursor: null,
-      workspaceSeq: 100,
+      groups: [],
+      dependencyEdges: [],
     });
 
     // Archive ENG-101
@@ -603,7 +625,7 @@ describe("VS-09A: Single-Item Task Archive & 10-Second Undo Toast (ARCH-01 to AR
       )
     );
 
-    const { queryClient } = renderTaskTestEnvironment();
+    renderTaskTestEnvironment();
 
     await waitFor(() => {
       expect(screen.getByTestId("task-list-row-ENG-101")).toBeInTheDocument();
@@ -875,7 +897,7 @@ describe("VS-09A: Single-Item Task Archive & 10-Second Undo Toast (ARCH-01 to AR
 
     // Drawer closes
     await waitFor(() => {
-      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("task-peek-drawer-desktop")).not.toBeInTheDocument();
     });
 
     // Active element must NOT be inside the toast
