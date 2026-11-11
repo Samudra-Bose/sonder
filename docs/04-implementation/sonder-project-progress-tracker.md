@@ -1,6 +1,6 @@
 # SONDER — CANONICAL PROJECT PROGRESS TRACKER
 
-**Document Version:** 1.3.0<br/>
+**Document Version:** 1.4.0<br/>
 **Last Synchronized:** 2026-11-11<br/>
 **Current Baseline Commit:** `develop @ 8f887de` (with PR #37 merge commit `1b88e60`)<br/>
 **Governance Standard:** Dual-Track Engineering & UI/UX Governance (PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT)<br/>
@@ -81,10 +81,18 @@ flowchart TD
 ```
 
 - **Current Audit Milestone:** `VS-09.0` — Complete Frontend Audit, Feature Inventory & First-Look Readiness (documented in `docs/04-implementation/sonder-frontend-completion-tracker.md`).
-  - **Audit Revision Status:** The original PR #38 merged with the earlier audit version. The corrected audit revision is based on commit `e4a9ab0`, with the corrected documentation awaiting review in a new pull request (PR #39). It is not locked or fully accepted yet.
+  - **Audit Revision Status:** The original PR #38 merged with the earlier audit version. The corrected audit revision is based on commit `e4a9ab0` + follow-up refinements, with the corrected documentation awaiting review in a new pull request (PR #39). It is not locked or fully accepted yet.
   - **Reconciled Feature Accounting:**
     - 70 canonical `FEAT-` patterns surveyed: 53 actionable concrete capabilities + 7 composite parents + 10 research family boundary markers.
     - Status distribution across 53 actionable capabilities: **17 DONE**, **3 PARTIAL**, **10 NOT STARTED (Phase 1)**, **3 DECISION BLOCKED** (`FEAT-C04`, `FEAT-C06`, `FEAT-G02b`), **1 BACKEND DEPENDENT** (`FEAT-F02`), **12 DEFERRED (Phases 2–4)**, **7 REJECTED / OUT OF SCOPE** (Sum: $17 + 3 + 10 + 3 + 1 + 12 + 7 = 53$).
+  - **Frontend Scope vs. Production Acceptance Distinction:**
+    - The 17 DONE capabilities reflect verified frontend candidate implementations operating against local mock handlers (MSW) in Vitest.
+    - Passing frontend tests does NOT certify live backend availability, database ACID guarantees, production rate limits, server backups/PITR, or production acceptance.
+    - `FEAT-J03` covers accessible design system primitives, tokens, and WCAG 2.2 AA compliance on the frontend; backend edge rate limits and backup/PITR drills remain separate pending operational gates.
+    - `FEAT-G01`, `FEAT-A04`, and `FEAT-F01a` verify client-side session, collaboration, and notification center flows; live auth services, watcher DB persistence (`DEP-COLLAB-01`), live WebSocket transport (`DEP-REALTIME-01`), and live notification outbox integration remain pending backend engineering milestones.
+  - **Canonical Entity Hierarchy:**
+    - Strictly $\text{Community} \to \text{Workspace} \to \text{Task} \to \text{Subtask}$. Projects and Lists (as intermediate container entities) are obsolete historical artifacts.
+    - Legitimate management capabilities operate at the Workspace level (`FEAT-E01` Workspace Overview, `FEAT-D05` Workspace Starter Templates, `FEAT-I01` Workspace Intake Forms).
   - **Offline Editing Classification:**
     - Reconciled discrepancy between historical Master Spec draft (labeled Phase 3) and approved Master PRD (§2.1 M1.3 and §2.2).
     - Preserved approved product direction: `FEAT-J02` belongs to **Milestone M1.3 (Phase 1)**, bounded to cached tasks with 14-day queue age, FIFO replay, CR-15 allow-list, and per-field conflict detection.
@@ -130,6 +138,10 @@ flowchart TD
    Narrow offline editing for existing cached tasks belongs under Phase 1 Milestone M1.3 (`FEAT-J02`).
 6. **Provisional Completion Metrics:**
    Completion counts represent provisional frontend candidate coverage and must not be cited as global platform completion until live backend reconciliation occurs.
+7. **Production Security, Rate Limits & Operational Acceptance Separation (FEAT-J03):**
+   `FEAT-J03` reflects frontend accessible design system primitives, tokens, and WCAG 2.2 AA contrast/keyboard compliance. Production edge rate limiting, server backup/PITR drills, security hardening, and operational disaster rehearsals remain distinct operational gates pending backend infrastructure deployment.
+8. **Authentication, Notification & Collaboration Backend Separation (FEAT-G01, FEAT-A04, FEAT-F01a):**
+   Frontend client state machines and UI components operate against local MSW mock fixtures. Live backend authentication services, production cookie domain infrastructure, cross-session watcher database persistence (`DEP-COLLAB-01`), live WebSocket gateways (`DEP-REALTIME-01`), and live notification event outboxes remain pending backend engineering milestones.
 
 | Feature ID | Feature Name | Planned Phase | Rationale |
 | :--- | :--- | :--- | :--- |
@@ -138,7 +150,7 @@ flowchart TD
 | `FEAT-E02` | Burndown, Velocity & Cumulative Flow Charts | Phase 4 | Dependent on timeboxed cycles. |
 | `FEAT-H01` | Declarative 1-Hop Workflow Automations | Phase 3 | Advanced automation engine deferred to maintain Day-1 simplicity. |
 | `FEAT-H02` | Outbound HMAC-Signed Webhooks | Phase 3 | Requires egress infrastructure and SSRF protection hardening. |
-| `FEAT-I01` | Shareable Project Intake Forms | Phase 2 | External anonymous/guest intake flows scheduled for Phase 2. |
+| `FEAT-I01` | Shareable Workspace Intake Forms | Phase 2 | External anonymous/guest intake flows scheduled for Phase 2. |
 | `FEAT-J01b`| Guided CSV Import Wizard | Phase 2 | Basic UTF-8 CSV Export ships in Phase 1; import wizard in Phase 2. |
 
 ---
