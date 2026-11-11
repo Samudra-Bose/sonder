@@ -122,7 +122,7 @@ export function useArchiveTask({
 
       for (const [queryKey, data] of matchingQueries) {
         const keyJson = JSON.stringify(queryKey);
-        if (!data || !Array.isArray(data.items)) {
+        if (!data) {
           queryMemberships.set(keyJson, {
             existed: false,
             recordedIndex: -1,
@@ -132,12 +132,40 @@ export function useArchiveTask({
           continue;
         }
 
-        const items = data.items;
-        const index = items.findIndex((t) => t.id === task.id);
-        const existed = index !== -1;
-        const prevTaskId = index > 0 ? items[index - 1]?.id ?? null : null;
-        const nextTaskId =
-          index >= 0 && index < items.length - 1 ? items[index + 1]?.id ?? null : null;
+        let existed = false;
+        let index = -1;
+        let prevTaskId: string | null = null;
+        let nextTaskId: string | null = null;
+
+        if (Array.isArray(data.items)) {
+          index = data.items.findIndex((t) => t.id === task.id);
+          if (index !== -1) {
+            existed = true;
+            prevTaskId = index > 0 ? data.items[index - 1]?.id ?? null : null;
+            nextTaskId =
+              index >= 0 && index < data.items.length - 1
+                ? data.items[index + 1]?.id ?? null
+                : null;
+          }
+        }
+
+        if (!existed && Array.isArray(data.groups)) {
+          for (const group of data.groups) {
+            if (Array.isArray(group.items)) {
+              const gIdx = group.items.findIndex((t) => t.id === task.id);
+              if (gIdx !== -1) {
+                existed = true;
+                index = gIdx;
+                prevTaskId = gIdx > 0 ? group.items[gIdx - 1]?.id ?? null : null;
+                nextTaskId =
+                  gIdx < group.items.length - 1
+                    ? group.items[gIdx + 1]?.id ?? null
+                    : null;
+                break;
+              }
+            }
+          }
+        }
 
         queryMemberships.set(keyJson, {
           existed,
@@ -148,13 +176,30 @@ export function useArchiveTask({
 
         if (existed) {
           queryClient.setQueryData<TaskQueryResult>(queryKey, (old) => {
-            if (!old || !old.items) return old;
-            const filtered = old.items.filter((t) => t.id !== task.id);
+            if (!old) return old;
+            const filteredItems = Array.isArray(old.items)
+              ? old.items.filter((t) => t.id !== task.id)
+              : old.items;
+
+            const filteredGroups = Array.isArray(old.groups)
+              ? old.groups.map((group) => {
+                  if (!Array.isArray(group.items)) return group;
+                  const gItems = group.items.filter((t) => t.id !== task.id);
+                  const countDiff = group.items.length - gItems.length;
+                  return {
+                    ...group,
+                    items: gItems,
+                    total: Math.max(0, group.total - countDiff),
+                  };
+                })
+              : old.groups;
+
             return {
               ...old,
-              items: filtered,
-              primaryCount: Math.max(0, (old.primaryCount ?? old.items.length) - 1),
-              total: Math.max(0, (old.total ?? old.items.length) - 1),
+              items: filteredItems,
+              groups: filteredGroups,
+              primaryCount: Math.max(0, (old.primaryCount ?? 0) - 1),
+              total: Math.max(0, (old.total ?? 0) - 1),
             };
           });
         }
@@ -164,7 +209,6 @@ export function useArchiveTask({
       if (singleTaskSnapshot) {
         queryClient.setQueryData<TaskDto>(singleKey, {
           ...singleTaskSnapshot,
-          lifecycleState: "ARCHIVED",
           archivedAt: new Date().toISOString(),
         });
       }
@@ -247,7 +291,7 @@ export function useArchiveTask({
 
       onError?.(err, variables, context);
     },
-    onSuccess: (result, variables, context) => {
+    onSuccess: (result, _variables, context) => {
       onSuccess?.(result, context);
     },
   });
@@ -312,7 +356,6 @@ export function useRestoreTask({
       const optimisticRestored: TaskDto = {
         ...task,
         archivedAt: null,
-        lifecycleState: "ACTIVE",
       };
 
       // Optimistically restore into queries where it previously existed
@@ -415,7 +458,6 @@ export function useRestoreTask({
       } else {
         queryClient.setQueryData<TaskDto>(singleKey, {
           ...taskSnapshot,
-          lifecycleState: "ARCHIVED",
           archivedAt: new Date().toISOString(),
         });
       }
@@ -423,7 +465,7 @@ export function useRestoreTask({
       queryClient.invalidateQueries({ queryKey: queryPrefix });
       onError?.(err, variables, context);
     },
-    onSuccess: (serverTask, variables, context) => {
+    onSuccess: (serverTask, _variables, context) => {
       const effCommId = context?.effectiveCommunityId || communityId;
       const effWsId = context?.effectiveWorkspaceId || workspaceId || serverTask.workspaceId;
       if (!effCommId || !effWsId) return;

@@ -64,7 +64,9 @@ export function TaskUndoToast({ className }: TaskUndoToastProps): React.JSX.Elem
                   size="sm"
                   variant="secondary"
                   disabled={isRestoring}
-                  onClick={() => undoTask(item.taskId)}
+                  onClick={() => {
+                    void undoTask(item.taskId);
+                  }}
                   aria-label={`Undo archive for task ${item.taskKey}`}
                   data-testid={`undo-button-${item.taskKey}`}
                   className="min-h-[44px] min-w-[44px] sm:min-h-[32px] sm:min-w-[32px] text-xs font-semibold px-2.5 py-1 focus-ring"

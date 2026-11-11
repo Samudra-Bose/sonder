@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { useTaskPeekDrawer } from "../useTaskPeekDrawer";
 import { useUpdateTask } from "../useUpdateTask";
+import { TaskActionsMenu } from "../TaskActionsMenu.js";
 import type {
   TaskDto,
   TaskQueryBucketDto,
@@ -303,9 +304,19 @@ export function TaskBoardView({
                           >
                             {task.taskKey}
                           </button>
-                          <Badge priority={task.priority} size="sm">
-                            {formatPriority(task.priority)}
-                          </Badge>
+                          <div
+                            className="flex items-center gap-1.5"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Badge priority={task.priority} size="sm">
+                              {formatPriority(task.priority)}
+                            </Badge>
+                            <TaskActionsMenu
+                              task={task}
+                              workspaceId={workspaceId}
+                              communityId={communityId}
+                            />
+                          </div>
                         </div>
 
                         {/* Title */}

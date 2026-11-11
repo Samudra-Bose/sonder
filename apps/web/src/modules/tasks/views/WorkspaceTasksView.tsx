@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useRef, useCallback } from "react";
+import React, { useMemo, useEffect, useRef, useCallback, useContext } from "react";
 import { useParams, useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { useWorkspace } from "@/modules/workspace";
 import { WorkspaceBadge } from "@/modules/workspace/WorkspaceBadge";
@@ -25,6 +25,12 @@ import {
 import { useMilestones } from "@/modules/milestones";
 import { useTaskPeekDrawer } from "../useTaskPeekDrawer";
 import { useQuickTaskComposer } from "../QuickTaskComposerContext";
+import {
+  TaskUndoContext,
+  defaultTaskUndoContextValue,
+  TaskUndoProvider,
+} from "../TaskUndoContext.js";
+import { TaskUndoToast } from "../TaskUndoToast.js";
 import type {
   TaskViewQueryRequest,
   QueryFilterCondition,
@@ -53,7 +59,7 @@ function isValidSortField(field: string): boolean {
   return /^cf\.[a-z][a-z0-9_]{0,47}$/.test(field);
 }
 
-export function WorkspaceTasksView({
+function WorkspaceTasksViewInner({
   defaultView = "list",
   className,
 }: WorkspaceTasksViewProps): React.JSX.Element {
@@ -512,5 +518,21 @@ export function WorkspaceTasksView({
         </div>
       )}
     </div>
+  );
+}
+
+export function WorkspaceTasksView(props: WorkspaceTasksViewProps): React.JSX.Element {
+  const context = useContext(TaskUndoContext);
+  const isWrapped = context !== defaultTaskUndoContextValue;
+
+  if (isWrapped) {
+    return <WorkspaceTasksViewInner {...props} />;
+  }
+
+  return (
+    <TaskUndoProvider>
+      <WorkspaceTasksViewInner {...props} />
+      <TaskUndoToast />
+    </TaskUndoProvider>
   );
 }

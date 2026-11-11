@@ -10,6 +10,8 @@ import {
   QuickTaskComposerProvider,
   QuickTaskComposer,
   useQuickTaskComposer,
+  TaskUndoProvider,
+  TaskUndoToast,
 } from "@/modules/tasks";
 import { AppHeader } from "./AppHeader";
 import { AppSidebar } from "./AppSidebar";
@@ -169,6 +171,9 @@ function AppShellContent({ children }: AppShellProps): React.JSX.Element {
       {/* Quick Task Composer Modal */}
       <QuickTaskComposer />
 
+      {/* Task Undo Toast Spine */}
+      <TaskUndoToast />
+
       {/* Semantic Footer (Visible on desktop/tablet) */}
       <footer
         role="contentinfo"
@@ -186,7 +191,9 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
     <WorkspaceProvider>
       <OmnibarProvider>
         <QuickTaskComposerProvider>
-          <AppShellContent>{children}</AppShellContent>
+          <TaskUndoProvider>
+            <AppShellContent>{children}</AppShellContent>
+          </TaskUndoProvider>
         </QuickTaskComposerProvider>
       </OmnibarProvider>
     </WorkspaceProvider>

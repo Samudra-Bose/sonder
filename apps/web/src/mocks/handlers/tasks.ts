@@ -1868,7 +1868,6 @@ export const taskHandlers = [
       });
 
       task.archivedAt = new Date().toISOString();
-      task.lifecycleState = "ARCHIVED";
       task.updatedAt = new Date().toISOString();
       task.version += 1;
 
@@ -2004,7 +2003,6 @@ export const taskHandlers = [
       }
 
       task.archivedAt = null;
-      task.lifecycleState = "ACTIVE";
       task.updatedAt = new Date().toISOString();
       task.version += 1;
 

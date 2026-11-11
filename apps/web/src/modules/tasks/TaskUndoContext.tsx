@@ -179,7 +179,7 @@ export function TaskUndoProvider({
         setActiveUndos((prev) => prev.filter((u) => u.taskId !== taskId));
         return restoredTask;
       } catch (err: unknown) {
-        // 3. On error, transition to error/expired
+        // 3. On error, transition to error/expired safely without unhandled crashes
         const errMsg =
           err instanceof Error
             ? err.message
@@ -196,7 +196,7 @@ export function TaskUndoProvider({
               : u
           )
         );
-        throw err;
+        return undefined;
       }
     },
     [activeUndos, restoreMutation]

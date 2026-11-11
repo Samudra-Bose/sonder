@@ -17,3 +17,7 @@ export * from "./ReparentTaskModal.js";
 export * from "./dependencies/index.js";
 export * from "./TaskDependencies.js";
 export * from "./views/index.js";
+export * from "./useArchiveTask.js";
+export * from "./TaskUndoContext.js";
+export * from "./TaskUndoToast.js";
+export * from "./TaskActionsMenu.js";

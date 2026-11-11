@@ -14,6 +14,7 @@ import { Feedback } from "@/components/ui/Feedback";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { useTaskPeekDrawer } from "../useTaskPeekDrawer";
+import { TaskActionsMenu } from "../TaskActionsMenu.js";
 import type { TaskDto, TaskStatusCategory, TaskPriority } from "../types";
 
 export interface TaskListViewProps {
@@ -286,6 +287,11 @@ export function TaskListView({
               <th scope="col" className="py-2.5 px-3 w-24 text-center">
                 Subtasks
               </th>
+
+              {/* Actions */}
+              <th scope="col" className="py-2.5 px-3 w-10 text-right">
+                <span className="sr-only">Actions</span>
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--border-subtle)]">
@@ -376,6 +382,18 @@ export function TaskListView({
                     ) : (
                       <span className="text-[var(--text-muted)] text-[11px]">—</span>
                     )}
+                  </td>
+
+                  {/* Actions Menu */}
+                  <td
+                    className="py-2.5 px-3 text-right"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <TaskActionsMenu
+                      task={task}
+                      workspaceId={workspaceId}
+                      communityId={_communityId}
+                    />
                   </td>
                 </tr>
               );
