@@ -1,13 +1,13 @@
-# SONDER — VS-09A REVISED IMPLEMENTATION PLAN: SINGLE-ITEM TASK ARCHIVE & 10-SECOND UNDO
+# SONDER — VS-09A FINAL IMPLEMENTATION PLAN: SINGLE-ITEM TASK ARCHIVE & 10-SECOND UNDO
 
 **Milestone**: VS-09A<br/>
 **Canonical Capability**: `FEAT-A10a` (Single-Item Archive & 10s Undo Toast)<br/>
 **Parent Capability**: `FEAT-A10` (Multi-Select Bulk Operations, Archive & 30-Day Trash)<br/>
 **Governance Phase**: Phase 1 (Milestone M1.1 Work Management Foundation)<br/>
 **Standard**: PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT<br/>
-**Document Version**: 2.0.0 (Post-GRILL Revised Architecture)<br/>
-**Baseline Commit**: `develop @ 26bd662` (Locked VS-09.0 Product Baseline)<br/>
-**Document Status**: **REVISED PLAN PROPOSED FOR HUMAN APPROVAL** (Zero application code modified)<br/>
+**Document Version**: 2.0.0 (Final Architectural Verification Packet)<br/>
+**Baseline Commit**: `develop @ ebc28d1` (Locked VS-09.0 Product Baseline post-PR #41)<br/>
+**Document Status**: **FINAL PLAN PROPOSED FOR HUMAN APPROVAL** (Zero application code modified)<br/>
 **Date**: November 11, 2026<br/>
 **Author**: Antigravity Pair Programming Agent<br/>
 
@@ -15,7 +15,7 @@
 
 ## 1. Executive Summary & Problem Definition
 
-In Sonder, task deletion is replaced with non-destructive, recoverable lifecycle transitions. A user archiving a task must have an immediate, low-friction recovery path without having to leave their active workflow or navigate to a trash screen.
+In Sonder, task deletion is replaced with non-destructive, recoverable lifecycle transitions. A user archiving a task must have an immediate, low-friction recovery path without leaving their active workflow or navigating to a separate trash management screen.
 
 Milestone **VS-09A** delivers **Single-Item Task Archive & 10-Second Undo Toast (`FEAT-A10a`)**. It introduces an archive action across primary task presentation surfaces, provides an accessible floating undo toast driven by server expiration timestamps, supports keyboard undo via shortcut `Z` (and `Mod+Z`) with strict input suppression, and restores the task to its exact prior status, ranking, and presentation view position.
 
@@ -26,6 +26,7 @@ Milestone **VS-09A** delivers **Single-Item Task Archive & 10-Second Undo Toast 
   - Floating 10-second Undo Toast with progress countdown derived from server `undoExpiresAt`.
   - Global keyboard shortcut `Z` and `Mod+Z` (`Cmd+Z` / `Ctrl+Z`) active during toast lifecycle with input suppression.
   - Preservation of independent undo opportunities for sequentially archived tasks.
+  - In-flight mutation locking to prevent duplicate-submission races.
   - Optimistic restoration to exact prior rank, status, and view placement upon undo.
   - Surgical cache rollback without overwriting concurrent edits on other tasks.
   - MSW mock handlers conforming to candidate OpenAPI 0.3.20-draft archive and restore endpoints.
@@ -40,7 +41,7 @@ Milestone **VS-09A** delivers **Single-Item Task Archive & 10-Second Undo Toast 
 
 ## 2. Architecture & Action Surfaces
 
-### 2.1 Action Surfaces: Existing vs. Proposed Components
+### 2.1 Action Surface Inventory: Existing vs. Proposed Components
 
 ```
 +-----------------------------------------------------------------------------------------+
@@ -61,13 +62,13 @@ Milestone **VS-09A** delivers **Single-Item Task Archive & 10-Second Undo Toast 
    - **Icon & Tooltip:** Lucide `Archive` icon with tooltip `"Archive task"`.
    - **Permissions Gate:** Gated by `Boolean(task.effectivePermissions?.canArchive ?? true)` and `!isArchived`.
    - **Execution Flow:** Triggering archive closes the drawer via `closeTask()` (clearing `?task=` from the URL), evicts the task optimistically from the active view cache, and spawns the undo toast.
-   - **Focus Management:** When the drawer closes, focus is logically transferred to the next adjacent task row or card in the canvas, or to the view container if no tasks remain. **Focus is NOT stolen into the undo toast.**
+   - **Focus Management:** When the drawer closes, focus is logically transferred to the nearest surviving task row or card in the canvas, or to the view container if no tasks remain. **Focus is NOT stolen into the undo toast.**
 
 2. **`TaskActionsMenu.tsx` (Proposed New Shared Dropdown Primitive):**
    - **Verification:** Inspection of the codebase confirms `TaskActionsMenu.tsx` **does not exist** currently. Neither `TaskListView.tsx` nor `TaskBoardView.tsx` currently has an action menu or three-dots trigger.
    - **Proposed Implementation:** Create `TaskActionsMenu.tsx` using `@base-ui/react` `DropdownMenu` with options:
      - "Copy Link"
-     - "Archive Task" (with red/muted hover token)
+     - "Archive Task" (with danger/muted hover token)
    - **Integration Surfaces:**
      - `TaskListView.tsx`: Added as a trailing action column cell on table rows.
      - `TaskBoardView.tsx`: Added to card header beside priority badge.
@@ -154,33 +155,45 @@ Both `archiveTask` and `restoreTask` require:
 
 ---
 
-## 4. Toast Lifecycle, Clock Skew & Multi-Item Policy
+## 4. Toast Lifecycle, Clock Calibration & Concurrency Protection
 
-### 4.1 Server Expiry & Clock Drift Derivation
+### 4.1 Server Expiry, Clock Drift & API Header Limitations
 - `ArchiveTaskResultDto` provides `undoExpiresAt` (ISO 8601 UTC timestamp).
 - **Client Countdown Derivation:**
   $$\text{remainingMs} = \max\left(0, \text{Date.parse}(result.undoExpiresAt) - \text{Date.now()}\right)$$
-- **Clock Skew Invariants & Limitations:**
-  - If a user's local operating system clock differs significantly from the server clock:
-    - *Client clock ahead:* Toast will prematurely expire locally even though the server token remains valid.
-    - *Client clock behind:* Toast may attempt to submit an expired token, receiving an error from the server.
-  - *Mitigation for Production:* In a live backend deployment, clock skew $\Delta t$ is calibrated via the HTTP response `Date` header:
-    $$\Delta t = \text{Date.parse}(\text{response.headers.get("Date")}) - \text{clientTimeAtReceipt}$$
-    $$\text{calibratedRemainingMs} = \max\left(0, \text{Date.parse}(result.undoExpiresAt) - (\text{Date.now()} + \Delta t)\right)$$
-  - *Testing Environment:* In Vitest with MSW mock handlers, MSW and the test harness execute in the same Node.js/jsdom process, ensuring $\Delta t = 0$.
+- **API Response Header Limitation & Clock Skew:**
+  - Inspection of [`apps/web/src/lib/api-client.ts`](file:///home/samudra/Projects/VisualSCode/VisualCode/Vscoding/Sonder/apps/web/src/lib/api-client.ts#L70-L110) confirms `apiRequest<T>` returns `(await response.json()) as T`, discarding the underlying HTTP `Response` object and its response headers (such as `Date` or `X-Workspace-Seq`).
+  - Consequently, client code cannot read `response.headers.get("Date")` through the standard `apiRequest` wrapper without extending the client or using a lower-level caller.
+  - *Candidate Test Environment:* In Vitest with MSW mock handlers, MSW and the test harness execute in the same Node.js/jsdom runtime process, guaranteeing client-server clock skew is exactly zero ($\Delta t = 0$).
+  - *Production Limitation:* If client system clocks drift significantly in production:
+    - A client clock skewed ahead will cause premature local toast expiration.
+    - A client clock skewed behind will attempt restoration with an expired token (receiving Problem Details rejection).
+    - For live production deployment, the backend should either expose a `serverTime` field in the response payload or configure CORS `Access-Control-Expose-Headers: Date` if header-based calibration is adopted.
 - **Background Tab Suspension Handling:**
-  - When the browser tab is backgrounded, `setInterval` and `requestAnimationFrame` are throttled or frozen by modern browsers.
+  - When the browser tab is backgrounded, `setInterval` and `requestAnimationFrame` are throttled or frozen by browsers.
   - `TaskUndoToast.tsx` registers a `visibilitychange` event listener on `document`. When `document.visibilityState === "visible"`, `remainingMs` is immediately re-calculated against `Date.now()`, ensuring the countdown snaps accurately to true wall-clock time rather than resuming from frozen ticks.
 
-### 4.2 Preservation of Independent Undo Opportunities
+### 4.2 Independent Undo Queue Concurrency & Duplicate Prevention
 - **Policy Invariant:** In accordance with governance instructions, **independent undo opportunities must be preserved** unless the Product Owner explicitly approves an alternative single-slot LIFO replacement policy.
-- **Architectural Handling:**
-  - The undo toast state manager maintains an active queue of archived items: `activeUndos: Map<string, UndoItemState>`.
-  - When a user archives Task A, then immediately archives Task B:
-    - Both tasks retain their independent server `undoExpiresAt` expiration timers.
-    - The toast displays the most recently archived task with an indicator of additional pending undos (e.g. `"Task PROJ-102 archived (1 other). Undo [Z]"` or stacked notification pills).
-    - Triggering Undo (via `Z` or button click) restores the most recent task (Task B) and brings the previous task (Task A) to the forefront with its remaining time intact.
-    - Each task expires independently when its own `undoExpiresAt` is reached without cutting short any other task's window.
+- **State Structure:**
+  The undo toast state manager maintains an active registry of archived items:
+  ```typescript
+  interface UndoItemState {
+    taskId: string;
+    taskKey: string;
+    undoToken: string;
+    undoExpiresAt: string;
+    status: "idle" | "restoring" | "restored" | "expired" | "error";
+    taskSnapshot: TaskDto;
+    originalViewIndices: Map<string, number>;
+  }
+  ```
+- **Duplicate-Submission & Race Protection:**
+  - When an undo action is triggered (via `Z`, `Mod+Z`, or clicking "Undo"):
+    1. The target item is identified and its status is immediately set to `"restoring"`.
+    2. Subsequent shortcut triggers or clicks for that item are **strictly ignored** while the restore mutation is in-flight (`status === "restoring"`).
+    3. This prevents double-submission races (e.g., rapid double-pressing `Z` or double-clicking "Undo" issuing duplicate `POST /restore` requests with the same single-use token).
+    4. Each item in the queue maintains its own independent `undoExpiresAt` timer. When an individual item's time elapses, only that specific item transitions to `"expired"` and is removed from the active queue.
 
 ---
 
@@ -228,8 +241,8 @@ sequenceDiagram
     participant Toast as TaskUndoToast
 
     User->>Hook: Archive Task (from Drawer or Menu)
-    Hook->>QueryCache: Snapshot target task & current view list
-    Hook->>QueryCache: Optimistic eviction (filter out taskId)
+    Hook->>QueryCache: Capture target TaskDto snapshot & current index
+    Hook->>QueryCache: Optimistic eviction (filter out taskId from active lists)
     Hook->>Toast: Register pending undo entry
     Hook->>API: POST /archive (X-Mutation-Id + CSRF)
     alt API Success (200 OK)
@@ -237,7 +250,7 @@ sequenceDiagram
         Hook->>Toast: Start live countdown from undoExpiresAt
     else API Failure (4xx/5xx/Network)
         API-->>Hook: ApiProblemError
-        Hook->>QueryCache: Surgical Rollback: re-insert target task snapshot
+        Hook->>QueryCache: Surgical Rollback: re-insert target TaskDto at original index
         Hook->>Toast: Dismiss undo toast & show error banner
     end
 ```
@@ -251,11 +264,16 @@ sequenceDiagram
   - Key format: `["communities", communityId, "workspaces", workspaceId, "tasks", taskId]`
   - Cache update: Mark `lifecycleState: "ARCHIVED"`, `archivedAt: new Date().toISOString()`.
 
-### 6.2 Surgical Rollback
-- Rather than replacing the entire list cache with an outdated array snapshot (which would wipe out concurrent changes made to other tasks), rollback must:
-  1. Capture the archived task's exact `TaskDto` and prior index.
-  2. If the archive mutation fails, surgically re-insert that specific `TaskDto` into its original index in the cached queries.
-  3. Invalidate workspace task queries to ensure eventual consistency with the server.
+### 6.2 Surgical Rollback Under Concurrent Task Updates
+- **Problem:** If Task A is archived, then Task B is modified (status changed or title edited), a naive array rollback that restores the entire pre-mutation list snapshot would overwrite Task B's edits, causing state regression.
+- **Surgical Rollback Algorithm:**
+  1. At archive invocation, store the specific target `TaskDto` and its array index in each active query.
+  2. If the archive mutation fails (or restore fails after optimistic un-archive):
+     - The rollback handler accesses the *current* query cache data.
+     - It inserts *only* the target `TaskDto` back into its original index position (clamped: `Math.min(originalIndex, currentItems.length)`).
+     - Concurrent edits made to other tasks in the list remain completely intact and unaffected.
+  3. Single task query `["communities", communityId, "workspaces", workspaceId, "tasks", taskId]` is restored to the captured snapshot.
+  4. Calls `queryClient.invalidateQueries` on workspace tasks for eventual consistency with the server.
 
 ---
 
@@ -268,16 +286,16 @@ The following three architectural decisions remain explicitly **unresolved** pen
    - *Current Stance:* Unresolved. The frontend candidate implementation will archive the target task ID and rely on server-side subtask cascading.
 2. **`DEC-ARCHIVE-02`: Comment & Field Freezing During Retention:**
    - *Question:* Can workspace members post comments or modify fields on an archived task while it sits in the 30-day trash window?
-   - *Current Stance:* Unresolved. The frontend currently disables inline editing (`isArchived` flag), but API contract guarantees on comment creation freeze remain pending backend confirmation.
+   - *Current Stance:* Unresolved. The frontend candidate disables inline editing (`isArchived` flag), but API contract guarantees on comment creation freeze remain pending backend confirmation.
 3. **`DEC-ARCHIVE-03`: Undo Token Atomicity & Invalidation:**
    - *Question:* Is `undoToken` single-use, and does the server invalidate it atomically upon the first successful restore call? What error problem code is returned on replay or expiration?
    - *Current Stance:* Unresolved. Frontend candidate mock handler treats the token as single-use and returns `404 Problem` (or `409 Problem`) upon replay or expiration.
 
 ---
 
-## 8. Recommended Test Matrix
+## 8. Recommended Test Matrix (16 Scenarios)
 
-A dedicated Vitest test suite ([`TaskArchive.test.tsx`](file:///home/samudra/Projects/VisualSCode/VisualCode/Vscoding/Sonder/apps/web/src/modules/tasks/TaskArchive.test.tsx)) will be authored during implementation:
+The following test matrix will be implemented in [`apps/web/src/modules/tasks/TaskArchive.test.tsx`](file:///home/samudra/Projects/VisualSCode/VisualCode/Vscoding/Sonder/apps/web/src/modules/tasks/TaskArchive.test.tsx) upon approval:
 
 | Test ID | Test Scenario | Verified Condition & Quality Invariant |
 | :--- | :--- | :--- |
@@ -291,19 +309,19 @@ A dedicated Vitest test suite ([`TaskArchive.test.tsx`](file:///home/samudra/Pro
 | **ARCH-08** | Input suppression during typing | Pressing `Z` or `Mod+Z` inside `<input>`, `<textarea>`, or `contenteditable` does NOT trigger task undo. |
 | **ARCH-09** | Token expiry (10s elapsed) | Toast dismisses automatically upon expiry; subsequent `Z` does not restore. |
 | **ARCH-10** | Independent undo opportunities preserved | Archiving Task B while Task A is active preserves both undo opportunities without premature cancellation. |
-| **ARCH-11** | Surgical rollback on archive failure | Network failure during archive re-inserts only the target task; does not overwrite other tasks' updates. |
-| **ARCH-12** | Expired token error on restore | Server rejection with Problem Details displays error feedback; task remains archived. |
-| **ARCH-13** | Non-stealing focus management | Archiving from drawer shifts focus to nearest surviving canvas item; does NOT steal focus into toast. |
-| **ARCH-14** | Accessible announcements | `aria-live="polite"` announces archive and restore actions to screen readers. |
-| **ARCH-15** | WCAG 2.2 SC 2.5.8 target size | Toast buttons satisfy $\ge 24 \times 24\,\text{px}$ minimum target size with $\ge 44 \times 44\,\text{px}$ mobile touch envelopes. |
-| **ARCH-16** | Background tab visibility change | Tab refocus snaps countdown accurately to remaining wall-clock duration. |
+| **ARCH-11** | In-flight duplicate submission lock | Double-clicking Undo or rapidly repeating `Z` does not dispatch multiple concurrent `/restore` requests. |
+| **ARCH-12** | Surgical rollback under concurrent updates | Network failure on Task A archive re-inserts Task A without overwriting concurrent Task B edits. |
+| **ARCH-13** | Expired token error on restore | Server rejection with Problem Details displays error feedback; task remains archived. |
+| **ARCH-14** | Non-stealing focus management | Archiving from drawer shifts focus to nearest surviving canvas item; does NOT steal focus into toast. |
+| **ARCH-15** | Accessible announcements | `aria-live="polite"` announces archive and restore actions to screen readers. |
+| **ARCH-16** | WCAG 2.2 SC 2.5.8 target size & tab focus | Toast buttons satisfy $\ge 24 \times 24\,\text{px}$ minimum target size ($\ge 44 \times 44\,\text{px}$ mobile); tab refocus snaps countdown. |
 
 ---
 
 ## 9. Verification & Next Steps
 
-This revised plan is submitted under the **PLAN → GRILL** governance phase.
+This finalized plan packet is submitted under the **PLAN → GRILL** governance phase.
 - **Zero application code has been modified.**
 - **API contracts and generated types are untouched.**
 - **UI/UX Track B remains strictly paused.**
-- **Standing by for human approval of this revised plan before implementation begins.**
+- **Standing by for explicit human approval before any implementation begins.**
