@@ -271,9 +271,24 @@ export function useArchiveTask({
               queryClient.invalidateQueries({ queryKey });
             }
 
+            const newGroups = Array.isArray(old.groups)
+              ? old.groups.map((group) => {
+                  if (group.key === taskSnapshot.statusCategory) {
+                    if (group.items.some((t) => t.id === taskSnapshot.id)) return group;
+                    return {
+                      ...group,
+                      items: [taskSnapshot, ...group.items],
+                      total: group.total + 1,
+                    };
+                  }
+                  return group;
+                })
+              : old.groups;
+
             return {
               ...old,
               items: newItems,
+              groups: newGroups,
               primaryCount: (old.primaryCount ?? 0) + 1,
               total: (old.total ?? 0) + 1,
             };
@@ -394,9 +409,24 @@ export function useRestoreTask({
               newItems.splice(targetIdx, 0, optimisticRestored);
             }
 
+            const newGroups = Array.isArray(old.groups)
+              ? old.groups.map((group) => {
+                  if (group.key === optimisticRestored.statusCategory) {
+                    if (group.items.some((t) => t.id === optimisticRestored.id)) return group;
+                    return {
+                      ...group,
+                      items: [optimisticRestored, ...group.items],
+                      total: group.total + 1,
+                    };
+                  }
+                  return group;
+                })
+              : old.groups;
+
             return {
               ...old,
               items: newItems,
+              groups: newGroups,
               primaryCount: (old.primaryCount ?? 0) + 1,
               total: (old.total ?? 0) + 1,
             };
@@ -437,16 +467,38 @@ export function useRestoreTask({
       });
 
       for (const [queryKey, data] of matchingQueries) {
-        if (!data || !Array.isArray(data.items)) continue;
-        if (!data.items.some((t) => t.id === taskSnapshot.id)) continue;
+        if (!data) continue;
+        const inItems = Array.isArray(data.items) && data.items.some((t) => t.id === taskSnapshot.id);
+        const inGroups =
+          Array.isArray(data.groups) &&
+          data.groups.some((g) => Array.isArray(g.items) && g.items.some((t) => t.id === taskSnapshot.id));
+        if (!inItems && !inGroups) continue;
 
         queryClient.setQueryData<TaskQueryResult>(queryKey, (old) => {
-          if (!old || !old.items) return old;
+          if (!old) return old;
+          const filteredItems = Array.isArray(old.items)
+            ? old.items.filter((t) => t.id !== taskSnapshot.id)
+            : old.items;
+
+          const filteredGroups = Array.isArray(old.groups)
+            ? old.groups.map((group) => {
+                if (!Array.isArray(group.items)) return group;
+                const gItems = group.items.filter((t) => t.id !== taskSnapshot.id);
+                const countDiff = group.items.length - gItems.length;
+                return {
+                  ...group,
+                  items: gItems,
+                  total: Math.max(0, group.total - countDiff),
+                };
+              })
+            : old.groups;
+
           return {
             ...old,
-            items: old.items.filter((t) => t.id !== taskSnapshot.id),
-            primaryCount: Math.max(0, (old.primaryCount ?? old.items.length) - 1),
-            total: Math.max(0, (old.total ?? old.items.length) - 1),
+            items: filteredItems,
+            groups: filteredGroups,
+            primaryCount: Math.max(0, (old.primaryCount ?? 0) - 1),
+            total: Math.max(0, (old.total ?? 0) - 1),
           };
         });
       }
