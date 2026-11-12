@@ -63,7 +63,7 @@ export function TaskUndoToast({ className }: TaskUndoToastProps): React.JSX.Elem
                   type="button"
                   size="sm"
                   variant="secondary"
-                  disabled={isRestoring}
+                  disabled={isRestoring || item.status === "error"}
                   onClick={() => {
                     void undoTask(item.taskId);
                   }}

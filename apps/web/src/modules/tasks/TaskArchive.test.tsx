@@ -359,21 +359,86 @@ describe("VS-09A: Single-Item Task Archive & 10-Second Undo Toast (ARCH-01 to AR
     expect(screen.getByTestId("undo-toast-ENG-101")).toBeInTheDocument();
   });
 
-  // ARCH-09: Token expiry (10s elapsed)
-  it("ARCH-09: toast automatically dismisses upon expiry; subsequent 'Z' does NOT restore", async () => {
-    vi.useFakeTimers();
-    try {
-      renderTaskTestEnvironment();
+  // ARCH-09: Client countdown zero + server token valid (Test A: Advisory countdown & Server Authority)
+  it("ARCH-09: client countdown reaching zero is advisory: Undo action remains available, dispatches restore with token, and task is restored if server accepts", async () => {
+    const user = userEvent.setup();
 
-      // Find an active undo item and manually inject or test timer transition
-      expect(getMockUndoTokens()).toBeDefined();
-      // Fast-forward fake time past 10 seconds
-      act(() => {
-        vi.advanceTimersByTime(11000);
-      });
-    } finally {
-      vi.useRealTimers();
-    }
+    // Mock archive endpoint returning undoExpiresAt in the past (client countdown immediately zero),
+    // while the server-side token record remains valid in the future.
+    let capturedRestoreToken: string | null = null;
+    server.use(
+      http.post(
+        "*/api/v1/communities/:communityId/workspaces/:workspaceId/tasks/:taskId/archive",
+        () => {
+          const testToken = "test_skew_token_zero_countdown";
+          const pastDate = new Date(Date.now() - 5000).toISOString();
+          const futureDate = new Date(Date.now() + 60000).toISOString();
+
+          // Server authoritative store keeps the token valid
+          getMockUndoTokens().set(testToken, {
+            taskId: mockTasksCommunity1[0]!.id,
+            workspaceId: WS_SHARED_ENG_ID,
+            undoExpiresAt: futureDate,
+            trashExpiresAt: new Date(Date.now() + 30 * 86400000).toISOString(),
+          });
+
+          return HttpResponse.json({
+            taskId: mockTasksCommunity1[0]!.id,
+            undoToken: testToken,
+            undoExpiresAt: pastDate, // Client receives past timestamp -> remainingMs is 0
+            trashExpiresAt: new Date(Date.now() + 30 * 86400000).toISOString(),
+          });
+        }
+      ),
+      http.post(
+        "*/api/v1/communities/:communityId/workspaces/:workspaceId/tasks/:taskId/restore",
+        async ({ request }) => {
+          const body = (await request.json()) as { undoToken?: string };
+          capturedRestoreToken = body.undoToken ?? null;
+          return HttpResponse.json({
+            ...mockTasksCommunity1[0]!,
+            archivedAt: null,
+          });
+        }
+      )
+    );
+
+    renderTaskTestEnvironment();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("task-list-row-ENG-101")).toBeInTheDocument();
+    });
+
+    // Archive ENG-101
+    await user.click(screen.getByTestId("task-actions-trigger-ENG-101"));
+    await user.click(await screen.findByTestId("task-action-archive-ENG-101"));
+
+    // Toast appears and task is evicted from list
+    await waitFor(() => {
+      expect(screen.getByTestId("undo-toast-ENG-101")).toBeInTheDocument();
+      expect(screen.queryByTestId("task-list-row-ENG-101")).not.toBeInTheDocument();
+    });
+
+    // Confirm client countdown displays zero remaining (empty progress bar)
+    const progressBar = screen.getByRole("progressbar");
+    expect(progressBar).toHaveAttribute("aria-valuenow", "0");
+
+    // Confirm Undo button is STILL available, visible, and enabled (NOT blocked by zero countdown)
+    const undoBtn = screen.getByTestId("undo-button-ENG-101");
+    expect(undoBtn).toBeInTheDocument();
+    expect(undoBtn).not.toBeDisabled();
+
+    // Click Undo
+    await user.click(undoBtn);
+
+    // Confirm restore dispatch occurred with the exact undoToken
+    expect(capturedRestoreToken).toBe("test_skew_token_zero_countdown");
+
+    // Confirm task is restored into active query without duplicate insertion
+    await waitFor(() => {
+      expect(screen.getByTestId("task-list-row-ENG-101")).toBeInTheDocument();
+    });
+    expect(screen.getAllByTestId("task-list-row-ENG-101")).toHaveLength(1);
   });
 
   // ARCH-10: Independent undo opportunities preserved
@@ -839,14 +904,17 @@ describe("VS-09A: Single-Item Task Archive & 10-Second Undo Toast (ARCH-01 to AR
     expect(screen.queryByTestId(`task-action-archive-${unarchivableTask.taskKey}`)).not.toBeInTheDocument();
   });
 
-  // ARCH-21: Server/client clock disagreement
-  it("ARCH-21: server Problem Details (409 UNDO_TOKEN_EXPIRED) handled safely without unhandled crashes", async () => {
+  // ARCH-21: Client countdown positive + server rejects (Test B: Server authoritative expiry)
+  it("ARCH-21: server Problem Details (409 UNDO_TOKEN_EXPIRED) handled safely without unhandled crashes: error alert shown and task not reinserted", async () => {
     const user = userEvent.setup();
 
+    let capturedRestoreToken: string | null = null;
     server.use(
       http.post(
         "*/api/v1/communities/:communityId/workspaces/:workspaceId/tasks/:taskId/restore",
-        () => {
+        async ({ request }) => {
+          const body = (await request.json()) as { undoToken?: string };
+          capturedRestoreToken = body.undoToken ?? null;
           return HttpResponse.json(
             {
               type: "https://errors.sonder.platform/undo-token-expired",
@@ -872,14 +940,32 @@ describe("VS-09A: Single-Item Task Archive & 10-Second Undo Toast (ARCH-01 to AR
 
     await waitFor(() => {
       expect(screen.getByTestId("undo-button-ENG-101")).toBeInTheDocument();
+      expect(screen.queryByTestId("task-list-row-ENG-101")).not.toBeInTheDocument();
     });
 
+    // Verify countdown still shows time remaining (positive value)
+    const progressBar = screen.getByRole("progressbar");
+    const remainingValue = Number(progressBar.getAttribute("aria-valuenow"));
+    expect(remainingValue).toBeGreaterThan(0);
+
+    // Click Undo while countdown is still positive
     await user.click(screen.getByTestId("undo-button-ENG-101"));
 
-    // Toast remains rendered with informative error, client app does not crash
+    // Verify restore request reached server with token
+    expect(capturedRestoreToken).toBeTruthy();
+
+    // Toast displays server authoritative error in role="alert"
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toBeInTheDocument();
+      const alert = screen.getByRole("alert");
+      expect(alert).toBeInTheDocument();
+      expect(alert).toHaveTextContent("Server authoritative expiry: token has expired.");
     });
+
+    // Task must NOT reappear in active queries
+    expect(screen.queryByTestId("task-list-row-ENG-101")).not.toBeInTheDocument();
+
+    // Undo button is disabled after server rejection
+    expect(screen.getByTestId("undo-button-ENG-101")).toBeDisabled();
   });
 
   // ARCH-22: Non-stealing focus management
@@ -1086,5 +1172,127 @@ describe("VS-09A Regression Suite: Archive Exclusion, Deep-Linking & Cache Inval
         undoToken: "",
       })
     ).rejects.toThrow("Missing undoToken");
+  });
+
+  // 7. Keyboard shortcut 'Z' functions when advisory countdown displays zero (Test F + Test A)
+  it("REG-07: keyboard shortcut 'Z' restores task when advisory countdown displays zero and server token remains valid", async () => {
+    const user = userEvent.setup();
+
+    let capturedRestoreToken: string | null = null;
+    server.use(
+      http.post(
+        "*/api/v1/communities/:communityId/workspaces/:workspaceId/tasks/:taskId/archive",
+        () => {
+          const testToken = "test_keyboard_zero_token";
+          getMockUndoTokens().set(testToken, {
+            taskId: mockTasksCommunity1[0]!.id,
+            workspaceId: WS_SHARED_ENG_ID,
+            undoExpiresAt: new Date(Date.now() + 60000).toISOString(),
+            trashExpiresAt: new Date(Date.now() + 30 * 86400000).toISOString(),
+          });
+
+          return HttpResponse.json({
+            taskId: mockTasksCommunity1[0]!.id,
+            undoToken: testToken,
+            undoExpiresAt: new Date(Date.now() - 5000).toISOString(), // zero remaining in client
+            trashExpiresAt: new Date(Date.now() + 30 * 86400000).toISOString(),
+          });
+        }
+      ),
+      http.post(
+        "*/api/v1/communities/:communityId/workspaces/:workspaceId/tasks/:taskId/restore",
+        async ({ request }) => {
+          const body = (await request.json()) as { undoToken?: string };
+          capturedRestoreToken = body.undoToken ?? null;
+          return HttpResponse.json({
+            ...mockTasksCommunity1[0]!,
+            archivedAt: null,
+          });
+        }
+      )
+    );
+
+    renderTaskTestEnvironment();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("task-list-row-ENG-101")).toBeInTheDocument();
+    });
+
+    // Archive ENG-101
+    await user.click(screen.getByTestId("task-actions-trigger-ENG-101"));
+    await user.click(await screen.findByTestId("task-action-archive-ENG-101"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("undo-toast-ENG-101")).toBeInTheDocument();
+      expect(screen.queryByTestId("task-list-row-ENG-101")).not.toBeInTheDocument();
+    });
+
+    // Verify countdown is 0
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0");
+
+    // Press 'Z' key
+    fireEvent.keyDown(document, { key: "z" });
+
+    // Verify restore request was dispatched with token
+    await waitFor(() => {
+      expect(capturedRestoreToken).toBe("test_keyboard_zero_token");
+      expect(screen.getByTestId("task-list-row-ENG-101")).toBeInTheDocument();
+    });
+  });
+
+  // 8. Missing undo token fails closed in UI without issuing network request (Test C)
+  it("REG-08: missing or empty undo token fails closed in UI, displaying error alert and issuing no restore network request", async () => {
+    const user = userEvent.setup();
+
+    let restoreNetworkCallCount = 0;
+    server.use(
+      http.post(
+        "*/api/v1/communities/:communityId/workspaces/:workspaceId/tasks/:taskId/archive",
+        () => {
+          return HttpResponse.json({
+            taskId: mockTasksCommunity1[0]!.id,
+            undoToken: "", // Empty token simulates invalid/missing token from broken response
+            undoExpiresAt: new Date(Date.now() + 10000).toISOString(),
+            trashExpiresAt: new Date(Date.now() + 30 * 86400000).toISOString(),
+          });
+        }
+      ),
+      http.post(
+        "*/api/v1/communities/:communityId/workspaces/:workspaceId/tasks/:taskId/restore",
+        () => {
+          restoreNetworkCallCount++;
+          return HttpResponse.json({});
+        }
+      )
+    );
+
+    renderTaskTestEnvironment();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("task-list-row-ENG-101")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByTestId("task-actions-trigger-ENG-101"));
+    await user.click(await screen.findByTestId("task-action-archive-ENG-101"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("undo-button-ENG-101")).toBeInTheDocument();
+    });
+
+    // Attempt to click Undo with empty token
+    await user.click(screen.getByTestId("undo-button-ENG-101"));
+
+    // Network request must NOT be issued
+    expect(restoreNetworkCallCount).toBe(0);
+
+    // Toast transitions to error alert
+    await waitFor(() => {
+      const alert = screen.getByRole("alert");
+      expect(alert).toBeInTheDocument();
+      expect(alert).toHaveTextContent("Missing undoToken");
+    });
+
+    // Task is NOT restored
+    expect(screen.queryByTestId("task-list-row-ENG-101")).not.toBeInTheDocument();
   });
 });

@@ -159,6 +159,23 @@ export function TaskUndoProvider({
         return;
       }
 
+      // Fail-closed validation for missing or empty undo token
+      if (!currentItem.undoToken || currentItem.undoToken.trim().length === 0) {
+        setActiveUndos((prev) =>
+          prev.map((u) =>
+            u.taskId === taskId
+              ? {
+                  ...u,
+                  status: "error" as const,
+                  errorMessage:
+                    "Missing undoToken: restoreTask requires a valid undoToken to restore an archived task.",
+                }
+              : u
+          )
+        );
+        return;
+      }
+
       // 1. Lock in-flight status immediately to block duplicates
       setActiveUndos((prev) =>
         prev.map((u) =>
@@ -179,7 +196,7 @@ export function TaskUndoProvider({
         setActiveUndos((prev) => prev.filter((u) => u.taskId !== taskId));
         return restoredTask;
       } catch (err: unknown) {
-        // 3. On error, transition to error/expired safely without unhandled crashes
+        // 3. On error, transition to error safely without unhandled crashes
         const errMsg =
           err instanceof Error
             ? err.message
@@ -203,6 +220,8 @@ export function TaskUndoProvider({
   );
 
   // Advisory Countdown Tick
+  // Server remains solely authoritative for undo-token validity.
+  // The local countdown is strictly advisory and clamps to zero without asserting expiration or removing the item.
   useEffect(() => {
     if (activeUndos.length === 0) return;
 
@@ -210,22 +229,17 @@ export function TaskUndoProvider({
       const now = Date.now();
       setActiveUndos((prev) => {
         let hasChanges = false;
-        const next = prev
-          .map((item) => {
-            if (item.status === "restoring") return item;
-            const expMs = Date.parse(item.undoExpiresAt);
-            const remaining = Math.max(0, expMs - now);
+        const next = prev.map((item) => {
+          if (item.status === "restoring") return item;
+          const expMs = Date.parse(item.undoExpiresAt);
+          const remaining = Math.max(0, expMs - now);
 
-            if (remaining !== item.remainingMs) {
-              hasChanges = true;
-              if (remaining <= 0 && item.status === "idle") {
-                return { ...item, remainingMs: 0, status: "expired" as const };
-              }
-              return { ...item, remainingMs: remaining };
-            }
-            return item;
-          })
-          .filter((item) => !(item.status === "expired" && item.remainingMs <= 0));
+          if (remaining !== item.remainingMs) {
+            hasChanges = true;
+            return { ...item, remainingMs: remaining };
+          }
+          return item;
+        });
 
         return hasChanges ? next : prev;
       });
@@ -235,22 +249,18 @@ export function TaskUndoProvider({
   }, [activeUndos.length]);
 
   // Tab Suspension Snap
+  // Resynchronizes remaining countdown with wall-clock time without dropping undo opportunities.
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         const now = Date.now();
         setActiveUndos((prev) =>
-          prev
-            .map((item) => {
-              if (item.status === "restoring") return item;
-              const expMs = Date.parse(item.undoExpiresAt);
-              const remaining = Math.max(0, expMs - now);
-              if (remaining <= 0 && item.status === "idle") {
-                return { ...item, remainingMs: 0, status: "expired" as const };
-              }
-              return { ...item, remainingMs: remaining };
-            })
-            .filter((item) => !(item.status === "expired" && item.remainingMs <= 0))
+          prev.map((item) => {
+            if (item.status === "restoring") return item;
+            const expMs = Date.parse(item.undoExpiresAt);
+            const remaining = Math.max(0, expMs - now);
+            return { ...item, remainingMs: remaining };
+          })
         );
       }
     };
