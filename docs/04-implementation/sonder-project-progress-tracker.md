@@ -217,7 +217,7 @@ SONDER PLATFORM PROGRESS SUMMARY
 Monorepo Status:           Clean, 100% Green
 Active Baseline:           develop @ 26bd662 (PR #40 merged)
 Total Passing Test Suites: 50 suites (apps/web + packages/contracts)
-Total Automated Tests:     506 tests (100% passing)
+Total Automated Tests:     538 tests (100% passing)
 Documentation Checks:      51 / 51 passed (pnpm validate:docs)
 
 Track A (Engineering):
@@ -225,12 +225,12 @@ Track A (Engineering):
                            - 53 Actionable Concrete Capabilities
                            - 7 Composite Parent Identifiers
                            - 10 Research Family Range Bounds
-- Actionable Status (53):  17 DONE, 3 PARTIAL, 10 NOT STARTED (Phase 1), 3 DECISION BLOCKED,
+- Actionable Status (53):  18 DONE, 2 PARTIAL, 10 NOT STARTED (Phase 1), 3 DECISION BLOCKED,
                            1 BACKEND DEPENDENT, 12 DEFERRED, 7 REJECTED (Total: 53)
 - Contract Readiness:      Candidate OpenAPI 0.3.20-draft (Live Backend Pending)
-- Latest Hardened Feature: VS-08B.1: Notification REST Vertical Slice & Functional Inbox
-- Current Milestone:       VS-09.0: Complete Frontend Audit (MERGED, VERIFIED & LOCKED)
-- Next Engineering Target: VS-09A: Single-Item Task Archive & 10s Undo Toast (FEAT-A10a) (PLAN & GRILL)
+- Latest Hardened Feature: VS-09A: Single-Item Task Archive & 10-Second Undo (FEAT-A10a)
+- Current Milestone:       VS-09A: Single-Item Task Archive & 10s Undo (DELIVERED & LOCKED)
+- Next Engineering Target: VS-09B: 30-Day Workspace Trash & Bulk Action Bar (FEAT-A10b)
 
 Track B (UI/UX Workstream - PAUSED):
 - Research & Principles:   Approved (PR #4, 92e984e)

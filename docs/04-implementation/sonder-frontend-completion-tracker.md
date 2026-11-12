@@ -314,7 +314,7 @@ flowchart LR
 - **Rationale:** No design system refactoring or micro-ergonomic tuning may distract from establishing complete functional feature coverage.
 
 ### Prerequisite Checklist Before Track B Unfreeze:
-- [ ] Complete Milestone VS-09A (Task Archive & 10s Undo Toast)
+- [x] Complete Milestone VS-09A (Task Archive & 10s Undo Toast) — DELIVERED & LOCKED (Commit `0b82ef9`)
 - [ ] Complete Milestone VS-09B (30-Day Trash & Bulk Action Bar)
 - [ ] Complete Milestone VS-09C (Starter Templates Picker UI)
 - [ ] Complete Milestone VS-09D (Work-Item Archetypes)
@@ -333,4 +333,4 @@ BACKEND-INDEPENDENT WORK REMAINS — IMPLEMENTATION REQUIRED.
 ================================================================================
 ```
 
-The next approved milestone is **VS-09A: Single-Item Task Archive & 10-Second Undo Toast (`FEAT-A10a`)**, following the strict engineering sequence: PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT.
+The next approved milestone is **VS-09B: 30-Day Workspace Trash & Bulk Action Bar (`FEAT-A10b`)**, following the strict engineering sequence: PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT.
