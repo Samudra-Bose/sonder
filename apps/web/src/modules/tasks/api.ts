@@ -191,6 +191,9 @@ export async function restoreTask({
   csrfToken,
   mutationId,
 }: RestoreTaskParams): Promise<TaskDto> {
+  if (undoToken === "") {
+    throw new Error("Missing undoToken: restoreTask requires a valid undoToken to restore an archived task.");
+  }
   const body = undoToken ? { undoToken } : {};
   return apiRequest<TaskDto>(
     `/communities/${encodeURIComponent(communityId)}/workspaces/${encodeURIComponent(workspaceId)}/tasks/${encodeURIComponent(taskId)}/restore`,
