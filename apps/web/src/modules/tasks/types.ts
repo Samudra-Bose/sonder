@@ -21,6 +21,10 @@ export type TaskMoveResultDto = ApiSchema<"TaskMoveResultDto">;
 export type ArchiveRequest = ApiSchema<"ArchiveRequest">;
 export type ArchiveTaskResultDto = ApiSchema<"ArchiveTaskResultDto">;
 export type RestoreTaskRequest = ApiSchema<"RestoreTaskRequest">;
+export type BulkTaskMutationRequest = ApiSchema<"BulkTaskMutationRequest">;
+export type BulkTaskResultDto = ApiSchema<"BulkTaskResultDto">;
+export type TrashedTaskDto = ApiSchema<"TrashedTaskDto">;
+export type TrashedTaskListDto = ApiSchema<"TrashedTaskListDto">;
 
 export interface GetTaskParams {
   communityId: string;
@@ -83,6 +87,19 @@ export interface RestoreTaskParams {
   undoToken?: string;
   csrfToken?: string;
   mutationId?: string;
+}
+
+export interface BulkMutateTasksParams {
+  communityId: string;
+  workspaceId: string;
+  data: BulkTaskMutationRequest;
+  csrfToken?: string;
+  mutationId?: string;
+}
+
+export interface ListTrashedTasksParams {
+  communityId: string;
+  workspaceId: string;
 }
 
 export interface TaskConcurrencyConflictError {

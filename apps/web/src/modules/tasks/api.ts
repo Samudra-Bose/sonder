@@ -14,6 +14,10 @@ import type {
   ArchiveTaskResultDto,
   ArchiveTaskParams,
   RestoreTaskParams,
+  BulkMutateTasksParams,
+  BulkTaskResultDto,
+  ListTrashedTasksParams,
+  TrashedTaskListDto,
 } from "./types.js";
 
 /**
@@ -175,8 +179,9 @@ export async function archiveTask({
 }
 
 /**
- * Restores an archived task using the server-issued undo token.
- * Validates undo token within the 10-second advisory window.
+ * Restores an archived task.
+ * When undoToken is provided, validates within the advisory undo window.
+ * When undoToken is omitted, restores from the 30-day trash view.
  */
 export async function restoreTask({
   communityId,
@@ -186,14 +191,46 @@ export async function restoreTask({
   csrfToken,
   mutationId,
 }: RestoreTaskParams): Promise<TaskDto> {
-  if (!undoToken) {
-    throw new Error("Missing undoToken: restoreTask requires a valid undoToken to restore an archived task.");
-  }
+  const body = undoToken ? { undoToken } : {};
   return apiRequest<TaskDto>(
     `/communities/${encodeURIComponent(communityId)}/workspaces/${encodeURIComponent(workspaceId)}/tasks/${encodeURIComponent(taskId)}/restore`,
     {
       method: "POST",
-      body: JSON.stringify({ undoToken }),
+      body: JSON.stringify(body),
+      csrfToken,
+      mutationId,
+    }
+  );
+}
+
+/**
+ * Lists recoverable archived tasks in the workspace (30-day retention window).
+ */
+export async function listTrashedTasks({
+  communityId,
+  workspaceId,
+}: ListTrashedTasksParams): Promise<TrashedTaskListDto> {
+  return apiRequest<TrashedTaskListDto>(
+    `/communities/${encodeURIComponent(communityId)}/workspaces/${encodeURIComponent(workspaceId)}/trash/tasks`
+  );
+}
+
+/**
+ * Applies an all-or-nothing bulk task mutation (up to 100 tasks).
+ * Supported actions: ARCHIVE, SET_STATUS, SET_PRIORITY, ASSIGN, UNASSIGN.
+ */
+export async function bulkMutateTasks({
+  communityId,
+  workspaceId,
+  data,
+  csrfToken,
+  mutationId,
+}: BulkMutateTasksParams): Promise<BulkTaskResultDto> {
+  return apiRequest<BulkTaskResultDto>(
+    `/communities/${encodeURIComponent(communityId)}/workspaces/${encodeURIComponent(workspaceId)}/tasks/bulk`,
+    {
+      method: "POST",
+      body: JSON.stringify(data),
       csrfToken,
       mutationId,
     }
