@@ -87,9 +87,9 @@ TOTAL CANONICAL FEAT PATTERNS ACCOUNTED FOR:                           70 items
 
 ```mermaid
 pie title Actionable Capability Status Distribution (53 Features)
-    "DONE (Provisional Frontend Candidate)" : 17
+    "DONE (Provisional Frontend Candidate)" : 18
     "PARTIAL (Incomplete Scope)" : 3
-    "NOT STARTED (Phase 1 Backlog)" : 10
+    "NOT STARTED (Phase 1 Backlog)" : 9
     "DECISION BLOCKED (PO / Backend Sign-Off)" : 3
     "BACKEND DEPENDENT (Gateway / Endpoints)" : 1
     "DEFERRED (Phases 2, 3, 4)" : 12
@@ -98,14 +98,14 @@ pie title Actionable Capability Status Distribution (53 Features)
 
 | Status Classification | Count | Description & Invariant Boundaries |
 | :--- | :---: | :--- |
-| **DONE** | **17** | Provisional frontend candidate implementation verified in `apps/web/src/` with passing Vitest test suites against MSW mocks. Live backend & infrastructure acceptance pending. |
+| **DONE** | **18** | Provisional frontend candidate implementation verified in `apps/web/src/` with passing Vitest test suites against MSW mocks. Live backend & infrastructure acceptance pending. |
 | **PARTIAL** | **3** | Core data structures exist in code or types, but UI or workflow remains incomplete (`FEAT-B02`, `FEAT-D05a`, `FEAT-K01`). |
-| **NOT STARTED (Phase 1)** | **10** | Approved Phase 1 capabilities with schemas in candidate OpenAPI 0.3.20-draft, awaiting frontend vertical slice implementation. |
+| **NOT STARTED (Phase 1)** | **9** | Approved Phase 1 capabilities with schemas in candidate OpenAPI 0.3.20-draft, awaiting frontend vertical slice implementation. |
 | **DECISION BLOCKED** | **3** | Implementation paused by formal governance decision (`FEAT-C04`, `FEAT-C06`, `FEAT-G02b`). |
 | **BACKEND DEPENDENT** | **1** | Requires live backend infrastructure (`FEAT-F02` Live WebSocket Gateway `DEP-REALTIME-01`). |
 | **DEFERRED (Phases 2–4)** | **12** | Approved product roadmap capabilities scheduled for Phase 2, 3, or 4. |
 | **REJECTED / OUT OF SCOPE**| **7** | Explicitly excluded to protect simplicity, performance, and low cognitive overhead. |
-| **TOTAL ACTIONABLE** | **53** | **Sum of all mutually exclusive capability statuses: 17 + 3 + 10 + 3 + 1 + 12 + 7 = 53** |
+| **TOTAL ACTIONABLE** | **53** | **Sum of all mutually exclusive capability statuses: 18 + 3 + 9 + 3 + 1 + 12 + 7 = 53** |
 
 ---
 
@@ -127,7 +127,7 @@ Below is the definitive enumeration of all 70 canonical FEAT patterns. Every act
 | **FEAT-A07** | Task & Checklist Cloning (Duplicate Task) | M1.2 | **NOT STARTED** | None | None | "Duplicate task" action in actions menu. |
 | **FEAT-A08** | Fractional Ranking & Manual Ordering (`rankKey` / LexoRank) | M1.1 | **DONE** | `TaskBoardView.tsx`, `TaskListView.tsx` | `TaskViews.test.tsx` (38), `CrossViewIntegration.test.tsx` (12) | Frontend manual ordering, board column drop ranking, and accessible Move menu verified (50 tests). Live database LexoRank rebalancing background job pending backend service. |
 | **FEAT-A09** | Granular Time Tracking & Billable Worklogs | Excluded | **REJECTED** | None (Excluded per PRD §2.3) | None | Excluded from product scope to preserve lightweight community focus. |
-| **FEAT-A10a**| Single-Item Archive & 10s Undo Toast (`Z` hotkey) | M1.1 | **NOT STARTED** | None | None | Archive action in drawer, 10s floating undo toast. |
+| **FEAT-A10a**| Single-Item Archive & 10s Undo Toast (`Z` hotkey) | M1.1 | **DONE** | `TaskActionsMenu.tsx`, `TaskUndoContext.tsx`, `TaskUndoToast.tsx`, `useArchiveTask.ts` | `TaskArchive.test.tsx` (32) | Single-task archive, 10s advisory undo toast, Z keyboard shortcut, and server-authoritative token validation verified (32 tests). Frozen at `0b82ef9`. |
 | **FEAT-A10b**| Bulk Action Bar (<=100 tasks) & 30-Day Trash Recovery View | M1.2 | **NOT STARTED** | None | None | Multi-select bar, `/trash` view, 30-day restore. |
 | **FEAT-A10c**| Granular Field-Revision Snapshot Restore | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3. |
 | **FEAT-B01** | Multi-Community, Workspace Spine & Responsive Navigation Rail | M1.1 | **DONE** | `AppShell.tsx`, `WorkspaceSwitcher.tsx` | `AppShell.test.tsx` (14), `WorkspaceSwitcher.test.tsx` (22) | Frontend application shell, responsive navigation rail, and desktop/mobile workspace switcher verified (36 tests). Live community multi-tenancy authorization middleware pending backend service. |
