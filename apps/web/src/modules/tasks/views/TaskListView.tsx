@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Calendar,
   RefreshCw,
@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { useTaskPeekDrawer } from "../useTaskPeekDrawer";
 import { TaskActionsMenu } from "../TaskActionsMenu.js";
+import { BulkActionBar } from "./BulkActionBar.js";
+import { useBulkMutateTasks } from "../useBulkMutateTasks.js";
 import type { TaskDto, TaskStatusCategory, TaskPriority } from "../types";
 
 export interface TaskListViewProps {
@@ -79,6 +81,98 @@ export function TaskListView({
   className,
 }: TaskListViewProps): React.JSX.Element {
   const { openTask } = useTaskPeekDrawer();
+  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
+  const headerCheckboxRef = useRef<HTMLInputElement>(null);
+  const bulkMutate = useBulkMutateTasks();
+
+  const maxSelectable = Math.min(tasks.length, 100);
+  const isAllSelected =
+    tasks.length > 0 &&
+    selectedTaskIds.size >= maxSelectable &&
+    tasks.slice(0, 100).every((t) => selectedTaskIds.has(t.id));
+  const isIndeterminate = selectedTaskIds.size > 0 && !isAllSelected;
+
+  useEffect(() => {
+    if (headerCheckboxRef.current) {
+      headerCheckboxRef.current.indeterminate = isIndeterminate;
+    }
+  }, [isIndeterminate]);
+
+  const handleToggleSelectTask = (taskId: string) => {
+    setSelectedTaskIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(taskId)) {
+        next.delete(taskId);
+      } else {
+        if (next.size < 100) {
+          next.add(taskId);
+        }
+      }
+      return next;
+    });
+  };
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedTaskIds(new Set());
+    } else {
+      const toSelect = tasks.slice(0, 100).map((t) => t.id);
+      setSelectedTaskIds(new Set(toSelect));
+    }
+  };
+
+  const handleBulkArchive = async () => {
+    if (selectedTaskIds.size === 0) return;
+    try {
+      await bulkMutate.mutateAsync({
+        communityId: _communityId,
+        workspaceId,
+        data: {
+          taskIds: Array.from(selectedTaskIds),
+          action: "ARCHIVE",
+        },
+      });
+      setSelectedTaskIds(new Set());
+    } catch {
+      // Error state handled by mutation
+    }
+  };
+
+  const handleBulkStatusChange = async (statusCategory: TaskStatusCategory) => {
+    if (selectedTaskIds.size === 0) return;
+    try {
+      await bulkMutate.mutateAsync({
+        communityId: _communityId,
+        workspaceId,
+        data: {
+          taskIds: Array.from(selectedTaskIds),
+          action: "SET_STATUS",
+          statusCategory,
+        },
+      });
+      setSelectedTaskIds(new Set());
+    } catch {
+      // Error state handled by mutation
+    }
+  };
+
+  const handleBulkPriorityChange = async (priority: TaskPriority) => {
+    if (selectedTaskIds.size === 0) return;
+    try {
+      await bulkMutate.mutateAsync({
+        communityId: _communityId,
+        workspaceId,
+        data: {
+          taskIds: Array.from(selectedTaskIds),
+          action: "SET_PRIORITY",
+          priority,
+        },
+      });
+      setSelectedTaskIds(new Set());
+    } catch {
+      // Error state handled by mutation
+    }
+  };
 
   const handleSortClick = (field: string) => {
     if (!onSortChange) return;
@@ -159,6 +253,19 @@ export function TaskListView({
         <table className="w-full text-left border-collapse text-xs" aria-label="Tasks table">
           <thead>
             <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-muted)] text-[var(--text-muted)] font-semibold select-none">
+              {/* Multi-Select Header Checkbox */}
+              <th scope="col" className="py-2.5 px-3 w-10 text-center">
+                <input
+                  type="checkbox"
+                  aria-label="Select all tasks"
+                  data-testid="bulk-select-all"
+                  ref={headerCheckboxRef}
+                  checked={isAllSelected}
+                  onChange={handleToggleSelectAll}
+                  className="h-4 w-4 rounded border-[var(--border-subtle)] text-[var(--brand-accent-btn-bg)] focus:ring-[var(--border-focus)] cursor-pointer"
+                />
+              </th>
+
               {/* Sortable: Key */}
               <th
                 scope="col"
@@ -314,8 +421,27 @@ export function TaskListView({
                   tabIndex={0}
                   onClick={handleRowClick}
                   onKeyDown={handleKeyDown}
-                  className="hover:bg-[var(--surface-muted)] transition-colors cursor-pointer focus:bg-[var(--surface-muted)] focus:outline-none focus:ring-1 focus:ring-inset focus:ring-[var(--border-focus)] group"
+                  className={cn(
+                    "hover:bg-[var(--surface-muted)] transition-colors cursor-pointer focus:bg-[var(--surface-muted)] focus:outline-none focus:ring-1 focus:ring-inset focus:ring-[var(--border-focus)] group",
+                    selectedTaskIds.has(task.id) && "bg-[var(--surface-muted)]"
+                  )}
                 >
+                  {/* Selection Checkbox */}
+                  <td
+                    className="py-2.5 px-3 w-10 text-center"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      aria-label={`Select task ${task.taskKey}`}
+                      data-testid={`bulk-select-task-${task.taskKey}`}
+                      checked={selectedTaskIds.has(task.id)}
+                      onChange={() => handleToggleSelectTask(task.id)}
+                      className="h-4 w-4 rounded border-[var(--border-subtle)] text-[var(--brand-accent-btn-bg)] focus:ring-[var(--border-focus)] cursor-pointer"
+                    />
+                  </td>
+
                   {/* Task Key */}
                   <td className="py-2.5 px-3 font-mono font-bold text-[var(--brand-accent-text)]">
                     <button
@@ -401,6 +527,18 @@ export function TaskListView({
           </tbody>
         </table>
       </div>
+
+      {/* Floating Bulk Action Bar */}
+      <BulkActionBar
+        selectedCount={selectedTaskIds.size}
+        totalCount={tasks.length}
+        maxLimit={100}
+        onClearSelection={() => setSelectedTaskIds(new Set())}
+        onArchive={handleBulkArchive}
+        onStatusChange={handleBulkStatusChange}
+        onPriorityChange={handleBulkPriorityChange}
+        isMutating={bulkMutate.isPending}
+      />
     </div>
   );
 }

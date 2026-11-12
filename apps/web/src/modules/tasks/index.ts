@@ -21,3 +21,6 @@ export * from "./useArchiveTask.js";
 export * from "./TaskUndoContext.js";
 export * from "./TaskUndoToast.js";
 export * from "./TaskActionsMenu.js";
+export * from "./useBulkMutateTasks.js";
+export * from "./useTrashedTasks.js";
+export * from "./useRestoreTrashedTask.js";

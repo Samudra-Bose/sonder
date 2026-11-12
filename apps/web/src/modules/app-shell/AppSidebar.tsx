@@ -8,6 +8,7 @@ import {
   LayoutGrid,
   Calendar,
   GanttChart,
+  Trash2,
 } from "lucide-react";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { Kbd } from "@/components/ui/KeyboardShortcut";
@@ -166,6 +167,14 @@ export function AppSidebar({
                   href: currentCommunityId
                     ? `/c/${currentCommunityId}/w/${activeWorkspace.id}/timeline`
                     : `/workspaces/${activeWorkspace.id}/timeline`,
+                },
+                {
+                  id: "trash",
+                  label: "Trash",
+                  icon: Trash2,
+                  href: currentCommunityId
+                    ? `/c/${currentCommunityId}/w/${activeWorkspace.id}/trash`
+                    : `/workspaces/${activeWorkspace.id}/trash`,
                 },
               ].map((viewItem) => {
                 const ViewIcon = viewItem.icon;

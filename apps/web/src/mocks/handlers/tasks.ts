@@ -1987,17 +1987,17 @@ export const taskHandlers = [
         // Token consumed atomically
         mockUndoTokens.delete(body.undoToken);
       } else {
-        // Missing undo token in VS-09A context: verify restore permissions
-        if (!task.effectivePermissions || !task.effectivePermissions.canRestore) {
+        // Missing undo token (e.g. from /trash view): verify restore permissions
+        if (task.effectivePermissions && task.effectivePermissions.canRestore === false) {
           return HttpResponse.json(
             {
-              type: "https://errors.sonder.platform/undo-token-required",
-              title: "Undo Token Required",
-              status: 400,
-              detail: "An undo token is required for immediate task restoration.",
-              code: "UNDO_TOKEN_REQUIRED",
+              type: "https://errors.sonder.platform/forbidden",
+              title: "Permission Denied",
+              status: 403,
+              detail: "You do not have permission to restore this task.",
+              code: "FORBIDDEN",
             },
-            { status: 400, headers: { "Content-Type": "application/problem+json" } }
+            { status: 403, headers: { "Content-Type": "application/problem+json" } }
           );
         }
       }
@@ -2020,6 +2020,211 @@ export const taskHandlers = [
           "X-Workspace-Seq": String(newSeq),
         },
       });
+    }
+  ),
+
+  // 9. GET /api/v1/communities/:communityId/workspaces/:workspaceId/trash/tasks
+  http.get(
+    "/api/v1/communities/:communityId/workspaces/:workspaceId/trash/tasks",
+    async ({ params }) => {
+      if (tasksDelayMs > 0) {
+        await delay(tasksDelayMs);
+      }
+
+      if (matchesErrorOverride("GET")) {
+        return HttpResponse.json(tasksErrorOverride!.problem, {
+          status: tasksErrorOverride!.status,
+          headers: { "Content-Type": "application/problem+json" },
+        });
+      }
+
+      const { workspaceId } = params as {
+        communityId: string;
+        workspaceId: string;
+      };
+
+      const workspace = mockWorkspacesCommunity1.find((w) => w.id === workspaceId);
+      if (!workspace) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/workspace-not-found",
+            title: "Workspace Not Found",
+            status: 404,
+            detail: `Workspace '${workspaceId}' not found.`,
+            code: "WORKSPACE_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      const trashed = currentMockTasks.filter(
+        (t) => t.workspaceId === workspaceId && Boolean(t.archivedAt)
+      );
+
+      const items = trashed.map((task) => {
+        const archivedTime = new Date(task.archivedAt!).getTime();
+        const recoverableUntil = new Date(archivedTime + 30 * 24 * 60 * 60 * 1000).toISOString();
+        return {
+          task,
+          archivedAt: task.archivedAt!,
+          recoverableUntil,
+          archivedByUserId: task.assigneeIds?.[0] ?? undefined,
+        };
+      });
+
+      return HttpResponse.json(
+        {
+          items,
+          nextCursor: null,
+        },
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "private, no-store",
+          },
+        }
+      );
+    }
+  ),
+
+  // 10. POST /api/v1/communities/:communityId/workspaces/:workspaceId/tasks/bulk
+  http.post(
+    "/api/v1/communities/:communityId/workspaces/:workspaceId/tasks/bulk",
+    async ({ params, request }) => {
+      if (tasksDelayMs > 0) {
+        await delay(tasksDelayMs);
+      }
+
+      if (matchesErrorOverride("POST")) {
+        return HttpResponse.json(tasksErrorOverride!.problem, {
+          status: tasksErrorOverride!.status,
+          headers: { "Content-Type": "application/problem+json" },
+        });
+      }
+
+      const { workspaceId } = params as {
+        communityId: string;
+        workspaceId: string;
+      };
+
+      const workspace = mockWorkspacesCommunity1.find((w) => w.id === workspaceId);
+      if (!workspace) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/workspace-not-found",
+            title: "Workspace Not Found",
+            status: 404,
+            detail: `Workspace '${workspaceId}' not found.`,
+            code: "WORKSPACE_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      let body: {
+        taskIds?: string[];
+        action?: "ARCHIVE" | "SET_STATUS" | "SET_PRIORITY" | "ASSIGN" | "UNASSIGN" | "RESTORE";
+        statusCategory?: TaskDto["statusCategory"];
+        priority?: TaskDto["priority"];
+        assigneeId?: string;
+      } = {};
+
+      try {
+        body = (await request.json()) as typeof body;
+      } catch {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/malformed-json",
+            title: "Malformed JSON",
+            status: 400,
+            detail: "The request body could not be parsed as JSON.",
+            code: "MALFORMED_JSON",
+          },
+          { status: 400, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      if (
+        !body.taskIds ||
+        !Array.isArray(body.taskIds) ||
+        body.taskIds.length === 0 ||
+        body.taskIds.length > 100
+      ) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/invalid-bulk-request",
+            title: "Invalid Bulk Request",
+            status: 400,
+            detail: "taskIds must contain between 1 and 100 task IDs.",
+            code: "INVALID_BULK_REQUEST",
+          },
+          { status: 400, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      const uniqueTaskIds = Array.from(new Set(body.taskIds));
+      if (uniqueTaskIds.length !== body.taskIds.length) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/duplicate-task-ids",
+            title: "Duplicate Task IDs",
+            status: 400,
+            detail: "taskIds must not contain duplicate identifiers.",
+            code: "DUPLICATE_TASK_IDS",
+          },
+          { status: 400, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      const now = new Date().toISOString();
+      const updatedIds: string[] = [];
+
+      for (const id of uniqueTaskIds) {
+        const task = currentMockTasks.find((t) => t.id === id && t.workspaceId === workspaceId);
+        if (!task) continue;
+
+        if (body.action === "ARCHIVE") {
+          task.archivedAt = now;
+          task.updatedAt = now;
+          task.version += 1;
+          updatedIds.push(task.id);
+        } else if (body.action === "RESTORE") {
+          task.archivedAt = null;
+          task.updatedAt = now;
+          task.version += 1;
+          updatedIds.push(task.id);
+        } else if (body.action === "SET_STATUS" && body.statusCategory) {
+          task.statusCategory = body.statusCategory;
+          task.updatedAt = now;
+          task.version += 1;
+          updatedIds.push(task.id);
+        } else if (body.action === "SET_PRIORITY" && body.priority) {
+          task.priority = body.priority;
+          task.updatedAt = now;
+          task.version += 1;
+          updatedIds.push(task.id);
+        }
+      }
+
+      querySnapshots.clear();
+      const newSeq = (workspaceSeqCounters[workspaceId] ?? 100) + 1;
+      workspaceSeqCounters[workspaceId] = newSeq;
+
+      return HttpResponse.json(
+        {
+          updatedTaskIds: updatedIds,
+          workspaceSeq: newSeq,
+        },
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "private, no-store",
+            "X-Workspace-Seq": String(newSeq),
+          },
+        }
+      );
     }
   ),
 ];
