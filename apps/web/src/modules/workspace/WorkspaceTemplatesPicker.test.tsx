@@ -76,22 +76,21 @@ describe("VS-09C: Starter Templates Picker UI (FEAT-D05a)", () => {
   });
 
   describe("Template Catalog Presentation & Built-in Templates", () => {
-    it("renders the 3 canonical built-in templates and the Blank Workspace option", async () => {
+    it("renders exactly the 3 canonical built-in templates from the catalog", async () => {
       renderCreateDialog();
 
       // Dialog opens
       expect(await screen.findByTestId("create-workspace-dialog")).toBeInTheDocument();
 
       // Wait for template cards to render
-      expect(await screen.findByTestId("template-card-BLANK")).toBeInTheDocument();
-      expect(screen.getByTestId("template-card-GENERAL_PURPOSE")).toBeInTheDocument();
+      expect(await screen.findByTestId("template-card-GENERAL_PURPOSE")).toBeInTheDocument();
       expect(screen.getByTestId("template-card-EVENT_PLANNING")).toBeInTheDocument();
       expect(screen.getByTestId("template-card-TEAM_OPERATIONS")).toBeInTheDocument();
 
-      // Verify template names & badges
-      expect(screen.getByText("Blank Workspace")).toBeInTheDocument();
-      expect(screen.getByText("Clean Slate")).toBeInTheDocument();
+      // Ensure no invented 4th template exists
+      expect(screen.queryByTestId("template-card-BLANK")).not.toBeInTheDocument();
 
+      // Verify canonical template names & badges
       expect(screen.getByText("General Workspace")).toBeInTheDocument();
       expect(screen.getByText("Recommended")).toBeInTheDocument();
 
@@ -114,7 +113,6 @@ describe("VS-09C: Starter Templates Picker UI (FEAT-D05a)", () => {
       expect(within(generalCard).getByText("Selected")).toBeInTheDocument();
 
       // Other cards are unselected
-      expect(screen.getByTestId("template-card-BLANK")).toHaveAttribute("aria-checked", "false");
       expect(screen.getByTestId("template-card-EVENT_PLANNING")).toHaveAttribute("aria-checked", "false");
       expect(screen.getByTestId("template-card-TEAM_OPERATIONS")).toHaveAttribute("aria-checked", "false");
     });
@@ -147,15 +145,15 @@ describe("VS-09C: Starter Templates Picker UI (FEAT-D05a)", () => {
       opsCard.focus();
       expect(opsCard).toHaveFocus();
 
-      // Press Enter
+      // Press Enter to select TEAM_OPERATIONS
       await user.keyboard("{Enter}");
       expect(opsCard).toHaveAttribute("aria-checked", "true");
 
-      // Press Space on Blank Workspace
-      const blankCard = screen.getByTestId("template-card-BLANK");
-      blankCard.focus();
+      // Press Space on GENERAL_PURPOSE
+      const generalCard = screen.getByTestId("template-card-GENERAL_PURPOSE");
+      generalCard.focus();
       await user.keyboard(" ");
-      expect(blankCard).toHaveAttribute("aria-checked", "true");
+      expect(generalCard).toHaveAttribute("aria-checked", "true");
       expect(opsCard).toHaveAttribute("aria-checked", "false");
     });
   });
@@ -332,18 +330,14 @@ describe("VS-09C: Starter Templates Picker UI (FEAT-D05a)", () => {
       });
     });
 
-    it("maps Blank Workspace selection to canonical GENERAL_PURPOSE contract default", async () => {
+    it("submits default GENERAL_PURPOSE when user does not change template selection", async () => {
       const user = userEvent.setup();
       const apiSpy = vi.spyOn(workspaceApi, "createWorkspaceApi");
 
       renderCreateDialog();
 
       const nameInput = await screen.findByTestId("workspace-name-input");
-      await user.type(nameInput, "Clean Sandbox");
-
-      // Select Blank Workspace
-      const blankCard = screen.getByTestId("template-card-BLANK");
-      await user.click(blankCard);
+      await user.type(nameInput, "General Purpose Team");
 
       const submitBtn = screen.getByTestId("create-workspace-submit-btn");
       await user.click(submitBtn);
@@ -352,7 +346,7 @@ describe("VS-09C: Starter Templates Picker UI (FEAT-D05a)", () => {
         expect(apiSpy).toHaveBeenCalledWith(
           MOCK_COMMUNITY_1_ID,
           expect.objectContaining({
-            name: "Clean Sandbox",
+            name: "General Purpose Team",
             templateKey: "GENERAL_PURPOSE",
           }),
           "mock-csrf-token"
