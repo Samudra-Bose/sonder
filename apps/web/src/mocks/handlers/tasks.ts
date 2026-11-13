@@ -818,13 +818,16 @@ export const taskHandlers = [
         );
       }
 
-      if (body.labelIds !== undefined && task.effectivePermissions.canEditCustomFieldsLinks === false) {
+      if (
+        (body.labelIds !== undefined || body.customFieldValues !== undefined) &&
+        task.effectivePermissions.canEditCustomFieldsLinks === false
+      ) {
         return HttpResponse.json(
           {
             type: "https://errors.sonder.platform/forbidden",
             title: "Permission Denied",
             status: 403,
-            detail: "You do not have permission to modify labels in this workspace.",
+            detail: "You do not have permission to modify custom fields or labels in this workspace.",
             code: "PERMISSION_DENIED",
           },
           { status: 403, headers: { "Content-Type": "application/problem+json" } }
@@ -948,6 +951,18 @@ export const taskHandlers = [
       if (body.itemType !== undefined) {
         task.itemType = body.itemType;
         task.fieldRevisions.itemType = (task.fieldRevisions.itemType ?? 1) + 1;
+      }
+      if (body.customFieldValues !== undefined) {
+        task.customFieldValues = { ...(task.customFieldValues ?? {}) };
+        for (const [defId, val] of Object.entries(body.customFieldValues)) {
+          if (val === null) {
+            delete task.customFieldValues[defId];
+          } else {
+            task.customFieldValues[defId] = val as string | number | boolean;
+          }
+          const revKey = `customFieldValues.${defId}`;
+          task.fieldRevisions[revKey] = (task.fieldRevisions[revKey] ?? 1) + 1;
+        }
       }
 
       task.version += 1;

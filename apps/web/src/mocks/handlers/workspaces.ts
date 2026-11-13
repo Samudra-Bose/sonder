@@ -347,4 +347,245 @@ export const workspaceHandlers = [
       },
     });
   }),
+
+  // GET /api/v1/communities/:communityId/workspaces/:workspaceId
+  http.get("/api/v1/communities/:communityId/workspaces/:workspaceId", async ({ params }) => {
+    if (workspacesDelayMs > 0) {
+      await delay(workspacesDelayMs);
+    }
+
+    if (workspacesError) {
+      return HttpResponse.json(workspacesError.problem, {
+        status: workspacesError.status,
+        headers: { "Content-Type": "application/problem+json" },
+      });
+    }
+
+    const { communityId, workspaceId } = params as { communityId: string; workspaceId: string };
+    const workspaces = mockWorkspacesByCommunityId[communityId] || mockWorkspacesCommunity1;
+    const ws = workspaces.find((w) => w.id === workspaceId);
+
+    if (!ws) {
+      return HttpResponse.json(
+        {
+          type: "https://errors.sonder.platform/not-found",
+          title: "Not Found",
+          status: 404,
+          detail: `Workspace '${workspaceId}' not found.`,
+          code: "RESOURCE_NOT_FOUND",
+        },
+        { status: 404, headers: { "Content-Type": "application/problem+json" } }
+      );
+    }
+
+    return HttpResponse.json(ws, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "private, no-store",
+      },
+    });
+  }),
+
+  // PATCH /api/v1/communities/:communityId/workspaces/:workspaceId
+  http.patch("/api/v1/communities/:communityId/workspaces/:workspaceId", async ({ params, request }) => {
+    if (workspacesDelayMs > 0) {
+      await delay(workspacesDelayMs);
+    }
+
+    const csrfToken = request.headers.get("X-CSRF-Token");
+    if (!csrfToken || !csrfToken.trim()) {
+      return HttpResponse.json(
+        {
+          type: "https://errors.sonder.platform/csrf-error",
+          title: "CSRF Token Required",
+          status: 400,
+          detail: "A valid CSRF synchronizer token is required.",
+          code: "CSRF_TOKEN_REQUIRED",
+        },
+        { status: 400, headers: { "Content-Type": "application/problem+json" } }
+      );
+    }
+
+    const { communityId, workspaceId } = params as { communityId: string; workspaceId: string };
+    const workspaces = mockWorkspacesByCommunityId[communityId] || mockWorkspacesCommunity1;
+    const ws = workspaces.find((w) => w.id === workspaceId);
+
+    if (!ws) {
+      return HttpResponse.json(
+        {
+          type: "https://errors.sonder.platform/not-found",
+          title: "Not Found",
+          status: 404,
+          detail: `Workspace '${workspaceId}' not found.`,
+          code: "RESOURCE_NOT_FOUND",
+        },
+        { status: 404, headers: { "Content-Type": "application/problem+json" } }
+      );
+    }
+
+    // Permission check: only active Workspace Owner may update settings
+    if (ws.myRole !== "OWNER") {
+      return HttpResponse.json(
+        {
+          type: "https://errors.sonder.platform/forbidden",
+          title: "Forbidden",
+          status: 403,
+          detail: "Only an active Workspace Owner may update workspace settings.",
+          code: "INSUFFICIENT_CAPABILITY",
+        },
+        { status: 403, headers: { "Content-Type": "application/problem+json" } }
+      );
+    }
+
+    let body: any;
+    try {
+      body = await request.json();
+    } catch {
+      return HttpResponse.json(
+        {
+          type: "https://errors.sonder.platform/bad-request",
+          title: "Bad Request",
+          status: 400,
+          detail: "Malformed JSON payload.",
+          code: "INVALID_JSON",
+        },
+        { status: 400, headers: { "Content-Type": "application/problem+json" } }
+      );
+    }
+
+    if (body.name !== undefined) {
+      if (!body.name.trim() || body.name.length > 120) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/validation-error",
+            title: "Validation Error",
+            status: 400,
+            detail: "Workspace name must be between 1 and 120 characters.",
+            code: "VALIDATION_FAILED",
+          },
+          { status: 400, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+      ws.name = body.name.trim();
+    }
+
+    if (body.keyPrefix !== undefined) {
+      const prefixRegex = /^[A-Z][A-Z0-9]{1,9}$/;
+      if (!prefixRegex.test(body.keyPrefix)) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/validation-error",
+            title: "Validation Error",
+            status: 400,
+            detail: "keyPrefix must match ^[A-Z][A-Z0-9]{1,9}$.",
+            code: "INVALID_KEY_PREFIX",
+          },
+          { status: 400, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+      ws.keyPrefix = body.keyPrefix.trim().toUpperCase();
+    }
+
+    if (body.taskEditPolicy !== undefined) {
+      ws.taskEditPolicy = body.taskEditPolicy;
+    }
+
+    if (body.coordinatorCanInviteMembers !== undefined) {
+      ws.coordinatorCanInviteMembers = Boolean(body.coordinatorCanInviteMembers);
+    }
+
+    if (body.maxSubtaskDepth !== undefined) {
+      if (body.maxSubtaskDepth < 1 || body.maxSubtaskDepth > 2) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/validation-error",
+            title: "Validation Error",
+            status: 400,
+            detail: "maxSubtaskDepth must be 1 or 2.",
+            code: "VALIDATION_FAILED",
+          },
+          { status: 400, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+      ws.maxSubtaskDepth = body.maxSubtaskDepth;
+    }
+
+    if (body.assigneeEditableFieldGroupsAllowed !== undefined) {
+      ws.assigneeEditableFieldGroupsAllowed = body.assigneeEditableFieldGroupsAllowed;
+    }
+
+    if (body.assigneeEditableFieldGroupsDefault !== undefined) {
+      ws.assigneeEditableFieldGroupsDefault = body.assigneeEditableFieldGroupsDefault;
+    }
+
+    ws.updatedAt = new Date().toISOString();
+
+    return HttpResponse.json(ws, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "private, no-store",
+        "X-Workspace-Seq": "2",
+      },
+    });
+  }),
+
+  // GET /api/v1/communities/:communityId/workspaces/:workspaceId/members
+  http.get("/api/v1/communities/:communityId/workspaces/:workspaceId/members", async ({ params }) => {
+    const { workspaceId: _workspaceId } = params as { workspaceId: string };
+
+    const mockMembers = [
+      {
+        user: {
+          id: "018f98a2-3f12-7890-a123-456789abcdef",
+          displayName: "Alex Morgan",
+          email: "alex.morgan@example.org",
+          avatarUrl: null,
+        },
+        roleId: "018f98a2-3f12-7890-role-owner-001",
+        roleName: "Workspace Owner",
+        roleSystemKey: "OWNER" as const,
+        membershipStatus: "ACTIVE" as const,
+        isDefaultCoordinator: false,
+      },
+      {
+        user: {
+          id: "018f98a2-3f12-7890-a123-456789bbcdef",
+          displayName: "Jordan Lee",
+          email: "jordan.lee@example.org",
+          avatarUrl: null,
+        },
+        roleId: "018f98a2-3f12-7890-role-coord-002",
+        roleName: "Coordinator",
+        roleSystemKey: "COORDINATOR" as const,
+        membershipStatus: "ACTIVE" as const,
+        isDefaultCoordinator: true,
+      },
+      {
+        user: {
+          id: "018f98a2-3f12-7890-a123-456789cccdef",
+          displayName: "Taylor Swift",
+          email: "taylor.swift@example.org",
+          avatarUrl: null,
+        },
+        roleId: "018f98a2-3f12-7890-role-member-003",
+        roleName: "Member",
+        roleSystemKey: "MEMBER" as const,
+        membershipStatus: "ACTIVE" as const,
+        isDefaultCoordinator: false,
+      },
+    ];
+
+    return HttpResponse.json(
+      { items: mockMembers, nextCursor: null },
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "private, no-store",
+        },
+      }
+    );
+  }),
 ];

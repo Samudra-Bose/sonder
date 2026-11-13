@@ -9,6 +9,7 @@ import {
   Calendar,
   GanttChart,
   Trash2,
+  Settings,
 } from "lucide-react";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { Kbd } from "@/components/ui/KeyboardShortcut";
@@ -175,6 +176,14 @@ export function AppSidebar({
                   href: currentCommunityId
                     ? `/c/${currentCommunityId}/w/${activeWorkspace.id}/trash`
                     : `/workspaces/${activeWorkspace.id}/trash`,
+                },
+                {
+                  id: "settings",
+                  label: "Settings",
+                  icon: Settings,
+                  href: currentCommunityId
+                    ? `/c/${currentCommunityId}/w/${activeWorkspace.id}/settings/general`
+                    : `/workspaces/${activeWorkspace.id}/settings/general`,
                 },
               ].map((viewItem) => {
                 const ViewIcon = viewItem.icon;

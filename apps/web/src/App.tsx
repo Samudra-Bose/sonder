@@ -10,6 +10,7 @@ import {
 import { InboxView } from "./modules/notifications/index.js";
 import { MyWorkView } from "./modules/my-work/index.js";
 import { WorkspaceTasksView, WorkspaceTrashView } from "./modules/tasks/index.js";
+import { WorkspaceSettingsLayout } from "./modules/workspace/settings/index.js";
 
 export { AppShell };
 
@@ -76,13 +77,19 @@ export function App({ initialEntries }: AppProps = {}): React.JSX.Element {
                 <Route path="workspaces/:workspaceId/calendar" element={<WorkspaceTasksView defaultView="calendar" />} />
                 <Route path="workspaces/:workspaceId/timeline" element={<WorkspaceTasksView defaultView="timeline" />} />
                 <Route path="workspaces/:workspaceId/trash" element={<WorkspaceTrashView />} />
+                <Route path="workspaces/:workspaceId/settings" element={<WorkspaceSettingsLayout />} />
+                <Route path="workspaces/:workspaceId/settings/:category" element={<WorkspaceSettingsLayout />} />
                 <Route path="trash" element={<WorkspaceTrashView />} />
+                <Route path="settings" element={<WorkspaceSettingsLayout />} />
+                <Route path="settings/:category" element={<WorkspaceSettingsLayout />} />
                 <Route path="c/:communityId/w/:workspaceId" element={<Navigate to="list" replace />} />
                 <Route path="c/:communityId/w/:workspaceId/list" element={<WorkspaceTasksView defaultView="list" />} />
                 <Route path="c/:communityId/w/:workspaceId/board" element={<WorkspaceTasksView defaultView="board" />} />
                 <Route path="c/:communityId/w/:workspaceId/calendar" element={<WorkspaceTasksView defaultView="calendar" />} />
                 <Route path="c/:communityId/w/:workspaceId/timeline" element={<WorkspaceTasksView defaultView="timeline" />} />
                 <Route path="c/:communityId/w/:workspaceId/trash" element={<WorkspaceTrashView />} />
+                <Route path="c/:communityId/w/:workspaceId/settings" element={<WorkspaceSettingsLayout />} />
+                <Route path="c/:communityId/w/:workspaceId/settings/:category" element={<WorkspaceSettingsLayout />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

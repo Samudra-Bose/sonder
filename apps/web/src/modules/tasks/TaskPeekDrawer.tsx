@@ -40,6 +40,7 @@ import { useTaskUndo } from "./TaskUndoContext.js";
 import { useTaskClone, canCloneTask } from "./TaskCloneContext.js";
 import { SubtaskList } from "./SubtaskList.js";
 import { TaskDependencies } from "./TaskDependencies.js";
+import { TaskCustomFieldsSection } from "./TaskCustomFieldsSection.js";
 import { ReparentTaskModal } from "./ReparentTaskModal.js";
 import { TaskActivityTab } from "./comments/TaskActivityTab.js";
 import { TaskWatchButton } from "./comments/TaskWatchButton.js";
@@ -665,6 +666,14 @@ export function TaskPeekDrawer({
           workspaceId={task.workspaceId}
           isArchived={isArchived}
           onNavigateToTask={(key) => openTask(key, { workspaceId: task.workspaceId })}
+        />
+
+        {/* Custom Fields Section (FEAT-D04a) */}
+        <TaskCustomFieldsSection
+          task={task}
+          communityId={currentCommunityId}
+          workspaceId={task.workspaceId}
+          isArchived={isArchived}
         />
 
         {/* Audit & Provenance Footer */}

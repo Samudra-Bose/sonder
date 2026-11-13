@@ -7,6 +7,7 @@ import { milestoneHandlers } from "./milestones.js";
 import { taskLinkHandlers } from "./task-links.js";
 import { commentHandlers } from "./comments.js";
 import { notificationHandlers } from "./notifications.js";
+import { customFieldHandlers } from "./custom-fields.js";
 
 export const handlers = [
   ...healthHandlers,
@@ -18,4 +19,5 @@ export const handlers = [
   ...taskLinkHandlers,
   ...commentHandlers,
   ...notificationHandlers,
+  ...customFieldHandlers,
 ];

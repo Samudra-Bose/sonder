@@ -31,3 +31,4 @@ export * from "./TaskCloneContext.js";
 export * from "./TaskCloneToast.js";
 export * from "./taskExportCsv.js";
 export * from "./useTaskExportCsv.js";
+export * from "./TaskCustomFieldsSection.js";
