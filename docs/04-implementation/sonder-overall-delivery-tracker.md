@@ -38,40 +38,40 @@ Across the approved Master Specification (`Community-Work-Management-Master-Spec
 
 ```mermaid
 pie title Actionable Concrete Capabilities (53 Features)
-    "DONE (Provisional Frontend Candidate)" : 19
+    "DONE (Provisional Frontend Candidate)" : 27
     "PARTIAL (Incomplete Scope)" : 2
-    "NOT STARTED (Phase 1 Backlog)" : 9
+    "NOT STARTED (Phase 1 Backlog)" : 0
     "DECISION BLOCKED (PO / Backend)" : 3
     "BACKEND DEPENDENT (Gateway)" : 1
-    "DEFERRED (Phases 2, 3, 4)" : 12
+    "DEFERRED (Phases 2, 3, 4)" : 13
     "REJECTED / OUT OF SCOPE" : 7
 ```
 
 | Status Classification | Count | Description & Invariant Boundaries |
 | :--- | :---: | :--- |
-| **DONE** | **19** | Frontend client implementation verified in `apps/web/src/` with passing Vitest tests against MSW local mock fixtures. Live backend persistence, ACID guarantees, and production infrastructure remain pending. |
+| **DONE** | **27** | Frontend client implementation verified in `apps/web/src/` with passing Vitest tests against MSW local mock fixtures. Live backend persistence, ACID guarantees, and production infrastructure remain pending. |
 | **PARTIAL** | **2** | Core contracts or data types exist, but UI presentation or user workflows remain incomplete (`FEAT-D05a`, `FEAT-K01`). |
-| **NOT STARTED (Phase 1)** | **9** | Approved Phase 1 features with schemas in candidate OpenAPI 0.3.20-draft, awaiting frontend vertical slice implementation. |
+| **NOT STARTED (Phase 1)** | **0** | Approved Phase 1 features with schemas in candidate OpenAPI 0.3.20-draft, awaiting frontend vertical slice implementation. |
 | **DECISION BLOCKED** | **3** | Implementation paused by formal governance decision (`FEAT-C04` Saved Views, `FEAT-C06` Swimlanes, `FEAT-G02b` Custom Roles). |
 | **BACKEND DEPENDENT** | **1** | Blocked on live backend gateway infrastructure (`FEAT-F02` Realtime Collaboration / `DEP-REALTIME-01`). |
-| **DEFERRED (Phases 2–4)** | **12** | Approved product roadmap capabilities scheduled for Phase 2, Phase 3, or Phase 4. |
+| **DEFERRED (Phases 2–4)** | **13** | Approved product roadmap capabilities scheduled for Phase 2, Phase 3, or Phase 4 (including `FEAT-J02` offline editing per SOT-11/14). |
 | **REJECTED / OUT OF SCOPE**| **7** | Explicitly excluded to protect community simplicity and prevent enterprise cognitive bloat. |
-| **TOTAL ACTIONABLE** | **53** | **Sum: 19 + 2 + 9 + 3 + 1 + 12 + 7 = 53** |
+| **TOTAL ACTIONABLE** | **53** | **Sum: 27 + 2 + 0 + 3 + 1 + 13 + 7 = 53** |
 
 ### 1.3 Completion Percentages Across Clearly Defined Denominators
 
 ```
 ================================================================================
-SONDER PLATFORM PROGRESS METRICS (AUDIT BASELINE 2026-11-12)
+SONDER PLATFORM PROGRESS METRICS (AUDIT BASELINE 2026-11-13)
 ================================================================================
-1. Frontend Engineering (Non-Rejected Scope):
-   - Strict (DONE only):               18 / 46 = 39.13%
-   - Weighted (DONE + 0.5 * PARTIAL): (18 + 1.5) / 46 = 42.39%
+1. Frontend Engineering (Non-Rejected Scope, 46 Capabilities):
+   - Strict (DONE only):               27 / 46 = 58.70%
+   - Weighted (DONE + 0.5 * PARTIAL): (27 + 1.0) / 46 = 60.87%
 
-2. Phase 1 Initial Production Scope (34 Capabilities):
-   - Strict (DONE only):               18 / 34 = 52.94%
-   - Weighted (DONE + 0.5 * PARTIAL): (18 + 1.5) / 34 = 57.35%
-   - Remaining Phase 1 Work:           16 capabilities (3 Partial, 9 Not Started, 3 Blocked, 1 Dependent)
+2. Phase 1 Initial Production Scope (33 Capabilities):
+   - Strict (DONE only):               27 / 33 = 81.82%
+   - Weighted (DONE + 0.5 * PARTIAL): (27 + 1.0) / 33 = 84.85%
+   - Remaining Phase 1 Work:           6 capabilities (2 Partial, 0 Not Started, 3 Blocked, 1 Dependent)
 
 3. UI/UX Track B (Separate Workstream):
    - Research & Design Principles:     100% Approved (PR #4, 92e984e)
@@ -102,18 +102,18 @@ SONDER PLATFORM PROGRESS METRICS (AUDIT BASELINE 2026-11-12)
 
 | Feature ID | Canonical Name | Target Milestone | Status | Components & Modules | Test Evidence | Backend Readiness | Dependencies |
 | :--- | :--- | :---: | :---: | :--- | :--- | :--- | :--- |
-| **FEAT-A01** | Work-Item Archetypes (`TASK`, `DELIVERABLE`, `BUG`, `DECISION`) | M1.2 | **NOT STARTED** | None (`itemType` defaults to `TASK`) | None | Schema in OpenAPI `0.3.20-draft` | None |
+| **FEAT-A01** | Work-Item Archetypes (`TASK`, `DELIVERABLE`, `BUG`, `DECISION`) | M1.2 | **DONE** | `InlineArchetypeEditor.tsx`, `TaskArchetypeBadge.tsx` | `TaskArchetypes.test.tsx` (16) | MSW handler: `/tasks` with archetype filters | Archetype picker, card/drawer badges, and edit permission gates verified |
 | **FEAT-A02** | Fast Task Creation, Editing & Assignment | M1.1 | **DONE** | `QuickTaskComposer.tsx`, `TaskPeekDrawer.tsx` | `TaskPeekDrawer.test.tsx` (28), `tasks.test.tsx` (24) | MSW handler: `POST /tasks`, `GET /tasks/{id}` | Live DB persistence pending |
 | **FEAT-A03** | Core Task Metadata (Status, Priority, Dates, Labels, Estimate) | M1.1 | **DONE** | `InlineFieldEditors.tsx`, `useUpdateTask.ts` | `InlineTaskEditing.test.tsx` (35) | MSW handler: `PATCH /tasks/{id}` | Live DB field validation pending |
 | **FEAT-A04** | Comments, @Mentions, #KEY Links & Task Watchers | M1.1 | **DONE** | `CommentComposer.tsx`, `markdown-ast.tsx`, `TaskWatchButton.tsx` | `TaskCollaboration.test.tsx` (24), `TaskCollaborationHardening.test.tsx` (22) | MSW handlers: comments, watch status | `DEP-COLLAB-01` (DB watcher persistence), `DEP-REALTIME-01` |
 | **FEAT-A05a**| Task File Attachments & Binary Uploads | Excluded | **REJECTED** | None | None | Excluded per PRD §2.3 | Day-1 simplicity protection |
 | **FEAT-A05b**| Workspace File Management Hub | Excluded | **REJECTED** | None | None | Excluded per PRD §2.3 | Day-1 simplicity protection |
 | **FEAT-A06** | Subtasks (Depth 1..2) & Dependency Links (BLOCKS DAG) | M1.1 | **DONE** | `SubtaskList.tsx`, `ReparentTaskModal.tsx`, `TimelineDependencyConnectors.tsx` | `SubtaskHierarchy.test.tsx` (26), `TimelineDependencies.test.tsx` (28) | MSW handlers: `/tasks/{id}/links`, parentId update | DB recursive cycle check pending |
-| **FEAT-A07** | Task & Checklist Cloning (Duplicate Task) | M1.2 | **NOT STARTED** | None | None | Schema in OpenAPI: `POST /tasks/{id}/clone` | None |
+| **FEAT-A07** | Task & Checklist Cloning (Duplicate Task) | M1.2 | **DONE** | `useCloneTask.ts`, `TaskCloneToast.tsx`, `TaskCloneContext.tsx` | `TaskCloning.test.tsx` (11) | MSW handler: `POST /tasks/{id}/clone` | Task and subtask checklist cloning with action menu, drawer triggers, and toast feedback verified |
 | **FEAT-A08** | Fractional Ranking & Manual Ordering (`rankKey` / LexoRank) | M1.1 | **DONE** | `TaskBoardView.tsx`, `TaskListView.tsx` | `TaskViews.test.tsx` (38), `CrossViewIntegration.test.tsx` (12) | MSW handler: `POST /tasks/{id}/move` | Server LexoRank rebalance job pending |
 | **FEAT-A09** | Granular Time Tracking & Billable Worklogs | Excluded | **REJECTED** | None | None | Excluded per PRD §2.3 | Day-1 simplicity protection |
 | **FEAT-A10a**| Single-Item Archive & 10s Undo Toast (`Z` hotkey) | M1.1 | **DONE** | `TaskActionsMenu.tsx`, `TaskUndoContext.tsx`, `TaskUndoToast.tsx`, `useArchiveTask.ts` | `TaskArchive.test.tsx` (32) | MSW handlers: `POST /tasks/{id}/archive`, `POST /tasks/{id}/restore` | Frozen at `0b82ef9` |
-| **FEAT-A10b**| Bulk Action Bar (<=100 tasks) & 30-Day Trash Recovery View | M1.2 | **NOT STARTED** | None | None | Schemas: `/trash/tasks`, `/tasks/bulk` | `DEP-TRASH-01` (`DEC-OPEN-03` purge policy) |
+| **FEAT-A10b**| Bulk Action Bar (<=100 tasks) & 30-Day Trash Recovery View | M1.2 | **DONE** | `TaskTrashView.tsx`, `BulkActionBar.tsx`, `useTrashedTasks.ts` | `TaskBulkActions.test.tsx` (8) | MSW handlers: `/trash/tasks`, `/tasks/bulk` | Multi-select bulk bar (<=100 tasks) and 30-day workspace trash recovery view verified (`DEC-OPEN-03` purge policy gated) |
 | **FEAT-A10c**| Granular Field-Revision Snapshot Restore | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3 | Phase 3 timeline |
 | **FEAT-B01** | Multi-Community, Workspace Spine & Responsive App Shell | M1.1 | **DONE** | `AppShell.tsx`, `NavigationRail.tsx`, `WorkspaceSwitcher.tsx` | `AppShell.test.tsx` (14), `WorkspaceSwitcher.test.tsx` (22) | MSW handlers: `/workspaces`, `/me` | Live workspace tenancy pending |
 | **FEAT-B02** | Backlog Status Category & Collapsible Tray | M1.1 | **DONE** | `BacklogTaskTray.tsx`, `TaskListView.tsx`, `TaskBoardView.tsx` | `BacklogTaskTray.test.tsx` (11), `TaskViews.test.tsx` (17) | Backend status enum supports `BACKLOG` | Collapsible tray on List & Board views with 1-click promotion and ARIA disclosure |
@@ -144,14 +144,14 @@ SONDER PLATFORM PROGRESS METRICS (AUDIT BASELINE 2026-11-12)
 | **FEAT-G02a**| Capability RBAC Engine, 4 System Roles & Permission Gates | M1.1 | **DONE** | `rbac/`, `PermissionGate.tsx` | `WorkspaceSwitcher.test.tsx` (22) | RBAC matrix in contracts | Server RLS policies pending |
 | **FEAT-G02b**| Configurable Custom Roles Builder UI | M1.3 | **DECISION BLOCKED** | None | None | Blocked on simulator contract | Blocked on `DEP-ROLES-01` |
 | **FEAT-G03** | Plain-Language Permission Inspector & Role Simulator | M1.3 | **DONE** | `PermissionInspector.tsx`, `capabilityDefinitions.ts`, `PermissionsSettingsView.tsx` | `RoleSimulator.test.tsx` (7) | MSW handlers: `/roles`, `X-Preview-Role-Id` safeguard | Downward-only simulation, read-only guard, and full 31-capability matrix verified |
-| **FEAT-G04** | Append-Only Hash-Chained Audit Log Table & CSV Export | M1.3 | **DONE** | `AuditLogSettingsView.tsx`, `useAuditLog.ts`, `auditExportCsv.ts` | `AuditLog.test.tsx` (16) | MSW handlers: `/audit-events`, `/admin/audit-integrity`, `/audit-events/export` | Authoritative SHA-256 hash-chain display, server-side integrity verification status, cursor pagination, category/severity filtering, detail drawer with allow-listed metadata, and formula-injection-safe UTF-8 CSV export with independent `audit:export` capability gate verified (16 tests) |
+| **FEAT-G04** | Append-Only Hash-Chained Audit Log Table & CSV Export | M1.3 | **DONE** | `AuditLogSettingsView.tsx`, `useAuditLog.ts`, `auditExportCsv.ts` | `AuditLog.test.tsx` (19) | MSW handlers: `/audit-events`, `/admin/audit-integrity`, `/audit-events/export` | Authoritative SHA-256 hash-chain display, server-reported integrity verification status, cursor pagination, category/severity/search filtering, detail drawer with allow-listed metadata (CR-14), and formula-injection-safe UTF-8 CSV export with independent `audit:export` capability gate verified (19 tests) |
 | **FEAT-H01** | Declarative 1-Hop Workflow Automations | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3 | Automation engine pending |
 | **FEAT-H02** | Outbound HMAC-Signed HTTPS Webhooks | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3 | Egress & SSRF hardening |
 | **FEAT-I01** | Lightweight Shareable Workspace Intake Forms | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2 | Anonymous access scope |
 | **FEAT-I02** | Full ITSM Helpdesk Suite, SLA Clocks & Incident Command | Excluded | **REJECTED** | None | None | Excluded per community focus | Out of scope |
 | **FEAT-J01a**| Filtered View UTF-8 CSV Export | M1.2 | **DONE** | `taskExportCsv.ts`, `useTaskExportCsv.ts`, `TaskViewToolbar.tsx`, `WorkspaceTasksView.tsx` | `TaskExportCsv.test.tsx` (13) | Client-side export algorithm, RFC 4180 UTF-8 BOM, OWASP formula protection | Export CSV button active on toolbar |
 | **FEAT-J01b**| Guided CSV Import Wizard with Dry-Run Validation | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2 | Phase 2 timeline |
-| **FEAT-J02** | Selected-Field Offline Task Editing & Queued Sync | M1.3 | **NOT STARTED** | None | None | IndexedDB queue specification (CR-15) | Sync engine pending |
+| **FEAT-J02** | Selected-Field Offline Task Editing & Queued Sync | Phase 3 | **DEFERRED** | Minimal M1.1 caching in place | None | Deferred to Phase 3 per SOT-11, SOT-14, and master PRD §1.1 | Sync engine, IndexedDB queue, 14-day expiry, FIFO replay, and 409 conflict resolver staged for Phase 3 |
 | **FEAT-J03** | Accessible Design System Primitives & Tokens (WCAG 2.2 AA) | M1.1 | **DONE** | `index.css`, `design-tokens.ts`, `keyboard.ts`, `theme.tsx`, `reduced-motion.ts` | 4 foundation suites (24 tests, 70 static expect sites) | Token standards in `@theme` | Operational rate limit / PITR pending |
 | **FEAT-K01** | External Smart URL Metadata Chips (GitHub, Figma, Docs) | M1.2 | **PARTIAL** | Plain URLs render safely in markdown | `markdown-ast.test.tsx` (25) | Metadata scrape endpoint pending | OpenGraph chip UI pending |
 | **FEAT-L01** | Optional AI Task Breakdown & Thread Summarization | Phase 4 | **DEFERRED** | None | None | Deferred to Phase 4 | LLM gateway pending |
@@ -401,7 +401,6 @@ flowchart TD
     subgraph M1_3 ["Milestone M1.3: Governance & Production Acceptance"]
         FEAT_G03["FEAT-G03 (Permission Simulator) - DONE"]
         FEAT_G04["FEAT-G04 (Audit Log Table) - DONE"]
-        FEAT_J02["FEAT-J02 (Offline Task Sync) - NOT STARTED"]
         FEAT_G02b["FEAT-G02b (Custom Roles UI) - BLOCKED"]
     end
 
@@ -409,10 +408,10 @@ flowchart TD
 ```
 
 ### Phase 1 Breakdown:
-- **Total Phase 1 Capabilities:** 34 concrete features.
-- **DONE:** 27 capabilities (79.41%).
+- **Total Phase 1 Capabilities:** 33 concrete features.
+- **DONE:** 27 capabilities (81.82%).
 - **PARTIAL:** 2 capabilities (`FEAT-D05a`, `FEAT-K01`).
-- **NOT STARTED:** 1 capability (`FEAT-J02`).
+- **NOT STARTED:** 0 capabilities.
 - **DECISION BLOCKED:** 3 capabilities (`FEAT-C04`, `FEAT-C06`, `FEAT-G02b`).
 - **BACKEND DEPENDENT:** 1 capability (`FEAT-F02`).
 
@@ -420,7 +419,7 @@ flowchart TD
 
 ## 7. Deferred Roadmap Tracker (Phases 2–4 & Excluded)
 
-### 7.1 Approved Deferred Product Scope (12 Capabilities)
+### 7.1 Approved Deferred Product Scope (13 Capabilities)
 
 | Feature ID | Capability Name | Target Phase | Deferred Rationale & Prerequisite |
 | :--- | :--- | :---: | :--- |
@@ -435,6 +434,7 @@ flowchart TD
 | **FEAT-H02** | Outbound HMAC-Signed HTTPS Webhooks | Phase 3 | Requires server-side egress queue and SSRF proxy protection. |
 | **FEAT-I01** | Lightweight Shareable Workspace Intake Forms | Phase 2 | External guest/anonymous submission flow scheduled for Phase 2. |
 | **FEAT-J01b**| Guided CSV Import Wizard with Dry-Run Validation | Phase 2 | UTF-8 CSV Export ships in Phase 1 (`FEAT-J01a`); import wizard in Phase 2. |
+| **FEAT-J02** | Selected-Field Offline Task Editing & Queued Sync | Phase 3 | Preserves simple Day-1 operational complexity; minimal M1.1 caching in place; full offline sync engine, IndexedDB queue, 14-day expiry, FIFO replay, and 409 conflict resolver deferred to Phase 3 per SOT-11, SOT-14, and master PRD §1.1. |
 | **FEAT-L01** | Optional AI Task Breakdown & Thread Summarization | Phase 4 | LLM gateway integration deferred to Phase 4. |
 
 ### 7.2 Rejected / Out of Scope (7 Capabilities)
@@ -464,6 +464,9 @@ flowchart TD
 | **DEC-ARCHIVE-01** | `FEAT-A10a` | Client-side retention period for advisory undo toast (10s fixed vs configurable). | Fixed 10s advisory timer in place; open for future policy review | Product Owner |
 | **DEC-ARCHIVE-02** | `FEAT-A10a` | Multi-task concurrent undo queue eviction policy (FIFO vs independent timer expiration). | Independent timers active; open for future policy review | Product Owner |
 | **DEC-ARCHIVE-03** | `FEAT-A10a` | Subtask undo token invalidation if parent task is modified while child is queued. | Subtask restore verifies parent existence; open for future edge review | Backend Lead |
+| **SOT-03** | Personal Workspace Privacy | Recommended default: `PRIVATE_STRICT`. Community Administrators see aggregate metadata only, not Personal Workspace task content. Break-Glass is restricted to Shared Workspaces. Unresolved pending stakeholder sign-off record. | Security & Privacy boundary | Product Owner & Security Lead |
+| **SOT-04** | Task-Edit Policy | Recommended default: `CREATOR_COORDINATOR_STRICT`. Preserves documented distinction between task definition editing and assignee execution permissions. Unresolved pending stakeholder sign-off record. | Authorization policy | Product Owner & Backend Lead |
+| **SOT-12** | File Quota | Exact quota decision unresolved. Community quota vs per-user quota pending formal capacity and cost model decision. | Infrastructure & storage | Product Owner & Platform Infra |
 
 ---
 
@@ -506,16 +509,16 @@ flowchart TD
 4. Finalize **DEP-REALTIME-01** WebSocket ticket authentication specification.
 
 ### P1 — Essential Phase 1 Initial-Release Slices (Frontend Owned)
-1. **Milestone VS-09B:** 30-Day Workspace Trash Recovery View & Bulk Action Bar (`FEAT-A10b`).
-2. **Milestone VS-09C:** Starter Templates Picker UI (`FEAT-D05a`).
-3. **Milestone VS-09D:** Work-Item Archetypes (`TASK`, `DELIVERABLE`, `BUG`, `DECISION`) (`FEAT-A01`).
-4. **Milestone VS-09E:** Task & Checklist Cloning (`FEAT-A07`).
-5. **Milestone VS-09F:** Filtered View UTF-8 CSV Export (`FEAT-J01a`).
-6. **Milestone VS-09G:** Collapsible Backlog Tray in List and Board views (`FEAT-B02`).
-7. **Milestone VS-09H:** Workspace Settings Shell & Core Custom Fields (`FEAT-D01`, `FEAT-D04a`).
-8. **Milestone M1.3 Governance:** Plain-Language Permission Inspector & Role Simulator (`FEAT-G03`).
+1. **Milestone VS-09B:** 30-Day Workspace Trash Recovery View & Bulk Action Bar (`FEAT-A10b`) — DELIVERED & LOCKED.
+2. **Milestone VS-09C:** Starter Templates Picker UI (`FEAT-D05a`) — DELIVERED & LOCKED.
+3. **Milestone VS-09D:** Work-Item Archetypes (`TASK`, `DELIVERABLE`, `BUG`, `DECISION`) (`FEAT-A01`) — DELIVERED & LOCKED.
+4. **Milestone VS-09E:** Task & Checklist Cloning (`FEAT-A07`) — DELIVERED & LOCKED.
+5. **Milestone VS-09F:** Filtered View UTF-8 CSV Export (`FEAT-J01a`) — DELIVERED & LOCKED.
+6. **Milestone VS-09G:** Collapsible Backlog Tray in List and Board views (`FEAT-B02`) — DELIVERED & LOCKED.
+7. **Milestone VS-09H:** Workspace Settings Shell & Core Custom Fields (`FEAT-D01`, `FEAT-D04a`) — DELIVERED & LOCKED.
+8. **Milestone M1.3 Governance (VS-09I):** Plain-Language Permission Inspector & Role Simulator (`FEAT-G03`) — DELIVERED & LOCKED.
 9. **Milestone M1.3 Governance (VS-09J):** Append-Only Hash-Chained Audit Log Table & CSV Export (`FEAT-G04`) — DELIVERED & LOCKED.
-10. **Milestone M1.3 Offline:** Selected-Field Offline Task Editing & Queued Sync (`FEAT-J02`, CR-15).
+10. **Milestone M1.3 Governance Complete & Roadmap Reconciliation (VS-09K):** Phase 1 governance requirements complete (`FEAT-G03`, `FEAT-G04`). Offline task editing (`FEAT-J02`) authoritatively deferred to Phase 3 per SOT-11, SOT-14, and Master Spec §1.1. Custom Roles Builder UI (`FEAT-G02b`) remains blocked on `DEP-ROLES-01` and live backend evaluator. All approved unblocked Phase 1 capabilities are complete (27 DONE, 2 PARTIAL, 0 NOT STARTED).
 
 ### P2 — Important UX, Mobile & Accessibility Completion (Track B Slices)
 1. **Slice UX-1:** Design System & Contrast Hardening (`UX-SYS-01`, `UX-SYS-02`, `UX-SYS-03`).

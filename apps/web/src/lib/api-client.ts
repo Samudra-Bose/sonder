@@ -46,7 +46,14 @@ export async function apiRequest<T>(
     credentials: _ignoredCredentials,
     ...rest
   } = options;
-  const isMutation = ["POST", "PUT", "PATCH", "DELETE"].includes(method.toUpperCase());
+  const isExportOrReadPost =
+    endpoint.includes("/export") ||
+    endpoint.includes("/query") ||
+    endpoint.includes("/search");
+  const isStateMutation =
+    ["PUT", "PATCH", "DELETE"].includes(method.toUpperCase()) ||
+    (method.toUpperCase() === "POST" && !isExportOrReadPost);
+  const isMutatingMethod = ["POST", "PUT", "PATCH", "DELETE"].includes(method.toUpperCase());
 
   const headers = new Headers(customHeaders);
 
@@ -54,8 +61,9 @@ export async function apiRequest<T>(
     headers.set("X-Preview-Role-Id", previewRoleId);
   }
 
-  // Role preview safeguard: prevent accidental mutations while simulating another role
-  if (isMutation && headers.get("X-Preview-Role-Id")) {
+  // Role preview safeguard: prevent accidental state mutations while simulating another role.
+  // Distinguishes state mutations from POST-based read/export operations (e.g. /export, /query).
+  if (isStateMutation && headers.get("X-Preview-Role-Id")) {
     throw new ApiProblemError(403, {
       type: "https://errors.sonder.platform/preview-mode-read-only",
       title: "Preview Mode Read Only",
@@ -65,7 +73,7 @@ export async function apiRequest<T>(
     });
   }
 
-  if (isMutation) {
+  if (isMutatingMethod) {
     if (!csrfToken || !csrfToken.trim()) {
       throw new ApiProblemError(400, {
         type: "https://errors.sonder.platform/csrf-error",

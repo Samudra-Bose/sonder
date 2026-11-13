@@ -47,6 +47,52 @@ export function escapeCsvCell(value: unknown): string {
   return str;
 }
 
+/**
+ * Canonical allow-listed metadata keys strictly conforming to CR-14 Privacy Minimization:
+ * only non-content identifiers and facts are allowed. Any user content, titles, descriptions,
+ * comment bodies, passwords, session tokens, or emails are strictly excluded.
+ */
+export const ALLOW_LISTED_METADATA_KEYS = new Set([
+  "membershipId",
+  "roleId",
+  "previousRoleId",
+  "newRoleId",
+  "grantId",
+  "grantExpiresAt",
+  "grantRevokedAt",
+  "breakGlassReasonCategory",
+  "breakGlassAccessMode",
+  "breakGlassRenewalSequence",
+  "approverUserId",
+  "notificationChannel",
+  "notificationAttempt",
+  "sourceWorkspaceId",
+  "targetWorkspaceId",
+  "changedFields",
+  "reasonCode",
+  "affectedCount",
+  "exportId",
+  "exportedRowCount",
+  "exportFilterFingerprint",
+]);
+
+/**
+ * Sanitizes metadata against CR-14 privacy minimization standards,
+ * stripping non-allow-listed keys and unexpected/nested content.
+ */
+export function sanitizeAuditMetadata(metadata: unknown): Record<string, unknown> {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return {};
+  }
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, val] of Object.entries(metadata as Record<string, unknown>)) {
+    if (ALLOW_LISTED_METADATA_KEYS.has(key)) {
+      sanitized[key] = val;
+    }
+  }
+  return sanitized;
+}
+
 export const AUDIT_CSV_COLUMNS: AuditCsvColumn[] = [
   { id: "communitySequence", header: "Sequence", accessor: (e) => e.communitySequence },
   { id: "occurredAt", header: "Occurred At", accessor: (e) => e.occurredAt },
@@ -62,7 +108,10 @@ export const AUDIT_CSV_COLUMNS: AuditCsvColumn[] = [
   {
     id: "metadata",
     header: "Metadata",
-    accessor: (e) => (e.metadata && Object.keys(e.metadata).length > 0 ? JSON.stringify(e.metadata) : ""),
+    accessor: (e) => {
+      const sanitized = sanitizeAuditMetadata(e.metadata);
+      return Object.keys(sanitized).length > 0 ? JSON.stringify(sanitized) : "";
+    },
   },
 ];
 

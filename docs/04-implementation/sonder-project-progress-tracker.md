@@ -47,6 +47,17 @@
 | **VS-08B.0.1**| Notification API Contract Alignment & Backend Handoff | `FEAT-F01a` | PR #36 | `43282e0` | Contract alignment | **MERGED & VERIFIED** (`vs-08b-notification-backend-integration-contract.md`) |
 | **VS-08B.1** | Notification REST Vertical Slice & Functional Inbox | `FEAT-F01a` | PR #37 | `1b88e60` | 19 tests | **MERGED & VERIFIED** (`Notifications.test.tsx` [19 tests], monorepo [506 tests]) |
 | **VS-09.0**  | Complete Frontend Audit, Feature Inventory & First-Look Readiness | Governance / Audit | PR #38 (`5ca384b`), PR #39 (`a9b093c`), PR #40 (`26bd662`) | `a9b093c`<br>`26bd662` | 506 tests | **MERGED, VERIFIED & LOCKED** (`sonder-frontend-completion-tracker.md`, `vs-09.0-delivery-report.md`) |
+| **VS-09A**   | Single-Item Archive & 10s Undo Toast (`Z` hotkey) | `FEAT-A10a` | — | `0b82ef9` | 32 tests | **VERIFIED & FROZEN** (`TaskArchive.test.tsx`) |
+| **VS-09B**   | 30-Day Workspace Trash View & Bulk Action Bar | `FEAT-A10b` | — | `278dd60` | 8 tests | **VERIFIED & LOCKED** (`TaskBulkActions.test.tsx`) |
+| **VS-09C**   | Starter Templates Picker UI (General, Event, Ops) | `FEAT-D05a` | — | `89c7206` | 15 tests | **VERIFIED & LOCKED** (`WorkspaceTemplatesPicker.test.tsx`) |
+| **VS-09D**   | Work-Item Archetypes (`TASK`, `DELIVERABLE`, `BUG`, `DECISION`) | `FEAT-A01` | — | `9daea79` | 16 tests | **VERIFIED & LOCKED** (`TaskArchetypes.test.tsx`) |
+| **VS-09E**   | Task & Subtask Checklist Cloning | `FEAT-A07` | — | `acf90d2` | 11 tests | **VERIFIED & LOCKED** (`TaskCloning.test.tsx`) |
+| **VS-09F**   | Filtered View UTF-8 CSV Export with OWASP Protection | `FEAT-J01a` | — | `46bc827` | 13 tests | **VERIFIED & LOCKED** (`TaskExportCsv.test.tsx`) |
+| **VS-09G**   | Collapsible Backlog Tray in List & Board Views | `FEAT-B02` | — | `5c31755` | 28 tests | **VERIFIED & LOCKED** (`BacklogTaskTray.test.tsx`, `TaskViews.test.tsx`) |
+| **VS-09H**   | Workspace Settings Shell & Core Custom Fields | `FEAT-D01`, `FEAT-D04a` | — | `0100a8e` | 11 tests | **VERIFIED & LOCKED** (`CustomFields.test.tsx`, `TaskCustomFields.test.tsx`, `WorkspaceSettings.test.tsx`) |
+| **VS-09I**   | Plain-Language Permission Inspector & Role Simulator | `FEAT-G03` | — | `a6f04a2` | 7 tests | **VERIFIED & LOCKED** (`RoleSimulator.test.tsx`) |
+| **VS-09J**   | Append-Only Hash-Chained Audit Log Table & CSV Export | `FEAT-G04` | — | `59a9511` | 19 tests | **VERIFIED & LOCKED** (`AuditLog.test.tsx`) |
+| **VS-09K**   | M1.3 Scope Reconciliation, Audit Authorization Hardening & Governance Gate | Governance / `FEAT-G04` | — | Working | 667 tests (63 suites) | **VERIFIED & RECONCILED** (Fail-closed audit capabilities, metadata sanitization, and SOT-11/14 reconciliation) |
 
 ### A.2 Current Engineering Status & Next Milestones
 
@@ -94,8 +105,8 @@ flowchart TD
     - Strictly $\text{Community} \to \text{Workspace} \to \text{Task} \to \text{Subtask}$. Projects and Lists (as intermediate container entities) are obsolete historical artifacts.
     - Legitimate management capabilities operate at the Workspace level (`FEAT-E01` Workspace Overview, `FEAT-D05` Workspace Starter Templates, `FEAT-I01` Workspace Intake Forms).
   - **Offline Editing Classification:**
-    - Reconciled discrepancy between historical Master Spec draft (labeled Phase 3) and approved Master PRD (§2.1 M1.3 and §2.2).
-    - Preserved approved product direction: `FEAT-J02` belongs to **Milestone M1.3 (Phase 1)**, bounded to cached tasks with 14-day queue age, FIFO replay, CR-15 allow-list, and per-field conflict detection.
+    - Reconciled against authoritative decision records SOT-11, SOT-14, and Master Specification v1.5.0 §1.1.
+    - Preserved canonical product roadmap: `FEAT-J02` (Selected-Field Offline Task Editing & Queued Sync) is formally classified as a **Phase 3 DEFERRED CAPABILITY** (with minimal M1.1 caching primitives in place). It is not part of Phase 1 / Milestone M1.3 scope. Full offline sync engine, IndexedDB queue, 14-day expiry, FIFO replay, and 409 conflict resolver will be built in Phase 3.
   - **Tightened VS-09A Scope:**
     - Separates single-item archive & 10s undo toast (`FEAT-A10a`, hotkey `Z`) from bulk archive and Trash recovery view (`FEAT-A10b`).
     - Preserves 30-day soft-delete restoration.

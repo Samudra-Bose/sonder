@@ -14,6 +14,7 @@ import {
   AlertOctagon,
   Lock,
   Hash,
+  Search,
 } from "lucide-react";
 import { useWorkspace } from "@/modules/workspace/index.js";
 import { useWorkspaceSettings } from "./useWorkspaceSettings.js";
@@ -23,6 +24,7 @@ import {
   useAuditIntegrityStatus,
   useExportAuditEvents,
 } from "./useAuditLog.js";
+import { sanitizeAuditMetadata } from "./auditExportCsv.js";
 import type {
   AuditEventDto,
   AuditEventCategory,
@@ -64,6 +66,7 @@ export const AuditLogSettingsView: React.FC = () => {
   // Filters State
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [selectedSeverity, setSelectedSeverity] = useState<string>("ALL");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
 
@@ -79,6 +82,7 @@ export const AuditLogSettingsView: React.FC = () => {
   const queryParams = {
     limit: pageSize,
     cursor: currentCursor,
+    actorId: searchQuery.trim() || undefined,
     categories:
       selectedCategory !== "ALL" ? [selectedCategory as AuditEventCategory] : undefined,
     severities:
@@ -114,6 +118,7 @@ export const AuditLogSettingsView: React.FC = () => {
     if (!canExport || isExporting) return;
     try {
       await exportAuditEvents({
+        actorId: searchQuery.trim() || undefined,
         categories:
           selectedCategory !== "ALL" ? [selectedCategory as AuditEventCategory] : undefined,
         severities:
@@ -132,6 +137,7 @@ export const AuditLogSettingsView: React.FC = () => {
   const handleResetFilters = () => {
     setSelectedCategory("ALL");
     setSelectedSeverity("ALL");
+    setSearchQuery("");
     setFromDate("");
     setToDate("");
     setCurrentCursor(undefined);
@@ -272,14 +278,14 @@ export const AuditLogSettingsView: React.FC = () => {
             )}
             <span>
               {integrityStatus?.status === "HEALTHY"
-                ? "Hash-Chain Verified"
+                ? "Mock / Server-Reported: Hash-Chain Verified"
                 : integrityStatus?.status === "VERIFYING"
-                ? "Verifying Integrity..."
+                ? "Server-Reported: Verifying Integrity..."
                 : integrityStatus?.status === "DEGRADED"
-                ? "Integrity Degraded"
+                ? "Server-Reported: Integrity Degraded"
                 : integrityStatus?.status === "FAILED"
-                ? "Verification Failed"
-                : "Integrity Unknown"}
+                ? "Server-Reported: Verification Failed"
+                : "Server-Reported: Status Pending"}
             </span>
             {integrityStatus?.verifiedThroughSequence && (
               <span className="font-mono text-[10px] opacity-80">
@@ -288,7 +294,7 @@ export const AuditLogSettingsView: React.FC = () => {
             )}
           </div>
           <span className="text-[10px] text-muted-foreground">
-            Authoritative server-side verification • Append-only immutability
+            Mock/server-reported status • Authoritative verification enforced by backend service
           </span>
         </div>
       </div>
@@ -313,6 +319,23 @@ export const AuditLogSettingsView: React.FC = () => {
       {/* Filters & Actions Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-lg border border-border bg-card">
         <div className="flex flex-wrap items-center gap-2.5">
+          {/* Search Filter: Actor ID */}
+          <div className="flex items-center gap-1.5 relative">
+            <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-2 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search Actor ID..."
+              data-testid="audit-search-filter"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentCursor(undefined);
+                setPageHistory([]);
+              }}
+              className="text-xs h-8 pl-7 pr-2.5 rounded-md border border-input bg-background text-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring w-36 sm:w-44"
+            />
+          </div>
+
           {/* Category Filter */}
           <div className="flex items-center gap-1.5">
             <label htmlFor="category-filter" className="text-xs font-medium text-muted-foreground">
@@ -402,7 +425,11 @@ export const AuditLogSettingsView: React.FC = () => {
           </div>
 
           {/* Reset Filters */}
-          {(selectedCategory !== "ALL" || selectedSeverity !== "ALL" || fromDate || toDate) && (
+          {(selectedCategory !== "ALL" ||
+            selectedSeverity !== "ALL" ||
+            searchQuery.trim() !== "" ||
+            fromDate ||
+            toDate) && (
             <button
               type="button"
               data-testid="audit-reset-filters-btn"
@@ -715,7 +742,7 @@ export const AuditLogSettingsView: React.FC = () => {
                 Metadata (Allow-Listed Facts)
               </span>
               <pre className="p-3.5 rounded-lg border border-border bg-muted/40 font-mono text-xs overflow-x-auto text-foreground">
-                {JSON.stringify(selectedEvent.metadata, null, 2)}
+                {JSON.stringify(sanitizeAuditMetadata(selectedEvent.metadata), null, 2)}
               </pre>
             </div>
 

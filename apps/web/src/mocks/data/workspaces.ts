@@ -1,4 +1,10 @@
 import type { WorkspaceDto, WorkspaceTemplateDto } from "@/modules/workspace/types";
+import {
+  mockOwnerRole,
+  mockCoordinatorRole,
+  mockMemberRole,
+  mockViewerRole,
+} from "./roles.js";
 
 export const mockWorkspacesCommunity1: WorkspaceDto[] = [
   {
@@ -9,6 +15,7 @@ export const mockWorkspacesCommunity1: WorkspaceDto[] = [
     keyPrefix: "ALEX",
     ownerIds: ["018f98a2-3f12-7890-a123-456789abcdef"],
     myRole: "OWNER",
+    effectiveCapabilities: [...mockOwnerRole.capabilities],
     taskEditPolicy: "CREATOR_COORDINATOR_STRICT",
     personalWorkspaceAdminPolicy: "AUDITED_BREAK_GLASS",
     coordinatorCanInviteMembers: true,
@@ -27,6 +34,7 @@ export const mockWorkspacesCommunity1: WorkspaceDto[] = [
     keyPrefix: "ENG",
     ownerIds: ["018f98a2-3f12-7890-a123-456789abcdef"],
     myRole: "OWNER",
+    effectiveCapabilities: [...mockOwnerRole.capabilities],
     taskEditPolicy: "COLLABORATIVE_MEMBER",
     personalWorkspaceAdminPolicy: "AUDITED_BREAK_GLASS",
     coordinatorCanInviteMembers: true,
@@ -45,6 +53,7 @@ export const mockWorkspacesCommunity1: WorkspaceDto[] = [
     keyPrefix: "GALA",
     ownerIds: ["018f98a2-3f12-7890-c999-456789abcdef"],
     myRole: "COORDINATOR",
+    effectiveCapabilities: [...mockCoordinatorRole.capabilities],
     taskEditPolicy: "CREATOR_COORDINATOR_STRICT",
     personalWorkspaceAdminPolicy: "AUDITED_BREAK_GLASS",
     coordinatorCanInviteMembers: true,
@@ -63,6 +72,7 @@ export const mockWorkspacesCommunity1: WorkspaceDto[] = [
     keyPrefix: "OUT",
     ownerIds: ["018f98a2-3f12-7890-c888-456789abcdef"],
     myRole: "MEMBER",
+    effectiveCapabilities: [...mockMemberRole.capabilities],
     taskEditPolicy: "COLLABORATIVE_MEMBER",
     personalWorkspaceAdminPolicy: "AUDITED_BREAK_GLASS",
     coordinatorCanInviteMembers: false,
@@ -84,6 +94,7 @@ export const mockWorkspacesCommunity2: WorkspaceDto[] = [
     keyPrefix: "ART",
     ownerIds: ["018f98a2-3f12-7890-a123-456789abcdef"],
     myRole: "OWNER",
+    effectiveCapabilities: [...mockOwnerRole.capabilities],
     taskEditPolicy: "CREATOR_COORDINATOR_STRICT",
     personalWorkspaceAdminPolicy: "AUDITED_BREAK_GLASS",
     coordinatorCanInviteMembers: true,
@@ -102,6 +113,7 @@ export const mockWorkspacesCommunity2: WorkspaceDto[] = [
     keyPrefix: "EXH",
     ownerIds: ["018f98a2-3f12-7890-d777-456789abcdef"],
     myRole: "VIEWER",
+    effectiveCapabilities: [...mockViewerRole.capabilities],
     taskEditPolicy: "CREATOR_COORDINATOR_STRICT",
     personalWorkspaceAdminPolicy: "AUDITED_BREAK_GLASS",
     coordinatorCanInviteMembers: false,
@@ -123,6 +135,7 @@ export const mockWorkspacesCommunity3NoShared: WorkspaceDto[] = [
     keyPrefix: "VOL",
     ownerIds: ["018f98a2-3f12-7890-a123-456789abcdef"],
     myRole: "OWNER",
+    effectiveCapabilities: [...mockOwnerRole.capabilities],
     taskEditPolicy: "CREATOR_COORDINATOR_STRICT",
     personalWorkspaceAdminPolicy: "AUDITED_BREAK_GLASS",
     coordinatorCanInviteMembers: true,

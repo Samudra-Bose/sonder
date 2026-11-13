@@ -13,6 +13,7 @@ import { WS_SHARED_ENG_ID, WS_SHARED_GALA_ID } from "@/mocks/data/my-work.js";
 import {
   escapeCsvCell,
   generateAuditEventsCsv,
+  sanitizeAuditMetadata,
 } from "./auditExportCsv.js";
 import type { AuditEventDto } from "./types.js";
 import { canReadAuditLogs, canExportAuditLogs } from "./permissions.js";
@@ -119,7 +120,7 @@ describe("VS-09J: Append-Only Hash-Chained Audit Log Table & CSV Export (FEAT-G0
         expect(integrityBadge).toHaveTextContent("Seq #12");
       });
       expect(
-        screen.getByText(/Authoritative server-side verification/i)
+        screen.getByText(/Authoritative verification/i)
       ).toBeInTheDocument();
     });
 
@@ -165,6 +166,22 @@ describe("VS-09J: Append-Only Hash-Chained Audit Log Table & CSV Export (FEAT-G0
 
       await waitFor(() => {
         expect(screen.getByText("BREAK_GLASS_GRANTED")).toBeInTheDocument();
+        expect(screen.queryByText("WORKSPACE_CREATED")).not.toBeInTheDocument();
+      });
+    });
+
+    it("filters events by Search input (Actor ID)", async () => {
+      const user = userEvent.setup();
+      renderAuditSettings();
+
+      await screen.findByTestId("audit-log-table");
+
+      const searchInput = screen.getByTestId("audit-search-filter");
+      // Search for Jordan's events (MOCK_ACTOR_JORDAN = "...bbcdef")
+      await user.type(searchInput, "bbcdef");
+
+      await waitFor(() => {
+        expect(screen.getByText("WORKSPACE_MEMBER_ROLE_CHANGED")).toBeInTheDocument();
         expect(screen.queryByText("WORKSPACE_CREATED")).not.toBeInTheDocument();
       });
     });
@@ -279,27 +296,90 @@ describe("VS-09J: Append-Only Hash-Chained Audit Log Table & CSV Export (FEAT-G0
       );
     });
 
-    it("evaluates permission helper functions strictly", () => {
-      const ownerWs = { id: "ws-1", myRole: "OWNER" } as any;
-      const coordWs = { id: "ws-2", myRole: "COORDINATOR" } as any;
-      const memberWs = { id: "ws-3", myRole: "MEMBER" } as any;
-      const viewerWs = { id: "ws-4", myRole: "VIEWER" } as any;
+    it("evaluates permission helper functions strictly against authoritative effectiveCapabilities and fails closed when absent", () => {
+      // Missing or unpopulated effectiveCapabilities must strictly FAIL CLOSED even if myRole is set
+      const ownerWithoutCaps = { id: "ws-1", myRole: "OWNER" } as any;
+      expect(canReadAuditLogs(ownerWithoutCaps)).toBe(false);
+      expect(canExportAuditLogs(ownerWithoutCaps)).toBe(false);
 
+      // Workspace with authoritative Owner capabilities
+      const ownerWs = {
+        id: "ws-1",
+        myRole: "OWNER",
+        effectiveCapabilities: ["audit:read", "audit:export", "task:read"],
+      } as any;
       expect(canReadAuditLogs(ownerWs)).toBe(true);
       expect(canExportAuditLogs(ownerWs)).toBe(true);
 
+      // Workspace with authoritative Coordinator capabilities (has read, lacks export)
+      const coordWs = {
+        id: "ws-2",
+        myRole: "COORDINATOR",
+        effectiveCapabilities: ["audit:read", "task:read"],
+      } as any;
       expect(canReadAuditLogs(coordWs)).toBe(true);
       expect(canExportAuditLogs(coordWs)).toBe(false);
 
+      // Workspace with Member capabilities (lacks both)
+      const memberWs = {
+        id: "ws-3",
+        myRole: "MEMBER",
+        effectiveCapabilities: ["task:read", "task:create"],
+      } as any;
       expect(canReadAuditLogs(memberWs)).toBe(false);
       expect(canExportAuditLogs(memberWs)).toBe(false);
 
+      // Workspace with Viewer capabilities (lacks both)
+      const viewerWs = {
+        id: "ws-4",
+        myRole: "VIEWER",
+        effectiveCapabilities: ["task:read"],
+      } as any;
       expect(canReadAuditLogs(viewerWs)).toBe(false);
       expect(canExportAuditLogs(viewerWs)).toBe(false);
 
-      // Fails closed on null/undefined
+      // Fails closed on null/undefined/empty
       expect(canReadAuditLogs(null)).toBe(false);
       expect(canExportAuditLogs(null)).toBe(false);
+      expect(canReadAuditLogs({ id: "ws-5", effectiveCapabilities: [] } as any)).toBe(false);
+      expect(canExportAuditLogs({ id: "ws-5", effectiveCapabilities: [] } as any)).toBe(false);
+    });
+
+    it("evaluates role preview simulation capability independently for export without breaking ordinary export", async () => {
+      // Simulate Coordinator role (lacks audit:export) -> export returns 403 Forbidden
+      const coordExportRes = await fetch(
+        `/api/v1/communities/018f98a2-3f12-7890-b123-456789abcdef/workspaces/${WS_SHARED_ENG_ID}/audit-events/export`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Preview-Role-Id": "018f98a2-3f12-7890-role-coord-002",
+            "X-CSRF-Token": "test-csrf-token",
+          },
+          body: JSON.stringify({}),
+        }
+      );
+      expect(coordExportRes.status).toBe(403);
+      const coordErr = await coordExportRes.json();
+      expect(coordErr.detail).toContain("audit:export");
+
+      // Simulate Owner role (has audit:export) -> export succeeds
+      const ownerExportRes = await fetch(
+        `/api/v1/communities/018f98a2-3f12-7890-b123-456789abcdef/workspaces/${WS_SHARED_ENG_ID}/audit-events/export`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Preview-Role-Id": "018f98a2-3f12-7890-role-owner-001",
+            "X-CSRF-Token": "test-csrf-token",
+          },
+          body: JSON.stringify({}),
+        }
+      );
+      expect(ownerExportRes.status).toBe(200);
+      const csvText = await ownerExportRes.text();
+      expect(csvText).toContain("Sequence");
+      expect(csvText).toContain("Occurred At");
     });
   });
 
@@ -355,6 +435,34 @@ describe("VS-09J: Append-Only Hash-Chained Audit Log Table & CSV Export (FEAT-G0
       expect(escapeCsvCell(null)).toBe("");
       expect(escapeCsvCell(undefined)).toBe("");
       expect(escapeCsvCell(42)).toBe("42");
+    });
+
+    it("sanitizes audit metadata to strictly allow-listed non-content fields (CR-14)", () => {
+      const dirtyMetadata = {
+        roleId: "018f98a2-role-1",
+        membershipId: "018f98a2-mem-1",
+        changedFields: ["status"],
+        // Malicious or leaked content
+        password: "cleartext-password",
+        userEmail: "victim@example.com",
+        taskTitle: "Secret Task Title",
+        taskDescription: "Sensitive project details",
+        authToken: "secret-token-xyz",
+      };
+
+      const clean = sanitizeAuditMetadata(dirtyMetadata);
+
+      // Allow-listed facts preserved
+      expect(clean.roleId).toBe("018f98a2-role-1");
+      expect(clean.membershipId).toBe("018f98a2-mem-1");
+      expect(clean.changedFields).toEqual(["status"]);
+
+      // Content and credential leaks stripped
+      expect(clean).not.toHaveProperty("password");
+      expect(clean).not.toHaveProperty("userEmail");
+      expect(clean).not.toHaveProperty("taskTitle");
+      expect(clean).not.toHaveProperty("taskDescription");
+      expect(clean).not.toHaveProperty("authToken");
     });
   });
 

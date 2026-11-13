@@ -6,13 +6,11 @@ import type { RoleCapability } from "./types.js";
  * the requested workspace-scoped capability.
  *
  * Evaluation rules:
- * 1. If explicit `effectiveCapabilities` array is present (from server or simulated custom role),
- *    it is strictly authoritative.
- * 2. If missing, falls back to the canonical default capabilities for built-in roles:
- *    - OWNER: possesses all workspace-scoped capabilities by default.
- *    - COORDINATOR: possesses coordination and task capabilities; excludes workspace:manage_custom_fields and workspace:update_settings.
- *    - MEMBER / VIEWER: restricted execution/read capabilities; excludes administration.
- * 3. In the absence of workspace context or unassigned roles, fails closed (returns false).
+ * 1. Strictly authoritative: relies solely on the server-provided `effectiveCapabilities` array.
+ * 2. In the absence of workspace context, or if `effectiveCapabilities` is missing/empty,
+ *    it strictly fails closed (returns false).
+ * 3. Never treats role names (`myRole`) as authorization proof. Role-to-capability mapping
+ *    belongs exclusively to server/fixture contracts.
  */
 export function hasWorkspaceCapability(
   workspace: (WorkspaceDto & { effectiveCapabilities?: string[] }) | null | undefined,
@@ -20,63 +18,13 @@ export function hasWorkspaceCapability(
 ): boolean {
   if (!workspace) return false;
 
-  // 1. Authoritative explicit capability array (used by server responses and role simulator)
+  // Authoritative explicit capability array (provided by server responses and role simulator)
   if (Array.isArray(workspace.effectiveCapabilities)) {
     return workspace.effectiveCapabilities.includes(capability);
   }
 
-  // 2. Canonical built-in role default capability sets
-  switch (workspace.myRole) {
-    case "OWNER":
-      return true;
-
-    case "COORDINATOR":
-      return [
-        "task:read",
-        "task:create",
-        "task:edit_definition",
-        "task:edit_title_description",
-        "task:edit_dates_priority",
-        "task:edit_custom_fields_links",
-        "task:edit_estimate",
-        "task:update_status",
-        "task:assign",
-        "task:manage_subtasks",
-        "task:move",
-        "task:comment",
-        "task:watch",
-        "task:archive",
-        "task:restore",
-        "workspace:read_metadata",
-        "workspace:invite_members",
-        "saved_view:manage_shared",
-        "audit:read",
-      ].includes(capability);
-
-    case "MEMBER":
-      return [
-        "task:read",
-        "task:create",
-        "task:edit_title_description",
-        "task:edit_dates_priority",
-        "task:edit_custom_fields_links",
-        "task:edit_estimate",
-        "task:update_status",
-        "task:comment",
-        "task:watch",
-        "workspace:read_metadata",
-      ].includes(capability);
-
-    case "VIEWER":
-      return [
-        "task:read",
-        "workspace:read_metadata",
-      ].includes(capability);
-
-    default:
-      // Unknown role or missing role without explicit capabilities fails closed
-      return false;
-  }
+  // Fails closed: role names are display labels, never authorization authority
+  return false;
 }
 
 /**

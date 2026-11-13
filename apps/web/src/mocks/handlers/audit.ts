@@ -70,13 +70,7 @@ function hasAuditCapability(
     return ws.effectiveCapabilities.includes(capability);
   }
 
-  if (ws.myRole === "OWNER") {
-    return true;
-  }
-  if (ws.myRole === "COORDINATOR") {
-    return capability === "audit:read";
-  }
-
+  // Fails closed if capability context is absent. Role names are not authorization proof.
   return false;
 }
 
@@ -146,7 +140,12 @@ export const auditHandlers = [
         events = events.filter((e) => eventTypeParams.includes(e.eventType));
       }
       if (actorId) {
-        events = events.filter((e) => e.actorId === actorId);
+        const query = actorId.toLowerCase();
+        events = events.filter(
+          (e) =>
+            e.actorId.toLowerCase().includes(query) ||
+            (e.targetId && e.targetId.toLowerCase().includes(query))
+        );
       }
       if (from) {
         events = events.filter((e) => e.occurredAt >= from);
@@ -215,28 +214,13 @@ export const auditHandlers = [
       }
 
       const previewRoleId = request.headers.get("X-Preview-Role-Id");
-      if (previewRoleId) {
-        return HttpResponse.json(
-          {
-            type: "https://errors.sonder.platform/preview-mode-read-only",
-            title: "Preview Mode Read Only",
-            status: 403,
-            detail: "Exit Role Preview mode before making mutations or exports.",
-            code: "PREVIEW_MODE_READ_ONLY",
-          },
-          {
-            status: 403,
-            headers: { "Content-Type": "application/problem+json" },
-          }
-        );
-      }
 
       const { communityId, workspaceId } = params as {
         communityId: string;
         workspaceId: string;
       };
 
-      // Check audit:export capability
+      // Check audit:export capability (evaluates previewRoleId if active simulation is in effect)
       if (!hasAuditCapability(communityId, workspaceId, "audit:export", previewRoleId)) {
         return HttpResponse.json(
           {
@@ -273,7 +257,12 @@ export const auditHandlers = [
         events = events.filter((e) => body.eventTypes!.includes(e.eventType));
       }
       if (body.actorId) {
-        events = events.filter((e) => e.actorId === body.actorId);
+        const query = body.actorId.toLowerCase();
+        events = events.filter(
+          (e) =>
+            e.actorId.toLowerCase().includes(query) ||
+            (e.targetId && e.targetId.toLowerCase().includes(query))
+        );
       }
       if (body.from) {
         events = events.filter((e) => e.occurredAt >= body.from!);
