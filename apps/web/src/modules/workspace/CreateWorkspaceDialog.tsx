@@ -330,8 +330,8 @@ export function CreateWorkspaceDialog({
 
               {/* Loading State */}
               {isLoadingTemplates ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-1">
-                  {[1, 2, 3, 4].map((i) => (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-1">
+                  {[1, 2, 3].map((i) => (
                     <div
                       key={i}
                       className="p-4 rounded-xl border border-[var(--border-subtle)] space-y-3"
@@ -370,22 +370,9 @@ export function CreateWorkspaceDialog({
                 <div
                   role="radiogroup"
                   aria-label="Starter Templates"
-                  className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                  className="grid grid-cols-1 sm:grid-cols-3 gap-3"
                 >
-                  {/* Option 0: Blank Workspace */}
-                  <WorkspaceTemplateCard
-                    templateKey="BLANK"
-                    title="Blank Workspace"
-                    description="Start fresh with standard To do, In progress, and Done statuses. No preconfigured custom fields."
-                    badge="Clean Slate"
-                    workflowStatuses={BLANK_TEMPLATE_MOCK.workflowStatuses}
-                    defaultViews={BLANK_TEMPLATE_MOCK.defaultSavedViews}
-                    isSelected={selectedTemplateKey === "BLANK"}
-                    onSelect={() => setSelectedTemplateKey("BLANK")}
-                    onPreview={() => setPreviewTemplate(BLANK_TEMPLATE_MOCK)}
-                  />
-
-                  {/* Built-in Templates from Catalog */}
+                  {/* Exactly 3 Built-in Canonical Templates from Catalog */}
                   {templates?.map((t) => (
                     <WorkspaceTemplateCard
                       key={t.key}
@@ -435,17 +422,9 @@ export function CreateWorkspaceDialog({
         isOpen={Boolean(previewTemplate)}
         onClose={() => setPreviewTemplate(null)}
         template={previewTemplate}
-        isCurrentSelection={
-          previewTemplate?.name === "Blank Workspace"
-            ? selectedTemplateKey === "BLANK"
-            : selectedTemplateKey === previewTemplate?.key
-        }
+        isCurrentSelection={selectedTemplateKey === previewTemplate?.key}
         onApply={(tpl) => {
-          if (tpl.name === "Blank Workspace") {
-            setSelectedTemplateKey("BLANK");
-          } else {
-            setSelectedTemplateKey(tpl.key);
-          }
+          setSelectedTemplateKey(tpl.key);
         }}
       />
     </>
