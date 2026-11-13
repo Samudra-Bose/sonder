@@ -246,20 +246,12 @@ export function CreateWorkspaceDialog({
                       setValidationErrors((prev) => ({ ...prev, name: undefined }));
                     }
                   }}
-                  error={Boolean(validationErrors.name)}
+                  error={validationErrors.name}
+                  helperText="Between 1 and 120 characters."
                   maxLength={120}
                   autoFocus
                   required
                 />
-                {validationErrors.name ? (
-                  <p className="text-xs text-[var(--feedback-danger-text)] mt-1">
-                    {validationErrors.name}
-                  </p>
-                ) : (
-                  <p className="text-[11px] text-[var(--text-muted)]">
-                    Between 1 and 120 characters.
-                  </p>
-                )}
               </div>
 
               {/* Workspace Kind: Shared vs Personal */}
@@ -332,18 +324,10 @@ export function CreateWorkspaceDialog({
                       setValidationErrors((prev) => ({ ...prev, keyPrefix: undefined }));
                     }
                   }}
-                  error={Boolean(validationErrors.keyPrefix)}
+                  error={validationErrors.keyPrefix}
+                  helperText="2 to 10 uppercase alphanumeric characters (e.g., ENG). If omitted, the platform will reserve one automatically."
                   maxLength={10}
                 />
-                {validationErrors.keyPrefix ? (
-                  <p className="text-xs text-[var(--feedback-danger-text)] mt-1">
-                    {validationErrors.keyPrefix}
-                  </p>
-                ) : (
-                  <p className="text-[11px] text-[var(--text-muted)]">
-                    2 to 10 uppercase alphanumeric characters (e.g., ENG). If omitted, the platform will reserve one automatically.
-                  </p>
-                )}
               </div>
             </div>
 
