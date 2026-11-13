@@ -6,8 +6,10 @@ import {
   useCreateCustomField,
   useUpdateCustomField,
   useArchiveCustomField,
+  useCreateCustomFieldOption,
 } from "./useCustomFields.js";
 import { useWorkspaceSettings } from "./useWorkspaceSettings.js";
+import { canManageCustomFields } from "./permissions.js";
 import type {
   CustomFieldDefinitionDto,
   CustomFieldType,
@@ -41,11 +43,11 @@ export const CustomFieldsSettingsView: React.FC = () => {
   const createMutation = useCreateCustomField(communityId, workspaceId);
   const updateMutation = useUpdateCustomField(communityId, workspaceId);
   const archiveMutation = useArchiveCustomField(communityId, workspaceId);
+  const createOptionMutation = useCreateCustomFieldOption(communityId, workspaceId);
 
-  const isOwner = Boolean(
-    activeWorkspace?.myRole === "OWNER" ||
-    workspaceData?.myRole === "OWNER"
-  );
+  const effectiveWorkspace = workspaceData ?? activeWorkspace;
+  // Authoritative capability enforcement: workspace:manage_custom_fields
+  const canManage = canManageCustomFields(effectiveWorkspace);
 
   // Modal dialog states
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -65,6 +67,7 @@ export const CustomFieldsSettingsView: React.FC = () => {
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editRequired, setEditRequired] = useState(false);
+  const [newEditOptionInput, setNewEditOptionInput] = useState("");
   const [editFormError, setEditFormError] = useState<string | null>(null);
 
   const openCreateDialog = () => {
@@ -190,9 +193,9 @@ export const CustomFieldsSettingsView: React.FC = () => {
             type="button"
             data-testid="create-custom-field-btn"
             onClick={openCreateDialog}
-            disabled={!isOwner || createMutation.isPending}
-            title={!isOwner ? "Only workspace owners can configure custom fields." : undefined}
-            aria-disabled={!isOwner}
+            disabled={!canManage || createMutation.isPending}
+            title={!canManage ? "Only workspace owners can configure custom fields." : undefined}
+            aria-disabled={!canManage}
             className="inline-flex items-center gap-2 px-3.5 py-2 rounded-md bg-primary text-primary-foreground font-medium text-sm shadow-xs hover:bg-primary/90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -203,8 +206,8 @@ export const CustomFieldsSettingsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Non-owner Read-only Notice */}
-      {!isOwner && (
+      {/* Non-owner / Unauthorized Read-only Notice */}
+      {!canManage && (
         <div
           data-testid="read-only-notice"
           className="rounded-lg border border-amber-300 dark:border-amber-800/80 bg-amber-50/80 dark:bg-amber-950/30 p-4 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-3"
@@ -213,7 +216,7 @@ export const CustomFieldsSettingsView: React.FC = () => {
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div>
-            <span className="font-semibold">Read-only view:</span> Only workspace owners can create, modify, or archive custom field definitions.
+            <span className="font-semibold">Read-only view:</span> Only workspace owners or roles with the <code className="font-mono text-[11px] bg-amber-100 dark:bg-amber-900/40 px-1 py-0.5 rounded">workspace:manage_custom_fields</code> capability can create, modify, or archive custom field definitions.
           </div>
         </div>
       )}
@@ -243,7 +246,7 @@ export const CustomFieldsSettingsView: React.FC = () => {
           <p className="text-xs text-muted-foreground max-w-md mx-auto">
             Add custom fields like Story Points, Component, Release Track, or Target Deployment to track workspace-specific task metadata.
           </p>
-          {isOwner && (
+          {canManage && (
             <button
               type="button"
               onClick={openCreateDialog}
@@ -332,7 +335,7 @@ export const CustomFieldsSettingsView: React.FC = () => {
                       )}
                     </td>
                     <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                      {isOwner && (
+                      {canManage && (
                         <div className="inline-flex items-center gap-1.5">
                           <button
                             type="button"
@@ -595,6 +598,59 @@ export const CustomFieldsSettingsView: React.FC = () => {
                   Require this field on all tasks
                 </label>
               </div>
+
+              {editingField.fieldType === "SINGLE_SELECT" && (
+                <div className="space-y-2 pt-2 border-t border-border">
+                  <label className="block text-xs font-medium text-foreground">
+                    Options ({editingField.options.length})
+                  </label>
+                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                    {editingField.options.map((opt) => (
+                      <span
+                        key={opt.id}
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs border ${
+                          opt.isArchived
+                            ? "bg-muted text-muted-foreground line-through opacity-60"
+                            : "bg-background text-foreground border-border"
+                        }`}
+                      >
+                        {opt.label}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <input
+                      type="text"
+                      data-testid="edit-add-option-input"
+                      value={newEditOptionInput}
+                      onChange={(e) => setNewEditOptionInput(e.target.value)}
+                      placeholder="Add new option..."
+                      className="flex-1 px-2.5 py-1.5 rounded-md border border-input bg-background text-xs text-foreground focus-visible:ring-1 focus-visible:ring-ring"
+                    />
+                    <button
+                      type="button"
+                      data-testid="edit-add-option-btn"
+                      disabled={!newEditOptionInput.trim() || createOptionMutation.isPending}
+                      onClick={async () => {
+                        const trimmed = newEditOptionInput.trim();
+                        if (!trimmed) return;
+                        try {
+                          await createOptionMutation.mutateAsync({
+                            fieldId: editingField.id,
+                            label: trimmed,
+                          });
+                          setNewEditOptionInput("");
+                        } catch (err: any) {
+                          setEditFormError(err.message || "Failed to add option.");
+                        }
+                      }}
+                      className="px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground text-xs font-medium hover:bg-secondary/80 disabled:opacity-50"
+                    >
+                      {createOptionMutation.isPending ? "Adding..." : "Add Option"}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-end gap-2.5 pt-3 border-t border-border">
                 <button

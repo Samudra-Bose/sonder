@@ -60,6 +60,18 @@ export function useUpdateTask(): UseMutationResult<
 
       // Optimistically update cached task if present
       if (previousTask) {
+        let updatedCustomFieldValues = previousTask.customFieldValues;
+        if (data.customFieldValues !== undefined) {
+          updatedCustomFieldValues = { ...(previousTask.customFieldValues ?? {}) };
+          for (const [cfId, cfVal] of Object.entries(data.customFieldValues)) {
+            if (cfVal === null) {
+              delete updatedCustomFieldValues[cfId];
+            } else {
+              updatedCustomFieldValues[cfId] = cfVal;
+            }
+          }
+        }
+
         const optimisticTask: TaskDto = {
           ...previousTask,
           ...(data.title !== undefined && { title: data.title }),
@@ -72,6 +84,7 @@ export function useUpdateTask(): UseMutationResult<
           ...(data.assigneeIds !== undefined && { assigneeIds: data.assigneeIds }),
           ...(data.labelIds !== undefined && { labelIds: data.labelIds }),
           ...(data.milestoneId !== undefined && { milestoneId: data.milestoneId }),
+          ...(data.customFieldValues !== undefined && { customFieldValues: updatedCustomFieldValues }),
           updatedAt: new Date().toISOString(),
         };
 

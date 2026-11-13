@@ -424,14 +424,18 @@ export const workspaceHandlers = [
       );
     }
 
-    // Permission check: only active Workspace Owner may update settings
-    if (ws.myRole !== "OWNER") {
+    // Permission check: capability workspace:update_settings (defaults to OWNER)
+    const canUpdate = Array.isArray((ws as any).effectiveCapabilities)
+      ? (ws as any).effectiveCapabilities.includes("workspace:update_settings")
+      : ws.myRole === "OWNER";
+
+    if (!canUpdate) {
       return HttpResponse.json(
         {
           type: "https://errors.sonder.platform/forbidden",
           title: "Forbidden",
           status: 403,
-          detail: "Only an active Workspace Owner may update workspace settings.",
+          detail: "Caller lacks workspace:update_settings capability.",
           code: "INSUFFICIENT_CAPABILITY",
         },
         { status: 403, headers: { "Content-Type": "application/problem+json" } }

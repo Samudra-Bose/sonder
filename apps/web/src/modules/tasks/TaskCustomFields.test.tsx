@@ -177,4 +177,45 @@ describe("VS-09H: Task Detail Custom Fields Section (FEAT-D04a)", () => {
     const textInput = screen.getByTestId("custom-field-input-018f98a2-3f12-7890-cf01-456789abcdef");
     expect(textInput).toBeDisabled();
   });
+
+  it("prevents clearing a required custom field and shows inline error", async () => {
+    const user = userEvent.setup();
+    const { getMockCustomFields } = await import("@/mocks/data/custom-fields.js");
+    const fields = getMockCustomFields("018f98a2-3f12-7890-w002-456789abcdef");
+    const compField = fields.find((f) => f.id === "018f98a2-3f12-7890-cf01-456789abcdef");
+    if (compField) {
+      compField.isRequired = true;
+    }
+
+    const task = makeTask();
+    renderSection(task);
+
+    const textInput = await screen.findByTestId("custom-field-input-018f98a2-3f12-7890-cf01-456789abcdef");
+    await user.clear(textInput);
+
+    expect(await screen.findByTestId("custom-field-error-018f98a2-3f12-7890-cf01-456789abcdef")).toBeInTheDocument();
+    expect(screen.getByText(/is required/i)).toBeInTheDocument();
+
+    if (compField) {
+      compField.isRequired = false;
+    }
+  });
+
+  it("handles 409 optimistic concurrency conflict gracefully", async () => {
+    const user = userEvent.setup();
+    // Simulate stale revision on task for cf01
+    const task = makeTask({
+      fieldRevisions: {
+        ...initialMockTasks[0]!.fieldRevisions,
+        "customFieldValues.018f98a2-3f12-7890-cf01-456789abcdef": 999, // mismatch with server (which is 1)
+      },
+    });
+    renderSection(task);
+
+    const textInput = await screen.findByTestId("custom-field-input-018f98a2-3f12-7890-cf01-456789abcdef");
+    await user.clear(textInput);
+    await user.type(textInput, "Concurrent Edit");
+
+    expect(await screen.findByTestId("custom-field-error-018f98a2-3f12-7890-cf01-456789abcdef")).toBeInTheDocument();
+  });
 });

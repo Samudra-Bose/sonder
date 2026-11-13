@@ -8,6 +8,7 @@ import {
   type CustomFieldOptionDto,
 } from "../data/custom-fields.js";
 import { mockWorkspacesByCommunityId, mockWorkspacesCommunity1 } from "../data/workspaces.js";
+import type { WorkspaceDto } from "@/modules/workspace/types.js";
 
 let customFieldsDelayMs = 0;
 let customFieldsErrorOverride: {
@@ -28,10 +29,14 @@ export function setMockCustomFieldsError(
 
 export { resetCustomFieldsMockState };
 
-function isWorkspaceOwner(communityId: string, workspaceId: string): boolean {
+function hasManageCustomFieldsCapability(communityId: string, workspaceId: string): boolean {
   const workspaces = mockWorkspacesByCommunityId[communityId] || mockWorkspacesCommunity1;
-  const ws = workspaces.find((w) => w.id === workspaceId);
-  return ws?.myRole === "OWNER";
+  const ws = workspaces.find((w) => w.id === workspaceId) as (WorkspaceDto & { effectiveCapabilities?: string[] }) | undefined;
+  if (!ws) return false;
+  if (Array.isArray(ws.effectiveCapabilities)) {
+    return ws.effectiveCapabilities.includes("workspace:manage_custom_fields");
+  }
+  return ws.myRole === "OWNER";
 }
 
 export const customFieldHandlers = [
@@ -101,7 +106,7 @@ export const customFieldHandlers = [
       }
 
       // Capability Check: workspace:manage_custom_fields
-      if (!isWorkspaceOwner(communityId, workspaceId)) {
+      if (!hasManageCustomFieldsCapability(communityId, workspaceId)) {
         return HttpResponse.json(
           {
             type: "https://errors.sonder.platform/forbidden",
@@ -267,7 +272,7 @@ export const customFieldHandlers = [
         fieldId: string;
       };
 
-      if (!isWorkspaceOwner(communityId, workspaceId)) {
+      if (!hasManageCustomFieldsCapability(communityId, workspaceId)) {
         return HttpResponse.json(
           {
             type: "https://errors.sonder.platform/forbidden",
@@ -387,7 +392,7 @@ export const customFieldHandlers = [
         fieldId: string;
       };
 
-      if (!isWorkspaceOwner(communityId, workspaceId)) {
+      if (!hasManageCustomFieldsCapability(communityId, workspaceId)) {
         return HttpResponse.json(
           {
             type: "https://errors.sonder.platform/forbidden",
@@ -455,7 +460,7 @@ export const customFieldHandlers = [
         fieldId: string;
       };
 
-      if (!isWorkspaceOwner(communityId, workspaceId)) {
+      if (!hasManageCustomFieldsCapability(communityId, workspaceId)) {
         return HttpResponse.json(
           {
             type: "https://errors.sonder.platform/forbidden",

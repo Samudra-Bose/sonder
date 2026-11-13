@@ -21,6 +21,7 @@ import { mockWorkspacesCommunity1 } from "../data/workspaces.js";
 import { resetMockMilestones } from "../data/milestones.js";
 import { getMockTaskLinks, resetMockTaskLinks } from "../data/task-links.js";
 import { resetMockCommentsState } from "../data/comments.js";
+import { getMockCustomFields, resetCustomFieldsMockState } from "../data/custom-fields.js";
 
 // In-memory mock task store mutable during tests
 let currentMockTasks: TaskDto[] = JSON.parse(JSON.stringify(initialMockTasks));
@@ -127,6 +128,7 @@ export function resetTaskMockState(): void {
   resetMockMilestones();
   resetMockTaskLinks();
   resetMockCommentsState();
+  resetCustomFieldsMockState();
   workspaceSeqCounters[WS_SHARED_ENG_ID] = 106;
   workspaceSeqCounters[WS_SHARED_GALA_ID] = 201;
   workspaceSeqCounters[WS_PERSONAL_ALEX_ID] = 2;
@@ -834,6 +836,114 @@ export const taskHandlers = [
         );
       }
 
+      // Validate custom fields before mutation
+      if (body.customFieldValues !== undefined && typeof body.customFieldValues === "object") {
+        const workspaceFields = getMockCustomFields(task.workspaceId);
+        for (const [defId, val] of Object.entries(body.customFieldValues)) {
+          const fieldDef = workspaceFields.find((f) => f.id === defId);
+          if (!fieldDef || fieldDef.isArchived) {
+            return HttpResponse.json(
+              {
+                type: "https://errors.sonder.platform/validation-error",
+                title: "Validation Error",
+                status: 422,
+                detail: `Custom field '${defId}' does not exist or is archived in this workspace.`,
+                code: "CUSTOM_FIELD_INVALID",
+                field: `customFieldValues.${defId}`,
+              },
+              { status: 422, headers: { "Content-Type": "application/problem+json" } }
+            );
+          }
+
+          if (fieldDef.isRequired && (val === null || val === "" || val === undefined)) {
+            return HttpResponse.json(
+              {
+                type: "https://errors.sonder.platform/validation-error",
+                title: "Validation Error",
+                status: 422,
+                detail: `Custom field '${fieldDef.name}' is required and cannot be empty.`,
+                code: "CUSTOM_FIELD_REQUIRED",
+                field: `customFieldValues.${defId}`,
+              },
+              { status: 422, headers: { "Content-Type": "application/problem+json" } }
+            );
+          }
+
+          if (val !== null && val !== undefined) {
+            if (fieldDef.fieldType === "TEXT" && typeof val !== "string") {
+              return HttpResponse.json(
+                {
+                  type: "https://errors.sonder.platform/validation-error",
+                  title: "Validation Error",
+                  status: 422,
+                  detail: `Custom field '${fieldDef.name}' must be a string value.`,
+                  code: "CUSTOM_FIELD_TYPE_MISMATCH",
+                  field: `customFieldValues.${defId}`,
+                },
+                { status: 422, headers: { "Content-Type": "application/problem+json" } }
+              );
+            }
+            if (fieldDef.fieldType === "NUMBER" && (typeof val !== "number" || isNaN(val))) {
+              return HttpResponse.json(
+                {
+                  type: "https://errors.sonder.platform/validation-error",
+                  title: "Validation Error",
+                  status: 422,
+                  detail: `Custom field '${fieldDef.name}' must be a valid number.`,
+                  code: "CUSTOM_FIELD_TYPE_MISMATCH",
+                  field: `customFieldValues.${defId}`,
+                },
+                { status: 422, headers: { "Content-Type": "application/problem+json" } }
+              );
+            }
+            if (fieldDef.fieldType === "BOOLEAN" && typeof val !== "boolean") {
+              return HttpResponse.json(
+                {
+                  type: "https://errors.sonder.platform/validation-error",
+                  title: "Validation Error",
+                  status: 422,
+                  detail: `Custom field '${fieldDef.name}' must be a boolean.`,
+                  code: "CUSTOM_FIELD_TYPE_MISMATCH",
+                  field: `customFieldValues.${defId}`,
+                },
+                { status: 422, headers: { "Content-Type": "application/problem+json" } }
+              );
+            }
+            if (fieldDef.fieldType === "DATE") {
+              if (typeof val !== "string" || isNaN(Date.parse(val))) {
+                return HttpResponse.json(
+                  {
+                    type: "https://errors.sonder.platform/validation-error",
+                    title: "Validation Error",
+                    status: 422,
+                    detail: `Custom field '${fieldDef.name}' must be a valid ISO date string.`,
+                    code: "CUSTOM_FIELD_TYPE_MISMATCH",
+                    field: `customFieldValues.${defId}`,
+                  },
+                  { status: 422, headers: { "Content-Type": "application/problem+json" } }
+                );
+              }
+            }
+            if (fieldDef.fieldType === "SINGLE_SELECT") {
+              const validOption = fieldDef.options.some((opt) => opt.id === val && !opt.isArchived);
+              if (!validOption) {
+                return HttpResponse.json(
+                  {
+                    type: "https://errors.sonder.platform/validation-error",
+                    title: "Validation Error",
+                    status: 422,
+                    detail: `Selected option '${val}' is not a valid active option for '${fieldDef.name}'.`,
+                    code: "CUSTOM_FIELD_INVALID_OPTION",
+                    field: `customFieldValues.${defId}`,
+                  },
+                  { status: 422, headers: { "Content-Type": "application/problem+json" } }
+                );
+              }
+            }
+          }
+        }
+      }
+
       // Optimistic concurrency check via baseFieldRevisions
       const baseRevisions = body.baseFieldRevisions ?? {};
       const conflictingFields: string[] = [];
@@ -867,6 +977,21 @@ export const taskHandlers = [
         if (clientRev === undefined || clientRev !== serverRev) {
           if (!conflictingFields.includes(field)) {
             conflictingFields.push(field);
+          }
+        }
+      }
+
+      // 2b. Check custom field per-field revisions
+      if (body.customFieldValues !== undefined && typeof body.customFieldValues === "object") {
+        for (const defId of Object.keys(body.customFieldValues)) {
+          const revKey = `customFieldValues.${defId}`;
+          const clientRev = baseRevisions[revKey];
+          const serverRev = task.fieldRevisions[revKey] ?? 1;
+
+          if (clientRev === undefined || clientRev !== serverRev) {
+            if (!conflictingFields.includes(revKey)) {
+              conflictingFields.push(revKey);
+            }
           }
         }
       }

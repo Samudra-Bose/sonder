@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Sliders, Database, GitFork, Users, Shield } from "lucide-react";
 import { useWorkspace } from "@/modules/workspace/index.js";
 import { useWorkspaceSettings } from "./useWorkspaceSettings.js";
+import { canUpdateWorkspaceSettings } from "./permissions.js";
 import { GeneralSettingsView } from "./GeneralSettingsView.js";
 import { CustomFieldsSettingsView } from "./CustomFieldsSettingsView.js";
 import { WorkflowSettingsView } from "./WorkflowSettingsView.js";
@@ -36,10 +37,7 @@ export const WorkspaceSettingsLayout: React.FC = () => {
   const { data: workspaceData, isLoading, isError, error } = useWorkspaceSettings(communityId, workspaceId);
 
   const effectiveWorkspace = workspaceData ?? activeWorkspace;
-  const isOwner = Boolean(
-    activeWorkspace?.myRole === "OWNER" ||
-    workspaceData?.myRole === "OWNER"
-  );
+  const canUpdateSettings = canUpdateWorkspaceSettings(effectiveWorkspace);
 
   const activeCategory: SettingsCategory = (params.category as SettingsCategory) || "general";
 
@@ -142,7 +140,7 @@ export const WorkspaceSettingsLayout: React.FC = () => {
                 <GeneralSettingsView
                   workspace={effectiveWorkspace}
                   communityId={communityId}
-                  isOwner={isOwner}
+                  isOwner={canUpdateSettings}
                 />
               )}
               {activeCategory === "custom-fields" && <CustomFieldsSettingsView />}

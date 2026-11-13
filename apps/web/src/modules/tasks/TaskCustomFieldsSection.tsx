@@ -46,6 +46,14 @@ export const TaskCustomFieldsSection: React.FC<TaskCustomFieldsSectionProps> = (
   ) => {
     if (!canEdit) return;
 
+    if (def.isRequired && (newValue === null || newValue === "")) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        [def.id]: `Field '${def.name}' is required.`,
+      }));
+      return;
+    }
+
     setValues((prev) => ({ ...prev, [def.id]: newValue }));
     setSavingFieldId(def.id);
     setFieldErrors((prev) => {

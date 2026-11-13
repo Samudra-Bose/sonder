@@ -232,8 +232,9 @@ describe("VS-09H: Core Custom Fields Management (FEAT-D04a)", () => {
     expect(await screen.findByTestId("custom-fields-settings")).toBeInTheDocument();
 
     // Read-only notice is displayed
-    expect(await screen.findByTestId("read-only-notice")).toBeInTheDocument();
-    expect(screen.getByText(/only workspace owners can create, modify, or archive custom field definitions/i)).toBeInTheDocument();
+    const readOnlyNotice = await screen.findByTestId("read-only-notice");
+    expect(readOnlyNotice).toBeInTheDocument();
+    expect(within(readOnlyNotice).getByText(/workspace:manage_custom_fields/i)).toBeInTheDocument();
 
     // Create button is disabled
     const createBtn = screen.getByTestId("create-custom-field-btn");
@@ -242,5 +243,34 @@ describe("VS-09H: Core Custom Fields Management (FEAT-D04a)", () => {
     // Edit and Archive buttons are not rendered
     expect(screen.queryByTestId("edit-custom-field-btn-018f98a2-3f12-7890-cf01-456789abcdef")).not.toBeInTheDocument();
     expect(screen.queryByTestId("archive-custom-field-btn-018f98a2-3f12-7890-cf01-456789abcdef")).not.toBeInTheDocument();
+  });
+
+  it("permits management when a custom or non-owner role has workspace:manage_custom_fields capability", async () => {
+    // Inject effectiveCapabilities on workspace w004 (MEMBER)
+    const { mockWorkspacesCommunity1 } = await import("@/mocks/data/workspaces.js");
+    const ws = mockWorkspacesCommunity1.find((w) => w.id === "018f98a2-3f12-7890-w004-456789abcdef");
+    if (ws) {
+      (ws as any).effectiveCapabilities = ["workspace:manage_custom_fields", "workspace:read_metadata"];
+    }
+
+    renderCustomFieldsView({
+      workspaceId: "018f98a2-3f12-7890-w004-456789abcdef",
+    });
+
+    expect(await screen.findByTestId("custom-fields-settings")).toBeInTheDocument();
+
+    // Read-only notice should NOT be present once permissions are resolved
+    await waitFor(() => {
+      expect(screen.queryByTestId("read-only-notice")).not.toBeInTheDocument();
+    });
+
+    // Create button is enabled
+    const createBtn = screen.getByTestId("create-custom-field-btn");
+    expect(createBtn).toBeEnabled();
+
+    // Reset effectiveCapabilities
+    if (ws) {
+      delete (ws as any).effectiveCapabilities;
+    }
   });
 });
