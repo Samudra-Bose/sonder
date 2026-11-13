@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/Dialog.js";
 import { IconButton } from "@/components/ui/IconButton.js";
 import { Button } from "@/components/ui/Button.js";
-import { Badge } from "@/components/ui/Badge.js";
 import { Skeleton } from "@/components/ui/Skeleton.js";
 import { Tooltip } from "@/components/ui/Tooltip.js";
 import { Separator } from "@/components/ui/Separator.js";
