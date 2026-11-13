@@ -11,7 +11,11 @@ import {
   WS_SHARED_ENG_ID,
   MOCK_USER_ID,
 } from "@/mocks/data/my-work.js";
-import { setMockTasksError } from "@/mocks/handlers/tasks.js";
+import {
+  setMockTasksError,
+  resetTaskMockState,
+  getMockTasks,
+} from "@/mocks/handlers/tasks.js";
 import { BacklogTaskTray, type BacklogTaskTrayProps } from "./BacklogTaskTray";
 import { TaskListView } from "./TaskListView";
 import { TaskBoardView } from "./TaskBoardView";
@@ -130,6 +134,7 @@ let storageMock: Record<string, string> = {};
 
 describe("VS-09G: Collapsible Backlog Tray (FEAT-B02)", () => {
   beforeEach(() => {
+    resetTaskMockState();
     setMockTasksError(null);
     storageMock = {};
     const mockLocalStorage = {
@@ -233,12 +238,9 @@ describe("VS-09G: Collapsible Backlog Tray (FEAT-B02)", () => {
 
   it("promotes backlog task to To Do via quick action button", async () => {
     const user = userEvent.setup();
-    const task = makeTask({
-      id: "task-to-promote",
-      taskKey: "ENG-502",
-      title: "Promote me to To Do",
-      statusCategory: "BACKLOG",
-    });
+    const task = getMockTasks().find((t) => t.workspaceId === WS_SHARED_ENG_ID)!;
+    task.statusCategory = "BACKLOG";
+    task.fieldRevisions = { statusCategory: 1 };
 
     renderBacklogTray({
       isOpen: true,
@@ -246,7 +248,7 @@ describe("VS-09G: Collapsible Backlog Tray (FEAT-B02)", () => {
       totalCount: 1,
     });
 
-    const promoteBtn = screen.getByTestId("backlog-promote-ENG-502");
+    const promoteBtn = screen.getByTestId(`backlog-promote-${task.taskKey}`);
     expect(promoteBtn).toBeInTheDocument();
     expect(promoteBtn).toHaveTextContent("To Do");
 
@@ -376,7 +378,6 @@ describe("VS-09G: Collapsible Backlog Tray (FEAT-B02)", () => {
                 tasks={[activeTask]}
                 backlogTasks={[backlogTask]}
                 backlogCount={1}
-                isBacklogOpen={false}
                 isLoading={false}
                 isError={false}
                 error={null}
@@ -415,7 +416,10 @@ describe("VS-09G: Collapsible Backlog Tray (FEAT-B02)", () => {
       {
         key: "TODO",
         label: "To Do",
-        tasks: [
+        total: 1,
+        nextCursor: null,
+        children: [],
+        items: [
           makeTask({
             id: "board-t1",
             taskKey: "ENG-010",
@@ -423,7 +427,6 @@ describe("VS-09G: Collapsible Backlog Tray (FEAT-B02)", () => {
             statusCategory: "TODO",
           }),
         ],
-        total: 1,
       },
     ];
 
@@ -446,7 +449,6 @@ describe("VS-09G: Collapsible Backlog Tray (FEAT-B02)", () => {
                 groups={groups}
                 backlogTasks={[backlogTask]}
                 backlogCount={1}
-                isBacklogOpen={false}
                 isLoading={false}
                 isError={false}
                 error={null}
@@ -467,5 +469,16 @@ describe("VS-09G: Collapsible Backlog Tray (FEAT-B02)", () => {
 
     await user.click(toggle);
     expect(screen.getByText("Task in board backlog tray")).toBeInTheDocument();
+  });
+
+  it("persists tray open/closed state scoped by workspaceId in localStorage", () => {
+    const ws1 = "ws-engineering";
+    const ws2 = "ws-design";
+
+    localStorage.setItem(`sonder:backlog-tray-open:${ws1}`, "true");
+    localStorage.setItem(`sonder:backlog-tray-open:${ws2}`, "false");
+
+    expect(localStorage.getItem(`sonder:backlog-tray-open:${ws1}`)).toBe("true");
+    expect(localStorage.getItem(`sonder:backlog-tray-open:${ws2}`)).toBe("false");
   });
 });

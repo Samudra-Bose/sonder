@@ -38,8 +38,8 @@ Across the approved Master Specification (`Community-Work-Management-Master-Spec
 
 ```mermaid
 pie title Actionable Concrete Capabilities (53 Features)
-    "DONE (Provisional Frontend Candidate)" : 18
-    "PARTIAL (Incomplete Scope)" : 3
+    "DONE (Provisional Frontend Candidate)" : 19
+    "PARTIAL (Incomplete Scope)" : 2
     "NOT STARTED (Phase 1 Backlog)" : 9
     "DECISION BLOCKED (PO / Backend)" : 3
     "BACKEND DEPENDENT (Gateway)" : 1
@@ -49,14 +49,14 @@ pie title Actionable Concrete Capabilities (53 Features)
 
 | Status Classification | Count | Description & Invariant Boundaries |
 | :--- | :---: | :--- |
-| **DONE** | **18** | Frontend client implementation verified in `apps/web/src/` with passing Vitest tests against MSW local mock fixtures. Live backend persistence, ACID guarantees, and production infrastructure remain pending. |
-| **PARTIAL** | **3** | Core contracts or data types exist, but UI presentation or user workflows remain incomplete (`FEAT-B02`, `FEAT-D05a`, `FEAT-K01`). |
+| **DONE** | **19** | Frontend client implementation verified in `apps/web/src/` with passing Vitest tests against MSW local mock fixtures. Live backend persistence, ACID guarantees, and production infrastructure remain pending. |
+| **PARTIAL** | **2** | Core contracts or data types exist, but UI presentation or user workflows remain incomplete (`FEAT-D05a`, `FEAT-K01`). |
 | **NOT STARTED (Phase 1)** | **9** | Approved Phase 1 features with schemas in candidate OpenAPI 0.3.20-draft, awaiting frontend vertical slice implementation. |
 | **DECISION BLOCKED** | **3** | Implementation paused by formal governance decision (`FEAT-C04` Saved Views, `FEAT-C06` Swimlanes, `FEAT-G02b` Custom Roles). |
 | **BACKEND DEPENDENT** | **1** | Blocked on live backend gateway infrastructure (`FEAT-F02` Realtime Collaboration / `DEP-REALTIME-01`). |
 | **DEFERRED (Phases 2–4)** | **12** | Approved product roadmap capabilities scheduled for Phase 2, Phase 3, or Phase 4. |
 | **REJECTED / OUT OF SCOPE**| **7** | Explicitly excluded to protect community simplicity and prevent enterprise cognitive bloat. |
-| **TOTAL ACTIONABLE** | **53** | **Sum: 18 + 3 + 9 + 3 + 1 + 12 + 7 = 53** |
+| **TOTAL ACTIONABLE** | **53** | **Sum: 19 + 2 + 9 + 3 + 1 + 12 + 7 = 53** |
 
 ### 1.3 Completion Percentages Across Clearly Defined Denominators
 
@@ -116,7 +116,7 @@ SONDER PLATFORM PROGRESS METRICS (AUDIT BASELINE 2026-11-12)
 | **FEAT-A10b**| Bulk Action Bar (<=100 tasks) & 30-Day Trash Recovery View | M1.2 | **NOT STARTED** | None | None | Schemas: `/trash/tasks`, `/tasks/bulk` | `DEP-TRASH-01` (`DEC-OPEN-03` purge policy) |
 | **FEAT-A10c**| Granular Field-Revision Snapshot Restore | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3 | Phase 3 timeline |
 | **FEAT-B01** | Multi-Community, Workspace Spine & Responsive App Shell | M1.1 | **DONE** | `AppShell.tsx`, `NavigationRail.tsx`, `WorkspaceSwitcher.tsx` | `AppShell.test.tsx` (14), `WorkspaceSwitcher.test.tsx` (22) | MSW handlers: `/workspaces`, `/me` | Live workspace tenancy pending |
-| **FEAT-B02** | Backlog Status Category & Collapsible Tray | M1.1 | **PARTIAL** | `BACKLOG` category mapped in status types | `TaskViews.test.tsx` (partial) | Backend status enum supports `BACKLOG` | Collapsible tray UI pending |
+| **FEAT-B02** | Backlog Status Category & Collapsible Tray | M1.1 | **DONE** | `BacklogTaskTray.tsx`, `TaskListView.tsx`, `TaskBoardView.tsx` | `BacklogTaskTray.test.tsx` (11), `TaskViews.test.tsx` (17) | Backend status enum supports `BACKLOG` | Collapsible tray on List & Board views with 1-click promotion and ARIA disclosure |
 | **FEAT-B03** | Opt-In Timeboxed Iterations / Cycles | Phase 4 | **DEFERRED** | None | None | Deferred to Phase 4 | Agile cycles scope |
 | **FEAT-B04** | Workspace Milestones & Target Buckets | M1.2 | **DONE** | `TimelineMilestoneMarkers.tsx`, `MilestoneDialog.tsx` | `TimelineView.test.tsx` (36) | MSW handlers: `/milestones` | Live milestone persistence pending |
 | **FEAT-B05** | Enterprise Scenario Sandbox & Capacity Modeling | Excluded | **REJECTED** | None | None | Excluded per community focus | Day-1 simplicity protection |
@@ -377,7 +377,7 @@ flowchart TD
         FEAT_C07["FEAT-C07 (Task Keys) - DONE"]
         FEAT_G02a["FEAT-G02a (RBAC Engine) - DONE"]
         FEAT_J03["FEAT-J03 (Design Tokens) - DONE"]
-        FEAT_B02["FEAT-B02 (Backlog Tray) - PARTIAL"]
+        FEAT_B02["FEAT-B02 (Backlog Tray) - DONE"]
         FEAT_D01["FEAT-D01 (Workflow Spine) - NOT STARTED"]
         FEAT_C04["FEAT-C04 (Saved Views) - BLOCKED"]
         FEAT_F02["FEAT-F02 (Realtime Presence) - DEPENDENT"]
@@ -410,8 +410,8 @@ flowchart TD
 
 ### Phase 1 Breakdown:
 - **Total Phase 1 Capabilities:** 34 concrete features.
-- **DONE:** 18 capabilities (52.94%).
-- **PARTIAL:** 3 capabilities (`FEAT-B02`, `FEAT-D05a`, `FEAT-K01`).
+- **DONE:** 19 capabilities (55.88%).
+- **PARTIAL:** 2 capabilities (`FEAT-D05a`, `FEAT-K01`).
 - **NOT STARTED:** 9 capabilities (`FEAT-A01`, `FEAT-A07`, `FEAT-A10b`, `FEAT-D01`, `FEAT-D04a`, `FEAT-G03`, `FEAT-G04`, `FEAT-J01a`, `FEAT-J02`).
 - **DECISION BLOCKED:** 3 capabilities (`FEAT-C04`, `FEAT-C06`, `FEAT-G02b`).
 - **BACKEND DEPENDENT:** 1 capability (`FEAT-F02`).

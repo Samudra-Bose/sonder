@@ -87,8 +87,8 @@ TOTAL CANONICAL FEAT PATTERNS ACCOUNTED FOR:                           70 items
 
 ```mermaid
 pie title Actionable Capability Status Distribution (53 Features)
-    "DONE (Provisional Frontend Candidate)" : 18
-    "PARTIAL (Incomplete Scope)" : 3
+    "DONE (Provisional Frontend Candidate)" : 19
+    "PARTIAL (Incomplete Scope)" : 2
     "NOT STARTED (Phase 1 Backlog)" : 9
     "DECISION BLOCKED (PO / Backend Sign-Off)" : 3
     "BACKEND DEPENDENT (Gateway / Endpoints)" : 1
@@ -98,14 +98,14 @@ pie title Actionable Capability Status Distribution (53 Features)
 
 | Status Classification | Count | Description & Invariant Boundaries |
 | :--- | :---: | :--- |
-| **DONE** | **18** | Provisional frontend candidate implementation verified in `apps/web/src/` with passing Vitest test suites against MSW mocks. Live backend & infrastructure acceptance pending. |
-| **PARTIAL** | **3** | Core data structures exist in code or types, but UI or workflow remains incomplete (`FEAT-B02`, `FEAT-D05a`, `FEAT-K01`). |
+| **DONE** | **19** | Provisional frontend candidate implementation verified in `apps/web/src/` with passing Vitest test suites against MSW mocks. Live backend & infrastructure acceptance pending. |
+| **PARTIAL** | **2** | Core data structures exist in code or types, but UI or workflow remains incomplete (`FEAT-D05a`, `FEAT-K01`). |
 | **NOT STARTED (Phase 1)** | **9** | Approved Phase 1 capabilities with schemas in candidate OpenAPI 0.3.20-draft, awaiting frontend vertical slice implementation. |
 | **DECISION BLOCKED** | **3** | Implementation paused by formal governance decision (`FEAT-C04`, `FEAT-C06`, `FEAT-G02b`). |
 | **BACKEND DEPENDENT** | **1** | Requires live backend infrastructure (`FEAT-F02` Live WebSocket Gateway `DEP-REALTIME-01`). |
 | **DEFERRED (Phases 2–4)** | **12** | Approved product roadmap capabilities scheduled for Phase 2, 3, or 4. |
 | **REJECTED / OUT OF SCOPE**| **7** | Explicitly excluded to protect simplicity, performance, and low cognitive overhead. |
-| **TOTAL ACTIONABLE** | **53** | **Sum of all mutually exclusive capability statuses: 18 + 3 + 9 + 3 + 1 + 12 + 7 = 53** |
+| **TOTAL ACTIONABLE** | **53** | **Sum of all mutually exclusive capability statuses: 19 + 2 + 9 + 3 + 1 + 12 + 7 = 53** |
 
 ---
 
@@ -131,7 +131,7 @@ Below is the definitive enumeration of all 70 canonical FEAT patterns. Every act
 | **FEAT-A10b**| Bulk Action Bar (<=100 tasks) & 30-Day Trash Recovery View | M1.2 | **NOT STARTED** | None | None | Multi-select bar, `/trash` view, 30-day restore. |
 | **FEAT-A10c**| Granular Field-Revision Snapshot Restore | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3. |
 | **FEAT-B01** | Multi-Community, Workspace Spine & Responsive Navigation Rail | M1.1 | **DONE** | `AppShell.tsx`, `WorkspaceSwitcher.tsx` | `AppShell.test.tsx` (14), `WorkspaceSwitcher.test.tsx` (22) | Frontend application shell, responsive navigation rail, and desktop/mobile workspace switcher verified (36 tests). Live community multi-tenancy authorization middleware pending backend service. |
-| **FEAT-B02** | Backlog Status Category & Collapsible Tray | M1.1 | **PARTIAL** | Unscheduled tray in Calendar; `BACKLOG` category in types | `CalendarView.test.tsx` (34) | Collapsible Backlog side-tray on List & Board views. |
+| **FEAT-B02** | Backlog Status Category & Collapsible Tray | M1.1 | **DONE** | `BacklogTaskTray.tsx`, `TaskListView.tsx`, `TaskBoardView.tsx` | `BacklogTaskTray.test.tsx` (11), `TaskViews.test.tsx` (17) | Collapsible Backlog tray on List & Board views with ARIA disclosure, 1-click promotion to To Do, task peek integration, and workspace-scoped persistence. |
 | **FEAT-B03** | Opt-In Timeboxed Iterations / Cycles | Phase 4 | **DEFERRED** | None | None | Deferred to Phase 4. |
 | **FEAT-B04** | Workspace Milestones & Target Buckets | M1.2 | **DONE** | `useMilestones.ts`, `TimelineMilestoneMarker.tsx` | `TimelineView.test.tsx` (36) | Frontend timeline milestone markers, modal, and completion percentage rollup verified (36 tests). Live milestone database persistence pending backend service. |
 | **FEAT-B05** | Enterprise Scenario Sandbox & Capacity Math | Excluded | **REJECTED** | None (Excluded to prevent enterprise bloat) | None | Excluded from product scope. |
