@@ -14,7 +14,7 @@ import { ApiProblemError } from "@/lib/api-client.js";
 import { useCreateTask } from "./useCreateTask.js";
 import { useTaskPeekDrawer } from "./useTaskPeekDrawer.js";
 import { useQuickTaskComposer } from "./QuickTaskComposerContext.js";
-import type { TaskPriority } from "./types.js";
+import type { TaskPriority, TaskType } from "./types.js";
 
 export interface QuickTaskComposerProps {
   className?: string;

@@ -7,7 +7,7 @@ import React, {
   useMemo,
 } from "react";
 import { useKeyboardShortcut } from "@/lib/keyboard.js";
-import type { TaskPriority } from "./types.js";
+import type { TaskPriority, TaskType } from "./types.js";
 
 export interface QuickTaskComposerInitialValues {
   /** Optional prefilled due date (YYYY-MM-DD) */
@@ -18,6 +18,8 @@ export interface QuickTaskComposerInitialValues {
   title?: string;
   /** Optional prefilled workspace ID */
   workspaceId?: string;
+  /** Optional prefilled work-item archetype */
+  itemType?: TaskType;
 }
 
 export interface QuickTaskComposerContextValue {

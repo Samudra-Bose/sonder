@@ -48,6 +48,7 @@ import {
   InlineDescriptionEditor,
   InlineStatusEditor,
   InlinePriorityEditor,
+  InlineArchetypeEditor,
   InlineDateEditor,
   InlineEstimateEditor,
   InlineAssigneeEditor,
@@ -498,9 +499,12 @@ export function TaskPeekDrawer({
               isArchived={isArchived}
             />
 
-            <Badge variant="outline" size="sm" className="text-[10px] font-mono uppercase">
-              {task.itemType}
-            </Badge>
+            <InlineArchetypeEditor
+              task={task}
+              communityId={currentCommunityId}
+              workspaceId={task.workspaceId}
+              isArchived={isArchived}
+            />
           </div>
         </div>
 
