@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { useTaskPeekDrawer } from "../useTaskPeekDrawer";
 import { TaskActionsMenu } from "../TaskActionsMenu.js";
+import { TaskArchetypeBadge } from "../TaskArchetypeBadge.js";
 import { BulkActionBar } from "./BulkActionBar.js";
 import { useBulkMutateTasks } from "../useBulkMutateTasks.js";
 import type { TaskDto, TaskStatusCategory, TaskPriority } from "../types";

@@ -317,9 +317,33 @@ export function QuickTaskComposer({
             )}
           </div>
 
-          {/* Fields 4 & 5: Priority & Due Date (Conservative Field Scope) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Field 4: Priority */}
+          {/* Fields 4, 5 & 6: Archetype, Priority & Due Date */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Field 4: Archetype */}
+            <div className="space-y-1">
+              <label
+                htmlFor="composer-archetype-select"
+                className="text-xs font-semibold text-[var(--text-secondary)] select-none"
+              >
+                Archetype
+              </label>
+              <select
+                id="composer-archetype-select"
+                data-testid="composer-archetype-select"
+                aria-label="Work-item archetype"
+                value={itemType}
+                onChange={(e) => setItemType(e.target.value as TaskType)}
+                disabled={createMutation.isPending}
+                className="w-full h-9 px-2 text-xs rounded-md border border-[var(--border-subtle)] bg-[var(--surface-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)] cursor-pointer"
+              >
+                <option value="TASK">Task</option>
+                <option value="DELIVERABLE">Deliverable</option>
+                <option value="BUG">Bug</option>
+                <option value="DECISION">Decision</option>
+              </select>
+            </div>
+
+            {/* Field 5: Priority */}
             <div className="space-y-1">
               <label
                 htmlFor="composer-priority-select"
@@ -334,7 +358,7 @@ export function QuickTaskComposer({
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as TaskPriority)}
                 disabled={createMutation.isPending}
-                className="w-full h-9 px-3 text-sm rounded-md border border-[var(--border-subtle)] bg-[var(--surface-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)]"
+                className="w-full h-9 px-2 text-xs rounded-md border border-[var(--border-subtle)] bg-[var(--surface-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)] cursor-pointer"
               >
                 <option value="NONE">None</option>
                 <option value="LOW">Low</option>
@@ -344,7 +368,7 @@ export function QuickTaskComposer({
               </select>
             </div>
 
-            {/* Field 5: Due Date */}
+            {/* Field 6: Due Date */}
             <div className="space-y-1">
               <label
                 htmlFor="composer-due-date-input"
@@ -360,7 +384,7 @@ export function QuickTaskComposer({
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
                 disabled={createMutation.isPending}
-                className="w-full h-9 px-3 text-sm rounded-md border border-[var(--border-subtle)] bg-[var(--surface-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)]"
+                className="w-full h-9 px-2 text-xs rounded-md border border-[var(--border-subtle)] bg-[var(--surface-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)] cursor-pointer"
               />
             </div>
           </div>
