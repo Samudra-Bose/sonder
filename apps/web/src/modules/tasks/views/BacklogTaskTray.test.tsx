@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthContext, type AuthContextType } from "@/modules/auth/AuthContext.js";
 import { WorkspaceProvider } from "@/modules/workspace/WorkspaceContext.js";
@@ -9,6 +9,7 @@ import { defaultMockCommunities } from "@/mocks/handlers/auth.js";
 import {
   MOCK_COMMUNITY_1_ID,
   WS_SHARED_ENG_ID,
+  WS_SHARED_GALA_ID,
   MOCK_USER_ID,
 } from "@/mocks/data/my-work.js";
 import {
@@ -19,6 +20,8 @@ import {
 import { BacklogTaskTray, type BacklogTaskTrayProps } from "./BacklogTaskTray";
 import { TaskListView } from "./TaskListView";
 import { TaskBoardView } from "./TaskBoardView";
+import { WorkspaceTasksView } from "./WorkspaceTasksView.js";
+import { QuickTaskComposerProvider } from "../QuickTaskComposerContext.js";
 import type { TaskDto, TaskQueryBucketDto } from "../types";
 
 const testAuthUser = {
@@ -260,6 +263,63 @@ describe("VS-09G: Collapsible Backlog Tray (FEAT-B02)", () => {
     });
   });
 
+  it("disables promote button when user lacks canUpdateStatus capability", () => {
+    const task = makeTask({
+      id: "task-no-perm",
+      taskKey: "ENG-502-NO-PERM",
+      title: "Task without update status permission",
+      statusCategory: "BACKLOG",
+      effectivePermissions: {
+        ...makeTask().effectivePermissions,
+        canUpdateStatus: false,
+      },
+    });
+
+    renderBacklogTray({
+      isOpen: true,
+      tasks: [task],
+      totalCount: 1,
+    });
+
+    const promoteBtn = screen.getByTestId("backlog-promote-ENG-502-NO-PERM");
+    expect(promoteBtn).toBeDisabled();
+    expect(promoteBtn).toHaveAttribute("aria-disabled", "true");
+    expect(promoteBtn).toHaveAttribute(
+      "title",
+      "You do not have permission to update task status"
+    );
+  });
+
+  it("fails closed when effectivePermissions is missing or task is archived", () => {
+    const unpermittedTask = makeTask({
+      id: "task-missing-perm",
+      taskKey: "ENG-502-MISSING",
+      title: "Task with missing permission data",
+      statusCategory: "BACKLOG",
+      effectivePermissions: undefined as any,
+    });
+
+    const archivedTask = makeTask({
+      id: "task-archived",
+      taskKey: "ENG-502-ARCHIVED",
+      title: "Archived backlog task",
+      statusCategory: "BACKLOG",
+      archivedAt: "2026-11-01T12:00:00Z",
+    });
+
+    renderBacklogTray({
+      isOpen: true,
+      tasks: [unpermittedTask, archivedTask],
+      totalCount: 2,
+    });
+
+    const missingBtn = screen.getByTestId("backlog-promote-ENG-502-MISSING");
+    expect(missingBtn).toBeDisabled();
+
+    const archivedBtn = screen.getByTestId("backlog-promote-ENG-502-ARCHIVED");
+    expect(archivedBtn).toBeDisabled();
+  });
+
   it("displays dismissible error banner when promote mutation fails", async () => {
     const user = userEvent.setup();
     const task = makeTask({
@@ -471,14 +531,108 @@ describe("VS-09G: Collapsible Backlog Tray (FEAT-B02)", () => {
     expect(screen.getByText("Task in board backlog tray")).toBeInTheDocument();
   });
 
-  it("persists tray open/closed state scoped by workspaceId in localStorage", () => {
-    const ws1 = "ws-engineering";
-    const ws2 = "ws-design";
+  describe("Workspace-Scoped Persistence & Switcher Integration", () => {
+    function renderWorkspaceView(workspaceId: string, queryClient: QueryClient) {
+      return render(
+        <QueryClientProvider client={queryClient}>
+          <AuthContext.Provider value={mockAuthValue}>
+            <WorkspaceProvider
+              initialCommunityId={MOCK_COMMUNITY_1_ID}
+              initialWorkspaceId={workspaceId}
+            >
+              <QuickTaskComposerProvider>
+                <MemoryRouter initialEntries={[`/c/${MOCK_COMMUNITY_1_ID}/w/${workspaceId}/list`]}>
+                  <Routes>
+                    <Route
+                      path="/c/:communityId/w/:workspaceId/list"
+                      element={<WorkspaceTasksView defaultView="list" />}
+                    />
+                  </Routes>
+                </MemoryRouter>
+              </QuickTaskComposerProvider>
+            </WorkspaceProvider>
+          </AuthContext.Provider>
+        </QueryClientProvider>
+      );
+    }
 
-    localStorage.setItem(`sonder:backlog-tray-open:${ws1}`, "true");
-    localStorage.setItem(`sonder:backlog-tray-open:${ws2}`, "false");
+    it("persists tray open state per workspace, unmounts/remounts, isolates workspace B, and restores workspace A", async () => {
+      const user = userEvent.setup();
 
-    expect(localStorage.getItem(`sonder:backlog-tray-open:${ws1}`)).toBe("true");
-    expect(localStorage.getItem(`sonder:backlog-tray-open:${ws2}`)).toBe("false");
+      // 1. Render in workspace A (WS_SHARED_ENG_ID)
+      const queryClient1 = new QueryClient({
+        defaultOptions: { queries: { retry: false, staleTime: 0 } },
+      });
+      const { unmount: unmount1 } = renderWorkspaceView(WS_SHARED_ENG_ID, queryClient1);
+
+      const toggleA = await screen.findByTestId("backlog-tray-toggle");
+      expect(toggleA).toHaveAttribute("aria-expanded", "false");
+
+      // 2. Open the tray in workspace A
+      await user.click(toggleA);
+      expect(toggleA).toHaveAttribute("aria-expanded", "true");
+      expect(storageMock[`sonder:backlog-tray-open:${WS_SHARED_ENG_ID}`]).toBe("true");
+
+      // 3. Unmount view
+      unmount1();
+
+      // 4. Remount workspace A view - verify state restored
+      const queryClient2 = new QueryClient({
+        defaultOptions: { queries: { retry: false, staleTime: 0 } },
+      });
+      const { unmount: unmount2 } = renderWorkspaceView(WS_SHARED_ENG_ID, queryClient2);
+
+      const restoredToggleA = await screen.findByTestId("backlog-tray-toggle");
+      expect(restoredToggleA).toHaveAttribute("aria-expanded", "true");
+      unmount2();
+
+      // 5. Mount in workspace B (WS_SHARED_GALA_ID) - verify independent default state (closed)
+      const queryClient3 = new QueryClient({
+        defaultOptions: { queries: { retry: false, staleTime: 0 } },
+      });
+      const { unmount: unmount3 } = renderWorkspaceView(WS_SHARED_GALA_ID, queryClient3);
+
+      const toggleB = await screen.findByTestId("backlog-tray-toggle");
+      expect(toggleB).toHaveAttribute("aria-expanded", "false");
+      unmount3();
+
+      // 6. Switch back to workspace A - verify open state is restored
+      const queryClient4 = new QueryClient({
+        defaultOptions: { queries: { retry: false, staleTime: 0 } },
+      });
+      renderWorkspaceView(WS_SHARED_ENG_ID, queryClient4);
+
+      const toggleAAgain = await screen.findByTestId("backlog-tray-toggle");
+      expect(toggleAAgain).toHaveAttribute("aria-expanded", "true");
+    });
+
+    it("handles unavailable or failing localStorage safely without throwing errors", async () => {
+      const user = userEvent.setup();
+      // Mock localStorage throwing errors
+      Object.defineProperty(window, "localStorage", {
+        value: {
+          getItem: vi.fn(() => {
+            throw new Error("QuotaExceededError");
+          }),
+          setItem: vi.fn(() => {
+            throw new Error("QuotaExceededError");
+          }),
+          removeItem: vi.fn(),
+          clear: vi.fn(),
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      renderBacklogTray({
+        isOpen: false,
+        totalCount: 3,
+      });
+
+      const toggle = screen.getByTestId("backlog-tray-toggle");
+      expect(toggle).toBeInTheDocument();
+      // Clicking toggle should not crash
+      await user.click(toggle);
+    });
   });
 });

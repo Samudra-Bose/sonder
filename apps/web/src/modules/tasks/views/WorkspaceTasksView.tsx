@@ -405,11 +405,9 @@ function WorkspaceTasksViewInner({
     if (!effectiveWorkspaceId) return;
     try {
       const saved = localStorage.getItem(`sonder:backlog-tray-open:${effectiveWorkspaceId}`);
-      if (saved !== null) {
-        setIsBacklogTrayOpen(saved === "true");
-      }
+      setIsBacklogTrayOpen(saved === "true");
     } catch {
-      // ignore storage errors
+      setIsBacklogTrayOpen(false);
     }
   }, [effectiveWorkspaceId]);
 

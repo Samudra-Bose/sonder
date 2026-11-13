@@ -75,7 +75,8 @@ export function BacklogTaskTray({
 
   const handlePromoteToTodo = async (e: React.MouseEvent, task: TaskDto) => {
     e.stopPropagation();
-    if (promotingTaskId) return;
+    const canPromoteTask = !task.archivedAt && Boolean(task.effectivePermissions?.canUpdateStatus);
+    if (!canPromoteTask || promotingTaskId) return;
 
     setPromotingTaskId(task.id);
     setPromotionError(null);
@@ -234,24 +235,36 @@ export function BacklogTaskTray({
                       </Badge>
 
                       {/* Quick Action: Promote to To Do */}
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={(e) => handlePromoteToTodo(e, task)}
-                        disabled={isPromoting}
-                        data-testid={`backlog-promote-${task.taskKey}`}
-                        aria-label={`Move ${task.taskKey} to To Do`}
-                        title="Move task to To Do"
-                        className="gap-1 text-[11px] h-7 px-2 cursor-pointer"
-                      >
-                        {isPromoting ? (
-                          <RefreshCw className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <ArrowRight className="h-3 w-3" />
-                        )}
-                        <span>{isPromoting ? "Moving..." : "To Do"}</span>
-                      </Button>
+                      {(() => {
+                        const canPromote =
+                          !task.archivedAt &&
+                          Boolean(task.effectivePermissions?.canUpdateStatus);
+                        return (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => handlePromoteToTodo(e, task)}
+                            disabled={!canPromote || isPromoting}
+                            aria-disabled={!canPromote || isPromoting}
+                            data-testid={`backlog-promote-${task.taskKey}`}
+                            aria-label={`Move ${task.taskKey} to To Do`}
+                            title={
+                              !canPromote
+                                ? "You do not have permission to update task status"
+                                : "Move task to To Do"
+                            }
+                            className="gap-1 text-[11px] h-7 px-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isPromoting ? (
+                              <RefreshCw className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <ArrowRight className="h-3 w-3" />
+                            )}
+                            <span>{isPromoting ? "Moving..." : "To Do"}</span>
+                          </Button>
+                        );
+                      })()}
 
                       {/* Task Actions Menu */}
                       <div onClick={(e) => e.stopPropagation()}>
