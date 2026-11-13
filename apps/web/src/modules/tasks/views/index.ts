@@ -5,3 +5,4 @@ export * from "./WorkspaceTasksView.js";
 export * from "./calendar/index.js";
 export * from "./BulkActionBar.js";
 export * from "./WorkspaceTrashView.js";
+export * from "./BacklogTaskTray.js";

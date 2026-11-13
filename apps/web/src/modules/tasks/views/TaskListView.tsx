@@ -17,11 +17,16 @@ import { useTaskPeekDrawer } from "../useTaskPeekDrawer";
 import { TaskActionsMenu } from "../TaskActionsMenu.js";
 import { TaskArchetypeBadge } from "../TaskArchetypeBadge.js";
 import { BulkActionBar } from "./BulkActionBar.js";
+import { BacklogTaskTray } from "./BacklogTaskTray.js";
 import { useBulkMutateTasks } from "../useBulkMutateTasks.js";
 import type { TaskDto, TaskStatusCategory, TaskPriority } from "../types";
 
 export interface TaskListViewProps {
   tasks: TaskDto[];
+  backlogTasks?: TaskDto[];
+  backlogCount?: number;
+  isBacklogOpen?: boolean;
+  onToggleBacklog?: () => void;
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
@@ -70,6 +75,10 @@ function formatPriority(priority: TaskPriority): string {
 
 export function TaskListView({
   tasks,
+  backlogTasks,
+  backlogCount,
+  isBacklogOpen: propIsBacklogOpen,
+  onToggleBacklog: propOnToggleBacklog,
   isLoading,
   isError,
   error,
@@ -82,6 +91,13 @@ export function TaskListView({
   className,
 }: TaskListViewProps): React.JSX.Element {
   const { openTask } = useTaskPeekDrawer();
+  const [internalBacklogOpen, setInternalBacklogOpen] = useState(false);
+  const isTrayOpen = propIsBacklogOpen ?? internalBacklogOpen;
+  const handleToggleTray = propOnToggleBacklog ?? (() => setInternalBacklogOpen((prev) => !prev));
+
+  const effectiveBacklogCount = backlogCount ?? (backlogTasks ? backlogTasks.length : 0);
+  const effectiveBacklogTasks = backlogTasks ?? [];
+
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
   const headerCheckboxRef = useRef<HTMLInputElement>(null);
   const bulkMutate = useBulkMutateTasks();
@@ -230,10 +246,28 @@ export function TaskListView({
   // Empty state
   if (tasks.length === 0) {
     return (
-      <div data-testid="task-list-empty" className={cn("py-8", className)}>
-        <EmptyState
-          title="No tasks match the active filters"
-          description="Adjust your search query, priority, or status filters, or press 'C' to create a new task."
+      <div
+        id="tasks-list-panel"
+        role="tabpanel"
+        aria-labelledby="tab-view-list"
+        data-testid="task-list-view"
+        className={cn("space-y-4", className)}
+      >
+        <div data-testid="task-list-empty" className="py-8">
+          <EmptyState
+            title="No tasks match the active filters"
+            description="Adjust your search query, priority, or status filters, or press 'C' to create a new task."
+          />
+        </div>
+        <BacklogTaskTray
+          tasks={effectiveBacklogTasks}
+          totalCount={effectiveBacklogCount}
+          isOpen={isTrayOpen}
+          onToggle={handleToggleTray}
+          onTaskClick={openTask}
+          workspaceId={workspaceId}
+          communityId={_communityId}
+          viewType="list"
         />
       </div>
     );
@@ -528,6 +562,20 @@ export function TaskListView({
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* Collapsible Backlog Tray (FEAT-B02 / VS-09G) */}
+      <div className="p-3 border-t border-[var(--border-subtle)] bg-[var(--surface-muted)]/30">
+        <BacklogTaskTray
+          tasks={effectiveBacklogTasks}
+          totalCount={effectiveBacklogCount}
+          isOpen={isTrayOpen}
+          onToggle={handleToggleTray}
+          onTaskClick={openTask}
+          workspaceId={workspaceId}
+          communityId={_communityId}
+          viewType="list"
+        />
       </div>
 
       {/* Floating Bulk Action Bar */}

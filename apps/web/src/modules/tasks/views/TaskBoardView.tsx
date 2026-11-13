@@ -14,6 +14,7 @@ import { useTaskPeekDrawer } from "../useTaskPeekDrawer";
 import { useUpdateTask } from "../useUpdateTask";
 import { TaskActionsMenu } from "../TaskActionsMenu.js";
 import { TaskArchetypeBadge } from "../TaskArchetypeBadge.js";
+import { BacklogTaskTray } from "./BacklogTaskTray.js";
 import type {
   TaskDto,
   TaskQueryBucketDto,
@@ -23,6 +24,10 @@ import type {
 
 export interface TaskBoardViewProps {
   groups: TaskQueryBucketDto[];
+  backlogTasks?: TaskDto[];
+  backlogCount?: number;
+  isBacklogOpen?: boolean;
+  onToggleBacklog?: () => void;
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
@@ -61,6 +66,10 @@ const ALL_STATUS_OPTIONS: Array<{ value: TaskStatusCategory; label: string }> = 
 
 export function TaskBoardView({
   groups,
+  backlogTasks,
+  backlogCount,
+  isBacklogOpen: propIsBacklogOpen,
+  onToggleBacklog: propOnToggleBacklog,
   isLoading,
   isError,
   error,
@@ -73,6 +82,14 @@ export function TaskBoardView({
 }: TaskBoardViewProps): React.JSX.Element {
   const { openTask } = useTaskPeekDrawer();
   const updateTaskMutation = useUpdateTask();
+
+  const [internalBacklogOpen, setInternalBacklogOpen] = useState(false);
+  const isTrayOpen = propIsBacklogOpen ?? internalBacklogOpen;
+  const handleToggleTray = propOnToggleBacklog ?? (() => setInternalBacklogOpen((prev) => !prev));
+
+  const effectiveBacklogCount = backlogCount ?? (backlogTasks ? backlogTasks.length : 0);
+  const effectiveBacklogTasks = backlogTasks ?? [];
+
   const [internalMobileStage, setInternalMobileStage] = useState<string>(() => {
     return groups[0]?.key ?? "TODO";
   });
@@ -163,10 +180,28 @@ export function TaskBoardView({
 
   if (groups.length === 0 || totalTasksAcrossGroups === 0) {
     return (
-      <div data-testid="task-board-empty" className={cn("py-8", className)}>
-        <EmptyState
-          title="No tasks found on the board"
-          description="Adjust your search query, priority, or status filters, or press 'C' to create a new task."
+      <div
+        id="tasks-board-panel"
+        role="tabpanel"
+        aria-labelledby="tab-view-board"
+        data-testid="task-board-view"
+        className={cn("space-y-4", className)}
+      >
+        <div data-testid="task-board-empty" className="py-8">
+          <EmptyState
+            title="No tasks found on the board"
+            description="Adjust your search query, priority, or status filters, or press 'C' to create a new task."
+          />
+        </div>
+        <BacklogTaskTray
+          tasks={effectiveBacklogTasks}
+          totalCount={effectiveBacklogCount}
+          isOpen={isTrayOpen}
+          onToggle={handleToggleTray}
+          onTaskClick={openTask}
+          workspaceId={workspaceId}
+          communityId={communityId}
+          viewType="board"
         />
       </div>
     );
@@ -390,6 +425,18 @@ export function TaskBoardView({
           );
         })}
       </div>
+
+      {/* Collapsible Backlog Tray (FEAT-B02 / VS-09G) */}
+      <BacklogTaskTray
+        tasks={effectiveBacklogTasks}
+        totalCount={effectiveBacklogCount}
+        isOpen={isTrayOpen}
+        onToggle={handleToggleTray}
+        onTaskClick={openTask}
+        workspaceId={workspaceId}
+        communityId={communityId}
+        viewType="board"
+      />
     </div>
   );
 }
