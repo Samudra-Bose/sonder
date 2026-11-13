@@ -37,7 +37,7 @@ import { useResolveTaskKey } from "./useResolveTaskKey.js";
 import { useTask } from "./useTask.js";
 import { useWorkspaceTasks } from "./useWorkspaceTasks.js";
 import { useTaskUndo } from "./TaskUndoContext.js";
-import { useTaskClone } from "./TaskCloneContext.js";
+import { useTaskClone, canCloneTask } from "./TaskCloneContext.js";
 import { SubtaskList } from "./SubtaskList.js";
 import { TaskDependencies } from "./TaskDependencies.js";
 import { ReparentTaskModal } from "./ReparentTaskModal.js";
@@ -246,12 +246,7 @@ export function TaskPeekDrawer({
   const maxSubtaskDepth = targetWorkspace?.maxSubtaskDepth ?? 1;
 
   const isCurrentTaskCloning = isCloning && task ? cloningTaskId === task.id : false;
-  const canClone = Boolean(
-    task &&
-    !isArchived &&
-    (targetWorkspace ? targetWorkspace.myRole !== "VIEWER" : true) &&
-    (task.effectivePermissions ? task.effectivePermissions.canCreateSubtask !== false : true)
-  );
+  const canClone = canCloneTask(task, targetWorkspace);
 
   const handleCloneTask = async () => {
     if (!task || !canClone || isCurrentTaskCloning) return;

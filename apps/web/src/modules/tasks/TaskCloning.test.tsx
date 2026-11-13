@@ -11,7 +11,7 @@ import {
   WS_SHARED_ENG_ID,
   MOCK_USER_ID,
 } from "@/mocks/data/my-work.js";
-import { resetTaskMockState } from "@/mocks/handlers/tasks.js";
+import { resetTaskMockState, setMockTasksError } from "@/mocks/handlers/tasks.js";
 import { QuickTaskComposerProvider } from "./QuickTaskComposerContext.js";
 import { TaskUndoProvider } from "./TaskUndoContext.js";
 import { TaskCloneProvider } from "./TaskCloneContext.js";
@@ -361,6 +361,36 @@ describe("VS-09E: Task & Subtask Checklist Cloning (FEAT-A07)", () => {
       const toast = await screen.findByTestId("clone-toast-ENG-107");
       expect(toast).toBeInTheDocument();
       expect(toast).toHaveTextContent("Task ENG-107 created.");
+    });
+
+    it("surfaces error feedback toast on server clone rejection and prevents silent failure", async () => {
+      const user = userEvent.setup();
+      renderTaskCloneEnvironment({
+        initialEntries: ["/?task=ENG-101"],
+      });
+
+      await screen.findByTestId("task-peek-drawer-desktop");
+      const cloneBtn = await screen.findByTestId("clone-task-button");
+
+      // Inject server 500 error
+      setMockTasksError({
+        status: 500,
+        problem: {
+          type: "https://errors.sonder.platform/internal-error",
+          title: "Internal Error",
+          status: 500,
+          detail: "Database transaction deadlock while duplicating entity tree.",
+        },
+        method: "POST",
+      });
+
+      await user.click(cloneBtn);
+
+      // Error toast is rendered
+      const errorToast = await screen.findByTestId("clone-toast-error-ENG-101");
+      expect(errorToast).toBeInTheDocument();
+      expect(errorToast).toHaveTextContent("Failed to clone task ENG-101");
+      expect(errorToast).toHaveTextContent("Database transaction deadlock while duplicating entity tree.");
     });
   });
 });

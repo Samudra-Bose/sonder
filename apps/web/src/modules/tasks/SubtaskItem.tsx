@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/Badge.js";
 import { IconButton } from "@/components/ui/IconButton.js";
 import { useTaskPeekDrawer } from "./useTaskPeekDrawer.js";
 import { ReparentTaskModal } from "./ReparentTaskModal.js";
-import { useTaskClone } from "./TaskCloneContext.js";
+import { useTaskClone, canCloneTask } from "./TaskCloneContext.js";
+import { useWorkspace } from "@/modules/workspace/index.js";
 import type { TaskDto } from "./types.js";
 import { cn } from "@/lib/utils.js";
 
@@ -38,9 +39,11 @@ export function SubtaskItem({
   const isTerminal = subtask.statusCategory === "DONE" || subtask.statusCategory === "CANCELED";
   const canMove = Boolean(subtask.effectivePermissions?.canMove && !isArchived);
 
+  const { activeWorkspace, workspaces } = useWorkspace();
   const { cloneTask, isCloning, cloningTaskId } = useTaskClone();
   const isCurrentSubtaskCloning = isCloning && cloningTaskId === subtask.id;
-  const canClone = Boolean(!isArchived && subtask.effectivePermissions?.canCreateSubtask !== false);
+  const targetWorkspace = workspaces?.find((w) => w.id === workspaceId) || activeWorkspace;
+  const canClone = canCloneTask(subtask, targetWorkspace);
 
   const handleCloneSubtask = async (e: React.MouseEvent) => {
     e.stopPropagation();
