@@ -1,5 +1,5 @@
 import React from "react";
-import { Check, Eye, LayoutGrid, CalendarDays, Boxes, FileText } from "lucide-react";
+import { Check, Eye, LayoutGrid, CalendarDays, Boxes } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
   WorkspaceTemplateKey,
@@ -9,7 +9,7 @@ import type {
 } from "./types";
 
 export interface WorkspaceTemplateCardProps {
-  templateKey: WorkspaceTemplateKey | "BLANK";
+  templateKey: WorkspaceTemplateKey;
   title: string;
   description: string;
   badge?: string;
@@ -53,10 +53,8 @@ export function WorkspaceTemplateCard({
       case "TEAM_OPERATIONS":
         return <Boxes className="h-5 w-5 text-emerald-500 shrink-0" />;
       case "GENERAL_PURPOSE":
-        return <LayoutGrid className="h-5 w-5 text-blue-500 shrink-0" />;
-      case "BLANK":
       default:
-        return <FileText className="h-5 w-5 text-[var(--text-muted)] shrink-0" />;
+        return <LayoutGrid className="h-5 w-5 text-blue-500 shrink-0" />;
     }
   };
 
