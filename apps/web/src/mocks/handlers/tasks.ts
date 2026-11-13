@@ -1781,6 +1781,333 @@ export const taskHandlers = [
     }
   ),
 
+  // 6.5. POST /api/v1/communities/:communityId/workspaces/:workspaceId/tasks/:taskId/clone
+  http.post(
+    "/api/v1/communities/:communityId/workspaces/:workspaceId/tasks/:taskId/clone",
+    async ({ request, params }) => {
+      if (tasksDelayMs > 0) {
+        await delay(tasksDelayMs);
+      }
+
+      if (matchesErrorOverride("POST")) {
+        return HttpResponse.json(tasksErrorOverride!.problem, {
+          status: tasksErrorOverride!.status,
+          headers: { "Content-Type": "application/problem+json" },
+        });
+      }
+
+      const { workspaceId, taskId } = params as {
+        communityId: string;
+        workspaceId: string;
+        taskId: string;
+      };
+
+      // Header verification
+      const csrfToken = request.headers.get("X-CSRF-Token");
+      if (!csrfToken || !csrfToken.trim()) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/csrf-error",
+            title: "CSRF Token Required",
+            status: 400,
+            detail: "A valid CSRF token is required for task cloning.",
+            code: "CSRF_TOKEN_REQUIRED",
+          },
+          {
+            status: 400,
+            headers: { "Content-Type": "application/problem+json" },
+          }
+        );
+      }
+
+      const mutationId = request.headers.get("X-Mutation-Id");
+      if (!mutationId || !mutationId.trim()) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/missing-mutation-id",
+            title: "Mutation ID Required",
+            status: 400,
+            detail: "A valid UUIDv7 X-Mutation-Id header is required for task cloning.",
+            code: "MUTATION_ID_REQUIRED",
+          },
+          {
+            status: 400,
+            headers: { "Content-Type": "application/problem+json" },
+          }
+        );
+      }
+
+      // Check idempotency replay / payload mismatch
+      const rawBody = await request.clone().text();
+      const cachedMutation = processedTaskMutations.get(mutationId);
+      if (cachedMutation) {
+        if (cachedMutation.rawBody === rawBody) {
+          return HttpResponse.json(cachedMutation.response, {
+            status: 201,
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "private, no-store",
+              "X-Workspace-Seq": String(cachedMutation.seq),
+              "X-Idempotent-Replayed": "true",
+            },
+          });
+        } else {
+          return HttpResponse.json(
+            {
+              type: "https://errors.sonder.platform/idempotency-mismatch",
+              title: "Idempotency Key Payload Mismatch",
+              status: 409,
+              detail: "X-Mutation-Id was already processed with a different request payload.",
+              code: "IDEMPOTENCY_KEY_PAYLOAD_MISMATCH",
+            },
+            {
+              status: 409,
+              headers: { "Content-Type": "application/problem+json" },
+            }
+          );
+        }
+      }
+
+      // Verify workspace exists
+      const workspace = mockWorkspacesCommunity1.find((w) => w.id === workspaceId);
+      if (!workspace) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/workspace-not-found",
+            title: "Workspace Not Found",
+            status: 404,
+            detail: `Workspace '${workspaceId}' not found.`,
+            code: "WORKSPACE_NOT_FOUND",
+          },
+          {
+            status: 404,
+            headers: { "Content-Type": "application/problem+json" },
+          }
+        );
+      }
+
+      // Permission check: VIEWER cannot create or clone tasks in workspace
+      if (workspace.myRole === "VIEWER") {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/forbidden",
+            title: "Forbidden",
+            status: 403,
+            detail: "You do not have permission to clone tasks in this workspace.",
+            code: "FORBIDDEN",
+          },
+          {
+            status: 403,
+            headers: { "Content-Type": "application/problem+json" },
+          }
+        );
+      }
+
+      // Find source task
+      const sourceTask = currentMockTasks.find(
+        (t) => (t.id === taskId || t.taskKey === taskId) && t.workspaceId === workspaceId
+      );
+      if (!sourceTask) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/task-not-found",
+            title: "Task Not Found",
+            status: 404,
+            detail: `Task '${taskId}' was not found in this workspace.`,
+            code: "TASK_NOT_FOUND",
+          },
+          {
+            status: 404,
+            headers: { "Content-Type": "application/problem+json" },
+          }
+        );
+      }
+
+      // Check if archived
+      if (sourceTask.archivedAt) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/cannot-clone-archived",
+            title: "Cannot Clone Archived Task",
+            status: 400,
+            detail: "Archived tasks cannot be cloned. Restore the task first.",
+            code: "CANNOT_CLONE_ARCHIVED_TASK",
+          },
+          {
+            status: 400,
+            headers: { "Content-Type": "application/problem+json" },
+          }
+        );
+      }
+
+      const body = (await request.json().catch(() => ({}))) as ApiSchema<"CloneTaskRequest">;
+      const includeSubtasks = body.includeSubtasks ?? false;
+      const titleSuffix = body.titleSuffix !== undefined ? body.titleSuffix : " (Copy)";
+
+      // Monotonic key generation
+      const prefix = workspace.keyPrefix ?? "TSK";
+      const nextSeq = (workspaceSeqCounters[workspaceId] ?? 100) + 1;
+      workspaceSeqCounters[workspaceId] = nextSeq;
+      const taskKey = `${prefix}-${nextSeq}`;
+
+      const now = new Date().toISOString();
+      const newTaskId = generateUuidV7();
+
+      const newTask: TaskDto = {
+        id: newTaskId,
+        workspaceId,
+        parentTaskId: sourceTask.parentTaskId ?? null,
+        taskKey,
+        title: `${sourceTask.title}${titleSuffix}`.slice(0, 500),
+        description: sourceTask.description ?? null,
+        itemType: sourceTask.itemType ?? "TASK",
+        statusCategory: sourceTask.statusCategory ?? "TODO",
+        priority: sourceTask.priority ?? "NONE",
+        assigneeIds: [...(sourceTask.assigneeIds ?? [])],
+        creatorId: MOCK_USER_ID,
+        startDate: sourceTask.startDate ?? null,
+        dueDate: sourceTask.dueDate ?? null,
+        estimatePoints: sourceTask.estimatePoints ?? null,
+        labelIds: [...(sourceTask.labelIds ?? [])],
+        milestoneId: sourceTask.milestoneId ?? null,
+        rankKey: `0|hzzzzz${nextSeq}:`,
+        version: 1,
+        fieldRevisions: {
+          title: 1,
+          description: 1,
+          statusCategory: 1,
+          priority: 1,
+          assigneeIds: 1,
+          dueDate: 1,
+          estimatePoints: 1,
+          labelIds: 1,
+          itemType: 1,
+        },
+        effectivePermissions: makeTaskPermissions(true),
+        createdAt: now,
+        updatedAt: now,
+        archivedAt: null,
+        assigneeAssignments: makeTaskAssignments(sourceTask.assigneeIds ?? [], MOCK_USER_ID, now),
+        assigneeEditableFieldGroups: [...(sourceTask.assigneeEditableFieldGroups ?? [])],
+        customFieldValues: { ...(sourceTask.customFieldValues ?? {}) },
+      };
+
+      const clonedSubtasks: TaskDto[] = [];
+      if (includeSubtasks) {
+        // Find direct children
+        const directChildren = currentMockTasks.filter(
+          (t) => t.parentTaskId === sourceTask.id && !t.archivedAt
+        );
+
+        for (const child of directChildren) {
+          const childSeq: number = (workspaceSeqCounters[workspaceId] ?? 100) + 1;
+          workspaceSeqCounters[workspaceId] = childSeq;
+          const childKey = `${prefix}-${childSeq}`;
+          const childId = generateUuidV7();
+
+          const newChild: TaskDto = {
+            id: childId,
+            workspaceId,
+            parentTaskId: newTask.id, // child points to new parent!
+            taskKey: childKey,
+            title: child.title,
+            description: child.description ?? null,
+            itemType: child.itemType ?? "TASK",
+            statusCategory: child.statusCategory ?? "TODO",
+            priority: child.priority ?? "NONE",
+            assigneeIds: [...(child.assigneeIds ?? [])],
+            creatorId: MOCK_USER_ID,
+            startDate: child.startDate ?? null,
+            dueDate: child.dueDate ?? null,
+            estimatePoints: child.estimatePoints ?? null,
+            labelIds: [...(child.labelIds ?? [])],
+            milestoneId: child.milestoneId ?? null,
+            rankKey: `0|hzzzzz${childSeq}:`,
+            version: 1,
+            fieldRevisions: {
+              title: 1,
+              statusCategory: 1,
+              itemType: 1,
+            },
+            effectivePermissions: makeTaskPermissions(true),
+            createdAt: now,
+            updatedAt: now,
+            archivedAt: null,
+            assigneeAssignments: makeTaskAssignments(child.assigneeIds ?? [], MOCK_USER_ID, now),
+            assigneeEditableFieldGroups: [],
+            customFieldValues: { ...(child.customFieldValues ?? {}) },
+          };
+
+          clonedSubtasks.push(newChild);
+
+          // Find grandchildren (depth 2)
+          const grandchildren = currentMockTasks.filter(
+            (t) => t.parentTaskId === child.id && !t.archivedAt
+          );
+
+          for (const grand of grandchildren) {
+            const grandSeq: number = (workspaceSeqCounters[workspaceId] ?? 100) + 1;
+            workspaceSeqCounters[workspaceId] = grandSeq;
+            const grandKey = `${prefix}-${grandSeq}`;
+            const grandId = generateUuidV7();
+
+            const newGrand: TaskDto = {
+              id: grandId,
+              workspaceId,
+              parentTaskId: newChild.id, // grandchild points to new child!
+              taskKey: grandKey,
+              title: grand.title,
+              description: grand.description ?? null,
+              itemType: grand.itemType ?? "TASK",
+              statusCategory: grand.statusCategory ?? "TODO",
+              priority: grand.priority ?? "NONE",
+              assigneeIds: [...(grand.assigneeIds ?? [])],
+              creatorId: MOCK_USER_ID,
+              startDate: grand.startDate ?? null,
+              dueDate: grand.dueDate ?? null,
+              estimatePoints: grand.estimatePoints ?? null,
+              labelIds: [...(grand.labelIds ?? [])],
+              milestoneId: grand.milestoneId ?? null,
+              rankKey: `0|hzzzzz${grandSeq}:`,
+              version: 1,
+              fieldRevisions: {
+                title: 1,
+                statusCategory: 1,
+                itemType: 1,
+              },
+              effectivePermissions: makeTaskPermissions(true),
+              createdAt: now,
+              updatedAt: now,
+              archivedAt: null,
+              assigneeAssignments: makeTaskAssignments(grand.assigneeIds ?? [], MOCK_USER_ID, now),
+              assigneeEditableFieldGroups: [],
+              customFieldValues: { ...(grand.customFieldValues ?? {}) },
+            };
+
+            clonedSubtasks.push(newGrand);
+          }
+        }
+      }
+
+      // Atomic commit
+      currentMockTasks.push(newTask, ...clonedSubtasks);
+      processedTaskMutations.set(mutationId, {
+        rawBody,
+        response: newTask,
+        seq: nextSeq,
+      });
+
+      return HttpResponse.json(newTask, {
+        status: 201,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "private, no-store",
+          "X-Workspace-Seq": String(nextSeq),
+        },
+      });
+    }
+  ),
+
   // 7. POST /api/v1/communities/:communityId/workspaces/:workspaceId/tasks/:taskId/archive
   http.post(
     "/api/v1/communities/:communityId/workspaces/:workspaceId/tasks/:taskId/archive",

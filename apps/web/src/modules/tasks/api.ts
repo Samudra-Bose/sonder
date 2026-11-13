@@ -10,6 +10,7 @@ import type {
   TaskQueryResult,
   MoveTaskParams,
   TaskMoveResultDto,
+  CloneTaskParams,
   TaskViewQueryRequest,
   ArchiveTaskResultDto,
   ArchiveTaskParams,
@@ -146,6 +147,29 @@ export async function moveTask({
 }: MoveTaskParams): Promise<TaskMoveResultDto> {
   return apiRequest<TaskMoveResultDto>(
     `/communities/${encodeURIComponent(communityId)}/workspaces/${encodeURIComponent(workspaceId)}/tasks/${encodeURIComponent(taskId)}/move`,
+    {
+      method: "POST",
+      body: JSON.stringify(data),
+      csrfToken,
+      mutationId,
+    }
+  );
+}
+
+/**
+ * Clones a task and optionally its subtasks / checklists into the same workspace.
+ * Returns the newly created TaskDto with fresh ID and sequential taskKey.
+ */
+export async function cloneTask({
+  communityId,
+  workspaceId,
+  taskId,
+  data,
+  csrfToken,
+  mutationId,
+}: CloneTaskParams): Promise<TaskDto> {
+  return apiRequest<TaskDto>(
+    `/communities/${encodeURIComponent(communityId)}/workspaces/${encodeURIComponent(workspaceId)}/tasks/${encodeURIComponent(taskId)}/clone`,
     {
       method: "POST",
       body: JSON.stringify(data),

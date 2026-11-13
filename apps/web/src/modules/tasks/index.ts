@@ -26,3 +26,6 @@ export * from "./useTrashedTasks.js";
 export * from "./useRestoreTrashedTask.js";
 export * from "./TaskArchetypeBadge.js";
 export * from "./InlineArchetypeEditor.js";
+export * from "./useCloneTask.js";
+export * from "./TaskCloneContext.js";
+export * from "./TaskCloneToast.js";

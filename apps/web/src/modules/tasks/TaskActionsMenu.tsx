@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { MoreHorizontal, Copy, Archive, Check } from "lucide-react";
+import { MoreHorizontal, Copy, Archive, Check, CopyPlus, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/DropdownMenu.js";
 import { cn } from "@/lib/utils.js";
 import { useTaskUndo } from "./TaskUndoContext.js";
+import { useTaskClone } from "./TaskCloneContext.js";
+import { useWorkspace } from "@/modules/workspace/index.js";
 import type { TaskDto } from "./types.js";
 
 export interface TaskActionsMenuProps {
@@ -25,12 +27,22 @@ export function TaskActionsMenu({
   className,
 }: TaskActionsMenuProps): React.JSX.Element {
   const { archiveTask } = useTaskUndo();
+  const { cloneTask, isCloning, cloningTaskId } = useTaskClone();
+  const { activeWorkspace } = useWorkspace();
   const [hasCopied, setHasCopied] = useState(false);
   const [open, setOpen] = useState(false);
+
+  const isCurrentTaskCloning = isCloning && cloningTaskId === task.id;
 
   // Strict Fail-Closed Permission Gate
   const canArchive = Boolean(
     task?.effectivePermissions?.canArchive && !task.archivedAt
+  );
+
+  const canClone = Boolean(
+    !task?.archivedAt &&
+    (activeWorkspace ? activeWorkspace.myRole !== "VIEWER" : true) &&
+    (task?.effectivePermissions ? task.effectivePermissions.canCreateSubtask !== false : true)
   );
 
   const handleCopyLink = useCallback(
@@ -51,6 +63,21 @@ export function TaskActionsMenu({
       setOpen(false);
     },
     [communityId, workspaceId, task.taskKey]
+  );
+
+  const handleClone = useCallback(
+    async (e: React.MouseEvent | React.KeyboardEvent) => {
+      e.stopPropagation();
+      if (!canClone || isCurrentTaskCloning) return;
+
+      setOpen(false);
+      try {
+        await cloneTask(task, { communityId, workspaceId, includeSubtasks: true });
+      } catch {
+        // Handled in context / mutation
+      }
+    },
+    [canClone, isCurrentTaskCloning, cloneTask, task, communityId, workspaceId]
   );
 
   const handleArchive = useCallback(
@@ -121,6 +148,22 @@ export function TaskActionsMenu({
             )}
             <span>{hasCopied ? "Link Copied" : "Copy Link"}</span>
           </DropdownMenuItem>
+
+          {/* Clone / Duplicate Task Option */}
+          {canClone && (
+            <DropdownMenuItem
+              onClick={handleClone}
+              disabled={isCurrentTaskCloning}
+              data-testid={`task-action-clone-${task.taskKey}`}
+            >
+              {isCurrentTaskCloning ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <CopyPlus className="h-3.5 w-3.5 text-[var(--text-muted)]" />
+              )}
+              <span>{isCurrentTaskCloning ? "Cloning..." : "Clone Task"}</span>
+            </DropdownMenuItem>
+          )}
 
           {/* Archive Task Option: Rendered ONLY if canArchive is true */}
           {canArchive && (

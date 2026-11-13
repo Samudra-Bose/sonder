@@ -10,6 +10,8 @@ import {
   Lock,
   ArrowRightLeft,
   Archive,
+  CopyPlus,
+  Loader2,
 } from "lucide-react";
 import {
   Dialog,
@@ -35,6 +37,7 @@ import { useResolveTaskKey } from "./useResolveTaskKey.js";
 import { useTask } from "./useTask.js";
 import { useWorkspaceTasks } from "./useWorkspaceTasks.js";
 import { useTaskUndo } from "./TaskUndoContext.js";
+import { useTaskClone } from "./TaskCloneContext.js";
 import { SubtaskList } from "./SubtaskList.js";
 import { TaskDependencies } from "./TaskDependencies.js";
 import { ReparentTaskModal } from "./ReparentTaskModal.js";
@@ -190,6 +193,7 @@ export function TaskPeekDrawer({
   const isArchived = resolveQuery.data?.lifecycleState === "ARCHIVED" || Boolean(task?.archivedAt);
 
   const { archiveTask } = useTaskUndo();
+  const { cloneTask, isCloning, cloningTaskId } = useTaskClone();
   // Fail-closed permission check strictly conforming to Section 2.1
   const canArchive = Boolean(task?.effectivePermissions?.canArchive && !isArchived);
 
@@ -240,6 +244,27 @@ export function TaskPeekDrawer({
   });
   const allWorkspaceTasks = workspaceTasksData?.items ?? [];
   const maxSubtaskDepth = targetWorkspace?.maxSubtaskDepth ?? 1;
+
+  const isCurrentTaskCloning = isCloning && task ? cloningTaskId === task.id : false;
+  const canClone = Boolean(
+    task &&
+    !isArchived &&
+    (targetWorkspace ? targetWorkspace.myRole !== "VIEWER" : true) &&
+    (task.effectivePermissions ? task.effectivePermissions.canCreateSubtask !== false : true)
+  );
+
+  const handleCloneTask = async () => {
+    if (!task || !canClone || isCurrentTaskCloning) return;
+    try {
+      await cloneTask(task, {
+        communityId: currentCommunityId ?? undefined,
+        workspaceId: effectiveWorkspaceId ?? task.workspaceId,
+        includeSubtasks: true,
+      });
+    } catch {
+      // Handled in context / mutation
+    }
+  };
 
   const handleCopyLink = async () => {
     if (!taskKey) return;
@@ -312,6 +337,27 @@ export function TaskPeekDrawer({
             size="sm"
             className="h-7 text-xs px-2"
           />
+        )}
+
+        {task && !isNotFound && !error && canClone && (
+          <Tooltip content="Clone task">
+            <IconButton
+              size="sm"
+              variant="ghost"
+              aria-label="Clone task"
+              data-testid="clone-task-button"
+              disabled={isCurrentTaskCloning}
+              icon={
+                isCurrentTaskCloning ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <CopyPlus className="h-3.5 w-3.5" />
+                )
+              }
+              onClick={handleCloneTask}
+              className="h-7 w-7 text-[var(--text-muted)] hover:text-[var(--text-primary)] focus-ring rounded"
+            />
+          </Tooltip>
         )}
 
         {task && !isNotFound && !error && canArchive && (

@@ -31,6 +31,12 @@ import {
   TaskUndoProvider,
 } from "../TaskUndoContext.js";
 import { TaskUndoToast } from "../TaskUndoToast.js";
+import {
+  TaskCloneContext,
+  defaultTaskCloneContextValue,
+  TaskCloneProvider,
+} from "../TaskCloneContext.js";
+import { TaskCloneToast } from "../TaskCloneToast.js";
 import type {
   TaskViewQueryRequest,
   QueryFilterCondition,
@@ -522,17 +528,30 @@ function WorkspaceTasksViewInner({
 }
 
 export function WorkspaceTasksView(props: WorkspaceTasksViewProps): React.JSX.Element {
-  const context = useContext(TaskUndoContext);
-  const isWrapped = context !== defaultTaskUndoContextValue;
+  const undoContext = useContext(TaskUndoContext);
+  const cloneContext = useContext(TaskCloneContext);
+  const isUndoWrapped = undoContext !== defaultTaskUndoContextValue;
+  const isCloneWrapped = cloneContext !== defaultTaskCloneContextValue;
 
-  if (isWrapped) {
-    return <WorkspaceTasksViewInner {...props} />;
+  let content = <WorkspaceTasksViewInner {...props} />;
+
+  if (!isCloneWrapped) {
+    content = (
+      <TaskCloneProvider>
+        {content}
+        <TaskCloneToast />
+      </TaskCloneProvider>
+    );
   }
 
-  return (
-    <TaskUndoProvider>
-      <WorkspaceTasksViewInner {...props} />
-      <TaskUndoToast />
-    </TaskUndoProvider>
-  );
+  if (!isUndoWrapped) {
+    content = (
+      <TaskUndoProvider>
+        {content}
+        <TaskUndoToast />
+      </TaskUndoProvider>
+    );
+  }
+
+  return content;
 }

@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { ChevronRight, ChevronDown, ArrowRightLeft } from "lucide-react";
+import { ChevronRight, ChevronDown, ArrowRightLeft, CopyPlus, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge.js";
 import { IconButton } from "@/components/ui/IconButton.js";
 import { useTaskPeekDrawer } from "./useTaskPeekDrawer.js";
 import { ReparentTaskModal } from "./ReparentTaskModal.js";
+import { useTaskClone } from "./TaskCloneContext.js";
 import type { TaskDto } from "./types.js";
 import { cn } from "@/lib/utils.js";
 
@@ -36,6 +37,24 @@ export function SubtaskItem({
 
   const isTerminal = subtask.statusCategory === "DONE" || subtask.statusCategory === "CANCELED";
   const canMove = Boolean(subtask.effectivePermissions?.canMove && !isArchived);
+
+  const { cloneTask, isCloning, cloningTaskId } = useTaskClone();
+  const isCurrentSubtaskCloning = isCloning && cloningTaskId === subtask.id;
+  const canClone = Boolean(!isArchived && subtask.effectivePermissions?.canCreateSubtask !== false);
+
+  const handleCloneSubtask = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!canClone || isCurrentSubtaskCloning) return;
+    try {
+      await cloneTask(subtask, {
+        communityId: communityId ?? undefined,
+        workspaceId,
+        includeSubtasks: true,
+      });
+    } catch {
+      // Handled in context
+    }
+  };
 
   return (
     <li
@@ -113,6 +132,27 @@ export function SubtaskItem({
               size="sm"
               className="hidden sm:inline-flex"
               data-testid={`subtask-priority-${subtask.taskKey}`}
+            />
+          )}
+
+          {/* Clone Subtask Button */}
+          {canClone && (
+            <IconButton
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={isCurrentSubtaskCloning}
+              icon={
+                isCurrentSubtaskCloning ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <CopyPlus className="h-3 w-3" />
+                )
+              }
+              onClick={handleCloneSubtask}
+              aria-label={`Clone subtask ${subtask.taskKey}`}
+              data-testid={`clone-subtask-btn-${subtask.taskKey}`}
+              className="h-6 w-6 text-[var(--text-muted)] hover:text-[var(--text-primary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
             />
           )}
 

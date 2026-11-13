@@ -12,6 +12,8 @@ import {
   useQuickTaskComposer,
   TaskUndoProvider,
   TaskUndoToast,
+  TaskCloneProvider,
+  TaskCloneToast,
 } from "@/modules/tasks";
 import { AppHeader } from "./AppHeader";
 import { AppSidebar } from "./AppSidebar";
@@ -174,6 +176,9 @@ function AppShellContent({ children }: AppShellProps): React.JSX.Element {
       {/* Task Undo Toast Spine */}
       <TaskUndoToast />
 
+      {/* Task Clone Toast Spine */}
+      <TaskCloneToast />
+
       {/* Semantic Footer (Visible on desktop/tablet) */}
       <footer
         role="contentinfo"
@@ -192,7 +197,9 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
       <OmnibarProvider>
         <QuickTaskComposerProvider>
           <TaskUndoProvider>
-            <AppShellContent>{children}</AppShellContent>
+            <TaskCloneProvider>
+              <AppShellContent>{children}</AppShellContent>
+            </TaskCloneProvider>
           </TaskUndoProvider>
         </QuickTaskComposerProvider>
       </OmnibarProvider>
