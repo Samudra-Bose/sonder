@@ -300,8 +300,31 @@ export function MobileWorkspaceSelector({
               </>
             )}
           </div>
+
+          {/* Create Workspace Action for Mobile */}
+          <div className="pt-2 border-t border-[var(--border-subtle)]">
+            <button
+              type="button"
+              onClick={() => {
+                setIsExpanded(false);
+                setIsCreateDialogOpen(true);
+              }}
+              data-testid="mobile-create-workspace-trigger"
+              className="w-full min-h-[44px] flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold text-[var(--brand-primary)] bg-[var(--surface-muted)] hover:bg-[var(--surface-active)] transition-colors active:scale-[0.99] touch-manipulation cursor-pointer"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Create New Workspace</span>
+            </button>
+          </div>
         </div>
       )}
+
+      <CreateWorkspaceDialog
+        isOpen={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        communityId={currentCommunity?.communityId ?? null}
+        onSuccess={() => onWorkspaceSelected?.()}
+      />
     </div>
   );
 }
