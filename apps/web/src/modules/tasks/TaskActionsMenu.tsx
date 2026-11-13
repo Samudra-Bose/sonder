@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/DropdownMenu.js";
 import { cn } from "@/lib/utils.js";
 import { useTaskUndo } from "./TaskUndoContext.js";
-import { useTaskClone } from "./TaskCloneContext.js";
+import { useTaskClone, canCloneTask } from "./TaskCloneContext.js";
 import { useWorkspace } from "@/modules/workspace/index.js";
 import type { TaskDto } from "./types.js";
 
@@ -28,7 +28,7 @@ export function TaskActionsMenu({
 }: TaskActionsMenuProps): React.JSX.Element {
   const { archiveTask } = useTaskUndo();
   const { cloneTask, isCloning, cloningTaskId } = useTaskClone();
-  const { activeWorkspace } = useWorkspace();
+  const { activeWorkspace, workspaces } = useWorkspace();
   const [hasCopied, setHasCopied] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -39,11 +39,8 @@ export function TaskActionsMenu({
     task?.effectivePermissions?.canArchive && !task.archivedAt
   );
 
-  const canClone = Boolean(
-    !task?.archivedAt &&
-    (activeWorkspace ? activeWorkspace.myRole !== "VIEWER" : true) &&
-    (task?.effectivePermissions ? task.effectivePermissions.canCreateSubtask !== false : true)
-  );
+  const targetWorkspace = workspaces.find((w) => w.id === workspaceId) || activeWorkspace;
+  const canClone = canCloneTask(task, targetWorkspace);
 
   const handleCopyLink = useCallback(
     (e: React.MouseEvent | React.KeyboardEvent) => {

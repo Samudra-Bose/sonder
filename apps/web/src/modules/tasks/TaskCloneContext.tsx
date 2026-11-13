@@ -11,11 +11,39 @@ import { useCloneTask } from "./useCloneTask.js";
 import type { TaskDto } from "./types.js";
 
 export interface CloneToastItem {
-  id: string; // cloned task id
-  clonedTask: TaskDto;
+  id: string; // cloned task id or unique error id
+  type: "success" | "error";
+  clonedTask?: TaskDto;
   sourceTaskKey: string;
   sourceTaskId: string;
+  errorMessage?: string;
   remainingMs: number;
+}
+
+/**
+ * Strict fail-closed capability check for task cloning.
+ * Conforms to contract requirement: task:create capability in the target workspace,
+ * and the source task cannot be archived.
+ */
+export function canCloneTask(
+  task: TaskDto | null | undefined,
+  workspace: { myRole?: string | null; effectiveCapabilities?: string[] } | null | undefined
+): boolean {
+  if (!task || Boolean(task.archivedAt)) return false;
+  if (!workspace) return false;
+
+  // Explicit capability grant check if provided
+  if (workspace.effectiveCapabilities && Array.isArray(workspace.effectiveCapabilities)) {
+    return workspace.effectiveCapabilities.includes("task:create");
+  }
+
+  // Fallback to role-based check
+  if (workspace.myRole) {
+    return workspace.myRole !== "VIEWER";
+  }
+
+  // Fail closed if permissions cannot be established
+  return false;
 }
 
 export interface TaskCloneContextValue {
@@ -125,11 +153,12 @@ export function TaskCloneProvider({
           },
         });
 
-        // Add toast item
+        // Add success toast item
         setActiveClones((prev) => [
           ...prev.filter((c) => c.id !== cloned.id),
           {
             id: cloned.id,
+            type: "success",
             clonedTask: cloned,
             sourceTaskKey: task.taskKey,
             sourceTaskId: task.id,
@@ -138,6 +167,21 @@ export function TaskCloneProvider({
         ]);
 
         return cloned;
+      } catch (err: any) {
+        const detail = err?.detail || err?.message || "Failed to clone task.";
+        const errorId = `err-${task.id}-${Date.now()}`;
+        setActiveClones((prev) => [
+          ...prev,
+          {
+            id: errorId,
+            type: "error",
+            sourceTaskKey: task.taskKey,
+            sourceTaskId: task.id,
+            errorMessage: detail,
+            remainingMs: 8000,
+          },
+        ]);
+        throw err;
       } finally {
         setCloningTaskId(null);
       }
