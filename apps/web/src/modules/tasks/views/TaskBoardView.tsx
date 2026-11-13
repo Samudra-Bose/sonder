@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { useTaskPeekDrawer } from "../useTaskPeekDrawer";
 import { useUpdateTask } from "../useUpdateTask";
 import { TaskActionsMenu } from "../TaskActionsMenu.js";
+import { TaskArchetypeBadge } from "../TaskArchetypeBadge.js";
 import type {
   TaskDto,
   TaskQueryBucketDto,
@@ -294,16 +295,19 @@ export function TaskBoardView({
                       >
                         {/* Top: Task Key + Priority */}
                         <div className="flex items-center justify-between gap-2">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCardClick();
-                            }}
-                            className="font-mono text-xs font-bold text-[var(--brand-accent-text)] hover:underline focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] rounded"
-                          >
-                            {task.taskKey}
-                          </button>
+                          <div className="flex items-center gap-1.5">
+                            <TaskArchetypeBadge archetype={task.itemType} size="sm" showLabel={false} />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCardClick();
+                              }}
+                              className="font-mono text-xs font-bold text-[var(--brand-accent-text)] hover:underline focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] rounded"
+                            >
+                              {task.taskKey}
+                            </button>
+                          </div>
                           <div
                             className="flex items-center gap-1.5"
                             onClick={(e) => e.stopPropagation()}

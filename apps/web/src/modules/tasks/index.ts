@@ -24,3 +24,5 @@ export * from "./TaskActionsMenu.js";
 export * from "./useBulkMutateTasks.js";
 export * from "./useTrashedTasks.js";
 export * from "./useRestoreTrashedTask.js";
+export * from "./TaskArchetypeBadge.js";
+export * from "./InlineArchetypeEditor.js";
