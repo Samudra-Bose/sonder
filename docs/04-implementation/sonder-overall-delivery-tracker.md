@@ -127,10 +127,10 @@ SONDER PLATFORM PROGRESS METRICS (AUDIT BASELINE 2026-11-12)
 | **FEAT-C05** | Omnibar (`Cmd+K`), Global Search & Filtered Facets | M1.1 | **DONE** | `OmnibarModal.tsx`, `SearchFilterBar.tsx` | `OmnibarModal.test.tsx` (18) | MSW handler: `GET /search` | Backend full-text search indexing |
 | **FEAT-C06** | Board Swimlanes & Card Property Visibility | M1.2 | **DECISION BLOCKED** | None | None | Blocked on Saved Views Decision D | Blocked on Decision D (`DEP-SV-01`) |
 | **FEAT-C07** | Permanent Task Keys (`PREFIX-NUM`) & History Link Unification | M1.1 | **DONE** | Task key resolver, URL deep links | `TaskPeekDrawer.test.tsx` (28) | MSW handler: `GET /tasks/by-key/{key}` | Community prefix registry enforcement |
-| **FEAT-D01** | 5-Category Workflow Spine & Custom Status Workflow Settings | M1.1 | **NOT STARTED** | Status enum defined in types | None | Schema in OpenAPI `0.3.20-draft` | None |
+| **FEAT-D01** | 5-Category Workflow Spine & Custom Status Workflow Settings | M1.1 | **DONE** | `WorkspaceSettingsLayout.tsx`, `WorkflowSettingsView.tsx` | `WorkspaceSettings.test.tsx` (5) | MSW handler: `GET/PATCH /workspaces/:id` | Workflow state persistence |
 | **FEAT-D02** | Enterprise Workflow Schemes & Mandatory Transitions | Excluded | **REJECTED** | None | None | Excluded per community simplicity | Out of scope |
 | **FEAT-D03** | Optional Single-Step Status Sign-Off / Approval | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3 | Phase 3 timeline |
-| **FEAT-D04a**| Core Custom Fields (Text, Number, Single-Select) | M1.2 | **NOT STARTED** | Custom field types in contracts | None | Schemas: `/custom-fields` | Settings UI pending |
+| **FEAT-D04a**| Core Custom Fields (Text, Number, Single-Select, Date, Boolean) | M1.2 | **DONE** | `CustomFieldsSettingsView.tsx`, `TaskCustomFieldsSection.tsx` | `CustomFields.test.tsx` (6), `TaskCustomFields.test.tsx` (5) | MSW handler: `/custom-fields` CRUD & options | Custom field definitions & values persistence |
 | **FEAT-D04b**| Extended Custom Fields (Multi-Select, User Picker, Date) | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2 | Phase 2 timeline |
 | **FEAT-D05a**| Built-in Starter Templates (General Purpose, Sprint, Event) | M1.2 | **PARTIAL** | Template seed definitions in OpenAPI | None | Schema: `GET /workspace-templates` | Template picker modal pending |
 | **FEAT-D05b**| Custom Workspace & Reusable Checklist Templates | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2 | Phase 2 timeline |
@@ -378,7 +378,7 @@ flowchart TD
         FEAT_G02a["FEAT-G02a (RBAC Engine) - DONE"]
         FEAT_J03["FEAT-J03 (Design Tokens) - DONE"]
         FEAT_B02["FEAT-B02 (Backlog Tray) - DONE"]
-        FEAT_D01["FEAT-D01 (Workflow Spine) - NOT STARTED"]
+        FEAT_D01["FEAT-D01 (Workflow Spine) - DONE"]
         FEAT_C04["FEAT-C04 (Saved Views) - BLOCKED"]
         FEAT_F02["FEAT-F02 (Realtime Presence) - DEPENDENT"]
     end
@@ -390,10 +390,10 @@ flowchart TD
         FEAT_F01a["FEAT-F01a (Notification Inbox) - DONE"]
         FEAT_D05a["FEAT-D05a (Templates Picker) - PARTIAL"]
         FEAT_K01["FEAT-K01 (Smart URL Chips) - PARTIAL"]
-        FEAT_A01["FEAT-A01 (Archetypes) - NOT STARTED"]
-        FEAT_A07["FEAT-A07 (Task Cloning) - NOT STARTED"]
-        FEAT_A10b["FEAT-A10b (Trash & Bulk Bar) - NOT STARTED"]
-        FEAT_D04a["FEAT-D04a (Core Custom Fields) - NOT STARTED"]
+        FEAT_A01["FEAT-A01 (Archetypes) - DONE"]
+        FEAT_A07["FEAT-A07 (Task Cloning) - DONE"]
+        FEAT_A10b["FEAT-A10b (Trash & Bulk Bar) - DONE"]
+        FEAT_D04a["FEAT-D04a (Core Custom Fields) - DONE"]
         FEAT_J01a["FEAT-J01a (CSV Export) - DONE"]
         FEAT_C06["FEAT-C06 (Swimlanes) - BLOCKED"]
     end
@@ -410,9 +410,9 @@ flowchart TD
 
 ### Phase 1 Breakdown:
 - **Total Phase 1 Capabilities:** 34 concrete features.
-- **DONE:** 19 capabilities (55.88%).
+- **DONE:** 25 capabilities (73.53%).
 - **PARTIAL:** 2 capabilities (`FEAT-D05a`, `FEAT-K01`).
-- **NOT STARTED:** 9 capabilities (`FEAT-A01`, `FEAT-A07`, `FEAT-A10b`, `FEAT-D01`, `FEAT-D04a`, `FEAT-G03`, `FEAT-G04`, `FEAT-J01a`, `FEAT-J02`).
+- **NOT STARTED:** 3 capabilities (`FEAT-G03`, `FEAT-G04`, `FEAT-J02`).
 - **DECISION BLOCKED:** 3 capabilities (`FEAT-C04`, `FEAT-C06`, `FEAT-G02b`).
 - **BACKEND DEPENDENT:** 1 capability (`FEAT-F02`).
 
