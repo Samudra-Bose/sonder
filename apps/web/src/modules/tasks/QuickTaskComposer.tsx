@@ -51,6 +51,7 @@ export function QuickTaskComposer({
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [itemType, setItemType] = useState<TaskType>("TASK");
   const [priority, setPriority] = useState<TaskPriority>("NONE");
   const [dueDate, setDueDate] = useState("");
 
@@ -75,6 +76,7 @@ export function QuickTaskComposer({
       // Initialize or reset form values to ensure no stale prefilled values persist on reopen
       setDueDate(initialValues?.dueDate ?? "");
       setPriority(initialValues?.priority ?? "NONE");
+      setItemType(initialValues?.itemType ?? "TASK");
       setTitle(initialValues?.title ?? "");
       setDescription("");
       setValidationErrors({});
