@@ -454,10 +454,10 @@ describe("VS-09D: Work-Item Archetypes (FEAT-A01)", () => {
       const groups: TaskQueryBucketDto[] = [
         {
           key: "TODO",
-          title: "To Do",
-          category: "TODO",
-          position: 1,
+          label: "To Do",
           total: 2,
+          nextCursor: null,
+          children: [],
           items: [
             createMockTask({ id: "t1", taskKey: "ENG-10", title: "Defect in navbar", itemType: "BUG" }),
             createMockTask({ id: "t2", taskKey: "ENG-11", title: "ADR 05 Architecture", itemType: "DECISION" }),
