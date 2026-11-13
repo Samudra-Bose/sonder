@@ -748,7 +748,7 @@ export const taskHandlers = [
 
       // Permission checks: separately authorize every supplied field
       if (
-        (body.title !== undefined || body.description !== undefined) &&
+        (body.title !== undefined || body.description !== undefined || body.itemType !== undefined) &&
         task.effectivePermissions.canEditTitleDescription === false
       ) {
         return HttpResponse.json(
@@ -756,7 +756,7 @@ export const taskHandlers = [
             type: "https://errors.sonder.platform/forbidden",
             title: "Permission Denied",
             status: 403,
-            detail: "You do not have permission to edit title or description in this workspace.",
+            detail: "You do not have permission to edit title, description or archetype in this workspace.",
             code: "PERMISSION_DENIED",
           },
           { status: 403, headers: { "Content-Type": "application/problem+json" } }
