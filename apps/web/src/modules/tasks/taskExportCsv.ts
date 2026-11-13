@@ -123,10 +123,16 @@ export interface FetchAllTasksForExportParams {
   maxPages?: number;
 }
 
+export interface FetchAllTasksForExportResult {
+  tasks: TaskDto[];
+  isTruncated: boolean;
+}
+
 /**
  * Fetches all matching tasks for the active querySpec by traversing cursor pagination.
  * Ensures the entire filtered dataset is exported rather than merely the currently visible page.
  * Recovers once from QUERY_SNAPSHOT_EXPIRED (409) if the snapshot expires mid-traversal.
+ * Returns isTruncated: true if pagination was halted by maxPages ceiling while further records exist.
  */
 export async function fetchAllTasksForExport({
   communityId,
@@ -134,11 +140,12 @@ export async function fetchAllTasksForExport({
   querySpec,
   csrfToken,
   maxPages = 50,
-}: FetchAllTasksForExportParams): Promise<TaskDto[]> {
+}: FetchAllTasksForExportParams): Promise<FetchAllTasksForExportResult> {
   const allTasks: TaskDto[] = [];
   let currentCursor: string | undefined = undefined;
   let pageCount = 0;
   let restartCount = 0;
+  let hasMore = false;
 
   while (pageCount < maxPages) {
     try {
@@ -163,7 +170,9 @@ export async function fetchAllTasksForExport({
 
       if (response.nextCursor) {
         currentCursor = response.nextCursor;
+        hasMore = true;
       } else {
+        hasMore = false;
         break;
       }
     } catch (error: unknown) {
@@ -177,13 +186,17 @@ export async function fetchAllTasksForExport({
         allTasks.length = 0;
         pageCount = 0;
         currentCursor = undefined;
+        hasMore = false;
         continue;
       }
       throw error;
     }
   }
 
-  return allTasks;
+  return {
+    tasks: allTasks,
+    isTruncated: hasMore && pageCount >= maxPages,
+  };
 }
 
 /**

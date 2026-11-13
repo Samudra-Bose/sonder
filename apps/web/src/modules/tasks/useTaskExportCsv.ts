@@ -105,7 +105,7 @@ export function useTaskExportCsv({
       clearFeedback();
 
       try {
-        const tasks = await fetchAllTasksForExport({
+        const { tasks, isTruncated } = await fetchAllTasksForExport({
           communityId,
           workspaceId,
           querySpec,
@@ -131,12 +131,19 @@ export function useTaskExportCsv({
 
         triggerCsvDownload(csvContent, filename);
 
-        setFeedbackWithAutoClear({
-          type: "success",
-          message: `Successfully exported ${tasks.length} ${
-            tasks.length === 1 ? "task" : "tasks"
-          } to CSV.`,
-        });
+        if (isTruncated) {
+          setFeedbackWithAutoClear({
+            type: "info",
+            message: `Export safety limit reached (${tasks.length} tasks). Exported the first ${tasks.length} tasks.`,
+          });
+        } else {
+          setFeedbackWithAutoClear({
+            type: "success",
+            message: `Successfully exported ${tasks.length} ${
+              tasks.length === 1 ? "task" : "tasks"
+            } to CSV.`,
+          });
+        }
         return true;
       } catch (error: unknown) {
         const err = error as { message?: string; detail?: string };
