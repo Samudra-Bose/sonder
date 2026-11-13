@@ -1599,3 +1599,5 @@ export function InlineLabelsEditor({
     </div>
   );
 }
+
+export { InlineArchetypeEditor, type InlineArchetypeEditorProps } from "./InlineArchetypeEditor.js";
