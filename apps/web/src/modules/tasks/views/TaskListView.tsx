@@ -460,6 +460,7 @@ export function TaskListView({
                   {/* Title & Hierarchy parent badge */}
                   <td className="py-2.5 px-3">
                     <div className="flex items-center gap-2">
+                      <TaskArchetypeBadge archetype={task.itemType} size="sm" showLabel={false} />
                       {task.parentTaskId && (
                         <span
                           title="Subtask"
