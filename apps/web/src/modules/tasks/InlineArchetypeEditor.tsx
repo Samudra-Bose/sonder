@@ -6,7 +6,6 @@ import { getTaskById } from "./api.js";
 import { useUpdateTask } from "./useUpdateTask.js";
 import {
   TaskArchetypeBadge,
-  ARCHETYPE_LABELS,
 } from "./TaskArchetypeBadge.js";
 import {
   ConflictAlert,
