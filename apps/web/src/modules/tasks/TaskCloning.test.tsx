@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, useLocation } from "react-router-dom";
@@ -9,7 +9,6 @@ import { defaultMockCommunities } from "@/mocks/handlers/auth.js";
 import {
   MOCK_COMMUNITY_1_ID,
   WS_SHARED_ENG_ID,
-  WS_SHARED_GALA_ID,
   MOCK_USER_ID,
 } from "@/mocks/data/my-work.js";
 import { resetTaskMockState } from "@/mocks/handlers/tasks.js";
@@ -20,7 +19,6 @@ import { TaskCloneToast } from "./TaskCloneToast.js";
 import { TaskPeekDrawer } from "./TaskPeekDrawer.js";
 import { WorkspaceTasksView } from "./views/WorkspaceTasksView.js";
 import { cloneTask } from "./api.js";
-import type { TaskDto } from "./types.js";
 
 const testAuthUser = {
   id: MOCK_USER_ID,
@@ -127,7 +125,7 @@ describe("VS-09E: Task & Subtask Checklist Cloning (FEAT-A07)", () => {
       const cloned = await cloneTask({
         communityId: MOCK_COMMUNITY_1_ID,
         workspaceId: WS_SHARED_ENG_ID,
-        taskId: "018f98a2-task-001-frontend-infra", // ENG-101
+        taskId: "018f98a2-task-003-today-assigned-created", // ENG-102
         data: {
           includeSubtasks: false,
           titleSuffix: " (Duplicated)",
@@ -137,12 +135,12 @@ describe("VS-09E: Task & Subtask Checklist Cloning (FEAT-A07)", () => {
       });
 
       expect(cloned.id).toBeDefined();
-      expect(cloned.id).not.toBe("018f98a2-task-001-frontend-infra");
+      expect(cloned.id).not.toBe("018f98a2-task-003-today-assigned-created");
       expect(cloned.taskKey).toBe("ENG-107");
-      expect(cloned.title).toBe("Implement frontend application shell with responsive navigation (Duplicated)");
+      expect(cloned.title).toBe("Ship VS-02E My Work cross-workspace dashboard (Duplicated)");
       expect(cloned.itemType).toBe("TASK");
       expect(cloned.priority).toBe("HIGH");
-      expect(cloned.statusCategory).toBe("TODO");
+      expect(cloned.statusCategory).toBe("IN_PROGRESS");
       expect(cloned.archivedAt).toBeNull();
       expect(cloned.version).toBe(1);
       expect(cloned.creatorId).toBe(MOCK_USER_ID);
@@ -150,11 +148,11 @@ describe("VS-09E: Task & Subtask Checklist Cloning (FEAT-A07)", () => {
     });
 
     it("deep-clones a task with its full subtask hierarchy when includeSubtasks is true", async () => {
-      // ENG-102 has subtasks ENG-103 and ENG-104 (and ENG-104 has grandchild ENG-105)
+      // ENG-101 has subtask ENG-105 (and ENG-105 has grandchild ENG-106)
       const cloned = await cloneTask({
         communityId: MOCK_COMMUNITY_1_ID,
         workspaceId: WS_SHARED_ENG_ID,
-        taskId: "018f98a2-task-002-state-mgmt", // ENG-102
+        taskId: "018f98a2-task-001-overdue-assigned", // ENG-101
         data: {
           includeSubtasks: true,
           titleSuffix: " (Copy)",
@@ -170,7 +168,7 @@ describe("VS-09E: Task & Subtask Checklist Cloning (FEAT-A07)", () => {
       const clonedSubtask = await cloneTask({
         communityId: MOCK_COMMUNITY_1_ID,
         workspaceId: WS_SHARED_ENG_ID,
-        taskId: "018f98a2-task-003-auth-context", // ENG-103 (parent is ENG-102)
+        taskId: "018f98a2-task-001-subtask-1", // ENG-105 (parent is ENG-101)
         data: {
           includeSubtasks: false,
           titleSuffix: " (Sibling Copy)",
@@ -179,8 +177,8 @@ describe("VS-09E: Task & Subtask Checklist Cloning (FEAT-A07)", () => {
         mutationId: "018f98a2-mut-clone-003",
       });
 
-      expect(clonedSubtask.parentTaskId).toBe("018f98a2-task-002-state-mgmt");
-      expect(clonedSubtask.taskKey).toBe("ENG-111"); // 107 (root) + 108 (child) + 109 (child) + 110 (grand) -> 111
+      expect(clonedSubtask.parentTaskId).toBe("018f98a2-task-001-overdue-assigned");
+      expect(clonedSubtask.taskKey).toBe("ENG-110"); // 107 (root) + 108 (child) + 109 (grand) -> 110
     });
 
     it("rejects cloning archived tasks with HTTP 400 CANNOT_CLONE_ARCHIVED_TASK", async () => {
@@ -296,15 +294,15 @@ describe("VS-09E: Task & Subtask Checklist Cloning (FEAT-A07)", () => {
     it("renders clone button for subtask items and clones subtask as sibling", async () => {
       const user = userEvent.setup();
       renderTaskCloneEnvironment({
-        initialEntries: ["/?task=ENG-102"], // ENG-102 has subtasks ENG-103 and ENG-104
+        initialEntries: ["/?task=ENG-101"], // ENG-101 has subtask ENG-105
       });
 
       await screen.findByTestId("task-peek-drawer-desktop");
 
-      // Locate subtask item for ENG-103
-      await screen.findByTestId("subtask-item-ENG-103");
+      // Locate subtask item for ENG-105
+      await screen.findByTestId("subtask-item-ENG-105");
 
-      const subtaskCloneBtn = screen.getByTestId("clone-subtask-btn-ENG-103");
+      const subtaskCloneBtn = screen.getByTestId("clone-subtask-btn-ENG-105");
       expect(subtaskCloneBtn).toBeInTheDocument();
 
       // Click subtask clone button
@@ -313,7 +311,56 @@ describe("VS-09E: Task & Subtask Checklist Cloning (FEAT-A07)", () => {
       // Toast appears confirming subtask clone
       const toast = await screen.findByTestId("clone-toast-ENG-107");
       expect(toast).toBeInTheDocument();
-      expect(toast).toHaveTextContent("Cloned from ENG-103");
+      expect(toast).toHaveTextContent("Cloned from ENG-105");
+    });
+  });
+
+  describe("Idempotency, Concurrency & View Synchronization", () => {
+    it("replays identical response for re-submitted X-Mutation-Id", async () => {
+      const mutationId = "018f98a2-mut-idempotent-replay";
+
+      const firstCall = await cloneTask({
+        communityId: MOCK_COMMUNITY_1_ID,
+        workspaceId: WS_SHARED_ENG_ID,
+        taskId: "018f98a2-task-003-today-assigned-created", // ENG-102
+        data: { includeSubtasks: false },
+        csrfToken: "mock-csrf-token",
+        mutationId,
+      });
+
+      const secondCall = await cloneTask({
+        communityId: MOCK_COMMUNITY_1_ID,
+        workspaceId: WS_SHARED_ENG_ID,
+        taskId: "018f98a2-task-003-today-assigned-created", // ENG-102
+        data: { includeSubtasks: false },
+        csrfToken: "mock-csrf-token",
+        mutationId,
+      });
+
+      expect(secondCall.id).toBe(firstCall.id);
+      expect(secondCall.taskKey).toBe(firstCall.taskKey);
+    });
+
+    it("clones task from Board view card actions menu", async () => {
+      const user = userEvent.setup();
+      renderTaskCloneEnvironment();
+
+      // Switch to Board View
+      const boardTab = await screen.findByTestId("tab-view-board");
+      await user.click(boardTab);
+
+      // Locate card trigger for ENG-101
+      const trigger = await screen.findByTestId("task-actions-trigger-ENG-101");
+      await user.click(trigger);
+
+      // Verify clone action
+      const cloneOption = await screen.findByTestId("task-action-clone-ENG-101");
+      await user.click(cloneOption);
+
+      // Toast appears
+      const toast = await screen.findByTestId("clone-toast-ENG-107");
+      expect(toast).toBeInTheDocument();
+      expect(toast).toHaveTextContent("Task ENG-107 created.");
     });
   });
 });
