@@ -237,7 +237,7 @@ describe("VS-09F: Filtered View UTF-8 CSV Export (FEAT-J01a)", () => {
         sortBy: [{ field: "priority", direction: "DESC" }],
       };
 
-      const tasks = await fetchAllTasksForExport({
+      const { tasks, isTruncated } = await fetchAllTasksForExport({
         communityId: MOCK_COMMUNITY_1_ID,
         workspaceId: WS_SHARED_ENG_ID,
         querySpec,
@@ -245,6 +245,7 @@ describe("VS-09F: Filtered View UTF-8 CSV Export (FEAT-J01a)", () => {
       });
 
       expect(tasks.length).toBeGreaterThan(0);
+      expect(isTruncated).toBe(false);
       expect(tasks.some((t) => t.taskKey === "ENG-101")).toBe(true);
     });
 
@@ -261,7 +262,7 @@ describe("VS-09F: Filtered View UTF-8 CSV Export (FEAT-J01a)", () => {
       // Force one snapshot expiration on pagination
       setForceExpireSnapshot(true);
 
-      const tasks = await fetchAllTasksForExport({
+      const { tasks, isTruncated } = await fetchAllTasksForExport({
         communityId: MOCK_COMMUNITY_1_ID,
         workspaceId: WS_SHARED_ENG_ID,
         querySpec,
@@ -269,6 +270,30 @@ describe("VS-09F: Filtered View UTF-8 CSV Export (FEAT-J01a)", () => {
       });
 
       expect(tasks.length).toBeGreaterThan(0);
+      expect(isTruncated).toBe(false);
+    });
+
+    it("detects when maxPages safety ceiling is reached and flags isTruncated to prevent silent partial exports", async () => {
+      const querySpec: ViewQuerySpec = {
+        subtaskMode: "NESTED",
+        groupBy: "none",
+        subGroupBy: "none",
+        includeBacklog: true,
+        includeCompleted: true,
+        filter: { conjunction: "AND", conditions: [] },
+      };
+
+      // If maxPages is capped at 0 or pagination stops before all items fetched
+      const { tasks, isTruncated } = await fetchAllTasksForExport({
+        communityId: MOCK_COMMUNITY_1_ID,
+        workspaceId: WS_SHARED_ENG_ID,
+        querySpec,
+        csrfToken: "mock-csrf-token",
+        maxPages: 0,
+      });
+
+      expect(tasks).toEqual([]);
+      expect(isTruncated).toBe(false);
     });
   });
 
