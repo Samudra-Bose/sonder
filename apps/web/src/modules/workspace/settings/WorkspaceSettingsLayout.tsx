@@ -1,6 +1,6 @@
 import React from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Sliders, Database, GitFork, Users, Shield } from "lucide-react";
+import { ArrowLeft, Sliders, Database, GitFork, Users, Shield, ScrollText } from "lucide-react";
 import { useWorkspace } from "@/modules/workspace/index.js";
 import { useWorkspaceSettings } from "./useWorkspaceSettings.js";
 import { canUpdateWorkspaceSettings } from "./permissions.js";
@@ -9,6 +9,7 @@ import { CustomFieldsSettingsView } from "./CustomFieldsSettingsView.js";
 import { WorkflowSettingsView } from "./WorkflowSettingsView.js";
 import { MembersSettingsView } from "./MembersSettingsView.js";
 import { PermissionsSettingsView } from "./PermissionsSettingsView.js";
+import { AuditLogSettingsView } from "./AuditLogSettingsView.js";
 import type { SettingsCategory } from "./types.js";
 
 interface TabItem {
@@ -24,6 +25,7 @@ const TABS: TabItem[] = [
   { id: "workflow", label: "Workflow Spine", icon: GitFork, testid: "settings-tab-workflow" },
   { id: "members", label: "Members", icon: Users, testid: "settings-tab-members" },
   { id: "permissions", label: "Permissions", icon: Shield, testid: "settings-tab-permissions" },
+  { id: "audit", label: "Audit Log", icon: ScrollText, testid: "settings-tab-audit" },
 ];
 
 export const WorkspaceSettingsLayout: React.FC = () => {
@@ -147,6 +149,7 @@ export const WorkspaceSettingsLayout: React.FC = () => {
               {activeCategory === "workflow" && <WorkflowSettingsView />}
               {activeCategory === "members" && <MembersSettingsView />}
               {activeCategory === "permissions" && <PermissionsSettingsView />}
+              {activeCategory === "audit" && <AuditLogSettingsView />}
             </>
           )}
         </div>

@@ -50,6 +50,7 @@ export function hasWorkspaceCapability(
         "workspace:read_metadata",
         "workspace:invite_members",
         "saved_view:manage_shared",
+        "audit:read",
       ].includes(capability);
 
     case "MEMBER":
@@ -96,4 +97,24 @@ export function canUpdateWorkspaceSettings(
   workspace: (WorkspaceDto & { effectiveCapabilities?: string[] }) | null | undefined
 ): boolean {
   return hasWorkspaceCapability(workspace, "workspace:update_settings");
+}
+
+/**
+ * Checks if the actor can inspect workspace audit events (FEAT-G04).
+ * Governed strictly by capability: audit:read.
+ */
+export function canReadAuditLogs(
+  workspace: (WorkspaceDto & { effectiveCapabilities?: string[] }) | null | undefined
+): boolean {
+  return hasWorkspaceCapability(workspace, "audit:read");
+}
+
+/**
+ * Checks if the actor can export workspace audit events to CSV (FEAT-G04).
+ * Governed strictly by capability: audit:export.
+ */
+export function canExportAuditLogs(
+  workspace: (WorkspaceDto & { effectiveCapabilities?: string[] }) | null | undefined
+): boolean {
+  return hasWorkspaceCapability(workspace, "audit:export");
 }

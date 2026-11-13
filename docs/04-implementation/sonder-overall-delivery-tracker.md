@@ -144,7 +144,7 @@ SONDER PLATFORM PROGRESS METRICS (AUDIT BASELINE 2026-11-12)
 | **FEAT-G02a**| Capability RBAC Engine, 4 System Roles & Permission Gates | M1.1 | **DONE** | `rbac/`, `PermissionGate.tsx` | `WorkspaceSwitcher.test.tsx` (22) | RBAC matrix in contracts | Server RLS policies pending |
 | **FEAT-G02b**| Configurable Custom Roles Builder UI | M1.3 | **DECISION BLOCKED** | None | None | Blocked on simulator contract | Blocked on `DEP-ROLES-01` |
 | **FEAT-G03** | Plain-Language Permission Inspector & Role Simulator | M1.3 | **DONE** | `PermissionInspector.tsx`, `capabilityDefinitions.ts`, `PermissionsSettingsView.tsx` | `RoleSimulator.test.tsx` (7) | MSW handlers: `/roles`, `X-Preview-Role-Id` safeguard | Downward-only simulation, read-only guard, and full 31-capability matrix verified |
-| **FEAT-G04** | Append-Only Hash-Chained Audit Log Table & CSV Export | M1.3 | **NOT STARTED** | None | None | Schemas: `/audit-events` | Audit table UI pending |
+| **FEAT-G04** | Append-Only Hash-Chained Audit Log Table & CSV Export | M1.3 | **DONE** | `AuditLogSettingsView.tsx`, `useAuditLog.ts`, `auditExportCsv.ts` | `AuditLog.test.tsx` (16) | MSW handlers: `/audit-events`, `/admin/audit-integrity`, `/audit-events/export` | Authoritative SHA-256 hash-chain display, server-side integrity verification status, cursor pagination, category/severity filtering, detail drawer with allow-listed metadata, and formula-injection-safe UTF-8 CSV export with independent `audit:export` capability gate verified (16 tests) |
 | **FEAT-H01** | Declarative 1-Hop Workflow Automations | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3 | Automation engine pending |
 | **FEAT-H02** | Outbound HMAC-Signed HTTPS Webhooks | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3 | Egress & SSRF hardening |
 | **FEAT-I01** | Lightweight Shareable Workspace Intake Forms | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2 | Anonymous access scope |
@@ -400,7 +400,7 @@ flowchart TD
 
     subgraph M1_3 ["Milestone M1.3: Governance & Production Acceptance"]
         FEAT_G03["FEAT-G03 (Permission Simulator) - DONE"]
-        FEAT_G04["FEAT-G04 (Audit Log Table) - NOT STARTED"]
+        FEAT_G04["FEAT-G04 (Audit Log Table) - DONE"]
         FEAT_J02["FEAT-J02 (Offline Task Sync) - NOT STARTED"]
         FEAT_G02b["FEAT-G02b (Custom Roles UI) - BLOCKED"]
     end
@@ -410,9 +410,9 @@ flowchart TD
 
 ### Phase 1 Breakdown:
 - **Total Phase 1 Capabilities:** 34 concrete features.
-- **DONE:** 26 capabilities (76.47%).
+- **DONE:** 27 capabilities (79.41%).
 - **PARTIAL:** 2 capabilities (`FEAT-D05a`, `FEAT-K01`).
-- **NOT STARTED:** 2 capabilities (`FEAT-G04`, `FEAT-J02`).
+- **NOT STARTED:** 1 capability (`FEAT-J02`).
 - **DECISION BLOCKED:** 3 capabilities (`FEAT-C04`, `FEAT-C06`, `FEAT-G02b`).
 - **BACKEND DEPENDENT:** 1 capability (`FEAT-F02`).
 
@@ -514,7 +514,7 @@ flowchart TD
 6. **Milestone VS-09G:** Collapsible Backlog Tray in List and Board views (`FEAT-B02`).
 7. **Milestone VS-09H:** Workspace Settings Shell & Core Custom Fields (`FEAT-D01`, `FEAT-D04a`).
 8. **Milestone M1.3 Governance:** Plain-Language Permission Inspector & Role Simulator (`FEAT-G03`).
-9. **Milestone M1.3 Governance:** Append-Only Hash-Chained Audit Log Table & CSV Export (`FEAT-G04`).
+9. **Milestone M1.3 Governance (VS-09J):** Append-Only Hash-Chained Audit Log Table & CSV Export (`FEAT-G04`) — DELIVERED & LOCKED.
 10. **Milestone M1.3 Offline:** Selected-Field Offline Task Editing & Queued Sync (`FEAT-J02`, CR-15).
 
 ### P2 — Important UX, Mobile & Accessibility Completion (Track B Slices)

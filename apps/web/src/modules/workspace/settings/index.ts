@@ -10,4 +10,7 @@ export * from "./MembersSettingsView.js";
 export * from "./PermissionsSettingsView.js";
 export * from "./PermissionInspector.js";
 export * from "./capabilityDefinitions.js";
+export * from "./AuditLogSettingsView.js";
+export * from "./useAuditLog.js";
+export * from "./auditExportCsv.js";
 export * from "./WorkspaceSettingsLayout.js";

@@ -8,6 +8,7 @@ import { taskLinkHandlers } from "./task-links.js";
 import { commentHandlers } from "./comments.js";
 import { notificationHandlers } from "./notifications.js";
 import { customFieldHandlers } from "./custom-fields.js";
+import { auditHandlers } from "./audit.js";
 
 export const handlers = [
   ...healthHandlers,
@@ -20,4 +21,5 @@ export const handlers = [
   ...commentHandlers,
   ...notificationHandlers,
   ...customFieldHandlers,
+  ...auditHandlers,
 ];
