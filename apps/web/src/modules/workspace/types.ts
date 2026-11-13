@@ -9,6 +9,14 @@ export type CommunityMembershipDto = ApiSchema<"CommunityMembershipDto">;
 
 export type WorkspaceRole = NonNullable<WorkspaceDto["myRole"]>;
 
+export type WorkspaceTemplateKey = ApiSchema<"WorkspaceTemplateKey">;
+export type WorkspaceTemplateStatusDto = ApiSchema<"WorkspaceTemplateStatusDto">;
+export type WorkspaceTemplateCustomFieldDto = ApiSchema<"WorkspaceTemplateCustomFieldDto">;
+export type WorkspaceTemplateSavedViewDto = ApiSchema<"WorkspaceTemplateSavedViewDto">;
+export type WorkspaceTemplateDto = ApiSchema<"WorkspaceTemplateDto">;
+export type WorkspaceTemplateListDto = ApiSchema<"WorkspaceTemplateListDto">;
+export type CreateWorkspaceRequest = ApiSchema<"CreateWorkspaceRequest">;
+
 export interface WorkspaceContextValue {
   /** The currently active Community ID (null if unselected) */
   currentCommunityId: string | null;

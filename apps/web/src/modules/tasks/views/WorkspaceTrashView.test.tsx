@@ -13,7 +13,8 @@ import {
 } from "@/mocks/data/my-work.js";
 import { WorkspaceTrashView } from "./WorkspaceTrashView.js";
 import * as tasksApi from "../api.js";
-import type { TrashedTaskListDto, TaskDto } from "../types.js";
+import type { TaskDto } from "../types.js";
+import { makeTaskPermissions } from "@/mocks/data/tasks.js";
 
 const testAuthUser = {
   id: MOCK_USER_ID,
@@ -58,6 +59,8 @@ function makeSampleTrashedTask(id: string, key: string, archivedAtDaysAgo = 2): 
       statusCategory: "DONE",
       priority: "HIGH",
       assigneeIds: [],
+      assigneeAssignments: [],
+      assigneeEditableFieldGroups: [],
       creatorId: MOCK_USER_ID,
       startDate: null,
       dueDate: "2026-11-20",
@@ -68,19 +71,9 @@ function makeSampleTrashedTask(id: string, key: string, archivedAtDaysAgo = 2): 
       version: 2,
       fieldRevisions: {},
       effectivePermissions: {
-        canEditTitleDescription: true,
-        canEditDatesPriority: true,
-        canEditCustomFieldsLinks: true,
-        canEditEstimate: true,
-        canUpdateStatus: true,
-        canRequestSignoff: false,
-        canApproveSignoff: false,
-        canAssign: true,
-        canManageSubtasks: true,
-        canMove: true,
+        ...makeTaskPermissions(true),
         canArchive: false,
         canRestore: true,
-        canDeleteForever: false,
       },
       createdAt: "2026-10-01T10:00:00Z",
       updatedAt: "2026-10-15T10:00:00Z",
@@ -119,7 +112,6 @@ function renderTrashView(initialPath = `/workspaces/${WS_SHARED_ENG_ID}/trash`) 
 }
 
 describe("Workspace Trash View (FEAT-A10b / DEC-OPEN-03)", () => {
-  let listTrashedSpy: any;
   let restoreSpy: any;
   let bulkMutateSpy: any;
 
@@ -128,7 +120,7 @@ describe("Workspace Trash View (FEAT-A10b / DEC-OPEN-03)", () => {
   });
 
   it("renders the Workspace Trash header and DEC-OPEN-03 safety policy banner", async () => {
-    listTrashedSpy = vi.spyOn(tasksApi, "listTrashedTasks").mockResolvedValue({
+    vi.spyOn(tasksApi, "listTrashedTasks").mockResolvedValue({
       items: [],
       nextCursor: null,
     });
@@ -142,7 +134,7 @@ describe("Workspace Trash View (FEAT-A10b / DEC-OPEN-03)", () => {
 
   it("DEC-OPEN-03 Safety Invariant: verifies NO permanent purge/delete button exists", async () => {
     const item1 = makeSampleTrashedTask("t-1", "ENG-088");
-    listTrashedSpy = vi.spyOn(tasksApi, "listTrashedTasks").mockResolvedValue({
+    vi.spyOn(tasksApi, "listTrashedTasks").mockResolvedValue({
       items: [item1],
       nextCursor: null,
     });
@@ -162,7 +154,7 @@ describe("Workspace Trash View (FEAT-A10b / DEC-OPEN-03)", () => {
   it("renders trashed tasks with 30-day retention countdown", async () => {
     const item1 = makeSampleTrashedTask("t-1", "ENG-088", 2);
     const item2 = makeSampleTrashedTask("t-2", "ENG-099", 25);
-    listTrashedSpy = vi.spyOn(tasksApi, "listTrashedTasks").mockResolvedValue({
+    vi.spyOn(tasksApi, "listTrashedTasks").mockResolvedValue({
       items: [item1, item2],
       nextCursor: null,
     });
@@ -181,7 +173,7 @@ describe("Workspace Trash View (FEAT-A10b / DEC-OPEN-03)", () => {
   it("executes single-task restore upon clicking Restore button", async () => {
     const user = userEvent.setup();
     const item1 = makeSampleTrashedTask("t-1", "ENG-088");
-    listTrashedSpy = vi.spyOn(tasksApi, "listTrashedTasks").mockResolvedValue({
+    vi.spyOn(tasksApi, "listTrashedTasks").mockResolvedValue({
       items: [item1],
       nextCursor: null,
     });
@@ -206,7 +198,7 @@ describe("Workspace Trash View (FEAT-A10b / DEC-OPEN-03)", () => {
     const user = userEvent.setup();
     const item1 = makeSampleTrashedTask("t-1", "ENG-088");
     const item2 = makeSampleTrashedTask("t-2", "ENG-099");
-    listTrashedSpy = vi.spyOn(tasksApi, "listTrashedTasks").mockResolvedValue({
+    vi.spyOn(tasksApi, "listTrashedTasks").mockResolvedValue({
       items: [item1, item2],
       nextCursor: null,
     });
@@ -240,7 +232,7 @@ describe("Workspace Trash View (FEAT-A10b / DEC-OPEN-03)", () => {
   });
 
   it("renders empty state when no tasks are trashed", async () => {
-    listTrashedSpy = vi.spyOn(tasksApi, "listTrashedTasks").mockResolvedValue({
+    vi.spyOn(tasksApi, "listTrashedTasks").mockResolvedValue({
       items: [],
       nextCursor: null,
     });

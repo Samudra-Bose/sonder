@@ -6,3 +6,7 @@ export * from "./WorkspaceRolePill";
 export * from "./WorkspaceListItem";
 export * from "./WorkspaceSwitcher";
 export * from "./MobileWorkspaceSelector";
+export * from "./useWorkspaceTemplates";
+export * from "./WorkspaceTemplateCard";
+export * from "./WorkspaceTemplatePreviewModal";
+export * from "./CreateWorkspaceDialog";

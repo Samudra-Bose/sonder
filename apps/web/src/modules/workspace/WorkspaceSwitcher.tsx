@@ -7,6 +7,7 @@ import {
   RefreshCw,
   AlertCircle,
   ArrowRightLeft,
+  Plus,
 } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/Popover";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -16,6 +17,7 @@ import { useWorkspace } from "./WorkspaceContext";
 import { WorkspaceBadge } from "./WorkspaceBadge";
 import { WorkspaceRolePill } from "./WorkspaceRolePill";
 import { WorkspaceListItem } from "./WorkspaceListItem";
+import { CreateWorkspaceDialog } from "./CreateWorkspaceDialog";
 import type { WorkspaceDto } from "./types";
 
 export interface WorkspaceSwitcherProps {
@@ -46,6 +48,7 @@ export function WorkspaceSwitcher({
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isCommunityMenuOpen, setIsCommunityMenuOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   // Filter workspaces based on search query (matches name or keyPrefix)
@@ -352,8 +355,30 @@ export function WorkspaceSwitcher({
               </>
             )}
           </div>
+
+          {/* Create Workspace Action */}
+          <div className="p-1.5 border-t border-[var(--border-subtle)] bg-[var(--surface-muted)]/30">
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                setIsCreateDialogOpen(true);
+              }}
+              data-testid="create-workspace-trigger"
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-muted)] transition-colors cursor-pointer"
+            >
+              <Plus className="h-4 w-4 text-[var(--brand-primary)]" />
+              <span>Create Workspace</span>
+            </button>
+          </div>
         </PopoverContent>
       </Popover>
+
+      <CreateWorkspaceDialog
+        isOpen={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        communityId={currentCommunity?.communityId ?? null}
+      />
     </div>
   );
 }

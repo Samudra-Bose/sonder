@@ -14,6 +14,7 @@ import {
 import { TaskListView } from "./views/TaskListView.js";
 import * as tasksApi from "./api.js";
 import type { TaskDto } from "./types.js";
+import { makeTaskPermissions } from "@/mocks/data/tasks.js";
 
 const testAuthUser = {
   id: MOCK_USER_ID,
@@ -47,6 +48,8 @@ function makeSampleTask(id: string, key: string, overrides: Partial<TaskDto> = {
     statusCategory: "TODO",
     priority: "MEDIUM",
     assigneeIds: [],
+    assigneeAssignments: [],
+    assigneeEditableFieldGroups: [],
     creatorId: MOCK_USER_ID,
     startDate: null,
     dueDate: "2026-11-20",
@@ -56,21 +59,7 @@ function makeSampleTask(id: string, key: string, overrides: Partial<TaskDto> = {
     rankKey: "0|hzzzzz:",
     version: 1,
     fieldRevisions: {},
-    effectivePermissions: {
-      canEditTitleDescription: true,
-      canEditDatesPriority: true,
-      canEditCustomFieldsLinks: true,
-      canEditEstimate: true,
-      canUpdateStatus: true,
-      canRequestSignoff: false,
-      canApproveSignoff: false,
-      canAssign: true,
-      canManageSubtasks: true,
-      canMove: true,
-      canArchive: true,
-      canRestore: true,
-      canDeleteForever: false,
-    },
+    effectivePermissions: makeTaskPermissions(true),
     createdAt: "2026-11-01T10:00:00Z",
     updatedAt: "2026-11-01T10:00:00Z",
     archivedAt: null,

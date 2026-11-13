@@ -7,6 +7,7 @@ import {
   ArrowRightLeft,
   ChevronDown,
   Layers,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -14,6 +15,7 @@ import { useWorkspace } from "./WorkspaceContext";
 import { WorkspaceBadge } from "./WorkspaceBadge";
 import { WorkspaceRolePill } from "./WorkspaceRolePill";
 import { WorkspaceListItem } from "./WorkspaceListItem";
+import { CreateWorkspaceDialog } from "./CreateWorkspaceDialog";
 import type { WorkspaceDto } from "./types";
 
 export interface MobileWorkspaceSelectorProps {
@@ -44,6 +46,7 @@ export function MobileWorkspaceSelector({
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isCommunitySelectorOpen, setIsCommunitySelectorOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const query = searchQuery.trim().toLowerCase();
 

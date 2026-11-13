@@ -1,4 +1,4 @@
-import type { WorkspaceDto } from "@/modules/workspace/types";
+import type { WorkspaceDto, WorkspaceTemplateDto } from "@/modules/workspace/types";
 
 export const mockWorkspacesCommunity1: WorkspaceDto[] = [
   {
@@ -140,3 +140,76 @@ export const mockWorkspacesByCommunityId: Record<string, WorkspaceDto[]> = {
   "018f98a2-3f12-7890-b999-456789abcdef": mockWorkspacesCommunity2,
   "018f98a2-3f12-7890-b888-456789abcdef": mockWorkspacesCommunity3NoShared,
 };
+
+export const mockWorkspaceTemplates: WorkspaceTemplateDto[] = [
+  {
+    key: "GENERAL_PURPOSE",
+    name: "General Workspace",
+    description: "A versatile setup for everyday work tracking with standard workflow statuses and views.",
+    templateVersion: 1,
+    workflowStatuses: [
+      { key: "TODO", name: "To do", category: "TODO", position: 0 },
+      { key: "IN_PROGRESS", name: "In progress", category: "IN_PROGRESS", position: 1 },
+      { key: "DONE", name: "Done", category: "DONE", position: 2 },
+    ],
+    customFieldDefinitions: [],
+    defaultSavedViews: [
+      { name: "All work", viewType: "LIST", scope: "SHARED" },
+      { name: "Board", viewType: "BOARD", scope: "SHARED" },
+    ],
+  },
+  {
+    key: "EVENT_PLANNING",
+    name: "Event Planning",
+    description: "Coordinate schedules, logistics, and deadlines for community events and programs.",
+    templateVersion: 1,
+    workflowStatuses: [
+      { key: "BACKLOG", name: "Backlog", category: "BACKLOG", position: 0 },
+      { key: "TODO", name: "To do", category: "TODO", position: 1 },
+      { key: "IN_PROGRESS", name: "In progress", category: "IN_PROGRESS", position: 2 },
+      { key: "DONE", name: "Done", category: "DONE", position: 3 },
+    ],
+    customFieldDefinitions: [
+      { key: "event_date", name: "Event date", fieldType: "DATE", required: false },
+      {
+        key: "workstream",
+        name: "Workstream",
+        fieldType: "SINGLE_SELECT",
+        required: false,
+        options: ["Program", "Logistics", "Marketing", "Registration"],
+      },
+    ],
+    defaultSavedViews: [
+      { name: "Planning board", viewType: "BOARD", scope: "SHARED" },
+      { name: "Event calendar", viewType: "CALENDAR", scope: "SHARED" },
+      { name: "Timeline", viewType: "TIMELINE", scope: "SHARED" },
+    ],
+  },
+  {
+    key: "TEAM_OPERATIONS",
+    name: "Team Operations",
+    description: "Track recurring service areas, team workflows, and periodic review dates.",
+    templateVersion: 1,
+    workflowStatuses: [
+      { key: "BACKLOG", name: "Backlog", category: "BACKLOG", position: 0 },
+      { key: "TODO", name: "Planned", category: "TODO", position: 1 },
+      { key: "IN_PROGRESS", name: "In progress", category: "IN_PROGRESS", position: 2 },
+      { key: "DONE", name: "Done", category: "DONE", position: 3 },
+    ],
+    customFieldDefinitions: [
+      {
+        key: "service_area",
+        name: "Service area",
+        fieldType: "SINGLE_SELECT",
+        required: false,
+        options: ["Facilities", "Communications", "Technical", "Community"],
+      },
+      { key: "review_date", name: "Review date", fieldType: "DATE", required: false },
+    ],
+    defaultSavedViews: [
+      { name: "Operations list", viewType: "LIST", scope: "SHARED" },
+      { name: "Operations board", viewType: "BOARD", scope: "SHARED" },
+      { name: "Review calendar", viewType: "CALENDAR", scope: "SHARED" },
+    ],
+  },
+];
