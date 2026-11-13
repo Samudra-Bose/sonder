@@ -264,7 +264,7 @@ export function TaskListView({
           totalCount={effectiveBacklogCount}
           isOpen={isTrayOpen}
           onToggle={handleToggleTray}
-          onTaskClick={openTask}
+          onTaskClick={(task) => openTask(task.taskKey, { workspaceId })}
           workspaceId={workspaceId}
           communityId={_communityId}
           viewType="list"
@@ -571,7 +571,7 @@ export function TaskListView({
           totalCount={effectiveBacklogCount}
           isOpen={isTrayOpen}
           onToggle={handleToggleTray}
-          onTaskClick={openTask}
+          onTaskClick={(task) => openTask(task.taskKey, { workspaceId })}
           workspaceId={workspaceId}
           communityId={_communityId}
           viewType="list"

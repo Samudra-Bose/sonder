@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils.js";
 import { TaskArchetypeBadge } from "../TaskArchetypeBadge.js";
 import { TaskActionsMenu } from "../TaskActionsMenu.js";
 import { useUpdateTask } from "../useUpdateTask.js";
-import type { TaskDto, TaskStatusCategory, TaskPriority } from "../types.js";
+import type { TaskDto, TaskPriority } from "../types.js";
 
 export interface BacklogTaskTrayProps {
   tasks: TaskDto[];
@@ -213,7 +213,7 @@ export function BacklogTaskTray({
                       <span className="font-semibold text-xs font-mono text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] flex-shrink-0">
                         {task.taskKey}
                       </span>
-                      <TaskArchetypeBadge itemType={task.itemType} size="sm" />
+                      <TaskArchetypeBadge archetype={task.itemType} size="sm" />
                       <span className="text-xs font-medium text-[var(--text-primary)] truncate">
                         {task.title}
                       </span>
@@ -236,7 +236,7 @@ export function BacklogTaskTray({
                       {/* Quick Action: Promote to To Do */}
                       <Button
                         type="button"
-                        size="xs"
+                        size="sm"
                         variant="outline"
                         onClick={(e) => handlePromoteToTodo(e, task)}
                         disabled={isPromoting}

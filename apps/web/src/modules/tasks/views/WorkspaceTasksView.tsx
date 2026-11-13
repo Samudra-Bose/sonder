@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useRef, useCallback, useContext } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback, useContext } from "react";
 import { useParams, useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { AlertCircle, CheckCircle, Info, X } from "lucide-react";
 import { useWorkspace } from "@/modules/workspace";
@@ -364,6 +364,55 @@ function WorkspaceTasksViewInner({
     }
   }, [queryResult]);
 
+  // Backlog Tray Tasks & Count (FEAT-B02 / VS-09G)
+  const backlogTasks = useMemo(() => {
+    if (queryResult?.backlogPreview && queryResult.backlogPreview.length > 0) {
+      return queryResult.backlogPreview;
+    }
+    if (queryResult?.items) {
+      return queryResult.items.filter((t) => t.statusCategory === "BACKLOG");
+    }
+    return [];
+  }, [queryResult]);
+
+  const backlogCount = queryResult?.backlogCount ?? backlogTasks.length;
+
+  // Workspace-Scoped Collapsible Tray Persistence (FEAT-B02 / VS-09G)
+  const [isBacklogTrayOpen, setIsBacklogTrayOpen] = useState<boolean>(() => {
+    if (typeof window === "undefined" || !window.localStorage || !effectiveWorkspaceId) return false;
+    try {
+      return localStorage.getItem(`sonder:backlog-tray-open:${effectiveWorkspaceId}`) === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const handleToggleBacklogTray = useCallback(() => {
+    setIsBacklogTrayOpen((prev) => {
+      const next = !prev;
+      try {
+        if (typeof window !== "undefined" && window.localStorage && effectiveWorkspaceId) {
+          localStorage.setItem(`sonder:backlog-tray-open:${effectiveWorkspaceId}`, String(next));
+        }
+      } catch {
+        // ignore storage errors
+      }
+      return next;
+    });
+  }, [effectiveWorkspaceId]);
+
+  useEffect(() => {
+    if (!effectiveWorkspaceId) return;
+    try {
+      const saved = localStorage.getItem(`sonder:backlog-tray-open:${effectiveWorkspaceId}`);
+      if (saved !== null) {
+        setIsBacklogTrayOpen(saved === "true");
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, [effectiveWorkspaceId]);
+
   // Loading state when resolving workspace
   if (isWorkspacesLoading) {
     return (
@@ -492,6 +541,10 @@ function WorkspaceTasksViewInner({
       {activeView === "list" ? (
         <TaskListView
           tasks={queryResult?.items ?? []}
+          backlogTasks={backlogTasks}
+          backlogCount={backlogCount}
+          isBacklogOpen={isBacklogTrayOpen}
+          onToggleBacklog={handleToggleBacklogTray}
           isLoading={isTasksLoading}
           isError={isTasksError}
           error={tasksError}
@@ -505,6 +558,10 @@ function WorkspaceTasksViewInner({
       ) : activeView === "board" ? (
         <TaskBoardView
           groups={queryResult?.groups ?? []}
+          backlogTasks={backlogTasks}
+          backlogCount={backlogCount}
+          isBacklogOpen={isBacklogTrayOpen}
+          onToggleBacklog={handleToggleBacklogTray}
           isLoading={isTasksLoading}
           isError={isTasksError}
           error={tasksError}
