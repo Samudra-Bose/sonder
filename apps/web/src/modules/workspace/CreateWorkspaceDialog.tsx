@@ -33,23 +33,6 @@ export interface CreateWorkspaceDialogProps {
   onSuccess?: (workspace: WorkspaceDto) => void;
 }
 
-const BLANK_TEMPLATE_MOCK: WorkspaceTemplateDto = {
-  key: "GENERAL_PURPOSE",
-  name: "Blank Workspace",
-  description: "Start clean with standard workflow statuses and views without preconfigured custom fields.",
-  templateVersion: 1,
-  workflowStatuses: [
-    { key: "TODO", name: "To do", category: "TODO", position: 0 },
-    { key: "IN_PROGRESS", name: "In progress", category: "IN_PROGRESS", position: 1 },
-    { key: "DONE", name: "Done", category: "DONE", position: 2 },
-  ],
-  customFieldDefinitions: [],
-  defaultSavedViews: [
-    { name: "All work", viewType: "LIST", scope: "SHARED" },
-    { name: "Board", viewType: "BOARD", scope: "SHARED" },
-  ],
-};
-
 export function CreateWorkspaceDialog({
   isOpen,
   onOpenChange,
@@ -67,9 +50,7 @@ export function CreateWorkspaceDialog({
   const [name, setName] = useState("");
   const [kind, setKind] = useState<WorkspaceKind>("SHARED");
   const [keyPrefix, setKeyPrefix] = useState("");
-  const [selectedTemplateKey, setSelectedTemplateKey] = useState<
-    WorkspaceTemplateKey | "BLANK"
-  >("GENERAL_PURPOSE");
+  const [selectedTemplateKey, setSelectedTemplateKey] = useState<WorkspaceTemplateKey>("GENERAL_PURPOSE");
 
   // Template preview state
   const [previewTemplate, setPreviewTemplate] = useState<WorkspaceTemplateDto | null>(null);
@@ -92,10 +73,9 @@ export function CreateWorkspaceDialog({
     refetch: refetchTemplates,
   } = useWorkspaceTemplates(communityId);
 
-  // Reset form when dialog closes or opens fresh
+  // Reset form when dialog closes
   const handleClose = () => {
     onOpenChange(false);
-    // Keep local values until modal is closed
     setTimeout(() => {
       setName("");
       setKind("SHARED");
@@ -140,14 +120,11 @@ export function CreateWorkspaceDialog({
       return;
     }
 
-    const effectiveTemplateKey: WorkspaceTemplateKey =
-      selectedTemplateKey === "BLANK" ? "GENERAL_PURPOSE" : selectedTemplateKey;
-
     const payload: CreateWorkspaceRequest = {
       name: name.trim(),
       kind,
       maxSubtaskDepth: 1,
-      templateKey: effectiveTemplateKey,
+      templateKey: selectedTemplateKey,
     };
 
     if (keyPrefix.trim()) {
@@ -162,8 +139,11 @@ export function CreateWorkspaceDialog({
         csrfToken ?? ""
       );
 
-      // Invalidate workspace list queries
+      // Invalidate and refetch workspace list queries to ensure immediate visibility
       await queryClient.invalidateQueries({
+        queryKey: ["communities", communityId, "workspaces"],
+      });
+      await queryClient.refetchQueries({
         queryKey: ["communities", communityId, "workspaces"],
       });
 
