@@ -945,6 +945,10 @@ export const taskHandlers = [
         task.milestoneId = body.milestoneId;
         task.fieldRevisions.milestoneId = (task.fieldRevisions.milestoneId ?? 1) + 1;
       }
+      if (body.itemType !== undefined) {
+        task.itemType = body.itemType;
+        task.fieldRevisions.itemType = (task.fieldRevisions.itemType ?? 1) + 1;
+      }
 
       task.version += 1;
       task.updatedAt = new Date().toISOString();

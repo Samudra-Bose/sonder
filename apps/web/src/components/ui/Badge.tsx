@@ -10,25 +10,33 @@ import {
   Minus,
   ChevronDown,
   CircleDashed,
+  SquareCheck,
+  Package,
+  Bug,
+  GitCommit,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type TaskStatus = "BACKLOG" | "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE" | "CANCELED";
 export type TaskPriority = "URGENT" | "HIGH" | "MEDIUM" | "LOW" | "NONE";
+export type TaskItemType = "TASK" | "DELIVERABLE" | "BUG" | "DECISION";
+
 export type BadgeVariant =
   | "default"
   | "secondary"
   | "outline"
   | "accent"
   | `status-${TaskStatus}`
-  | `priority-${TaskPriority}`;
+  | `priority-${TaskPriority}`
+  | `archetype-${TaskItemType}`;
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
   status?: TaskStatus;
   priority?: TaskPriority;
+  archetype?: TaskItemType;
   size?: "sm" | "md";
-  /** Optional icon override; if not provided, status & priority badges automatically render their required dual-indicator icon */
+  /** Optional icon override; if not provided, status, priority & archetype badges automatically render their required dual-indicator icon */
   icon?: React.ReactNode;
 }
 
@@ -104,6 +112,32 @@ const priorityConfig: Record<
   },
 };
 
+const archetypeConfig: Record<
+  TaskItemType,
+  { styles: string; icon: React.ReactElement }
+> = {
+  TASK: {
+    styles:
+      "bg-[var(--surface-muted)] border-[var(--border-subtle)] text-[var(--text-secondary)]",
+    icon: <SquareCheck className="h-3 w-3 shrink-0 text-[var(--brand-accent-text)]" aria-hidden="true" data-testid="archetype-icon-TASK" />,
+  },
+  DELIVERABLE: {
+    styles:
+      "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-300",
+    icon: <Package className="h-3 w-3 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" data-testid="archetype-icon-DELIVERABLE" />,
+  },
+  BUG: {
+    styles:
+      "bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-300",
+    icon: <Bug className="h-3 w-3 shrink-0 text-rose-600 dark:text-rose-400" aria-hidden="true" data-testid="archetype-icon-BUG" />,
+  },
+  DECISION: {
+    styles:
+      "bg-purple-500/10 border-purple-500/20 text-purple-700 dark:text-purple-300",
+    icon: <GitCommit className="h-3 w-3 shrink-0 text-purple-600 dark:text-purple-400" aria-hidden="true" data-testid="archetype-icon-DECISION" />,
+  },
+};
+
 const genericStyles: Record<string, string> = {
   default: "bg-[var(--brand-primary)] text-[var(--text-inverted)] border-transparent",
   secondary: "bg-[var(--surface-muted)] text-[var(--text-secondary)] border-transparent",
@@ -117,6 +151,7 @@ export const Badge: React.FC<BadgeProps> = ({
   variant,
   status,
   priority,
+  archetype,
   size = "md",
   icon,
   ...props
@@ -142,6 +177,12 @@ export const Badge: React.FC<BadgeProps> = ({
     activePriority = variant.replace("priority-", "") as TaskPriority;
   }
 
+  // Resolve archetype config
+  let activeArchetype: TaskItemType | undefined = archetype;
+  if (!activeArchetype && variant?.startsWith("archetype-")) {
+    activeArchetype = variant.replace("archetype-", "") as TaskItemType;
+  }
+
   if (activeStatus && statusConfig[activeStatus]) {
     styleClasses = statusConfig[activeStatus].styles;
     // Dual indicator requirement: status must always include an icon
@@ -153,6 +194,12 @@ export const Badge: React.FC<BadgeProps> = ({
     // Dual indicator requirement: priority must always include an icon
     if (!resolvedIcon) {
       resolvedIcon = priorityConfig[activePriority].icon;
+    }
+  } else if (activeArchetype && archetypeConfig[activeArchetype]) {
+    styleClasses = archetypeConfig[activeArchetype].styles;
+    // Dual indicator requirement: archetype must always include an icon
+    if (!resolvedIcon) {
+      resolvedIcon = archetypeConfig[activeArchetype].icon;
     }
   } else if (variant) {
     styleClasses = genericStyles[variant] || genericStyles.default;
