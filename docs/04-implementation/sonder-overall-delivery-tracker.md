@@ -149,7 +149,7 @@ SONDER PLATFORM PROGRESS METRICS (AUDIT BASELINE 2026-11-12)
 | **FEAT-H02** | Outbound HMAC-Signed HTTPS Webhooks | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3 | Egress & SSRF hardening |
 | **FEAT-I01** | Lightweight Shareable Workspace Intake Forms | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2 | Anonymous access scope |
 | **FEAT-I02** | Full ITSM Helpdesk Suite, SLA Clocks & Incident Command | Excluded | **REJECTED** | None | None | Excluded per community focus | Out of scope |
-| **FEAT-J01a**| Filtered View UTF-8 CSV Export | M1.2 | **NOT STARTED** | None | None | Client-side export algorithm | Toolbar button pending |
+| **FEAT-J01a**| Filtered View UTF-8 CSV Export | M1.2 | **DONE** | `taskExportCsv.ts`, `useTaskExportCsv.ts`, `TaskViewToolbar.tsx`, `WorkspaceTasksView.tsx` | `TaskExportCsv.test.tsx` (13) | Client-side export algorithm, RFC 4180 UTF-8 BOM, OWASP formula protection | Export CSV button active on toolbar |
 | **FEAT-J01b**| Guided CSV Import Wizard with Dry-Run Validation | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2 | Phase 2 timeline |
 | **FEAT-J02** | Selected-Field Offline Task Editing & Queued Sync | M1.3 | **NOT STARTED** | None | None | IndexedDB queue specification (CR-15) | Sync engine pending |
 | **FEAT-J03** | Accessible Design System Primitives & Tokens (WCAG 2.2 AA) | M1.1 | **DONE** | `index.css`, `design-tokens.ts`, `keyboard.ts`, `theme.tsx`, `reduced-motion.ts` | 4 foundation suites (24 tests, 70 static expect sites) | Token standards in `@theme` | Operational rate limit / PITR pending |
@@ -394,7 +394,7 @@ flowchart TD
         FEAT_A07["FEAT-A07 (Task Cloning) - NOT STARTED"]
         FEAT_A10b["FEAT-A10b (Trash & Bulk Bar) - NOT STARTED"]
         FEAT_D04a["FEAT-D04a (Core Custom Fields) - NOT STARTED"]
-        FEAT_J01a["FEAT-J01a (CSV Export) - NOT STARTED"]
+        FEAT_J01a["FEAT-J01a (CSV Export) - DONE"]
         FEAT_C06["FEAT-C06 (Swimlanes) - BLOCKED"]
     end
 

@@ -1,5 +1,6 @@
 import React, { useMemo, useEffect, useRef, useCallback, useContext } from "react";
 import { useParams, useSearchParams, useNavigate, useLocation } from "react-router-dom";
+import { AlertCircle, CheckCircle, Info, X } from "lucide-react";
 import { useWorkspace } from "@/modules/workspace";
 import { WorkspaceBadge } from "@/modules/workspace/WorkspaceBadge";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -7,6 +8,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { useWorkspaceTasks } from "../useWorkspaceTasks";
+import { useTaskExportCsv } from "../useTaskExportCsv.js";
 import { TaskViewToolbar } from "./TaskViewToolbar";
 import { TaskListView } from "./TaskListView";
 import { TaskBoardView } from "./TaskBoardView";
@@ -342,6 +344,19 @@ function WorkspaceTasksViewInner({
     { enabled: Boolean(effectiveCommunityId && effectiveWorkspaceId) }
   );
 
+  // CSV Export Hook (FEAT-J01a / VS-09F)
+  const {
+    isExporting,
+    canExport,
+    feedback: exportFeedback,
+    clearFeedback: clearExportFeedback,
+    exportFilteredTasksCsv,
+  } = useTaskExportCsv({
+    communityId: effectiveCommunityId,
+    workspaceId: effectiveWorkspaceId,
+    activeWorkspace,
+  });
+
   // Reset transition snapshot ID once query has executed
   useEffect(() => {
     if (queryResult && transitionSnapshotIdRef.current) {
@@ -431,7 +446,47 @@ function WorkspaceTasksViewInner({
         totalCount={totalCount}
         isFetching={isTasksFetching}
         onRefresh={() => refetchTasks()}
+        onExportCsv={() => exportFilteredTasksCsv(querySpec)}
+        isExporting={isExporting}
+        canExport={canExport}
       />
+
+      {/* Export CSV status / error feedback banner */}
+      {exportFeedback && (
+        <div
+          role={exportFeedback.type === "error" ? "alert" : "status"}
+          aria-live={exportFeedback.type === "error" ? "assertive" : "polite"}
+          data-testid={`export-feedback-${exportFeedback.type}`}
+          className={cn(
+            "flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs border transition-all",
+            exportFeedback.type === "error" &&
+              "bg-[var(--status-canceled-surface)] border-[var(--status-canceled-border)] text-[var(--status-canceled-text)]",
+            exportFeedback.type === "success" &&
+              "bg-[var(--status-done-surface)] border-[var(--status-done-border)] text-[var(--status-done-text)]",
+            exportFeedback.type === "info" &&
+              "bg-[var(--surface-muted)] border-[var(--border-subtle)] text-[var(--text-secondary)]"
+          )}
+        >
+          <div className="flex items-center gap-2">
+            {exportFeedback.type === "error" ? (
+              <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            ) : exportFeedback.type === "success" ? (
+              <CheckCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            ) : (
+              <Info className="h-4 w-4 shrink-0" aria-hidden="true" />
+            )}
+            <span>{exportFeedback.message}</span>
+          </div>
+          <button
+            type="button"
+            onClick={clearExportFeedback}
+            className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
+            aria-label="Dismiss export notice"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Primary View Projection (List, Board, Calendar, or Timeline) */}
       {activeView === "list" ? (

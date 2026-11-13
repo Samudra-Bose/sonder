@@ -11,6 +11,7 @@ import {
   Plus,
   RefreshCw,
   Layers,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { SearchInput } from "@/components/ui/SearchInput";
@@ -35,6 +36,9 @@ export interface TaskViewToolbarProps {
   totalCount: number;
   isFetching?: boolean;
   onRefresh?: () => void;
+  onExportCsv?: () => void;
+  isExporting?: boolean;
+  canExport?: boolean;
   className?: string;
 }
 
@@ -56,6 +60,9 @@ export function TaskViewToolbar({
   totalCount,
   isFetching = false,
   onRefresh,
+  onExportCsv,
+  isExporting = false,
+  canExport = true,
   className,
 }: TaskViewToolbarProps): React.JSX.Element {
   const { open: openQuickComposer } = useQuickTaskComposer();
@@ -165,8 +172,29 @@ export function TaskViewToolbar({
           />
         </div>
 
-        {/* Actions: Refresh + New Task button */}
+        {/* Actions: Export CSV + Refresh + New Task button */}
         <div className="flex items-center gap-2 self-end sm:self-auto">
+          {onExportCsv && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onExportCsv}
+              disabled={isExporting || canExport === false}
+              aria-label={isExporting ? "Exporting tasks to CSV..." : "Export filtered tasks to CSV"}
+              data-testid="task-toolbar-export-csv-btn"
+              className="gap-1.5 text-xs h-9 cursor-pointer"
+              title={canExport === false ? "You do not have permission to export tasks" : "Export filtered tasks to CSV"}
+            >
+              {isExporting ? (
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+              ) : (
+                <Download className="h-3.5 w-3.5" aria-hidden="true" />
+              )}
+              <span>{isExporting ? "Exporting..." : "Export CSV"}</span>
+            </Button>
+          )}
+
           {onRefresh && (
             <button
               type="button"
@@ -174,7 +202,7 @@ export function TaskViewToolbar({
               disabled={isFetching}
               aria-label="Refresh tasks query"
               className={cn(
-                "p-2 rounded-lg border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-muted)] focus-ring transition-colors",
+                "p-2 rounded-lg border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-muted)] focus-ring transition-colors cursor-pointer",
                 isFetching && "animate-spin text-[var(--brand-accent-text)]"
               )}
             >
