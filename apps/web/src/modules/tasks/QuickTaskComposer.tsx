@@ -97,6 +97,7 @@ export function QuickTaskComposer({
   const resetForm = () => {
     setTitle("");
     setDescription("");
+    setItemType("TASK");
     setPriority("NONE");
     setDueDate("");
     setValidationErrors({});
@@ -144,6 +145,7 @@ export function QuickTaskComposer({
         workspaceId: selectedWorkspaceId,
         data: {
           title: trimmedTitle,
+          itemType,
           ...(trimmedDesc ? { description: trimmedDesc } : {}),
           ...(priority !== "NONE" ? { priority } : {}),
           ...(dueDate ? { dueDate } : {}),
