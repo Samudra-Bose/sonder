@@ -143,7 +143,7 @@ SONDER PLATFORM PROGRESS METRICS (AUDIT BASELINE 2026-11-12)
 | **FEAT-G01** | Authentication, Session Lifecycle, Cookies & CSRF Spine | M1.1 | **DONE** | `auth/`, `csrf.ts`, session restore hooks | `AuthFlow.test.tsx` (25) | MSW handlers: `/auth/*`, `/me` | Live auth service & cookies pending |
 | **FEAT-G02a**| Capability RBAC Engine, 4 System Roles & Permission Gates | M1.1 | **DONE** | `rbac/`, `PermissionGate.tsx` | `WorkspaceSwitcher.test.tsx` (22) | RBAC matrix in contracts | Server RLS policies pending |
 | **FEAT-G02b**| Configurable Custom Roles Builder UI | M1.3 | **DECISION BLOCKED** | None | None | Blocked on simulator contract | Blocked on `DEP-ROLES-01` |
-| **FEAT-G03** | Plain-Language Permission Inspector & Role Simulator | M1.3 | **NOT STARTED** | `X-Preview-Role-Id` supported in OpenAPI | None | Header simulator contract defined | Banner UI pending |
+| **FEAT-G03** | Plain-Language Permission Inspector & Role Simulator | M1.3 | **DONE** | `PermissionInspector.tsx`, `capabilityDefinitions.ts`, `PermissionsSettingsView.tsx` | `RoleSimulator.test.tsx` (7) | MSW handlers: `/roles`, `X-Preview-Role-Id` safeguard | Downward-only simulation, read-only guard, and full 31-capability matrix verified |
 | **FEAT-G04** | Append-Only Hash-Chained Audit Log Table & CSV Export | M1.3 | **NOT STARTED** | None | None | Schemas: `/audit-events` | Audit table UI pending |
 | **FEAT-H01** | Declarative 1-Hop Workflow Automations | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3 | Automation engine pending |
 | **FEAT-H02** | Outbound HMAC-Signed HTTPS Webhooks | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3 | Egress & SSRF hardening |
@@ -399,7 +399,7 @@ flowchart TD
     end
 
     subgraph M1_3 ["Milestone M1.3: Governance & Production Acceptance"]
-        FEAT_G03["FEAT-G03 (Permission Simulator) - NOT STARTED"]
+        FEAT_G03["FEAT-G03 (Permission Simulator) - DONE"]
         FEAT_G04["FEAT-G04 (Audit Log Table) - NOT STARTED"]
         FEAT_J02["FEAT-J02 (Offline Task Sync) - NOT STARTED"]
         FEAT_G02b["FEAT-G02b (Custom Roles UI) - BLOCKED"]
@@ -410,9 +410,9 @@ flowchart TD
 
 ### Phase 1 Breakdown:
 - **Total Phase 1 Capabilities:** 34 concrete features.
-- **DONE:** 25 capabilities (73.53%).
+- **DONE:** 26 capabilities (76.47%).
 - **PARTIAL:** 2 capabilities (`FEAT-D05a`, `FEAT-K01`).
-- **NOT STARTED:** 3 capabilities (`FEAT-G03`, `FEAT-G04`, `FEAT-J02`).
+- **NOT STARTED:** 2 capabilities (`FEAT-G04`, `FEAT-J02`).
 - **DECISION BLOCKED:** 3 capabilities (`FEAT-C04`, `FEAT-C06`, `FEAT-G02b`).
 - **BACKEND DEPENDENT:** 1 capability (`FEAT-F02`).
 

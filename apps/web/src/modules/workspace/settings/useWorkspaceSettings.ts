@@ -4,6 +4,7 @@ import {
   fetchWorkspaceSettings,
   updateWorkspaceSettingsApi,
   fetchWorkspaceMembers,
+  fetchWorkspaceRoles,
 } from "./api.js";
 import type { UpdateWorkspaceSettingsRequest } from "./types.js";
 
@@ -66,5 +67,22 @@ export function useWorkspaceMembers(
     },
     enabled: Boolean(communityId && workspaceId),
     staleTime: 1000 * 60 * 2,
+  });
+}
+
+export function useWorkspaceRoles(
+  communityId: string | null | undefined,
+  workspaceId: string | null | undefined
+) {
+  return useQuery({
+    queryKey: ["communities", communityId, "workspaces", workspaceId, "roles"],
+    queryFn: async () => {
+      if (!communityId || !workspaceId) {
+        return { items: [] };
+      }
+      return fetchWorkspaceRoles(communityId, workspaceId);
+    },
+    enabled: Boolean(communityId && workspaceId),
+    staleTime: 1000 * 60 * 5,
   });
 }

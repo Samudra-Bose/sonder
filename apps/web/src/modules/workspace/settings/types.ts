@@ -9,6 +9,9 @@ export type UpdateCustomFieldDefinitionRequest = ApiSchema<"UpdateCustomFieldDef
 
 export type WorkspaceMemberDto = ApiSchema<"WorkspaceMemberDto">;
 export type WorkspaceMemberListDto = ApiSchema<"WorkspaceMemberListDto">;
+export type WorkspaceRoleDto = ApiSchema<"WorkspaceRoleDto">;
+export type WorkspaceRoleListDto = ApiSchema<"WorkspaceRoleListDto">;
+export type RoleCapability = ApiSchema<"RoleCapability">;
 export type UpdateWorkspaceSettingsRequest = ApiSchema<"UpdateWorkspaceSettingsRequest">;
 
 export type SettingsCategory =

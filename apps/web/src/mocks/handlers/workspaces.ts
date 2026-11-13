@@ -6,6 +6,7 @@ import {
   mockWorkspacesCommunity1,
   mockWorkspaceTemplates,
 } from "../data/workspaces";
+import { initialMockWorkspaceRoles } from "../data/roles.js";
 import type {
   WorkspaceDto,
   WorkspaceListDto,
@@ -393,6 +394,19 @@ export const workspaceHandlers = [
       await delay(workspacesDelayMs);
     }
 
+    if (request.headers.get("X-Preview-Role-Id")) {
+      return HttpResponse.json(
+        {
+          type: "https://errors.sonder.platform/preview-mode-read-only",
+          title: "Preview Mode Read Only",
+          status: 403,
+          detail: "Exit Role Preview mode before making changes to workspace data.",
+          code: "PREVIEW_MODE_READ_ONLY",
+        },
+        { status: 403, headers: { "Content-Type": "application/problem+json" } }
+      );
+    }
+
     const csrfToken = request.headers.get("X-CSRF-Token");
     if (!csrfToken || !csrfToken.trim()) {
       return HttpResponse.json(
@@ -583,6 +597,24 @@ export const workspaceHandlers = [
 
     return HttpResponse.json(
       { items: mockMembers, nextCursor: null },
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "private, no-store",
+        },
+      }
+    );
+  }),
+
+  // GET /api/v1/communities/:communityId/workspaces/:workspaceId/roles
+  http.get("/api/v1/communities/:communityId/workspaces/:workspaceId/roles", async () => {
+    if (workspacesDelayMs > 0) {
+      await delay(workspacesDelayMs);
+    }
+
+    return HttpResponse.json(
+      { items: initialMockWorkspaceRoles },
       {
         status: 200,
         headers: {

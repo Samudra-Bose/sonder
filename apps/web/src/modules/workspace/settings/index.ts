@@ -8,4 +8,6 @@ export * from "./CustomFieldsSettingsView.js";
 export * from "./WorkflowSettingsView.js";
 export * from "./MembersSettingsView.js";
 export * from "./PermissionsSettingsView.js";
+export * from "./PermissionInspector.js";
+export * from "./capabilityDefinitions.js";
 export * from "./WorkspaceSettingsLayout.js";

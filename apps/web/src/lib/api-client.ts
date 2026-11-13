@@ -20,6 +20,7 @@ export class ApiProblemError extends Error {
 export interface RequestOptions extends RequestInit {
   csrfToken?: string | null;
   mutationId?: string;
+  previewRoleId?: string | null;
 }
 
 const API_BASE = "/api/v1";
@@ -30,6 +31,7 @@ const API_BASE = "/api/v1";
  * - Required X-Mutation-Id (UUIDv7) on mutating methods (POST, PUT, PATCH, DELETE)
  * - Required X-CSRF-Token on mutating methods; fails closed if omitted or empty
  * - application/problem+json error decoding
+ * - Role-Preview Simulation Safeguard (FEAT-G03): blocks mutating requests when X-Preview-Role-Id is active
  */
 export async function apiRequest<T>(
   endpoint: string,
@@ -38,6 +40,7 @@ export async function apiRequest<T>(
   const {
     csrfToken,
     mutationId,
+    previewRoleId,
     headers: customHeaders,
     method = "GET",
     credentials: _ignoredCredentials,
@@ -46,6 +49,21 @@ export async function apiRequest<T>(
   const isMutation = ["POST", "PUT", "PATCH", "DELETE"].includes(method.toUpperCase());
 
   const headers = new Headers(customHeaders);
+
+  if (previewRoleId) {
+    headers.set("X-Preview-Role-Id", previewRoleId);
+  }
+
+  // Role preview safeguard: prevent accidental mutations while simulating another role
+  if (isMutation && headers.get("X-Preview-Role-Id")) {
+    throw new ApiProblemError(403, {
+      type: "https://errors.sonder.platform/preview-mode-read-only",
+      title: "Preview Mode Read Only",
+      status: 403,
+      detail: "Exit Role Preview mode before making changes to workspace data.",
+      code: "PREVIEW_MODE_READ_ONLY",
+    });
+  }
 
   if (isMutation) {
     if (!csrfToken || !csrfToken.trim()) {

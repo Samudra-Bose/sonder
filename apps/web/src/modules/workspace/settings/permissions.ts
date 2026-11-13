@@ -1,7 +1,5 @@
 import type { WorkspaceDto } from "@/modules/workspace/types.js";
-import type { ApiSchema } from "@sonder/contracts";
-
-export type RoleCapability = ApiSchema<"RoleCapability">;
+import type { RoleCapability } from "./types.js";
 
 /**
  * Validates whether the active user in the given workspace context possesses

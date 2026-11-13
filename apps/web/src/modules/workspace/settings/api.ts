@@ -7,6 +7,7 @@ import type {
   UpdateCustomFieldDefinitionRequest,
   UpdateWorkspaceSettingsRequest,
   WorkspaceMemberListDto,
+  WorkspaceRoleListDto,
 } from "./types.js";
 
 /**
@@ -147,5 +148,18 @@ export async function fetchWorkspaceMembers(
 ): Promise<WorkspaceMemberListDto> {
   return apiRequest<WorkspaceMemberListDto>(
     `/communities/${encodeURIComponent(communityId)}/workspaces/${encodeURIComponent(workspaceId)}/members`
+  );
+}
+
+/**
+ * List workspace built-in and custom roles.
+ * Contract: GET /api/v1/communities/{communityId}/workspaces/{workspaceId}/roles
+ */
+export async function fetchWorkspaceRoles(
+  communityId: string,
+  workspaceId: string
+): Promise<WorkspaceRoleListDto> {
+  return apiRequest<WorkspaceRoleListDto>(
+    `/communities/${encodeURIComponent(communityId)}/workspaces/${encodeURIComponent(workspaceId)}/roles`
   );
 }

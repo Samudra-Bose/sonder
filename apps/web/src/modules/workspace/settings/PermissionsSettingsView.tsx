@@ -2,6 +2,7 @@ import React from "react";
 import { useParams } from "react-router-dom";
 import { useWorkspace } from "@/modules/workspace/index.js";
 import { useWorkspaceSettings } from "./useWorkspaceSettings.js";
+import { PermissionInspector } from "./PermissionInspector.js";
 
 interface RoleCapabilitySummary {
   role: string;
@@ -63,39 +64,59 @@ export const PermissionsSettingsView: React.FC = () => {
   const workspaceId = params.workspaceId ?? activeWorkspace?.id;
 
   const { data: settings } = useWorkspaceSettings(communityId, workspaceId);
+  const effectiveWorkspace = settings ?? activeWorkspace;
 
   return (
     <div className="space-y-8" data-testid="permissions-settings">
+      {/* Header */}
       <div>
         <h2 className="text-xl font-semibold tracking-tight text-foreground">
-          Roles & Permissions Matrix
+          Roles & Permissions Governance
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Sonder enforces role-based capabilities and task-level permission checks. The backend remains the authoritative enforcement point on every operation.
+          Sonder enforces role-based capabilities and task-level permission checks. Use the interactive Role Simulator (FEAT-G03) to inspect effective permissions or consult the built-in roles matrix.
         </p>
       </div>
 
-      {/* Role Capabilities Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-testid="role-matrix">
-        {ROLES.map((r) => (
-          <div
-            key={r.role}
-            className="rounded-lg border border-border bg-card p-5 shadow-xs space-y-3"
-          >
-            <div className="flex items-center justify-between">
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${r.badgeClass}`}>
-                {r.role}
-              </span>
+      {/* Interactive Permission Inspector & Role Simulator */}
+      <PermissionInspector
+        workspace={effectiveWorkspace}
+        communityId={communityId}
+        workspaceId={workspaceId}
+      />
+
+      {/* Built-in Role Capabilities Matrix */}
+      <div className="space-y-4 pt-4 border-t border-border">
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">
+            Built-In Roles Reference Matrix
+          </h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Standard baseline capability sets for immutable built-in roles.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-testid="role-matrix">
+          {ROLES.map((r) => (
+            <div
+              key={r.role}
+              className="rounded-lg border border-border bg-card p-5 shadow-xs space-y-3"
+            >
+              <div className="flex items-center justify-between">
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${r.badgeClass}`}>
+                  {r.role}
+                </span>
+              </div>
+              <ul className="text-xs text-muted-foreground space-y-1.5 list-disc list-inside">
+                {r.capabilities.map((cap, i) => (
+                  <li key={i} className="leading-relaxed">
+                    <span className="text-foreground/90">{cap}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ul className="text-xs text-muted-foreground space-y-1.5 list-disc list-inside">
-              {r.capabilities.map((cap, i) => (
-                <li key={i} className="leading-relaxed">
-                  <span className="text-foreground/90">{cap}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Delegation & Task Policy Summary */}
