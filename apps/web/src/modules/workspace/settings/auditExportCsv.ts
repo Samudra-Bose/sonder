@@ -77,6 +77,40 @@ export const ALLOW_LISTED_METADATA_KEYS = new Set([
 ]);
 
 /**
+ * Safely sanitizes a nested value within allow-listed metadata:
+ * - Allows primitives (strings, numbers, booleans, null)
+ * - Traverses arrays and plain objects up to a safe depth limit (3)
+ * - Excludes functions, symbols, BigInt, and prototype-polluting keys (__proto__, constructor, prototype)
+ */
+function sanitizeNestedValue(val: unknown, depth = 0): unknown {
+  if (depth > 3) return undefined;
+  if (val === null || val === undefined) return null;
+  const t = typeof val;
+  if (t === "string" || t === "number" || t === "boolean") return val;
+  if (Array.isArray(val)) {
+    return val
+      .map((item) => sanitizeNestedValue(item, depth + 1))
+      .filter((item) => item !== undefined);
+  }
+  if (t === "object") {
+    const proto = Object.getPrototypeOf(val);
+    if (proto !== null && proto !== Object.prototype) {
+      return undefined;
+    }
+    const cleanObj: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(val as Record<string, unknown>)) {
+      if (k === "__proto__" || k === "constructor" || k === "prototype") continue;
+      const cleanV = sanitizeNestedValue(v, depth + 1);
+      if (cleanV !== undefined) {
+        cleanObj[k] = cleanV;
+      }
+    }
+    return cleanObj;
+  }
+  return undefined;
+}
+
+/**
  * Sanitizes metadata against CR-14 privacy minimization standards,
  * stripping non-allow-listed keys and unexpected/nested content.
  */
@@ -87,7 +121,10 @@ export function sanitizeAuditMetadata(metadata: unknown): Record<string, unknown
   const sanitized: Record<string, unknown> = {};
   for (const [key, val] of Object.entries(metadata as Record<string, unknown>)) {
     if (ALLOW_LISTED_METADATA_KEYS.has(key)) {
-      sanitized[key] = val;
+      const cleanVal = sanitizeNestedValue(val, 0);
+      if (cleanVal !== undefined) {
+        sanitized[key] = cleanVal;
+      }
     }
   }
   return sanitized;

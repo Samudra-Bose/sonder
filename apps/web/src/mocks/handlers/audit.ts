@@ -121,6 +121,7 @@ export const auditHandlers = [
       const severityParams = url.searchParams.getAll("severities");
       const eventTypeParams = url.searchParams.getAll("eventTypes");
       const actorId = url.searchParams.get("actorId");
+      const targetId = url.searchParams.get("targetId");
       const from = url.searchParams.get("from");
       const to = url.searchParams.get("to");
       const cursor = url.searchParams.get("cursor");
@@ -141,11 +142,11 @@ export const auditHandlers = [
       }
       if (actorId) {
         const query = actorId.toLowerCase();
-        events = events.filter(
-          (e) =>
-            e.actorId.toLowerCase().includes(query) ||
-            (e.targetId && e.targetId.toLowerCase().includes(query))
-        );
+        events = events.filter((e) => e.actorId.toLowerCase().includes(query));
+      }
+      if (targetId) {
+        const query = targetId.toLowerCase();
+        events = events.filter((e) => e.targetId && e.targetId.toLowerCase().includes(query));
       }
       if (from) {
         events = events.filter((e) => e.occurredAt >= from);
@@ -258,11 +259,11 @@ export const auditHandlers = [
       }
       if (body.actorId) {
         const query = body.actorId.toLowerCase();
-        events = events.filter(
-          (e) =>
-            e.actorId.toLowerCase().includes(query) ||
-            (e.targetId && e.targetId.toLowerCase().includes(query))
-        );
+        events = events.filter((e) => e.actorId.toLowerCase().includes(query));
+      }
+      if (body.targetId) {
+        const query = body.targetId.toLowerCase();
+        events = events.filter((e) => e.targetId && e.targetId.toLowerCase().includes(query));
       }
       if (body.from) {
         events = events.filter((e) => e.occurredAt >= body.from!);

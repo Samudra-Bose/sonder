@@ -33,6 +33,28 @@ const API_BASE = "/api/v1";
  * - application/problem+json error decoding
  * - Role-Preview Simulation Safeguard (FEAT-G03): blocks mutating requests when X-Preview-Role-Id is active
  */
+/**
+ * Canonical allowlist of contract-defined POST endpoints that are read-only / non-mutating
+ * (queries, export streams, and calculation previews). All other POST operations mutate state.
+ */
+export const NON_MUTATING_POST_ALLOWLIST: readonly RegExp[] = [
+  /^\/communities\/[^/]+\/workspaces\/[^/]+\/tasks\/query$/,
+  /^\/communities\/[^/]+\/my-work\/query$/,
+  /^\/communities\/[^/]+\/workspaces\/[^/]+\/audit-events\/export$/,
+  /^\/communities\/[^/]+\/admin\/audit-events\/export$/,
+  /^\/communities\/[^/]+\/workspaces\/[^/]+\/tasks\/[^/]+\/move-preview$/,
+  /^\/communities\/[^/]+\/workspaces\/[^/]+\/role-preview$/,
+] as const;
+
+/**
+ * Checks whether an endpoint matches the contract-defined allowlist of non-mutating POST operations.
+ */
+export function isNonMutatingPostEndpoint(endpoint: string): boolean {
+  const pathname = endpoint.split("?")[0]!;
+  const normalized = pathname.startsWith("/") ? pathname : `/${pathname}`;
+  return NON_MUTATING_POST_ALLOWLIST.some((pattern) => pattern.test(normalized));
+}
+
 export async function apiRequest<T>(
   endpoint: string,
   options: RequestOptions = {}
@@ -46,13 +68,9 @@ export async function apiRequest<T>(
     credentials: _ignoredCredentials,
     ...rest
   } = options;
-  const isExportOrReadPost =
-    endpoint.includes("/export") ||
-    endpoint.includes("/query") ||
-    endpoint.includes("/search");
   const isStateMutation =
     ["PUT", "PATCH", "DELETE"].includes(method.toUpperCase()) ||
-    (method.toUpperCase() === "POST" && !isExportOrReadPost);
+    (method.toUpperCase() === "POST" && !isNonMutatingPostEndpoint(endpoint));
   const isMutatingMethod = ["POST", "PUT", "PATCH", "DELETE"].includes(method.toUpperCase());
 
   const headers = new Headers(customHeaders);

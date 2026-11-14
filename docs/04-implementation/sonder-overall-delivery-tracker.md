@@ -38,8 +38,8 @@ Across the approved Master Specification (`Community-Work-Management-Master-Spec
 
 ```mermaid
 pie title Actionable Concrete Capabilities (53 Features)
-    "DONE (Provisional Frontend Candidate)" : 27
-    "PARTIAL (Incomplete Scope)" : 2
+    "DONE (Provisional Frontend Candidate)" : 28
+    "PARTIAL (Incomplete Scope)" : 1
     "NOT STARTED (Phase 1 Backlog)" : 0
     "DECISION BLOCKED (PO / Backend)" : 3
     "BACKEND DEPENDENT (Gateway)" : 1
@@ -49,14 +49,14 @@ pie title Actionable Concrete Capabilities (53 Features)
 
 | Status Classification | Count | Description & Invariant Boundaries |
 | :--- | :---: | :--- |
-| **DONE** | **27** | Frontend client implementation verified in `apps/web/src/` with passing Vitest tests against MSW local mock fixtures. Live backend persistence, ACID guarantees, and production infrastructure remain pending. |
-| **PARTIAL** | **2** | Core contracts or data types exist, but UI presentation or user workflows remain incomplete (`FEAT-D05a`, `FEAT-K01`). |
+| **DONE** | **28** | Frontend client implementation verified in `apps/web/src/` with passing Vitest tests against MSW local mock fixtures. Live backend persistence, ACID guarantees, and production infrastructure remain pending. |
+| **PARTIAL** | **1** | Core contracts or data types exist, but UI presentation or user workflows remain incomplete (`FEAT-K01`). |
 | **NOT STARTED (Phase 1)** | **0** | Approved Phase 1 features with schemas in candidate OpenAPI 0.3.20-draft, awaiting frontend vertical slice implementation. |
 | **DECISION BLOCKED** | **3** | Implementation paused by formal governance decision (`FEAT-C04` Saved Views, `FEAT-C06` Swimlanes, `FEAT-G02b` Custom Roles). |
 | **BACKEND DEPENDENT** | **1** | Blocked on live backend gateway infrastructure (`FEAT-F02` Realtime Collaboration / `DEP-REALTIME-01`). |
 | **DEFERRED (Phases 2–4)** | **13** | Approved product roadmap capabilities scheduled for Phase 2, Phase 3, or Phase 4 (including `FEAT-J02` offline editing per SOT-11/14). |
 | **REJECTED / OUT OF SCOPE**| **7** | Explicitly excluded to protect community simplicity and prevent enterprise cognitive bloat. |
-| **TOTAL ACTIONABLE** | **53** | **Sum: 27 + 2 + 0 + 3 + 1 + 13 + 7 = 53** |
+| **TOTAL ACTIONABLE** | **53** | **Sum: 28 + 1 + 0 + 3 + 1 + 13 + 7 = 53** |
 
 ### 1.3 Completion Percentages Across Clearly Defined Denominators
 
@@ -65,13 +65,13 @@ pie title Actionable Concrete Capabilities (53 Features)
 SONDER PLATFORM PROGRESS METRICS (AUDIT BASELINE 2026-11-13)
 ================================================================================
 1. Frontend Engineering (Non-Rejected Scope, 46 Capabilities):
-   - Strict (DONE only):               27 / 46 = 58.70%
-   - Weighted (DONE + 0.5 * PARTIAL): (27 + 1.0) / 46 = 60.87%
+   - Strict (DONE only):               28 / 46 = 60.87%
+   - Weighted (DONE + 0.5 * PARTIAL): (28 + 0.5) / 46 = 28.5 / 46 = 61.96%
 
 2. Phase 1 Initial Production Scope (33 Capabilities):
-   - Strict (DONE only):               27 / 33 = 81.82%
-   - Weighted (DONE + 0.5 * PARTIAL): (27 + 1.0) / 33 = 84.85%
-   - Remaining Phase 1 Work:           6 capabilities (2 Partial, 0 Not Started, 3 Blocked, 1 Dependent)
+   - Strict (DONE only):               28 / 33 = 84.85%
+   - Weighted (DONE + 0.5 * PARTIAL): (28 + 0.5) / 33 = 28.5 / 33 = 86.36%
+   - Remaining Phase 1 Work:           5 capabilities (1 Partial, 0 Not Started, 3 Blocked, 1 Dependent)
 
 3. UI/UX Track B (Separate Workstream):
    - Research & Design Principles:     100% Approved (PR #4, 92e984e)
@@ -87,7 +87,7 @@ SONDER PLATFORM PROGRESS METRICS (AUDIT BASELINE 2026-11-13)
    - Live Backend Verified:            0 / 118 operations (0.00% - live BE services pending)
 
 5. Overall Monorepo Verification:
-   - Automated Tests:                  538 / 538 passing (100%)
+   - Automated Tests:                  673 / 673 passing (100%)
    - Monorepo Compilation:             0 TypeScript errors across 2 projects (100%)
    - Production Asset Build:           Built cleanly in 3.55s (100%)
    - Spec & Schema Validation:         51 / 51 checks passing (100%)
@@ -132,7 +132,7 @@ SONDER PLATFORM PROGRESS METRICS (AUDIT BASELINE 2026-11-13)
 | **FEAT-D03** | Optional Single-Step Status Sign-Off / Approval | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3 | Phase 3 timeline |
 | **FEAT-D04a**| Core Custom Fields (Text, Number, Single-Select, Date, Boolean) | M1.2 | **DONE** | `CustomFieldsSettingsView.tsx`, `TaskCustomFieldsSection.tsx` | `CustomFields.test.tsx` (6), `TaskCustomFields.test.tsx` (5) | MSW handler: `/custom-fields` CRUD & options | Custom field definitions & values persistence |
 | **FEAT-D04b**| Extended Custom Fields (Multi-Select, User Picker, Date) | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2 | Phase 2 timeline |
-| **FEAT-D05a**| Built-in Starter Templates (General Purpose, Sprint, Event) | M1.2 | **PARTIAL** | Template seed definitions in OpenAPI | None | Schema: `GET /workspace-templates` | Template picker modal pending |
+| **FEAT-D05a**| Built-in Starter Templates (General Purpose, Sprint, Event) | M1.2 | **DONE** | `CreateWorkspaceDialog.tsx`, `WorkspaceTemplateCard.tsx`, `WorkspaceTemplatePreviewModal.tsx`, `useWorkspaceTemplates.ts` | `WorkspaceTemplatesPicker.test.tsx` (15) | Schema: `GET /workspace-templates` | Frontend card picker, modal preview, keyboard selection, form validation, and workspace creation verified (15 tests). Live atomic database configuration seeding pending backend service |
 | **FEAT-D05b**| Custom Workspace & Reusable Checklist Templates | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2 | Phase 2 timeline |
 | **FEAT-E01** | Workspace Overview, Completion & Workload Summary | M1.2 | **DONE** | `WorkspaceOverview.tsx`, `SummaryCards.tsx` | `WorkspaceOverview.test.tsx` (18) | MSW handler: `GET /workspaces/{id}/summary` | Aggregation queries pending BE |
 | **FEAT-E02** | Agile Burndown, Velocity & Cumulative Flow Charts | Phase 4 | **DEFERRED** | None | None | Deferred to Phase 4 | Phase 4 timeline |
@@ -144,7 +144,7 @@ SONDER PLATFORM PROGRESS METRICS (AUDIT BASELINE 2026-11-13)
 | **FEAT-G02a**| Capability RBAC Engine, 4 System Roles & Permission Gates | M1.1 | **DONE** | `rbac/`, `PermissionGate.tsx` | `WorkspaceSwitcher.test.tsx` (22) | RBAC matrix in contracts | Server RLS policies pending |
 | **FEAT-G02b**| Configurable Custom Roles Builder UI | M1.3 | **DECISION BLOCKED** | None | None | Blocked on simulator contract | Blocked on `DEP-ROLES-01` |
 | **FEAT-G03** | Plain-Language Permission Inspector & Role Simulator | M1.3 | **DONE** | `PermissionInspector.tsx`, `capabilityDefinitions.ts`, `PermissionsSettingsView.tsx` | `RoleSimulator.test.tsx` (7) | MSW handlers: `/roles`, `X-Preview-Role-Id` safeguard | Downward-only simulation, read-only guard, and full 31-capability matrix verified |
-| **FEAT-G04** | Append-Only Hash-Chained Audit Log Table & CSV Export | M1.3 | **DONE** | `AuditLogSettingsView.tsx`, `useAuditLog.ts`, `auditExportCsv.ts` | `AuditLog.test.tsx` (19) | MSW handlers: `/audit-events`, `/admin/audit-integrity`, `/audit-events/export` | Authoritative SHA-256 hash-chain display, server-reported integrity verification status, cursor pagination, category/severity/search filtering, detail drawer with allow-listed metadata (CR-14), and formula-injection-safe UTF-8 CSV export with independent `audit:export` capability gate verified (19 tests) |
+| **FEAT-G04** | Append-Only Hash-Chained Audit Log Table & CSV Export | M1.3 | **DONE** | `AuditLogSettingsView.tsx`, `useAuditLog.ts`, `auditExportCsv.ts` | `AuditLog.test.tsx` (22) | MSW handlers: `/audit-events`, `/admin/audit-integrity`, `/audit-events/export` | Authoritative SHA-256 hash-chain display, server-reported integrity verification status, cursor pagination, category/severity/search filtering, separate actorId and targetId filters, detail drawer with allow-listed metadata (CR-14), and formula-injection-safe UTF-8 CSV export with independent `audit:export` capability gate verified (22 tests) |
 | **FEAT-H01** | Declarative 1-Hop Workflow Automations | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3 | Automation engine pending |
 | **FEAT-H02** | Outbound HMAC-Signed HTTPS Webhooks | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3 | Egress & SSRF hardening |
 | **FEAT-I01** | Lightweight Shareable Workspace Intake Forms | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2 | Anonymous access scope |
@@ -153,7 +153,7 @@ SONDER PLATFORM PROGRESS METRICS (AUDIT BASELINE 2026-11-13)
 | **FEAT-J01b**| Guided CSV Import Wizard with Dry-Run Validation | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2 | Phase 2 timeline |
 | **FEAT-J02** | Selected-Field Offline Task Editing & Queued Sync | Phase 3 | **DEFERRED** | Minimal M1.1 caching in place | None | Deferred to Phase 3 per SOT-11, SOT-14, and master PRD §1.1 | Sync engine, IndexedDB queue, 14-day expiry, FIFO replay, and 409 conflict resolver staged for Phase 3 |
 | **FEAT-J03** | Accessible Design System Primitives & Tokens (WCAG 2.2 AA) | M1.1 | **DONE** | `index.css`, `design-tokens.ts`, `keyboard.ts`, `theme.tsx`, `reduced-motion.ts` | 4 foundation suites (24 tests, 70 static expect sites) | Token standards in `@theme` | Operational rate limit / PITR pending |
-| **FEAT-K01** | External Smart URL Metadata Chips (GitHub, Figma, Docs) | M1.2 | **PARTIAL** | Plain URLs render safely in markdown | `markdown-ast.test.tsx` (25) | Metadata scrape endpoint pending | OpenGraph chip UI pending |
+| **FEAT-K01** | External Smart URL Metadata Chips (GitHub, Figma, Docs) | M1.2 | **PARTIAL** | `markdown-ast.tsx` | `markdown-ast.test.tsx` (25) | Metadata scrape endpoint pending (`DEP-METADATA-01`) | Plain URLs render safely with protocol validation; OpenGraph chip UI pending server scrape contract |
 | **FEAT-L01** | Optional AI Task Breakdown & Thread Summarization | Phase 4 | **DEFERRED** | None | None | Deferred to Phase 4 | LLM gateway pending |
 
 ### 2.2 Group 2: Composite Parent Identifiers (7 Headings)
@@ -388,7 +388,7 @@ flowchart TD
         FEAT_C02["FEAT-C02 (Calendar & Timeline) - DONE"]
         FEAT_E01["FEAT-E01 (Workspace Overview) - DONE"]
         FEAT_F01a["FEAT-F01a (Notification Inbox) - DONE"]
-        FEAT_D05a["FEAT-D05a (Templates Picker) - PARTIAL"]
+        FEAT_D05a["FEAT-D05a (Templates Picker) - DONE"]
         FEAT_K01["FEAT-K01 (Smart URL Chips) - PARTIAL"]
         FEAT_A01["FEAT-A01 (Archetypes) - DONE"]
         FEAT_A07["FEAT-A07 (Task Cloning) - DONE"]
@@ -409,8 +409,8 @@ flowchart TD
 
 ### Phase 1 Breakdown:
 - **Total Phase 1 Capabilities:** 33 concrete features.
-- **DONE:** 27 capabilities (81.82%).
-- **PARTIAL:** 2 capabilities (`FEAT-D05a`, `FEAT-K01`).
+- **DONE:** 28 capabilities (84.85%).
+- **PARTIAL:** 1 capability (`FEAT-K01`).
 - **NOT STARTED:** 0 capabilities.
 - **DECISION BLOCKED:** 3 capabilities (`FEAT-C04`, `FEAT-C06`, `FEAT-G02b`).
 - **BACKEND DEPENDENT:** 1 capability (`FEAT-F02`).
@@ -461,6 +461,7 @@ flowchart TD
 | **DEP-REALTIME-01** | `FEAT-F02`, `FEAT-A04` | Deployment of live WebSocket gateway, ticket authentication handshake, and stream event routing. | Blocks live multi-client collaborative synchronization | Platform Infra & Backend Lead |
 | **DEP-COLLAB-01** | `FEAT-A04` | Cross-session database persistence for task watchers. | Watchers reset upon browser session termination | Backend Lead |
 | **DEP-ROLES-01** | `FEAT-G02b` | Finalization of custom role capability bundles and preview simulator schema. | Blocks Custom Roles Builder UI | Backend Lead |
+| **DEP-METADATA-01** | `FEAT-K01` | Server-side OpenGraph / smart URL metadata scrape endpoint and DTO contract. | Blocks rich OpenGraph smart URL preview chips | Backend Lead & Product Owner |
 | **DEC-ARCHIVE-01** | `FEAT-A10a` | Client-side retention period for advisory undo toast (10s fixed vs configurable). | Fixed 10s advisory timer in place; open for future policy review | Product Owner |
 | **DEC-ARCHIVE-02** | `FEAT-A10a` | Multi-task concurrent undo queue eviction policy (FIFO vs independent timer expiration). | Independent timers active; open for future policy review | Product Owner |
 | **DEC-ARCHIVE-03** | `FEAT-A10a` | Subtask undo token invalidation if parent task is modified while child is queued. | Subtask restore verifies parent existence; open for future edge review | Backend Lead |
@@ -518,7 +519,8 @@ flowchart TD
 7. **Milestone VS-09H:** Workspace Settings Shell & Core Custom Fields (`FEAT-D01`, `FEAT-D04a`) — DELIVERED & LOCKED.
 8. **Milestone M1.3 Governance (VS-09I):** Plain-Language Permission Inspector & Role Simulator (`FEAT-G03`) — DELIVERED & LOCKED.
 9. **Milestone M1.3 Governance (VS-09J):** Append-Only Hash-Chained Audit Log Table & CSV Export (`FEAT-G04`) — DELIVERED & LOCKED.
-10. **Milestone M1.3 Governance Complete & Roadmap Reconciliation (VS-09K):** Phase 1 governance requirements complete (`FEAT-G03`, `FEAT-G04`). Offline task editing (`FEAT-J02`) authoritatively deferred to Phase 3 per SOT-11, SOT-14, and Master Spec §1.1. Custom Roles Builder UI (`FEAT-G02b`) remains blocked on `DEP-ROLES-01` and live backend evaluator. All approved unblocked Phase 1 capabilities are complete (27 DONE, 2 PARTIAL, 0 NOT STARTED).
+10. **Milestone M1.3 Governance Complete & Roadmap Reconciliation (VS-09K):** Phase 1 governance requirements complete (`FEAT-G03`, `FEAT-G04`, commit `67c4bf0`). Offline task editing (`FEAT-J02`) authoritatively deferred to Phase 3 per SOT-11, SOT-14, and Master Spec §1.1. Custom Roles Builder UI (`FEAT-G02b`) remains blocked on `DEP-ROLES-01` and live backend evaluator.
+11. **Milestone VS-09L (Phase 1 Partial-Scope Closure & Release Readiness):** Replaced substring POST exceptions with strict non-mutating POST allowlist in role preview; separated audit `actorId` and `targetId` structured filters; recursive metadata sanitization (CR-14); `FEAT-D05a` verified DONE (15 tests in `WorkspaceTemplatesPicker.test.tsx`); `FEAT-K01` verified PARTIAL pending backend scrape contract (`DEP-METADATA-01`). Phase 1 status reconciled: 28 DONE (84.85%), 1 PARTIAL, 0 NOT STARTED, 3 DECISION BLOCKED, 1 BACKEND DEPENDENT.
 
 ### P2 — Important UX, Mobile & Accessibility Completion (Track B Slices)
 1. **Slice UX-1:** Design System & Contrast Hardening (`UX-SYS-01`, `UX-SYS-02`, `UX-SYS-03`).

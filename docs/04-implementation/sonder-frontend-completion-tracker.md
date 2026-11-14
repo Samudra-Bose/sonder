@@ -87,8 +87,8 @@ TOTAL CANONICAL FEAT PATTERNS ACCOUNTED FOR:                           70 items
 
 ```mermaid
 pie title Actionable Capability Status Distribution (53 Features)
-    "DONE (Provisional Frontend Candidate)" : 27
-    "PARTIAL (Incomplete Scope)" : 2
+    "DONE (Provisional Frontend Candidate)" : 28
+    "PARTIAL (Incomplete Scope)" : 1
     "NOT STARTED (Phase 1 Backlog)" : 0
     "DECISION BLOCKED (PO / Backend Sign-Off)" : 3
     "BACKEND DEPENDENT (Gateway / Endpoints)" : 1
@@ -98,14 +98,14 @@ pie title Actionable Capability Status Distribution (53 Features)
 
 | Status Classification | Count | Description & Invariant Boundaries |
 | :--- | :---: | :--- |
-| **DONE** | **27** | Provisional frontend candidate implementation verified in `apps/web/src/` with passing Vitest test suites against MSW mocks. Live backend & infrastructure acceptance pending. |
-| **PARTIAL** | **2** | Core data structures exist in code or types, but UI or workflow remains incomplete (`FEAT-D05a`, `FEAT-K01`). |
+| **DONE** | **28** | Provisional frontend candidate implementation verified in `apps/web/src/` with passing Vitest test suites against MSW mocks. Live backend & infrastructure acceptance pending. |
+| **PARTIAL** | **1** | Core data structures exist in code or types, but UI or workflow remains incomplete (`FEAT-K01`). |
 | **NOT STARTED (Phase 1)** | **0** | Approved Phase 1 capabilities with schemas in candidate OpenAPI 0.3.20-draft, awaiting frontend vertical slice implementation. |
 | **DECISION BLOCKED** | **3** | Implementation paused by formal governance decision (`FEAT-C04`, `FEAT-C06`, `FEAT-G02b`). |
 | **BACKEND DEPENDENT** | **1** | Requires live backend infrastructure (`FEAT-F02` Live WebSocket Gateway `DEP-REALTIME-01`). |
 | **DEFERRED (Phases 2–4)** | **13** | Approved product roadmap capabilities scheduled for Phase 2, 3, or 4 (including `FEAT-J02` offline task editing per SOT-11/14). |
 | **REJECTED / OUT OF SCOPE**| **7** | Explicitly excluded to protect simplicity, performance, and low cognitive overhead. |
-| **TOTAL ACTIONABLE** | **53** | **Sum of all mutually exclusive capability statuses: 27 + 2 + 0 + 3 + 1 + 13 + 7 = 53** |
+| **TOTAL ACTIONABLE** | **53** | **Sum of all mutually exclusive capability statuses: 28 + 1 + 0 + 3 + 1 + 13 + 7 = 53** |
 
 ---
 
@@ -147,7 +147,7 @@ Below is the definitive enumeration of all 70 canonical FEAT patterns. Every act
 | **FEAT-D03** | Optional Single-Step Status Sign-Off / Approval Gate | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3. |
 | **FEAT-D04a**| Core Custom Fields (Text, Number, Single-Select, Date, Boolean) | M1.2 | **DONE** | `CustomFieldsSettingsView.tsx`, `TaskCustomFieldsSection.tsx`, `useCustomFields.ts` | `CustomFields.test.tsx` (6), `TaskCustomFields.test.tsx` (5) | Frontend workspace custom field manager (TEXT, NUMBER, DATE, BOOLEAN, SINGLE_SELECT with options builder) and task peek drawer field value integration verified (11 tests). |
 | **FEAT-D04b**| Extended Custom Fields (Multi-Select, User, Checkbox, URL) | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2. |
-| **FEAT-D05a**| Built-in Starter Templates (General Purpose, Event, Ops) UI | M1.2 | **PARTIAL** | Templates seeded in MSW mock database | `WorkspaceSwitcher.test.tsx` (22) | Card-based template selector UI in creation modal. |
+| **FEAT-D05a**| Built-in Starter Templates (General Purpose, Event, Ops) UI | M1.2 | **DONE** | `CreateWorkspaceDialog.tsx`, `WorkspaceTemplateCard.tsx`, `WorkspaceTemplatePreviewModal.tsx`, `useWorkspaceTemplates.ts` | `WorkspaceTemplatesPicker.test.tsx` (15) | Frontend starter templates picker UI (General Purpose, Event Planning, Team Operations), loading/error/retry states, preview modal, keyboard selection, form validation, and workspace creation verified (15 tests). Live database atomic configuration seeding pending backend service. |
 | **FEAT-D05b**| Custom Workspace & Reusable Checklist Templates (formerly Project Templates) | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2. |
 | **FEAT-E01** | Workspace Overview, Completion & Workload Summary (formerly Project Overview) | M1.2 | **DONE** | `ProjectOverviewTab.tsx`, `AssigneeWorkloadBar.tsx` | `TaskViews.test.tsx` (38) | Frontend workspace overview tab, completion progress bar, overdue tally, and assignee workload distribution verified (38 tests). Live SQL group-by summary aggregation pending backend service. |
 | **FEAT-E02** | Agile Burndown, Velocity & Cumulative Flow Charts | Phase 4 | **DEFERRED** | None | None | Deferred to Phase 4. |
@@ -159,7 +159,7 @@ Below is the definitive enumeration of all 70 canonical FEAT patterns. Every act
 | **FEAT-G02a**| Capability RBAC Engine, 4 System Roles & Permission Gates | M1.1 | **DONE** | `rbac/`, `PermissionGate.tsx` | `WorkspaceSwitcher.test.tsx` (22) | Frontend client-side `PermissionGate`, role guards, and capability checks verified (22 tests). Server-side capability authorization middleware and RLS policies pending backend service. |
 | **FEAT-G02b**| Configurable Custom Roles Builder UI | M1.3 | **DECISION BLOCKED** | None | None | Blocked on `DEP-ROLES-01` role simulator contract. |
 | **FEAT-G03** | Plain-Language Permission Inspector & Role Simulator | M1.3 | **DONE** | `PermissionInspector.tsx`, `capabilityDefinitions.ts`, `PermissionsSettingsView.tsx` | `RoleSimulator.test.tsx` (7) | Plain-language permission inspector, interactive downward-only role simulator, 31 canonical capabilities, scenario sandbox, and simulation isolation banner verified (7 tests). Server-side dynamic preview execution pending live service. |
-| **FEAT-G04** | Append-Only Hash-Chained Audit Log Table & CSV Export | M1.3 | **DONE** | `AuditLogSettingsView.tsx`, `useAuditLog.ts`, `auditExportCsv.ts` | `AuditLog.test.tsx` (19) | Workspace Settings Audit Log table with SHA-256 hash-chain display, server-reported cryptographic integrity status, cursor pagination, category/severity/search filtering, allow-listed metadata detail drawer (CR-14), and formula-injection-safe UTF-8 CSV export with independent `audit:export` capability gate verified (19 tests). Production cryptographic key checkpointing pending backend service. |
+| **FEAT-G04** | Append-Only Hash-Chained Audit Log Table & CSV Export | M1.3 | **DONE** | `AuditLogSettingsView.tsx`, `useAuditLog.ts`, `auditExportCsv.ts` | `AuditLog.test.tsx` (22) | Workspace Settings Audit Log table with SHA-256 hash-chain display, server-reported cryptographic integrity status, cursor pagination, category/severity/search filtering, separate actorId and targetId filters, allow-listed metadata detail drawer (CR-14), and formula-injection-safe UTF-8 CSV export with independent `audit:export` capability gate verified (22 tests). Production cryptographic key checkpointing pending backend service. |
 | **FEAT-H01** | Declarative 1-Hop Workflow Automations | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3. |
 | **FEAT-H02** | Outbound HMAC-Signed HTTPS Webhooks | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3. |
 | **FEAT-I01** | Lightweight Shareable Workspace Intake Forms (formerly Project Intake Forms) | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2. |
@@ -168,7 +168,7 @@ Below is the definitive enumeration of all 70 canonical FEAT patterns. Every act
 | **FEAT-J01b**| Guided CSV Import Wizard with Dry-Run Validation | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2. |
 | **FEAT-J02** | Selected-Field Offline Task Editing & Queued Sync | Phase 3 | **DEFERRED** | Minimal M1.1 caching in place | None | Deferred to Phase 3 per SOT-11, SOT-14, and master PRD §1.1. IndexedDB queue, 14-day expiry, FIFO replay, and 409 conflict resolver staged for Phase 3. |
 | **FEAT-J03** | Accessible Design System Primitives & Tokens (WCAG 2.2 AA) | M1.1 | **DONE** | `index.css`, `design-tokens.ts`, `keyboard.ts`, `theme.tsx`, `reduced-motion.ts` | `design-tokens.test.ts` (6), `keyboard.test.tsx` (10), `theme.test.tsx` (5), `reduced-motion.test.ts` (3) | Frontend design system tokens, WCAG 2.2 AA contrast, semantic focus rings, keyboard conflict resolution, theme provider, and reduced motion verified across 4 foundation suites (24 Vitest tests, 70 static `expect()` call sites: `design-tokens.test.ts` [6 tests, 27 expect() sites], `keyboard.test.tsx` [10 tests, 23 expect() sites], `theme.test.tsx` [5 tests, 16 expect() sites], `reduced-motion.test.ts` [3 tests, 4 expect() sites]; corrects historical 16-test citation). Production backend edge rate limiting, server backup/PITR drills, and operational infrastructure acceptance remain separate pending operational gates. |
-| **FEAT-K01** | External Smart URL Metadata Chips (GitHub, Figma, Docs) | M1.2 | **PARTIAL** | Plain URLs render safely in markdown | `markdown-ast.test.tsx` (25) | Rich OpenGraph preview chips in task drawer. |
+| **FEAT-K01** | External Smart URL Metadata Chips (GitHub, Figma, Docs) | M1.2 | **PARTIAL** | `markdown-ast.tsx` | `markdown-ast.test.tsx` (25) | Plain URLs render safely with protocol validation and external link attributes verified (25 tests). Rich OpenGraph smart URL preview chips pending server-side metadata retrieval endpoint and DTO contract (DEP-METADATA-01). |
 | **FEAT-L01** | Optional AI Task Breakdown & Thread Summarization | Phase 4 | **DEFERRED** | None | None | Deferred to Phase 4. |
 
 ---

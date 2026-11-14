@@ -67,6 +67,7 @@ export const AuditLogSettingsView: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [selectedSeverity, setSelectedSeverity] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [targetIdQuery, setTargetIdQuery] = useState<string>("");
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
 
@@ -83,6 +84,7 @@ export const AuditLogSettingsView: React.FC = () => {
     limit: pageSize,
     cursor: currentCursor,
     actorId: searchQuery.trim() || undefined,
+    targetId: targetIdQuery.trim() || undefined,
     categories:
       selectedCategory !== "ALL" ? [selectedCategory as AuditEventCategory] : undefined,
     severities:
@@ -119,6 +121,7 @@ export const AuditLogSettingsView: React.FC = () => {
     try {
       await exportAuditEvents({
         actorId: searchQuery.trim() || undefined,
+        targetId: targetIdQuery.trim() || undefined,
         categories:
           selectedCategory !== "ALL" ? [selectedCategory as AuditEventCategory] : undefined,
         severities:
@@ -138,6 +141,7 @@ export const AuditLogSettingsView: React.FC = () => {
     setSelectedCategory("ALL");
     setSelectedSeverity("ALL");
     setSearchQuery("");
+    setTargetIdQuery("");
     setFromDate("");
     setToDate("");
     setCurrentCursor(undefined);
@@ -324,15 +328,34 @@ export const AuditLogSettingsView: React.FC = () => {
             <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-2 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search Actor ID..."
+              placeholder="Filter Actor ID..."
               data-testid="audit-search-filter"
+              aria-label="Filter Actor ID"
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 setCurrentCursor(undefined);
                 setPageHistory([]);
               }}
-              className="text-xs h-8 pl-7 pr-2.5 rounded-md border border-input bg-background text-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring w-36 sm:w-44"
+              className="text-xs h-8 pl-7 pr-2.5 rounded-md border border-input bg-background text-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring w-32 sm:w-40"
+            />
+          </div>
+
+          {/* Filter: Target ID */}
+          <div className="flex items-center gap-1.5 relative">
+            <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-2 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Filter Target ID..."
+              data-testid="audit-target-filter"
+              aria-label="Filter Target ID"
+              value={targetIdQuery}
+              onChange={(e) => {
+                setTargetIdQuery(e.target.value);
+                setCurrentCursor(undefined);
+                setPageHistory([]);
+              }}
+              className="text-xs h-8 pl-7 pr-2.5 rounded-md border border-input bg-background text-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring w-32 sm:w-40"
             />
           </div>
 

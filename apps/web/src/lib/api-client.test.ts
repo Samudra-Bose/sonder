@@ -132,4 +132,126 @@ describe("api-client hardening and security invariants", () => {
       }
     });
   });
+
+  describe("Role Preview Mutation Protection & Explicit Non-Mutating Allowlist", () => {
+    it("allows contract-defined non-mutating POST operations in role preview mode", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ ok: true }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          })
+        )
+      );
+
+      const allowedEndpoints = [
+        "/communities/c1/workspaces/w1/tasks/query",
+        "/communities/c1/my-work/query",
+        "/communities/c1/workspaces/w1/audit-events/export",
+        "/communities/c1/admin/audit-events/export",
+        "/communities/c1/workspaces/w1/tasks/t1/move-preview",
+        "/communities/c1/workspaces/w1/role-preview",
+      ];
+
+      for (const endpoint of allowedEndpoints) {
+        await apiRequest(endpoint, {
+          method: "POST",
+          csrfToken: "valid-csrf-token",
+          previewRoleId: "role-preview-123",
+          body: JSON.stringify({}),
+        });
+      }
+
+      expect(fetchSpy).toHaveBeenCalledTimes(allowedEndpoints.length);
+      for (let i = 0; i < allowedEndpoints.length; i++) {
+        const passedHeaders = new Headers(fetchSpy.mock.calls[i]?.[1]?.headers);
+        expect(passedHeaders.get("X-Preview-Role-Id")).toBe("role-preview-123");
+        expect(passedHeaders.get("X-CSRF-Token")).toBe("valid-csrf-token");
+      }
+    });
+
+    it("strictly blocks state-changing POST routes containing 'export', 'query', or 'search' substrings in preview mode", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+      const mutatingSubstringEndpoints = [
+        "/communities/c1/workspaces/w1/export-settings",
+        "/communities/c1/workspaces/w1/tasks/query-presets",
+        "/communities/c1/workspaces/w1/search-configuration",
+        "/communities/c1/workspaces/w1/bulk-export-jobs",
+        "/communities/c1/workspaces/w1/saved-views/query-builder/save",
+      ];
+
+      for (const endpoint of mutatingSubstringEndpoints) {
+        await expect(
+          apiRequest(endpoint, {
+            method: "POST",
+            csrfToken: "valid-csrf",
+            previewRoleId: "role-viewer-sim",
+            body: JSON.stringify({ name: "hack" }),
+          })
+        ).rejects.toMatchObject({
+          status: 403,
+          code: "PREVIEW_MODE_READ_ONLY",
+        });
+      }
+
+      // No network request should have been dispatched
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    it("blocks standard mutating methods (PUT, PATCH, DELETE, and normal POST) in preview mode", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+      // Mutating POST
+      await expect(
+        apiRequest("/communities/c1/workspaces/w1/tasks", {
+          method: "POST",
+          csrfToken: "valid-csrf",
+          previewRoleId: "role-sim",
+          body: JSON.stringify({ title: "New Task" }),
+        })
+      ).rejects.toMatchObject({
+        status: 403,
+        code: "PREVIEW_MODE_READ_ONLY",
+      });
+
+      // PUT
+      await expect(
+        apiRequest("/communities/c1/workspaces/w1/tasks/t1", {
+          method: "PUT",
+          csrfToken: "valid-csrf",
+          previewRoleId: "role-sim",
+        })
+      ).rejects.toMatchObject({
+        status: 403,
+        code: "PREVIEW_MODE_READ_ONLY",
+      });
+
+      // PATCH
+      await expect(
+        apiRequest("/communities/c1/workspaces/w1/tasks/t1", {
+          method: "PATCH",
+          csrfToken: "valid-csrf",
+          previewRoleId: "role-sim",
+        })
+      ).rejects.toMatchObject({
+        status: 403,
+        code: "PREVIEW_MODE_READ_ONLY",
+      });
+
+      // DELETE
+      await expect(
+        apiRequest("/communities/c1/workspaces/w1/tasks/t1", {
+          method: "DELETE",
+          csrfToken: "valid-csrf",
+          previewRoleId: "role-sim",
+        })
+      ).rejects.toMatchObject({
+        status: 403,
+        code: "PREVIEW_MODE_READ_ONLY",
+      });
+
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+  });
 });

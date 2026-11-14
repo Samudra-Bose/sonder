@@ -186,6 +186,50 @@ describe("VS-09J: Append-Only Hash-Chained Audit Log Table & CSV Export (FEAT-G0
       });
     });
 
+    it("filters events strictly by Target ID without overloading Actor ID", async () => {
+      const user = userEvent.setup();
+      renderAuditSettings();
+
+      await screen.findByTestId("audit-log-table");
+
+      // Searching "exp1" in Actor ID should yield nothing (event 10 actor is Alex, not exp1)
+      const actorInput = screen.getByTestId("audit-search-filter");
+      await user.type(actorInput, "exp1");
+
+      await waitFor(() => {
+        expect(screen.queryByText("AUDIT_LOG_EXPORTED")).not.toBeInTheDocument();
+      });
+
+      // Clear actor input
+      await user.clear(actorInput);
+
+      // Searching "exp1" in Target ID should match event 10 (targetId: ...exp1...)
+      const targetInput = screen.getByTestId("audit-target-filter");
+      await user.type(targetInput, "exp1");
+
+      await waitFor(() => {
+        expect(screen.getByText("AUDIT_LOG_EXPORTED")).toBeInTheDocument();
+        expect(screen.queryByText("WORKSPACE_CREATED")).not.toBeInTheDocument();
+      });
+    });
+
+    it("resets cursor pagination when filters change", async () => {
+      const user = userEvent.setup();
+      renderAuditSettings();
+
+      await screen.findByTestId("audit-log-table");
+
+      // Verify severity filter change resets pagination controls
+      const severityFilter = screen.getByTestId("audit-severity-filter");
+      await user.selectOptions(severityFilter, "CRITICAL");
+
+      await waitFor(() => {
+        expect(screen.getByText("BREAK_GLASS_GRANTED")).toBeInTheDocument();
+        // Prev button should be disabled when resetting to page 1
+        expect(screen.getByTestId("audit-prev-page-btn")).toBeDisabled();
+      });
+    });
+
     it("resets filters when clicking the Reset button", async () => {
       const user = userEvent.setup();
       renderAuditSettings();
@@ -463,6 +507,39 @@ describe("VS-09J: Append-Only Hash-Chained Audit Log Table & CSV Export (FEAT-G0
       expect(clean).not.toHaveProperty("taskTitle");
       expect(clean).not.toHaveProperty("taskDescription");
       expect(clean).not.toHaveProperty("authToken");
+    });
+
+    it("recursively sanitizes nested metadata and strips functions, symbols, and unexpected values safely", () => {
+      const complexMetadata = {
+        changedFields: ["status", "priority"],
+        reasonCode: {
+          code: "DELEGATION_REVIEW",
+          nestedDetail: {
+            approved: true,
+            attempts: 2,
+          },
+          // Unexpected or unsafe values
+          maliciousFn: () => "evil",
+          symbolField: Symbol("hidden"),
+        },
+        nonAllowlistedObj: {
+          secretKey: "super-secret",
+        },
+      };
+
+      const clean = sanitizeAuditMetadata(complexMetadata);
+
+      expect(clean.changedFields).toEqual(["status", "priority"]);
+      expect(clean.reasonCode).toEqual({
+        code: "DELEGATION_REVIEW",
+        nestedDetail: {
+          approved: true,
+          attempts: 2,
+        },
+      });
+      expect(clean).not.toHaveProperty("nonAllowlistedObj");
+      expect((clean.reasonCode as Record<string, unknown>)).not.toHaveProperty("maliciousFn");
+      expect((clean.reasonCode as Record<string, unknown>)).not.toHaveProperty("symbolField");
     });
   });
 
