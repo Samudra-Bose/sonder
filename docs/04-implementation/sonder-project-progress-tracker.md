@@ -61,7 +61,8 @@
 | **VS-09L**   | Phase 1 Partial Scope Closure & Release Readiness | Multi (`FEAT-D05a`, `FEAT-K01`, `FEAT-G04`, `FEAT-G03`) | — | `5ab2436` | 31 tests (22 in `AuditLog.test.tsx`, 9 in `api-client.test.ts`) | **MERGED & VERIFIED** (Role-preview non-mutating POST allowlist, audit actorId/targetId separation, recursive metadata sanitization, FEAT-D05a verified DONE, FEAT-K01 PARTIAL with DEP-METADATA-01) |
 | **VS-10**    | Backend Integration & Authorization Foundation | Track C / `FEAT-G02b`, `FEAT-G03` | — | `0659662` | 19 tests in `authorization.test.ts` (692 total) | **VERIFIED & COMPLETED** (Frontend/mock authorization boundary hardening, canonical intersection engine `effectiveCapabilities = callerCapabilities ∩ previewRoleCapabilities`, privilege escalation defense, downward-only role preview, and grant ceiling validation) |
 | **VS-11**    | Live Backend Runtime & First Persisted Authorization Slice | Track C / Backend Handoff | — | `048f70d` | 24 tests in `@sonder/server` (717 total across workspace) | **DELIVERED & VERIFIED** (Real Node.js/TypeScript `@sonder/server` modular monolith, PostgreSQL RLS migrations, connection pool tenant context isolation, RFC 9457 error handler, `/health/live`, `/health/ready`, live HTTP roles & role-preview downward-only intersection slice; delineated as backend-owner handoff) |
-| **FE-VS12**  | Frontend Roadmap Reconciliation & Completeness Baseline | Track A / Governance Audit | — | Current | 693 tests in `apps/web` (717 total monorepo) | **DELIVERED & VERIFIED** (Authoritative frontend completeness baseline: 28 FE COMPLETE [84.85%], 1 FE PARTIAL, 0 NOT STARTED, 3 FE BLOCKED, 1 BACKEND DEPENDENT; weighted score 86.36%; 100% test verification across implemented slices; FEAT-J02 retained Phase 3 DEFERRED; VS-10/11 delineated as backend-owner handoff) |
+| **FE-VS12**  | Frontend Roadmap Reconciliation & Completeness Baseline | Track A / Governance Audit | — | `757ac5a` | 693 tests in `apps/web` (717 total monorepo) | **DELIVERED & VERIFIED** (Authoritative frontend completeness baseline: 28 FE COMPLETE [84.85%], 1 FE PARTIAL, 0 NOT STARTED, 3 FE BLOCKED, 1 BACKEND DEPENDENT; weighted score 86.36%; FEAT-J02 retained Phase 3 DEFERRED; VS-10/11 delineated as backend-owner handoff) |
+| **FE-VS12.1**| Feature Identifier Integrity & Acceptance Evidence Correction | Track A / Governance Audit | — | Current | 693 tests in `apps/web` (717 total monorepo) | **DELIVERED & VERIFIED** (Reconciled disputed feature IDs FEAT-A10c, D03, D05b, I01; corrected deferred phase accounting to 5+5+3=13; established granular AC Traceability Matrix with 26 VERIFIED / 3 PARTIALLY VERIFIED [89.66% strict / 94.83% weighted]; delineated FEAT-K01 safe fallback vs DEP-METADATA-01) |
 
 ### A.2 Current Engineering Status & Next Milestones
 
@@ -243,11 +244,12 @@ Track A (Frontend Engineering):
 - Phase 1 Status (33):     28 FE COMPLETE (84.85%), 1 FE PARTIAL (FEAT-K01), 0 FE NOT STARTED,
                            3 FE BLOCKED (FEAT-C04, FEAT-C06, FEAT-G02b), 1 BACKEND DEPENDENT (FEAT-F02)
 - Weighted Phase 1 Score:  86.36% ((28 + 0.5 * 1) / 33 * 100)
-- Full Roadmap Score (46): 61.96% ((28 + 0.5 * 1) / 46 * 100, including 13 Phase 2-4 Deferred)
-- Functional Verification: 100% of implemented frontend slices (29/29) verified in Vitest
+- Full Roadmap Score (46): 61.96% ((28 + 0.5 * 1) / 46 * 100, including 13 Phase 2-4 Deferred: 5 in Phase 2, 5 in Phase 3, 3 in Phase 4)
+- AC Verification (29):    89.66% Strict (26/29), 94.83% Weighted (27.5/29) across implemented slices; 78.79% Strict / 83.33% Weighted across all 33 Phase 1 capabilities
+- Automated Test Proof:    64 test files in apps/web, 693 tests passing (100% green); 717 tests monorepo
 - Contract Readiness:      28 Contract Ready, 2 Contract Gap, 2 Ambiguous, 1 Backend Dependent
-- Latest Hardened Feature: FE-VS12: Frontend Roadmap Reconciliation & Completeness Baseline
-- Current Milestone:       FE-VS12: Frontend Roadmap Reconciliation & Completeness Baseline (DELIVERED & VERIFIED)
+- Latest Hardened Feature: FE-VS12.1: Feature Identifier Integrity & Acceptance Evidence Correction
+- Current Milestone:       FE-VS12.1: Feature Identifier Integrity & Acceptance Evidence Correction (DELIVERED & VERIFIED)
 - Next Frontend Target:    FE-VS13: External Smart URL Fallback Chip Renderer (FEAT-K01)
 
 Track C (Backend Infrastructure — Backend Developer Owned):
