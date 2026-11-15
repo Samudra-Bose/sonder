@@ -254,4 +254,29 @@ describe("api-client hardening and security invariants", () => {
       expect(fetchSpy).not.toHaveBeenCalled();
     });
   });
+
+  describe("API Base URL and Target Resolution", () => {
+    it("targets /api/v1 prefix by default or absolute URL if endpoint starts with http", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ status: "ok" }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          })
+        )
+      );
+
+      await apiRequest("/test-relative");
+      expect(fetchSpy).toHaveBeenCalledWith(
+        expect.stringMatching(/\/api\/v1\/test-relative$/),
+        expect.anything()
+      );
+
+      await apiRequest("http://127.0.0.1:3001/api/v1/test-absolute");
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "http://127.0.0.1:3001/api/v1/test-absolute",
+        expect.anything()
+      );
+    });
+  });
 });

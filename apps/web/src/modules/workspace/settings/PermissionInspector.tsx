@@ -74,7 +74,7 @@ export const PermissionInspector: React.FC<PermissionInspectorProps> = ({
         );
         return {
           ...sim,
-          capabilities: effectiveCaps as WorkspaceRoleDto["capabilities"],
+          capabilities: effectiveCaps,
         };
       }
     }

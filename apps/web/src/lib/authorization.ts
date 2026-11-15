@@ -1,4 +1,17 @@
+import type { ApiSchema } from "@sonder/contracts";
 import type { WorkspaceRoleDto } from "@/mocks/data/roles.js";
+import { ALL_CANONICAL_CAPABILITIES } from "@/mocks/data/roles.js";
+
+export type RoleCapability = ApiSchema<"RoleCapability">;
+
+export const CANONICAL_CAPABILITY_SET = new Set<string>(ALL_CANONICAL_CAPABILITIES);
+
+/**
+ * Type guard for canonical RoleCapability.
+ */
+export function isRoleCapability(cap: unknown): cap is RoleCapability {
+  return typeof cap === "string" && CANONICAL_CAPABILITY_SET.has(cap);
+}
 
 /**
  * Authoritative Capability Evaluation & Role Preview Engine (FEAT-G02b, FEAT-G03)
@@ -16,47 +29,111 @@ import type { WorkspaceRoleDto } from "@/mocks/data/roles.js";
  */
 
 export interface EvaluateAuthorizationParams {
-  callerCapabilities: string[] | null | undefined;
+  callerCapabilities: RoleCapability[] | string[] | null | undefined;
   previewRoleId?: string | null;
   availableRoles: WorkspaceRoleDto[];
-  requiredCapability?: string;
+  requiredCapability?: RoleCapability | string;
+  membershipState?: "ACTIVE" | "SUSPENDED" | string | null;
+  contextCommunityId?: string | null;
+  targetCommunityId?: string | null;
+  contextWorkspaceId?: string | null;
+  targetWorkspaceId?: string | null;
 }
 
 export interface AuthorizationResult {
   allowed: boolean;
-  effectiveCapabilities: string[];
+  effectiveCapabilities: RoleCapability[];
   isPreview: boolean;
   previewRole?: WorkspaceRoleDto | null;
   reason?: string;
 }
 
 /**
- * Computes the intersection of caller capabilities and preview role capabilities.
+ * Computes the canonical intersection of caller capabilities and preview role capabilities.
  * If no preview role is active, returns caller capabilities.
  * If caller capabilities are missing, returns empty array (fail closed).
  */
-export function computeEffectiveCapabilities<T extends string = string>(
-  callerCapabilities: T[] | null | undefined,
-  previewRoleCapabilities?: T[] | null
-): T[] {
+export function computeEffectiveCapabilities(
+  callerCapabilities: RoleCapability[] | string[] | null | undefined,
+  previewRoleCapabilities?: RoleCapability[] | string[] | null
+): RoleCapability[] {
   if (!callerCapabilities || !Array.isArray(callerCapabilities) || callerCapabilities.length === 0) {
     return [];
   }
-  if (!previewRoleCapabilities) {
-    return [...callerCapabilities];
+  const filteredCallerCaps: RoleCapability[] = [];
+  for (const cap of callerCapabilities) {
+    if (isRoleCapability(cap)) {
+      filteredCallerCaps.push(cap);
+    }
   }
-  // Intersection: callerCapabilities ∩ previewRoleCapabilities
-  return callerCapabilities.filter((cap) => previewRoleCapabilities.includes(cap));
+  if (!previewRoleCapabilities) {
+    return [...filteredCallerCaps];
+  }
+  const previewCapSet = new Set<string>();
+  for (const cap of previewRoleCapabilities) {
+    if (isRoleCapability(cap)) {
+      previewCapSet.add(cap);
+    }
+  }
+  return filteredCallerCaps.filter((cap): cap is RoleCapability => previewCapSet.has(cap));
 }
 
 /**
  * Evaluates whether an action requiring `requiredCapability` is authorized under the
  * caller's effective permissions, taking role-preview simulation into account.
+ * Strictly fails closed for inactive memberships, missing context, or mismatched tenant boundaries.
  */
 export function evaluateAuthorization(params: EvaluateAuthorizationParams): AuthorizationResult {
-  const { callerCapabilities, previewRoleId, availableRoles, requiredCapability } = params;
+  const {
+    callerCapabilities,
+    previewRoleId,
+    availableRoles,
+    requiredCapability,
+    membershipState,
+    contextCommunityId,
+    targetCommunityId,
+    contextWorkspaceId,
+    targetWorkspaceId,
+  } = params;
 
-  // 1. Missing caller capabilities -> fail closed
+  // 1. Membership status boundary -> fail closed if inactive / suspended
+  if (membershipState && membershipState !== "ACTIVE") {
+    return {
+      allowed: false,
+      effectiveCapabilities: [],
+      isPreview: Boolean(previewRoleId),
+      reason: `Membership state is '${membershipState}'. Failing closed.`,
+    };
+  }
+
+  // 2. Tenant isolation boundary -> fail closed on mismatch
+  if (
+    contextCommunityId &&
+    targetCommunityId &&
+    contextCommunityId !== targetCommunityId
+  ) {
+    return {
+      allowed: false,
+      effectiveCapabilities: [],
+      isPreview: Boolean(previewRoleId),
+      reason: "Community ID mismatch across tenant boundary. Failing closed.",
+    };
+  }
+
+  if (
+    contextWorkspaceId &&
+    targetWorkspaceId &&
+    contextWorkspaceId !== targetWorkspaceId
+  ) {
+    return {
+      allowed: false,
+      effectiveCapabilities: [],
+      isPreview: Boolean(previewRoleId),
+      reason: "Workspace ID mismatch across tenant boundary. Failing closed.",
+    };
+  }
+
+  // 3. Missing caller capabilities -> fail closed
   if (!callerCapabilities || !Array.isArray(callerCapabilities) || callerCapabilities.length === 0) {
     return {
       allowed: false,
@@ -66,12 +143,21 @@ export function evaluateAuthorization(params: EvaluateAuthorizationParams): Auth
     };
   }
 
-  // 2. Direct caller evaluation (no preview role active)
+  const validCallerCaps: RoleCapability[] = [];
+  for (const cap of callerCapabilities) {
+    if (isRoleCapability(cap)) {
+      validCallerCaps.push(cap);
+    }
+  }
+
+  // 4. Direct caller evaluation (no preview role active)
   if (!previewRoleId || !previewRoleId.trim()) {
-    const allowed = requiredCapability ? callerCapabilities.includes(requiredCapability) : true;
+    const allowed = requiredCapability
+      ? validCallerCaps.includes(requiredCapability as RoleCapability)
+      : true;
     return {
       allowed,
-      effectiveCapabilities: [...callerCapabilities],
+      effectiveCapabilities: [...validCallerCaps],
       isPreview: false,
       reason: allowed
         ? undefined
@@ -79,7 +165,7 @@ export function evaluateAuthorization(params: EvaluateAuthorizationParams): Auth
     };
   }
 
-  // 3. Preview mode active: resolve preview role from available workspace roles
+  // 5. Preview mode active: resolve preview role from available workspace roles
   const targetRole = availableRoles.find(
     (r) => r.id === previewRoleId || (r.systemKey && r.systemKey === previewRoleId)
   );
@@ -94,10 +180,12 @@ export function evaluateAuthorization(params: EvaluateAuthorizationParams): Auth
     };
   }
 
-  // 4. Downward-only intersection: callerCapabilities ∩ targetRole.capabilities
-  const effective = computeEffectiveCapabilities(callerCapabilities, targetRole.capabilities);
+  // 6. Downward-only intersection: callerCapabilities ∩ targetRole.capabilities
+  const effective = computeEffectiveCapabilities(validCallerCaps, targetRole.capabilities);
 
-  const allowed = requiredCapability ? effective.includes(requiredCapability) : true;
+  const allowed = requiredCapability
+    ? effective.includes(requiredCapability as RoleCapability)
+    : true;
 
   return {
     allowed,
@@ -116,15 +204,17 @@ export function evaluateAuthorization(params: EvaluateAuthorizationParams): Auth
  * Invariant: granted_caps ⊆ actor_caps
  */
 export function validateGrantCeiling(
-  actorCapabilities: string[] | null | undefined,
-  requestedCapabilities: string[]
+  actorCapabilities: RoleCapability[] | string[] | null | undefined,
+  requestedCapabilities: (RoleCapability | string)[]
 ): { valid: boolean; unauthorizedCapabilities: string[] } {
   if (!actorCapabilities || !Array.isArray(actorCapabilities)) {
-    return { valid: false, unauthorizedCapabilities: [...requestedCapabilities] };
+    return { valid: false, unauthorizedCapabilities: [...requestedCapabilities.map(String)] };
   }
 
-  const actorCapSet = new Set(actorCapabilities);
-  const unauthorized = requestedCapabilities.filter((cap) => !actorCapSet.has(cap));
+  const actorCapSet = new Set(actorCapabilities.map(String));
+  const unauthorized = requestedCapabilities
+    .map(String)
+    .filter((cap) => !actorCapSet.has(cap));
 
   return {
     valid: unauthorized.length === 0,

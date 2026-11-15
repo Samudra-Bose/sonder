@@ -165,6 +165,41 @@ describe("VS-10: Critical Authorization Boundary & Role Preview Security", () =>
       expect(invalidRoleResult.allowed).toBe(false);
       expect(invalidRoleResult.effectiveCapabilities).toEqual([]);
       expect(invalidRoleResult.reason).toMatch(/invalid or unrecognized preview role/i);
+
+      // Inactive / suspended membership -> fails closed
+      const suspendedResult = evaluateAuthorization({
+        callerCapabilities: ownerCaps,
+        availableRoles: initialMockWorkspaceRoles,
+        membershipState: "SUSPENDED",
+        requiredCapability: "task:read",
+      });
+      expect(suspendedResult.allowed).toBe(false);
+      expect(suspendedResult.effectiveCapabilities).toEqual([]);
+      expect(suspendedResult.reason).toMatch(/membership state is 'SUSPENDED'/i);
+
+      // Tenant mismatch (Community ID mismatch) -> fails closed
+      const communityMismatchResult = evaluateAuthorization({
+        callerCapabilities: ownerCaps,
+        availableRoles: initialMockWorkspaceRoles,
+        contextCommunityId: "community-1",
+        targetCommunityId: "community-2",
+        requiredCapability: "task:read",
+      });
+      expect(communityMismatchResult.allowed).toBe(false);
+      expect(communityMismatchResult.effectiveCapabilities).toEqual([]);
+      expect(communityMismatchResult.reason).toMatch(/community id mismatch/i);
+
+      // Tenant mismatch (Workspace ID mismatch) -> fails closed
+      const workspaceMismatchResult = evaluateAuthorization({
+        callerCapabilities: ownerCaps,
+        availableRoles: initialMockWorkspaceRoles,
+        contextWorkspaceId: "workspace-1",
+        targetWorkspaceId: "workspace-2",
+        requiredCapability: "task:read",
+      });
+      expect(workspaceMismatchResult.allowed).toBe(false);
+      expect(workspaceMismatchResult.effectiveCapabilities).toEqual([]);
+      expect(workspaceMismatchResult.reason).toMatch(/workspace id mismatch/i);
     });
 
     it("Scenario 5: Member previews Viewer -> further restricts to read-only capabilities", () => {

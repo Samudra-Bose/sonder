@@ -23,7 +23,10 @@ export interface RequestOptions extends RequestInit {
   previewRoleId?: string | null;
 }
 
-const API_BASE = "/api/v1";
+const API_BASE =
+  typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL
+    ? (import.meta.env.VITE_API_BASE_URL as string).replace(/\/+$/, "")
+    : "/api/v1";
 
 /**
  * Type-safe API client enforcing Sonder contract invariants:

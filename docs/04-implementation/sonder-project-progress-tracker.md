@@ -59,7 +59,8 @@
 | **VS-09J**   | Append-Only Hash-Chained Audit Log Table & CSV Export | `FEAT-G04` | — | `59a9511` | 19 tests | **VERIFIED & LOCKED** (`AuditLog.test.tsx`) |
 | **VS-09K**   | M1.3 Scope Reconciliation, Audit Authorization Hardening & Governance Gate | Governance / `FEAT-G04` | — | `67c4bf0` | 667 tests (63 suites) | **MERGED & VERIFIED** (Fail-closed audit capabilities, metadata sanitization, and SOT-11/14 reconciliation) |
 | **VS-09L**   | Phase 1 Partial Scope Closure & Release Readiness | Multi (`FEAT-D05a`, `FEAT-K01`, `FEAT-G04`, `FEAT-G03`) | — | `5ab2436` | 31 tests (22 in `AuditLog.test.tsx`, 9 in `api-client.test.ts`) | **MERGED & VERIFIED** (Role-preview non-mutating POST allowlist, audit actorId/targetId separation, recursive metadata sanitization, FEAT-D05a verified DONE, FEAT-K01 PARTIAL with DEP-METADATA-01) |
-| **VS-10**    | Backend Integration & Authorization Foundation | Track C / `FEAT-G02b`, `FEAT-G03` | — | Current | 19 tests in `authorization.test.ts` (692 total) | **VERIFIED & COMPLETED** (Canonical intersection engine `effectiveCapabilities = callerCapabilities ∩ previewRoleCapabilities`, privilege escalation defense, downward-only role preview, grant ceiling validation, and live backend baseline audit) |
+| **VS-10**    | Backend Integration & Authorization Foundation | Track C / `FEAT-G02b`, `FEAT-G03` | — | `0659662` | 19 tests in `authorization.test.ts` (692 total) | **VERIFIED & COMPLETED** (Frontend/mock authorization boundary hardening, canonical intersection engine `effectiveCapabilities = callerCapabilities ∩ previewRoleCapabilities`, privilege escalation defense, downward-only role preview, and grant ceiling validation) |
+| **VS-11**    | Live Backend Runtime & First Persisted Authorization Slice | Track C / `FEAT-G02b`, `FEAT-G03`, Architecture | — | Current | 24 tests in `@sonder/server` (717 total across workspace) | **DELIVERED & VERIFIED** (Real Node.js/TypeScript `@sonder/server` modular monolith, PostgreSQL RLS migrations, connection pool tenant context isolation, RFC 9457 error handler, `/health/live`, `/health/ready`, live HTTP roles & role-preview downward-only intersection slice) |
 
 ### A.2 Current Engineering Status & Next Milestones
 
@@ -241,9 +242,9 @@ Track A (Engineering):
 - Actionable Status (53):  28 DONE, 1 PARTIAL, 0 NOT STARTED (Phase 1), 3 DECISION BLOCKED,
                            1 BACKEND DEPENDENT, 13 DEFERRED, 7 REJECTED (Total: 53)
 - Contract Readiness:      Candidate OpenAPI 0.3.20-draft (Live Backend Pending)
-- Latest Hardened Feature: VS-10: Backend Integration & Authorization Foundation
-- Current Milestone:       VS-10: Backend Integration & Authorization Foundation (DELIVERED & VERIFIED)
-- Next Engineering Target: Track C Live Database Migrations & Runtime Service Provisioning (DEP-ROLES-01)
+- Latest Hardened Feature: VS-11: Live Backend Runtime & First Persisted Authorization Slice
+- Current Milestone:       VS-11: Live Backend Runtime & First Persisted Authorization Slice (DELIVERED & VERIFIED)
+- Next Engineering Target: Live PostgreSQL local daemon / CI provisioning & multi-tenant outbox worker pipeline
 
 Track B (UI/UX Workstream - PAUSED):
 - Research & Principles:   Approved (PR #4, 92e984e)
