@@ -60,7 +60,8 @@
 | **VS-09K**   | M1.3 Scope Reconciliation, Audit Authorization Hardening & Governance Gate | Governance / `FEAT-G04` | — | `67c4bf0` | 667 tests (63 suites) | **MERGED & VERIFIED** (Fail-closed audit capabilities, metadata sanitization, and SOT-11/14 reconciliation) |
 | **VS-09L**   | Phase 1 Partial Scope Closure & Release Readiness | Multi (`FEAT-D05a`, `FEAT-K01`, `FEAT-G04`, `FEAT-G03`) | — | `5ab2436` | 31 tests (22 in `AuditLog.test.tsx`, 9 in `api-client.test.ts`) | **MERGED & VERIFIED** (Role-preview non-mutating POST allowlist, audit actorId/targetId separation, recursive metadata sanitization, FEAT-D05a verified DONE, FEAT-K01 PARTIAL with DEP-METADATA-01) |
 | **VS-10**    | Backend Integration & Authorization Foundation | Track C / `FEAT-G02b`, `FEAT-G03` | — | `0659662` | 19 tests in `authorization.test.ts` (692 total) | **VERIFIED & COMPLETED** (Frontend/mock authorization boundary hardening, canonical intersection engine `effectiveCapabilities = callerCapabilities ∩ previewRoleCapabilities`, privilege escalation defense, downward-only role preview, and grant ceiling validation) |
-| **VS-11**    | Live Backend Runtime & First Persisted Authorization Slice | Track C / `FEAT-G02b`, `FEAT-G03`, Architecture | — | Current | 24 tests in `@sonder/server` (717 total across workspace) | **DELIVERED & VERIFIED** (Real Node.js/TypeScript `@sonder/server` modular monolith, PostgreSQL RLS migrations, connection pool tenant context isolation, RFC 9457 error handler, `/health/live`, `/health/ready`, live HTTP roles & role-preview downward-only intersection slice) |
+| **VS-11**    | Live Backend Runtime & First Persisted Authorization Slice | Track C / Backend Handoff | — | `048f70d` | 24 tests in `@sonder/server` (717 total across workspace) | **DELIVERED & VERIFIED** (Real Node.js/TypeScript `@sonder/server` modular monolith, PostgreSQL RLS migrations, connection pool tenant context isolation, RFC 9457 error handler, `/health/live`, `/health/ready`, live HTTP roles & role-preview downward-only intersection slice; delineated as backend-owner handoff) |
+| **FE-VS12**  | Frontend Roadmap Reconciliation & Completeness Baseline | Track A / Governance Audit | — | Current | 693 tests in `apps/web` (717 total monorepo) | **DELIVERED & VERIFIED** (Authoritative frontend completeness baseline: 28 FE COMPLETE [84.85%], 1 FE PARTIAL, 0 NOT STARTED, 3 FE BLOCKED, 1 BACKEND DEPENDENT; weighted score 86.36%; 100% test verification across implemented slices; FEAT-J02 retained Phase 3 DEFERRED; VS-10/11 delineated as backend-owner handoff) |
 
 ### A.2 Current Engineering Status & Next Milestones
 
@@ -229,26 +230,34 @@ flowchart LR
 SONDER PLATFORM PROGRESS SUMMARY
 ================================================================================
 Monorepo Status:           Clean, 100% Green
-Active Baseline:           develop @ 26bd662 (PR #40 merged)
-Total Passing Test Suites: 64 suites (apps/web + packages/contracts)
-Total Automated Tests:     692 tests (100% passing)
+Active Baseline:           feat/FE-VS12-frontend-completeness-baseline @ 048f70d
+Total Passing Test Suites: 69 suites (64 in apps/web + 5 in apps/server)
+Total Automated Tests:     717 tests (693 in apps/web + 24 in apps/server, 100% passing)
 Documentation Checks:      51 / 51 passed (pnpm validate:docs)
 
-Track A (Engineering):
+Track A (Frontend Engineering):
 - Canonical Feature Audit: 70 canonical FEAT patterns accounted for in sonder-frontend-completion-tracker.md:
                            - 53 Actionable Concrete Capabilities
                            - 7 Composite Parent Identifiers
                            - 10 Research Family Range Bounds
-- Actionable Status (53):  28 DONE, 1 PARTIAL, 0 NOT STARTED (Phase 1), 3 DECISION BLOCKED,
-                           1 BACKEND DEPENDENT, 13 DEFERRED, 7 REJECTED (Total: 53)
-- Contract Readiness:      Candidate OpenAPI 0.3.20-draft (Live Backend Pending)
-- Latest Hardened Feature: VS-11: Live Backend Runtime & First Persisted Authorization Slice
-- Current Milestone:       VS-11: Live Backend Runtime & First Persisted Authorization Slice (DELIVERED & VERIFIED)
-- Next Engineering Target: Live PostgreSQL local daemon / CI provisioning & multi-tenant outbox worker pipeline
+- Phase 1 Status (33):     28 FE COMPLETE (84.85%), 1 FE PARTIAL (FEAT-K01), 0 FE NOT STARTED,
+                           3 FE BLOCKED (FEAT-C04, FEAT-C06, FEAT-G02b), 1 BACKEND DEPENDENT (FEAT-F02)
+- Weighted Phase 1 Score:  86.36% ((28 + 0.5 * 1) / 33 * 100)
+- Full Roadmap Score (46): 61.96% ((28 + 0.5 * 1) / 46 * 100, including 13 Phase 2-4 Deferred)
+- Functional Verification: 100% of implemented frontend slices (29/29) verified in Vitest
+- Contract Readiness:      28 Contract Ready, 2 Contract Gap, 2 Ambiguous, 1 Backend Dependent
+- Latest Hardened Feature: FE-VS12: Frontend Roadmap Reconciliation & Completeness Baseline
+- Current Milestone:       FE-VS12: Frontend Roadmap Reconciliation & Completeness Baseline (DELIVERED & VERIFIED)
+- Next Frontend Target:    FE-VS13: External Smart URL Fallback Chip Renderer (FEAT-K01)
 
-Track B (UI/UX Workstream - PAUSED):
+Track C (Backend Infrastructure — Backend Developer Owned):
+- Status:                  VS-10 & VS-11 established real modular-monolith package (@sonder/server),
+                           PostgreSQL migrations, RLS policies, RFC 9457 errors, and live role-preview slice.
+                           Backend developer owns ongoing database and infrastructure deployment.
+
+Track B (UI/UX Workstream — PAUSED):
 - Research & Principles:   Approved (PR #4, 92e984e)
-- Status:                  Strictly PAUSED pending completion of Inventory A backlog
+- Status:                  Strictly PAUSED pending completion of all approved frontend functional scope
 - Screens Audited:         10 / 10 Core Views & Shell Modules (100%)
 - Identified Findings:     14 Findings (0 Critical, 2 High, 5 Medium, 7 Low)
 - Execution Plan:          4 Independent Slices (UX-1 through UX-4)

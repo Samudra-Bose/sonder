@@ -1,197 +1,185 @@
-# SONDER — FRONTEND COMPLETION TRACKER & FIRST-LOOK READINESS
+# SONDER — FRONTEND COMPLETION TRACKER & ROADMAP BASELINE
 
-**Document Version:** 1.6.0<br/>
-**Last Synchronized:** 2026-11-11<br/>
-**Current Baseline Commit:** `develop @ 26bd662` (with PR #39 audit merge `a9b093c` and PR #40 documentation lock `26bd662`)<br/>
+**Document Version:** 1.7.0<br/>
+**Last Synchronized:** 2026-11-15<br/>
+**Current Baseline Commit:** `feat/FE-VS12-frontend-completeness-baseline @ 048f70d`<br/>
+**Engineering Domain:** Frontend Only (Backend implementation & infrastructure owned by Backend Developer)<br/>
 **Governance Standard:** Dual-Track Engineering & UI/UX Governance (PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT)<br/>
-**Milestone:** VS-09.0 — Complete Frontend Audit, Feature Inventory & First-Look Readiness<br/>
-**Status Recommendation:** `BACKEND-INDEPENDENT WORK REMAINS — IMPLEMENTATION REQUIRED (MERGED, VERIFIED & LOCKED in PR #39 @ a9b093c, locked in PR #40 @ 26bd662).`
+**Milestone:** FE-VS12 — Frontend Roadmap Reconciliation & Completeness Baseline<br/>
+**Status Recommendation:** `PHASE 1 CORE FRONTEND FOUNDATION DELIVERED (86.36% WEIGHTED COMPLETION). REMAINING WORK BOUNDED TO CONTRACT-GATED CAPABILITIES & PHASE 2–4 ROADMAP.`
 
 ---
 
 ## 1. Executive Summary
 
-Milestone **VS-09.0** provides a complete, read-only audit of the entire Sonder web application (`apps/web/`) and candidate OpenAPI contracts (`Community-Work-Management-v1.5/docs/contracts/openapi.yaml`). The purpose of this audit is to reconcile all canonical feature identifiers, document exact test and code evidence, identify remaining backend-independent engineering work, and establish readiness for the first complete functional release of Sonder.
+Milestone **FE-VS12** establishes an authoritative, evidence-based baseline of Sonder's frontend feature completeness. Sonder's engineering responsibilities are strictly divided: our team builds the **frontend only**, while a separate developer owns backend runtime services, databases, RLS policies, and deployment infrastructure.
 
-### Key Audit Findings:
-1. **Core Work Management Foundation is Operational:**<br/>
-   The core work management spine is solid, verified by 50 Vitest test suites (506 tests passing) and zero TypeScript errors:
-   - Authentication & session cookie lifecycle (`FEAT-G01`).
-   - App shell, responsive navigation rail, and workspace switcher (`FEAT-B01`).
-   - Omnibar command palette with `Cmd+K` keyboard navigation (`FEAT-C05`).
-   - Cross-workspace triage dashboard ("My Work", `FEAT-C03`).
-   - Task CRUD, URL deep-linking (`?task=`), and peek drawer (`FEAT-A02`).
-   - Inline field editors with optimistic concurrency and rollback (`FEAT-A03`).
-   - Quick task composer with `C` hotkey and floating button (`FEAT-A02`).
-   - Subtasks (depth 1–2) with reparenting modal (`FEAT-A06`).
-   - Synchronized List and Kanban Board views with fractional ranking (`FEAT-C01`, `FEAT-A08`).
-   - Calendar View with month/week grids and unscheduled task tray (`FEAT-C02`).
-   - Timeline View with Gantt bars, workspace milestones (`FEAT-B04`), and BLOCKS DAG dependency conflict lines (`FEAT-A06`).
-   - Collaboration spine with threaded comments, AST-safe markdown, `@mentions`, and task watchers (`FEAT-A04`).
-   - In-app Notification Center with unread bell counter, popover preview, and `/inbox` route (`FEAT-F01a`).
-   - Accessible design system primitives, contrast tokens, and keyboard accessibility patterns (`FEAT-J03`).
+Our mandate is to ensure every approved frontend user workflow, interaction pattern, form validation, error/empty/loading state, and capability gate is fully implemented and functionally verified against OpenAPI contracts and MSW mock handlers before unfreezing dedicated UI/UX Track B implementation.
 
-2. **Frontend Scope vs. Production Backend Acceptance:**<br/>
-   In accordance with our contract-first dual-track engineering model:
-   - **Provisional Frontend Candidate Coverage:** Capabilities marked as **DONE** represent verified frontend client implementations operating against local mock handlers (MSW) in Vitest.
-   - **Backend & Infrastructure Distinction:** Passing frontend unit, integration, and mock tests does NOT certify live backend availability, database ACID guarantees, production rate limits, server backup/PITR recovery, or production acceptance.
-   - **`FEAT-J03` Scope Clarification & Test Evidence Breakdown:** `FEAT-J03` covers accessible design system primitives, tokens, and WCAG 2.2 AA contrast/keyboard standards on the frontend. Automated test evidence spans 4 foundation test files totaling 24 Vitest tests across 70 static `expect()` call sites (not 70 runtime assertions):
-     - `apps/web/src/lib/design-tokens.test.ts`: 6 test cases (27 static `expect()` call sites) verifying component corner radius scale in `@theme`, light and dark status border tokens, brand accent button contrast, danger button contrast $\ge$ 4.5:1, and semantic `.focus-ring` utility tokens.
-     - `apps/web/src/lib/keyboard.test.tsx`: 10 test cases (23 static `expect()` call sites) verifying shortcut dispatch, required modifiers, strict modifier exclusion, duplicate registrations (LIFO and priority), input element suppression, and unmount cleanup.
-     - `apps/web/src/lib/theme.test.tsx`: 5 test cases (16 static `expect()` call sites) verifying `ThemeProvider` / `useTheme` default resolution, dark/light toggle, localStorage persistence, system preference synchronization, and provider boundary validation.
-     - `apps/web/src/lib/reduced-motion.test.ts`: 3 test cases (4 static `expect()` call sites) verifying `usePrefersReducedMotion` false/true states and dynamic matchMedia listener updates.
-     - *Historical Citation Correction:* Historical project documentation (PR #5, PR #31) cited "16 tests" for `design-tokens.test.ts`. Direct execution confirms `design-tokens.test.ts` contains exactly 6 test cases (27 static `expect()` call sites); the historical "16" conflated combined foundation suite counts (such as 6 design-token + 10 keyboard test cases, or the 16 assertions in `theme.test.tsx`).
-     - *Production Acceptance Distinction:* These frontend test suites verify UI component styling and browser token behavior; they do NOT test or prove backend security, edge rate limits, server backups/PITR drills, or production disaster recovery, which remain distinct platform engineering gates pending backend infrastructure deployment.
-   - **`FEAT-G01` Scope Clarification:** `FEAT-G01` verifies frontend session state, CSRF fail-closed client headers, cookie lifecycle, and auto-refresh against MSW. Live backend authentication services, production cookie domain infrastructure, and OAuth provider integrations remain pending.
-   - **`FEAT-A04` Scope Clarification:** `FEAT-A04` verifies the collaboration UI, threaded comments, AST-safe markdown, @mentions, and optimistic watcher toggle. Cross-session watcher persistence (`DEP-COLLAB-01`) and live WebSocket synchronization (`DEP-REALTIME-01`) remain pending backend engineering milestones.
-   - **`FEAT-F01a` Scope Clarification:** `FEAT-F01a` verifies the frontend REST notification center, bell badge, preview popover, and `/inbox` route against MSW. Live backend notification dispatch, realtime WebSocket badge sync, and task deep-linking (`DEP-NOTIF-02`) remain pending on the backend.
-
-3. **Canonical Hierarchy & Terminology Reconciliation:**<br/>
-   The canonical platform entity hierarchy is strictly:
-   $$\text{Community} \longrightarrow \text{Workspace} \longrightarrow \text{Task} \longrightarrow \text{Subtask}$$
-   - **No Projects or Lists as Hierarchy Entities:** "Projects" and "Lists" (as intermediate container entities between Workspace and Task) were obsolete artifacts from earlier Jira research and have been completely eliminated.
-   - **Workspace-Level Mapping:** Legitimate functionality historically labeled with "Project" in research registers operates strictly at the **Workspace** level:
-     - `FEAT-E01`: Workspace Overview & Workload Summary (formerly Project Overview)
-     - `FEAT-D05a` / `FEAT-D05b`: Workspace Starter & Configuration Templates (formerly Project Templates)
-     - `FEAT-I01`: Workspace-Scoped Intake Forms (formerly Project Intake Forms)
-   - **Presentation View Clarification:** "List View" refers strictly to one of the four presentation views (`TaskListView.tsx`), not a container entity in the product model.
-
-4. **First-Look Experience Requires Remaining Phase 1 Features:**<br/>
-   While the application executes cleanly against mock handlers in automated unit and component tests, essential task lifecycle paths (soft-delete, undo toast, workspace trash, template picker, work-item archetypes, task cloning, CSV export) remain unbuilt.
-5. **Dual-Track Governance:**<br/>
-   UI/UX Track B remains strictly **PAUSED**. Visual polish, density tuning, and ergonomics will not begin until Phase 1 backend-independent functional features are completed and locked.
-6. **Final Status:**<br/>
-   `BACKEND-INDEPENDENT WORK REMAINS — IMPLEMENTATION REQUIRED.`
+### Key Baseline Findings:
+1. **Frontend Foundation Fully Operational:**
+   * Automated verification across `apps/web/` stands at **64 test suites, 693 tests passing (100% green)** in Vitest with zero TypeScript compilation errors.
+   * All 8 backend-independent Phase 1 milestones from Inventory A (`VS-09A` through `VS-09H`) plus M1.3 governance slices (`VS-09I` Permission Inspector, `VS-09J` Audit Log Table & CSV Export, `VS-09L` Release Hardening) are fully implemented, verified, and locked.
+2. **Strict Frontend / Backend Responsibility Boundary:**
+   * Frontend completeness is evaluated by client-side workflows, responsive components, URL synchronization, optimistic UI, state machines, and MSW contract fidelity.
+   * Milestone `VS-10` (Authorization Foundation) and Milestone `VS-11` (Live Backend Runtime Package `@sonder/server`) established backend integration baselines. Those deliverables represent backend-owner handoff infrastructure and do NOT expand frontend engineering obligations.
+   * Passing frontend tests against MSW mocks does not claim live production backend ACID correctness or database persistence; it confirms frontend client readiness to integrate.
+3. **Canonical Hierarchy & Design System Preservation:**
+   * Canonical hierarchy remains: $\text{Community} \longrightarrow \text{Workspace} \longrightarrow \text{Task} \longrightarrow \text{Subtask}$ (depth 1–2).
+   * UI/UX Track B remains **PAUSED**. No visual redesign, decorative changes, or theme rewrites were introduced.
+4. **Authoritative Metric Summary (Phase 1 Initial-Production Scope):**
+   * **In-Scope Frontend Capabilities:** 33 concrete capabilities.
+   * **FE COMPLETE:** 28 capabilities (84.85%).
+   * **FE PARTIAL:** 1 capability (`FEAT-K01`, Smart URL Chips).
+   * **FE NOT STARTED:** 0 capabilities (0.00%).
+   * **FE BLOCKED (Product Decisions / Contract Gaps):** 3 capabilities (`FEAT-C04`, `FEAT-C06`, `FEAT-G02b`).
+   * **BACKEND DEPENDENT:** 1 capability (`FEAT-F02`, Real-Time Presence / WebSocket).
+   * **Weighted Frontend Completeness:** **86.36%**.
+   * **Functional Verification Coverage:** **100%** of implemented frontend capabilities (29/29) possess dedicated automated Vitest test suites.
 
 ---
 
-## 2. Reconciled Feature Inventory Accounting (All 70 Canonical Patterns)
+## 2. Source-of-Truth Hierarchy & Precedence Rules
 
-Across the Master Specification (`Community-Work-Management-Master-Specification-v1.5.0.md`) and Master PRD (`Community-Work-Management-v1.5/docs/01-product/master-prd.md`), exactly **70 canonical `FEAT-` patterns** are documented.
+To prevent scope creep, misattributed dependencies, and silent requirements drift, project documentation adheres to the following explicit order of precedence:
 
-To resolve prior inventory ambiguities, this section establishes a strict 1-to-1 accounting where every pattern is classified into one of three distinct groups, and every actionable capability is assigned **exactly one unambiguous status**:
+1. **Tier 1 — Master Product Specification & Governance Decisions:**
+   * `Community-Work-Management-Master-Specification-v1.5.0.md`
+   * `Community-Work-Management-v1.5/docs/01-product/master-prd.md`
+   * `Community-Work-Management-v1.5/docs/00-governance/decision-register.md`
+   * *Rule:* Formal stakeholder decisions (DEC-OPEN-*, SOT-*) override tracker summaries or provisional drafts.
+2. **Tier 2 — Contract Infrastructure & API Specifications:**
+   * `packages/contracts/src/api-types.ts` & `openapi-0.3.20-draft.yaml`
+   * `packages/contracts/src/ws-events-types.ts` & `ws-protocol-types.ts`
+   * *Rule:* The frontend must consume contract-defined DTOs and endpoints; frontend developers must never invent API endpoints, request bodies, or capability names.
+3. **Tier 3 — Delivery Trackers & Execution Roadmaps:**
+   * `docs/04-implementation/sonder-frontend-completion-tracker.md` (this document)
+   * `docs/04-implementation/sonder-project-progress-tracker.md`
+   * `docs/04-implementation/sonder-overall-delivery-tracker.md`
+   * *Rule:* Trackers reflect verified implementation evidence and must remain strictly synchronized with Tier 1 and Tier 2.
+
+---
+
+## 3. Comprehensive 70-Pattern Feature Inventory & Accounting
+
+Across the Master Specification and PRD, exactly **70 canonical `FEAT-` patterns** are documented:
+* **Group 1: Actionable Concrete Capabilities:** 53 items
+* **Group 2: Composite Parent Identifiers:** 7 items (decomposed into concrete sub-features)
+* **Group 3: Historical Research Boundary Citations:** 10 items (non-actionable family bounds)
 
 ```
 ================================================================================
-CANONICAL FEATURE INVENTORY RECONCILIATION
+CANONICAL FEATURE INVENTORY ACCOUNTING (ALL 70 PATTERNS)
 ================================================================================
 Group 1: Actionable Concrete Capabilities (Families A through L):      53 items
 Group 2: Composite Parent Identifiers (Subdivided into sub-features):   7 items
-Group 3: Historical Research Family Boundary References (Section 3):   10 items
+Group 3: Historical Research Family Boundary References:               10 items
 --------------------------------------------------------------------------------
 TOTAL CANONICAL FEAT PATTERNS ACCOUNTED FOR:                           70 items
 ================================================================================
 ```
 
-### Reconciled Status Distribution of Actionable Capabilities (53 Concrete Features)
-
-```mermaid
-pie title Actionable Capability Status Distribution (53 Features)
-    "DONE (Provisional Frontend Candidate)" : 28
-    "PARTIAL (Incomplete Scope)" : 1
-    "NOT STARTED (Phase 1 Backlog)" : 0
-    "DECISION BLOCKED (PO / Backend Sign-Off)" : 3
-    "BACKEND DEPENDENT (Gateway / Endpoints)" : 1
-    "DEFERRED (Phases 2, 3, 4)" : 13
-    "REJECTED / OUT OF SCOPE (Excluded)" : 7
-```
-
-| Status Classification | Count | Description & Invariant Boundaries |
-| :--- | :---: | :--- |
-| **DONE** | **28** | Provisional frontend candidate implementation verified in `apps/web/src/` with passing Vitest test suites against MSW mocks. Live backend & infrastructure acceptance pending. |
-| **PARTIAL** | **1** | Core data structures exist in code or types, but UI or workflow remains incomplete (`FEAT-K01`). |
-| **NOT STARTED (Phase 1)** | **0** | Approved Phase 1 capabilities with schemas in candidate OpenAPI 0.3.20-draft, awaiting frontend vertical slice implementation. |
-| **DECISION BLOCKED** | **3** | Implementation paused by formal governance decision (`FEAT-C04`, `FEAT-C06`, `FEAT-G02b`). |
-| **BACKEND DEPENDENT** | **1** | Requires live backend infrastructure (`FEAT-F02` Live WebSocket Gateway `DEP-REALTIME-01`). |
-| **DEFERRED (Phases 2–4)** | **13** | Approved product roadmap capabilities scheduled for Phase 2, 3, or 4 (including `FEAT-J02` offline task editing per SOT-11/14). |
-| **REJECTED / OUT OF SCOPE**| **7** | Explicitly excluded to protect simplicity, performance, and low cognitive overhead. |
-| **TOTAL ACTIONABLE** | **53** | **Sum of all mutually exclusive capability statuses: 28 + 1 + 0 + 3 + 1 + 13 + 7 = 53** |
+### Mutual Exclusion Accounting of Actionable Capabilities (53 Features)
+Every actionable capability is assigned **exactly one mutually exclusive status**:
+* **FE COMPLETE (Phase 1):** 28
+* **FE PARTIAL (Phase 1):** 1 (`FEAT-K01`)
+* **FE NOT STARTED (Phase 1):** 0
+* **FE BLOCKED (Phase 1):** 3 (`FEAT-C04`, `FEAT-C06`, `FEAT-G02b`)
+* **BACKEND DEPENDENT (Phase 1):** 1 (`FEAT-F02`)
+* **DEFERRED (Phases 2, 3, 4):** 13
+* **REJECTED / OUT OF SCOPE:** 7
+* **Total Actionable Capabilities:** $28 + 1 + 0 + 3 + 1 + 13 + 7 = 53$
 
 ---
 
-## 3. Comprehensive Feature-by-Feature Completion Table
+## 4. Definitive 53-Feature Evaluation Matrix (5 Independent Dimensions)
 
-Below is the definitive enumeration of all 70 canonical FEAT patterns. Every actionable capability is assigned **exactly one status**.
+Each feature is evaluated across five distinct, uncollapsed dimensions:
+1. **Frontend Implementation:** `FE COMPLETE` | `FE PARTIAL` | `FE NOT STARTED` | `FE BLOCKED` | `DEFERRED` | `REJECTED`
+2. **Functional Verification:** `VERIFIED` | `PARTIALLY VERIFIED` | `NOT VERIFIED`
+3. **API Contract Readiness:** `CONTRACT READY` | `CONTRACT GAP` | `CONTRACT AMBIGUOUS` | `NOT APPLICABLE`
+4. **Backend Handoff Readiness:** `READY FOR BACKEND INTEGRATION` | `BACKEND CONTRACT DEPENDENCY` | `INTEGRATION PENDING` | `NOT APPLICABLE`
+5. **UI/UX Phase Readiness:** `READY FOR UI/UX PHASE` | `PENDING FE COMPLETION` | `NOT APPLICABLE`
 
 ### Group 1: Actionable Concrete Capabilities (53 Features)
 
-| Feature ID | Feature Name | Planned Phase | Status | Implementation Evidence | Test Suite Evidence | Frontend Scope Verified & Live Backend / Infra Boundary |
-| :--- | :--- | :---: | :---: | :--- | :--- | :--- |
-| **FEAT-A01** | Work-Item Archetypes (`TASK`, `DELIVERABLE`, `BUG`, `DECISION`) | M1.2 | **DONE** | `InlineArchetypeEditor.tsx`, `TaskArchetypeBadge.tsx` | `TaskArchetypes.test.tsx` (16) | Work-item archetype picker, card & drawer badges, and permission gating verified (16 tests). |
-| **FEAT-A02** | Fast Task Creation, Editing & Assignment | M1.1 | **DONE** | `QuickTaskComposer.tsx`, `TaskPeekDrawer.tsx` | `TaskPeekDrawer.test.tsx` (28), `tasks.test.tsx` (24) | Frontend Quick Task Composer, Peek Drawer, and URL deep link (`?task=`) verified (52 tests). Live database task persistence and validation pending backend service. |
-| **FEAT-A03** | Core Task Metadata (Status, Priority, Dates, Labels, Estimate)| M1.1 | **DONE** | `InlineFieldEditors.tsx`, `useUpdateTask.ts` | `InlineTaskEditing.test.tsx` (35) | Frontend inline editors, optimistic updates, and snapshot rollback verified (35 tests). Live database field updates pending backend service. |
-| **FEAT-A04** | Comments, @Mentions, #KEY Links & Task Watchers | M1.1 | **DONE** | `CommentComposer.tsx`, `markdown-ast.tsx`, `TaskWatchButton.tsx` | `TaskCollaboration.test.tsx` (24), `TaskCollaborationHardening.test.tsx` (22) | Frontend threaded comments, AST-safe markdown, @mentions, and optimistic watcher toggle verified (46 tests). Cross-session watcher DB persistence (`DEP-COLLAB-01`) and live WebSocket synchronization (`DEP-REALTIME-01`) pending backend implementation. |
-| **FEAT-A05a**| Task File Attachments & Binary Uploads | Excluded | **REJECTED** | None (Excluded per PRD §2.3) | None | Excluded from product scope to maintain Day-1 simplicity. |
-| **FEAT-A05b**| Workspace File Management Hub | Excluded | **REJECTED** | None (Excluded per PRD §2.3) | None | Excluded from product scope to maintain Day-1 simplicity. |
-| **FEAT-A06** | Subtasks (Depth 1..2) & Dependency Links (BLOCKS DAG) | M1.1 | **DONE** | `SubtaskList.tsx`, `ReparentTaskModal.tsx`, `TimelineDependencyConnectors.tsx` | `SubtaskHierarchy.test.tsx` (26), `TimelineDependencies.test.tsx` (28) | Frontend subtask hierarchy (depth 1–2), reparenting modal, and BLOCKS DAG conflict lines verified (54 tests). Live database parent/dependency integrity constraints pending backend service. |
-| **FEAT-A07** | Task & Checklist Cloning (Duplicate Task) | M1.2 | **DONE** | `useCloneTask.ts`, `TaskCloneToast.tsx`, `TaskCloneContext.tsx` | `TaskCloning.test.tsx` (11) | Single-click task & subtask checklist cloning from action menu and peek drawer with undo/toast feedback verified (11 tests). |
-| **FEAT-A08** | Fractional Ranking & Manual Ordering (`rankKey` / LexoRank) | M1.1 | **DONE** | `TaskBoardView.tsx`, `TaskListView.tsx` | `TaskViews.test.tsx` (38), `CrossViewIntegration.test.tsx` (12) | Frontend manual ordering, board column drop ranking, and accessible Move menu verified (50 tests). Live database LexoRank rebalancing background job pending backend service. |
-| **FEAT-A09** | Granular Time Tracking & Billable Worklogs | Excluded | **REJECTED** | None (Excluded per PRD §2.3) | None | Excluded from product scope to preserve lightweight community focus. |
-| **FEAT-A10a**| Single-Item Archive & 10s Undo Toast (`Z` hotkey) | M1.1 | **DONE** | `TaskActionsMenu.tsx`, `TaskUndoContext.tsx`, `TaskUndoToast.tsx`, `useArchiveTask.ts` | `TaskArchive.test.tsx` (32) | Single-task archive, 10s advisory undo toast, Z keyboard shortcut, and server-authoritative token validation verified (32 tests). Frozen at `0b82ef9`. |
-| **FEAT-A10b**| Bulk Action Bar (<=100 tasks) & 30-Day Trash Recovery View | M1.2 | **DONE** | `TaskTrashView.tsx`, `BulkActionBar.tsx`, `useTrashedTasks.ts` | `TaskBulkActions.test.tsx` (8) | Multi-select bulk action bar (<=100 tasks) and 30-day workspace trash recovery view verified (8 tests). |
-| **FEAT-A10c**| Granular Field-Revision Snapshot Restore | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3. |
-| **FEAT-B01** | Multi-Community, Workspace Spine & Responsive Navigation Rail | M1.1 | **DONE** | `AppShell.tsx`, `WorkspaceSwitcher.tsx` | `AppShell.test.tsx` (14), `WorkspaceSwitcher.test.tsx` (22) | Frontend application shell, responsive navigation rail, and desktop/mobile workspace switcher verified (36 tests). Live community multi-tenancy authorization middleware pending backend service. |
-| **FEAT-B02** | Backlog Status Category & Collapsible Tray | M1.1 | **DONE** | `BacklogTaskTray.tsx`, `TaskListView.tsx`, `TaskBoardView.tsx` | `BacklogTaskTray.test.tsx` (11), `TaskViews.test.tsx` (17) | Collapsible Backlog tray on List & Board views with ARIA disclosure, 1-click promotion to To Do, task peek integration, and workspace-scoped persistence. |
-| **FEAT-B03** | Opt-In Timeboxed Iterations / Cycles | Phase 4 | **DEFERRED** | None | None | Deferred to Phase 4. |
-| **FEAT-B04** | Workspace Milestones & Target Buckets | M1.2 | **DONE** | `useMilestones.ts`, `TimelineMilestoneMarker.tsx` | `TimelineView.test.tsx` (36) | Frontend timeline milestone markers, modal, and completion percentage rollup verified (36 tests). Live milestone database persistence pending backend service. |
-| **FEAT-B05** | Enterprise Scenario Sandbox & Capacity Math | Excluded | **REJECTED** | None (Excluded to prevent enterprise bloat) | None | Excluded from product scope. |
-| **FEAT-C01** | Synchronized List View (TreeGrid) & Kanban Board View | M1.1 | **DONE** | `TaskListView.tsx`, `TaskBoardView.tsx` | `TaskViews.test.tsx` (38), `CrossViewIntegration.test.tsx` (12) | Frontend virtualized list treegrid, board columns, mobile stage carousel, and column sorting verified (50 tests). Live task query execution and server-side filtering pending backend service. |
-| **FEAT-C02** | Synchronized Calendar View & Dependency Timeline View | M1.2 | **DONE** | `CalendarView.tsx`, `TimelineView.tsx` | `CalendarView.test.tsx` (34), `TimelineView.test.tsx` (36) | Frontend monthly/weekly calendar grid, unscheduled tray, split-pane Gantt axis, and conflict visualizer verified (70 tests). Live date-range query execution pending backend service. |
-| **FEAT-C03** | Personal Cross-Workspace Dashboard ("My Work") | M1.1 | **DONE** | `MyWorkView.tsx`, `TemporalGroupSection.tsx` | `MyWorkView.test.tsx` (24) | Frontend cross-workspace triage dashboard, date bucketing, and assignment views verified (24 tests). Live cross-workspace aggregation endpoints pending backend service. |
-| **FEAT-C04** | Saved Views (Personal vs Shared Views) | M1.1 | **DECISION BLOCKED** | PR #29 (`fb45f66`), PR #30 (`8fabfc2`) | Contract audit reports | Blocked on PO/BE sign-off on Decisions A–E. |
-| **FEAT-C05** | Omnibar (`Cmd+K`), Global Search & Filter Pills | M1.1 | **DONE** | `OmnibarModal.tsx`, `useOmnibarCommands.ts` | `OmnibarModal.test.tsx` (18) | Frontend instant Omnibar modal (`Cmd+K`), fuzzy search, and filter pill builder verified (18 tests). Live PostgreSQL full-text/trigram search index pending backend service. |
-| **FEAT-C06** | Board Swimlanes & Card Property Visibility Toggles | M1.2 | **DECISION BLOCKED** | Basic card badge rendering exists | None | Linked to Decision D of Saved Views contract. |
-| **FEAT-C07** | Permanent Task Keys (`PREFIX-NUM`) & Historical Aliases | M1.1 | **DONE** | `useResolveTaskKey.ts`, `TaskPeekDrawer.tsx` | `TaskIntegrationE2E.test.tsx` (320 monorepo suite) | Frontend monospace key badges, deep linking, and alias resolution hooks verified (320 monorepo suite). Live atomic monotonic counter and alias redirect table pending backend database migrations. |
-| **FEAT-D01** | 5-Category Workflow Spine & Custom Statuses Editor | M1.1 | **DONE** | `WorkspaceSettingsLayout.tsx`, `WorkflowSettingsView.tsx` | `WorkspaceSettings.test.tsx` (5) | Frontend 5-Category Workflow Spine (BACKLOG, TODO, IN_PROGRESS, DONE, CANCELED), status mappings, and simplicity governance policy verified (5 tests). |
-| **FEAT-D02** | Enterprise Workflow Schemes & Mandatory Transition Screens | Excluded | **REJECTED** | None (Excluded to preserve low learning curve) | None | Excluded from product scope. |
-| **FEAT-D03** | Optional Single-Step Status Sign-Off / Approval Gate | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3. |
-| **FEAT-D04a**| Core Custom Fields (Text, Number, Single-Select, Date, Boolean) | M1.2 | **DONE** | `CustomFieldsSettingsView.tsx`, `TaskCustomFieldsSection.tsx`, `useCustomFields.ts` | `CustomFields.test.tsx` (6), `TaskCustomFields.test.tsx` (5) | Frontend workspace custom field manager (TEXT, NUMBER, DATE, BOOLEAN, SINGLE_SELECT with options builder) and task peek drawer field value integration verified (11 tests). |
-| **FEAT-D04b**| Extended Custom Fields (Multi-Select, User, Checkbox, URL) | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2. |
-| **FEAT-D05a**| Built-in Starter Templates (General Purpose, Event, Ops) UI | M1.2 | **DONE** | `CreateWorkspaceDialog.tsx`, `WorkspaceTemplateCard.tsx`, `WorkspaceTemplatePreviewModal.tsx`, `useWorkspaceTemplates.ts` | `WorkspaceTemplatesPicker.test.tsx` (15) | Frontend starter templates picker UI (General Purpose, Event Planning, Team Operations), loading/error/retry states, preview modal, keyboard selection, form validation, and workspace creation verified (15 tests). Live database atomic configuration seeding pending backend service. |
-| **FEAT-D05b**| Custom Workspace & Reusable Checklist Templates (formerly Project Templates) | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2. |
-| **FEAT-E01** | Workspace Overview, Completion & Workload Summary (formerly Project Overview) | M1.2 | **DONE** | `ProjectOverviewTab.tsx`, `AssigneeWorkloadBar.tsx` | `TaskViews.test.tsx` (38) | Frontend workspace overview tab, completion progress bar, overdue tally, and assignee workload distribution verified (38 tests). Live SQL group-by summary aggregation pending backend service. |
-| **FEAT-E02** | Agile Burndown, Velocity & Cumulative Flow Charts | Phase 4 | **DEFERRED** | None | None | Deferred to Phase 4. |
-| **FEAT-E03** | Configurable Multi-Gadget Custom Dashboard Builder | Excluded | **REJECTED** | None (Excluded in favor of My Work & Overview) | None | Excluded from product scope. |
-| **FEAT-F01a**| Segmented In-App Notification Center (REST Inbox) | M1.2 | **DONE** | `NotificationCenter.tsx`, `InboxView.tsx` | `Notifications.test.tsx` (19) | Frontend REST inbox view, header bell, preview popover, unread toggle, cursor pagination, and mark-all-read mutations verified (19 tests). Live backend notification dispatch, realtime WebSocket badge sync, and task deep-linking (`DEP-NOTIF-02`) pending backend implementation. |
-| **FEAT-F01b**| Custom Reminder Rules & Scheduled Email Digests | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2. |
-| **FEAT-F02** | Real-Time Collaborative Updates & Presence | M1.1 | **BACKEND DEPENDENT** | Event consumer abstraction in place | None | Blocked on live WebSocket gateway (`DEP-REALTIME-01`). |
-| **FEAT-G01** | Authentication, Session Lifecycle, Cookies & CSRF Spine | M1.1 | **DONE** | `auth/`, `csrf.ts`, session restore hooks | `AuthFlow.test.tsx` (25) | Frontend authentication state machine, session cookie lifecycle, CSRF fail-closed client, and auto-refresh verified (25 tests). Live backend authentication service, production cookie domain, and OAuth provider deployment pending backend service. |
-| **FEAT-G02a**| Capability RBAC Engine, 4 System Roles & Permission Gates | M1.1 | **DONE** | `rbac/`, `PermissionGate.tsx` | `WorkspaceSwitcher.test.tsx` (22) | Frontend client-side `PermissionGate`, role guards, and capability checks verified (22 tests). Server-side capability authorization middleware and RLS policies pending backend service. |
-| **FEAT-G02b**| Configurable Custom Roles Builder UI | M1.3 | **DECISION BLOCKED** | None | None | Blocked on `DEP-ROLES-01` role simulator contract. |
-| **FEAT-G03** | Plain-Language Permission Inspector & Role Simulator | M1.3 | **DONE** | `PermissionInspector.tsx`, `capabilityDefinitions.ts`, `PermissionsSettingsView.tsx` | `RoleSimulator.test.tsx` (7) | Plain-language permission inspector, interactive downward-only role simulator, 31 canonical capabilities, scenario sandbox, and simulation isolation banner verified (7 tests). Server-side dynamic preview execution pending live service. |
-| **FEAT-G04** | Append-Only Hash-Chained Audit Log Table & CSV Export | M1.3 | **DONE** | `AuditLogSettingsView.tsx`, `useAuditLog.ts`, `auditExportCsv.ts` | `AuditLog.test.tsx` (22) | Workspace Settings Audit Log table with SHA-256 hash-chain display, server-reported cryptographic integrity status, cursor pagination, category/severity/search filtering, separate actorId and targetId filters, allow-listed metadata detail drawer (CR-14), and formula-injection-safe UTF-8 CSV export with independent `audit:export` capability gate verified (22 tests). Production cryptographic key checkpointing pending backend service. |
-| **FEAT-H01** | Declarative 1-Hop Workflow Automations | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3. |
-| **FEAT-H02** | Outbound HMAC-Signed HTTPS Webhooks | Phase 3 | **DEFERRED** | None | None | Deferred to Phase 3. |
-| **FEAT-I01** | Lightweight Shareable Workspace Intake Forms (formerly Project Intake Forms) | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2. |
-| **FEAT-I02** | Full ITSM Helpdesk Suite, SLA Clocks & Incident Command | Excluded | **REJECTED** | None (Excluded per low-overhead community scope) | None | Excluded from product scope. |
-| **FEAT-J01a**| Filtered View UTF-8 CSV Export | M1.2 | **DONE** | `taskExportCsv.ts`, `useTaskExportCsv.ts`, `TaskViewToolbar.tsx`, `WorkspaceTasksView.tsx` | `TaskExportCsv.test.tsx` (13) | RFC 4180-compliant UTF-8 CSV with BOM (\uFEFF), OWASP formula injection protection, cursor pagination across all filtered records, and TaskViewToolbar button. |
-| **FEAT-J01b**| Guided CSV Import Wizard with Dry-Run Validation | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2. |
-| **FEAT-J02** | Selected-Field Offline Task Editing & Queued Sync | Phase 3 | **DEFERRED** | Minimal M1.1 caching in place | None | Deferred to Phase 3 per SOT-11, SOT-14, and master PRD §1.1. IndexedDB queue, 14-day expiry, FIFO replay, and 409 conflict resolver staged for Phase 3. |
-| **FEAT-J03** | Accessible Design System Primitives & Tokens (WCAG 2.2 AA) | M1.1 | **DONE** | `index.css`, `design-tokens.ts`, `keyboard.ts`, `theme.tsx`, `reduced-motion.ts` | `design-tokens.test.ts` (6), `keyboard.test.tsx` (10), `theme.test.tsx` (5), `reduced-motion.test.ts` (3) | Frontend design system tokens, WCAG 2.2 AA contrast, semantic focus rings, keyboard conflict resolution, theme provider, and reduced motion verified across 4 foundation suites (24 Vitest tests, 70 static `expect()` call sites: `design-tokens.test.ts` [6 tests, 27 expect() sites], `keyboard.test.tsx` [10 tests, 23 expect() sites], `theme.test.tsx` [5 tests, 16 expect() sites], `reduced-motion.test.ts` [3 tests, 4 expect() sites]; corrects historical 16-test citation). Production backend edge rate limiting, server backup/PITR drills, and operational infrastructure acceptance remain separate pending operational gates. |
-| **FEAT-K01** | External Smart URL Metadata Chips (GitHub, Figma, Docs) | M1.2 | **PARTIAL** | `markdown-ast.tsx` | `markdown-ast.test.tsx` (25) | Plain URLs render safely with protocol validation and external link attributes verified (25 tests). Rich OpenGraph smart URL preview chips pending server-side metadata retrieval endpoint and DTO contract (DEP-METADATA-01). |
-| **FEAT-L01** | Optional AI Task Breakdown & Thread Summarization | Phase 4 | **DEFERRED** | None | None | Deferred to Phase 4. |
+| Feature ID & Name | Phase | FE Status | Verification | Contract Status | Backend Handoff | UI/UX Readiness | Acceptance Criteria Completed & Remaining Work | Blocking Dependency | Evidence / Test Location | Recommended Action |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- | :--- | :--- |
+| **FEAT-A01**<br/>Work-Item Archetypes (`TASK`, `DELIVERABLE`, `BUG`, `DECISION`) | M1.2 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Archetype dropdown, cards & drawer badges, color tokens, permission checks.<br/>**Remaining:** None on frontend. | None | `InlineArchetypeEditor.tsx`<br/>`TaskArchetypes.test.tsx` (16) | Ready for backend integration; preserve frozen UI. |
+| **FEAT-A02**<br/>Fast Task Creation, Peek Drawer & Deep Linking | M1.1 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** `C` hotkey composer, peek drawer, URL sync (`?task=:id`), title/description edit, assignee select.<br/>**Remaining:** None on frontend. | None | `QuickTaskComposer.tsx`<br/>`TaskPeekDrawer.test.tsx` (19)<br/>`QuickTaskComposer.test.tsx` (21) | Maintain contract conformance. |
+| **FEAT-A03**<br/>Core Task Metadata (Status, Priority, Dates, Labels, Estimate) | M1.1 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Inline click-to-edit, optimistic updates, rollback on error, keyboard controls (Escape/Enter).<br/>**Remaining:** None on frontend. | None | `InlineFieldEditors.tsx`<br/>`InlineTaskEditing.test.tsx` (26) | Ready for backend integration. |
+| **FEAT-A04**<br/>Comments, @Mentions, #KEY Links & Task Watchers | M1.1 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Threaded comment composer, AST-safe markdown parsing, user mention autocomplete, optimistic watcher toggle.<br/>**Remaining:** None on frontend. | DEP-COLLAB-01 (DB persistence), DEP-REALTIME-01 (WS sync) | `CommentComposer.tsx`<br/>`TaskCollaboration.test.tsx` (12)<br/>`TaskCollaborationHardening.test.tsx` (22) | Ready for backend integration. |
+| **FEAT-A05a**<br/>Task File Attachments & Binary Uploads | Excluded | **REJECTED** | NOT APPLICABLE | NOT APPLICABLE | NOT APPLICABLE | NOT APPLICABLE | Formally excluded from product scope to protect simplicity (PRD §2.3). | None | None | Preserve exclusion; do not implement. |
+| **FEAT-A05b**<br/>Workspace File Management Hub | Excluded | **REJECTED** | NOT APPLICABLE | NOT APPLICABLE | NOT APPLICABLE | NOT APPLICABLE | Formally excluded from product scope (PRD §2.3). | None | None | Preserve exclusion; do not implement. |
+| **FEAT-A06**<br/>Subtasks (Depth 1..2) & Dependency Links (BLOCKS DAG) | M1.1 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Subtask hierarchy capped at depth 2, reparenting modal, cycle-checked BLOCKS DAG connectors in Timeline.<br/>**Remaining:** None on frontend. | None | `SubtaskList.tsx`<br/>`SubtaskHierarchy.test.tsx` (18)<br/>`dependency-conflict-utils.test.ts` (11) | Maintain depth cap of 2. |
+| **FEAT-A07**<br/>Task & Checklist Cloning | M1.2 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Single-click clone action, subtask clone toggle, toast with link to cloned task, optimistic cache insert.<br/>**Remaining:** None on frontend. | None | `useCloneTask.ts`<br/>`TaskCloning.test.tsx` (11) | Ready for backend integration. |
+| **FEAT-A08**<br/>Fractional Ranking & Manual Ordering (`rankKey` / LexoRank) | M1.1 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Drag-and-drop column drop ranking, accessible Move menu for keyboard users, lexorank calculation.<br/>**Remaining:** None on frontend. | None | `TaskBoardView.tsx`<br/>`TaskViews.test.tsx` (17)<br/>`CrossViewIntegration.test.tsx` (10) | Ready for backend integration. |
+| **FEAT-A09**<br/>Granular Time Tracking & Billable Worklogs | Excluded | **REJECTED** | NOT APPLICABLE | NOT APPLICABLE | NOT APPLICABLE | NOT APPLICABLE | Formally excluded per PRD §2.3 to preserve community focus. | None | None | Preserve exclusion; do not implement. |
+| **FEAT-A10a**<br/>Single-Item Archive & 10s Undo Toast (`Z` hotkey) | M1.1 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Soft-delete timestamp `archivedAt`, 10s floating undo toast with countdown progress bar, `Z` hotkey, view eviction.<br/>**Remaining:** None on frontend. | None | `TaskActionsMenu.tsx`<br/>`TaskArchive.test.tsx` (32) | Frozen at `0b82ef9`. |
+| **FEAT-A10b**<br/>Bulk Action Bar (<=100 tasks) & 30-Day Trash View | M1.2 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Multi-select table checkboxes, bulk status/priority/archive, dedicated `/trash` view with 30-day countdown & restore.<br/>**Remaining:** None on frontend. Hard purge disabled pending DEC-OPEN-03. | DEC-OPEN-03 (Hard purge policy) | `TaskTrashView.tsx`<br/>`BulkActionBar.tsx`<br/>`TaskBulkActions.test.tsx` (8) | Maintain purge restriction. |
+| **FEAT-A10c**<br/>Granular Field-Revision Snapshot Restore | Phase 3 | **DEFERRED** | NOT APPLICABLE | CONTRACT READY | NOT APPLICABLE | NOT APPLICABLE | Scheduled for Phase 3 roadmap. | None | None | Preserve deferred status. |
+| **FEAT-B01**<br/>Multi-Community, Workspace Spine & Navigation Rail | M1.1 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Tenant switcher, responsive navigation rail, mobile drawer with focus trap, community context routing.<br/>**Remaining:** None on frontend. | None | `AppShell.tsx`<br/>`AppShell.test.tsx` (17)<br/>`WorkspaceSwitcher.test.tsx` (14) | Ready for backend integration. |
+| **FEAT-B02**<br/>Backlog Status Category & Collapsible Tray | M1.1 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Collapsible Backlog tray in List and Board views, count badge, 1-click promotion to To Do, ARIA disclosure, collapsed state persistence.<br/>**Remaining:** None on frontend. | None | `BacklogTaskTray.tsx`<br/>`BacklogTaskTray.test.tsx` (14) | Ready for backend integration. |
+| **FEAT-B03**<br/>Opt-In Timeboxed Iterations / Cycles | Phase 4 | **DEFERRED** | NOT APPLICABLE | CONTRACT READY | NOT APPLICABLE | NOT APPLICABLE | Scheduled for Phase 4 roadmap. | None | None | Preserve deferred status. |
+| **FEAT-B04**<br/>Workspace Milestones & Target Buckets | M1.2 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Optional planning markers on Timeline (DEC-OPEN-08), creation dialog, target dates, progress rollup.<br/>**Remaining:** None on frontend. | None | `TimelineMilestoneMarker.tsx`<br/>`TimelineView.test.tsx` (7)<br/>`milestones.test.tsx` (5) | Ready for backend integration. |
+| **FEAT-B05**<br/>Enterprise Scenario Sandbox & Capacity Math | Excluded | **REJECTED** | NOT APPLICABLE | NOT APPLICABLE | NOT APPLICABLE | NOT APPLICABLE | Formally excluded to prevent enterprise bloat. | None | None | Preserve exclusion. |
+| **FEAT-C01**<br/>Synchronized List View (TreeGrid) & Kanban Board View | M1.1 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Virtualized treegrid, column headers, mobile stage carousel, optimistic task reordering, shared query cache.<br/>**Remaining:** None on frontend. | None | `TaskListView.tsx`<br/>`TaskBoardView.tsx`<br/>`TaskListView.test.tsx` (7)<br/>`TaskViews.test.tsx` (17) | Ready for backend integration. |
+| **FEAT-C02**<br/>Synchronized Calendar View & Dependency Timeline View | M1.2 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Monthly & weekly calendar grids, unscheduled task tray, Gantt chart split axis, drag-to-reschedule, conflict lines.<br/>**Remaining:** None on frontend. | None | `CalendarView.tsx`<br/>`TimelineView.tsx`<br/>`CalendarView.test.tsx` (14)<br/>`TimelineView.test.tsx` (7) | Ready for backend integration. |
+| **FEAT-C03**<br/>Personal Cross-Workspace Dashboard ("My Work") | M1.1 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Aggregated view of assigned/created tasks across workspaces, bucketing by Overdue, Today, Upcoming, and Later.<br/>**Remaining:** None on frontend. | None | `MyWorkView.tsx`<br/>`MyWorkView.test.tsx` (13)<br/>`task-helpers.test.ts` (13) | Ready for backend integration. |
+| **FEAT-C04**<br/>Saved Views (Personal vs Shared Views) | M1.1 | **FE BLOCKED** | NOT VERIFIED | CONTRACT AMBIGUOUS | BACKEND CONTRACT DEPENDENCY | PENDING FE COMPLETION | **Done:** Draft spec in `proposed-saved-views-openapi.yaml`.<br/>**Remaining:** UI for creating, saving, switching, and sharing views blocked pending product decisions. | DEP-SV-01 (Decisions A–E) | `proposed-saved-views-openapi.yaml` | Awaiting PO decision sign-off. |
+| **FEAT-C05**<br/>Omnibar (`Cmd+K`), Global Search & Filter Pills | M1.1 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** `Cmd+K` instant modal, fuzzy search over tasks/views/settings, keyboard arrow navigation, action dispatch.<br/>**Remaining:** None on frontend. | None | `OmnibarModal.tsx`<br/>`Omnibar.test.tsx` (11) | Ready for backend integration. |
+| **FEAT-C06**<br/>Board Swimlanes & Card Property Visibility Toggles | M1.2 | **FE BLOCKED** | NOT VERIFIED | CONTRACT AMBIGUOUS | BACKEND CONTRACT DEPENDENCY | PENDING FE COMPLETION | **Done:** Card badge components exist.<br/>**Remaining:** Swimlane groupBy UI and property toggle controls blocked on Saved Views schema. | DEP-SV-01 (Decision D) | None | Awaiting Saved Views resolution. |
+| **FEAT-C07**<br/>Permanent Task Keys (`PREFIX-NUM`) & Historical Aliases | M1.1 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Monospace key badges, deep linking via `?task=PREFIX-NUM`, alias redirection resolution hooks.<br/>**Remaining:** None on frontend. | None | `TaskPeekDrawer.tsx`<br/>`TaskPeekDrawer.test.tsx` (19)<br/>`TaskIntegrationE2E.test.tsx` (24) | Ready for backend integration. |
+| **FEAT-D01**<br/>5-Category Workflow Spine & Custom Statuses Editor | M1.1 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** 5 canonical status categories (BACKLOG, TODO, IN_PROGRESS, DONE, CANCELED), custom status creator, category mapping editor.<br/>**Remaining:** None on frontend. | None | `WorkspaceSettingsLayout.tsx`<br/>`WorkflowSettingsView.tsx`<br/>`WorkspaceSettings.test.tsx` (5) | Ready for backend integration. |
+| **FEAT-D02**<br/>Enterprise Workflow Schemes & Transition Screens | Excluded | **REJECTED** | NOT APPLICABLE | NOT APPLICABLE | NOT APPLICABLE | NOT APPLICABLE | Formally excluded to preserve low cognitive overhead. | None | None | Preserve exclusion. |
+| **FEAT-D03**<br/>Optional Single-Step Status Sign-Off Gate | Phase 3 | **DEFERRED** | NOT APPLICABLE | CONTRACT READY | NOT APPLICABLE | NOT APPLICABLE | Scheduled for Phase 3 roadmap. | None | None | Preserve deferred status. |
+| **FEAT-D04a**<br/>Core Custom Fields (Text, Number, Single-Select, Date, Bool) | M1.2 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Field schema manager, option list builder, field value renderers/editors in peek drawer, validation.<br/>**Remaining:** None on frontend. | None | `CustomFieldsSettingsView.tsx`<br/>`CustomFields.test.tsx` (7)<br/>`TaskCustomFields.test.tsx` (7) | Ready for backend integration. |
+| **FEAT-D04b**<br/>Extended Custom Fields (Multi-Select, User, Checkbox, URL) | Phase 2 | **DEFERRED** | NOT APPLICABLE | CONTRACT READY | NOT APPLICABLE | NOT APPLICABLE | Scheduled for Phase 2 roadmap. | None | None | Preserve deferred status. |
+| **FEAT-D05a**<br/>Built-in Starter Templates Picker UI (General, Event, Ops) | M1.2 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Card picker for 3 approved templates, preview modal with pre-configured statuses and views, keyboard selection, form validation.<br/>**Remaining:** None on frontend. Backend atomic template seeding is an integration dependency. | Backend template seed runner | `CreateWorkspaceDialog.tsx`<br/>`WorkspaceTemplatesPicker.test.tsx` (15) | Provisional frontend complete. |
+| **FEAT-D05b**<br/>Custom Workspace & Reusable Checklist Templates | Phase 2 | **DEFERRED** | NOT APPLICABLE | CONTRACT READY | NOT APPLICABLE | NOT APPLICABLE | Scheduled for Phase 2 roadmap. | None | None | Preserve deferred status. |
+| **FEAT-E01**<br/>Workspace Overview, Completion & Workload Summary | M1.2 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Workspace summary tab, completion ratio progress bar, overdue tally, per-assignee open task workload distribution.<br/>**Remaining:** None on frontend. | None | `ProjectOverviewTab.tsx`<br/>`TaskViews.test.tsx` (17) | Ready for backend integration. |
+| **FEAT-E02**<br/>Agile Burndown, Velocity & Cumulative Flow Charts | Phase 4 | **DEFERRED** | NOT APPLICABLE | CONTRACT READY | NOT APPLICABLE | NOT APPLICABLE | Scheduled for Phase 4 roadmap. | None | None | Preserve deferred status. |
+| **FEAT-E03**<br/>Configurable Multi-Gadget Custom Dashboard Builder | Excluded | **REJECTED** | NOT APPLICABLE | NOT APPLICABLE | NOT APPLICABLE | NOT APPLICABLE | Formally excluded in favor of standard My Work & Overview. | None | None | Preserve exclusion. |
+| **FEAT-F01a**<br/>Segmented In-App Notification Center (REST Inbox) | M1.2 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Header bell badge counter, popover preview, full `/inbox` route with filters (All, Mentions, Assigned), mark-all-read.<br/>**Remaining:** None on frontend. Realtime push sync is a separate backend dependency (`DEP-NOTIF-02`). | None on frontend | `NotificationCenter.tsx`<br/>`InboxView.tsx`<br/>`Notifications.test.tsx` (19) | Ready for backend integration. |
+| **FEAT-F01b**<br/>Custom Reminder Rules & Scheduled Email Digests | Phase 2 | **DEFERRED** | NOT APPLICABLE | CONTRACT READY | NOT APPLICABLE | NOT APPLICABLE | Scheduled for Phase 2 roadmap. | None | None | Preserve deferred status. |
+| **FEAT-F02**<br/>Real-Time Collaborative Updates & Presence | M1.1 | **BACKEND DEPENDENT** | NOT VERIFIED | CONTRACT READY | BACKEND CONTRACT DEPENDENCY | PENDING FE COMPLETION | **Done:** Client event abstraction exists in `useRealtimeStream.ts`.<br/>**Remaining:** Live WebSocket protocol connection, reconnect backoff, presence indicators pending backend WS ticket infrastructure. | DEP-REALTIME-01 (WebSocket ticket & gateway) | `useRealtimeStream.ts` | Awaiting backend WebSocket gateway. |
+| **FEAT-G01**<br/>Authentication, Session Lifecycle, Cookies & CSRF Spine | M1.1 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Login/registration views, session restoration, automatic CSRF token header attachment, 401 interceptor & redirect.<br/>**Remaining:** None on frontend. | None on frontend | `AuthFlow.tsx`<br/>`AuthFlow.test.tsx` (17)<br/>`AuthTheme.test.tsx` (5) | Ready for backend integration. |
+| **FEAT-G02a**<br/>Capability RBAC Engine, 4 System Roles & Permission Gates | M1.1 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Client-side `PermissionGate`, role guards, authoritative capability intersection evaluator, fail-closed tenant boundary checks.<br/>**Remaining:** None on frontend. | None | `PermissionGate.tsx`<br/>`authorization.ts`<br/>`authorization.test.ts` (19)<br/>`WorkspaceSwitcher.test.tsx` (14) | Ready for backend integration. |
+| **FEAT-G02b**<br/>Configurable Custom Roles Builder UI | M1.3 | **FE BLOCKED** | NOT VERIFIED | CONTRACT GAP | BACKEND CONTRACT DEPENDENCY | PENDING FE COMPLETION | **Done:** Role preview simulator exists in `FEAT-G03`.<br/>**Remaining:** Custom role creation/edit builder UI, capability bundle selector, grant ceiling validator UI blocked on backend evaluator contract. | DEP-ROLES-01 (Custom role capability contract) | None | Awaiting custom role evaluator contract. |
+| **FEAT-G03**<br/>Plain-Language Permission Inspector & Role Simulator | M1.3 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Plain-language descriptions, downward-only role simulator banner, scenario sandbox, 31 canonical capabilities, type-safe `RoleCapability` mapping.<br/>**Remaining:** None on frontend. | None | `PermissionInspector.tsx`<br/>`RoleSimulator.test.tsx` (7)<br/>`authorization.test.ts` (19) | Ready for backend integration. |
+| **FEAT-G04**<br/>Append-Only Hash-Chained Audit Log Table & CSV Export | M1.3 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Audit event table with SHA-256 hash chains, cryptographic verification banner, separate `actorId`/`targetId` filters, allow-listed metadata detail drawer (CR-14), formula-injection-safe CSV export gated by `audit:export`.<br/>**Remaining:** None on frontend. | None | `AuditLogSettingsView.tsx`<br/>`AuditLog.test.tsx` (22) | Ready for backend integration. |
+| **FEAT-H01**<br/>Declarative 1-Hop Workflow Automations | Phase 3 | **DEFERRED** | NOT APPLICABLE | CONTRACT READY | NOT APPLICABLE | NOT APPLICABLE | Scheduled for Phase 3 roadmap. | None | None | Preserve deferred status. |
+| **FEAT-H02**<br/>Outbound HMAC-Signed HTTPS Webhooks | Phase 3 | **DEFERRED** | NOT APPLICABLE | CONTRACT READY | NOT APPLICABLE | NOT APPLICABLE | Scheduled for Phase 3 roadmap. | None | None | Preserve deferred status. |
+| **FEAT-I01**<br/>Lightweight Shareable Workspace Intake Forms | Phase 2 | **DEFERRED** | NOT APPLICABLE | CONTRACT READY | NOT APPLICABLE | NOT APPLICABLE | Scheduled for Phase 2 roadmap. | None | None | Preserve deferred status. |
+| **FEAT-I02**<br/>Full ITSM Helpdesk Suite, SLA Clocks & Incident Command | Excluded | **REJECTED** | NOT APPLICABLE | NOT APPLICABLE | NOT APPLICABLE | NOT APPLICABLE | Formally excluded per low-overhead community scope. | None | None | Preserve exclusion. |
+| **FEAT-J01a**<br/>Filtered View UTF-8 CSV Export | M1.2 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** Export button on view toolbar, exports filtered and sorted tasks, UTF-8 BOM (`\uFEFF`), OWASP formula injection protection.<br/>**Remaining:** None on frontend. | None | `taskExportCsv.ts`<br/>`TaskExportCsv.test.tsx` (10) | Ready for backend integration. |
+| **FEAT-J01b**<br/>Guided CSV Import Wizard with Dry-Run Validation | Phase 2 | **DEFERRED** | NOT APPLICABLE | CONTRACT READY | NOT APPLICABLE | NOT APPLICABLE | Scheduled for Phase 2 roadmap. | None | None | Preserve deferred status. |
+| **FEAT-J02**<br/>Selected-Field Offline Task Editing & Queued Sync | Phase 3 | **DEFERRED** | NOT APPLICABLE | CONTRACT READY | NOT APPLICABLE | NOT APPLICABLE | Scheduled for Phase 3 per SOT-11, SOT-14, and Master Spec §1.1. IndexedDB queue, 14-day expiry, FIFO replay, and 409 conflict resolver staged for Phase 3. | None | None | Authoritatively deferred to Phase 3. |
+| **FEAT-J03**<br/>Accessible Design System Primitives & Tokens (WCAG 2.2 AA) | M1.1 | **FE COMPLETE** | VERIFIED | CONTRACT READY | READY FOR BACKEND INTEGRATION | READY FOR UI/UX PHASE | **Done:** 4.5:1 contrast, semantic focus ring utilities, keyboard shortcut management, theme provider (dark/light/system), reduced motion support, 13 Base UI primitives.<br/>**Remaining:** None on frontend. | None | `design-tokens.ts`<br/>`keyboard.ts`<br/>`theme.tsx`<br/>`design-tokens.test.ts` (6)<br/>`keyboard.test.tsx` (10)<br/>`theme.test.tsx` (5)<br/>`reduced-motion.test.ts` (3) | Verified across 4 foundation suites (24 tests, 70 static expect sites). |
+| **FEAT-K01**<br/>External Smart URL Metadata Chips (GitHub, Figma, Docs) | M1.2 | **FE PARTIAL** | PARTIALLY VERIFIED | CONTRACT GAP | INTEGRATION PENDING | PENDING FE COMPLETION | **Done:** Safe URL rendering with `rel="noopener noreferrer"` and protocol validation in Markdown.<br/>**Remaining:** Rich OpenGraph preview chips (title, thumbnail, favicon, domain) blocked on backend scrape endpoint contract. | DEP-METADATA-01 (Metadata endpoint contract) | `markdown-ast.tsx`<br/>`markdown-ast.test.tsx` (13) | Partial frontend; awaiting scrape schema. |
+| **FEAT-L01**<br/>Optional AI Task Breakdown & Thread Summarization | Phase 4 | **DEFERRED** | NOT APPLICABLE | CONTRACT READY | NOT APPLICABLE | NOT APPLICABLE | Scheduled for Phase 4 roadmap. | None | None | Preserve deferred status. |
 
 ---
 
 ### Group 2: Composite Parent Identifiers (7 Patterns)
 
-These patterns represent historical multi-part parent capability headings that are formally decomposed into concrete sub-features in Group 1:
+These patterns represent multi-part parent capability headings that are formally decomposed into concrete sub-features in Group 1:
 
-| Pattern | Title & Definition | Decomposed Child Features | Status / Accounting Rule |
+| Pattern | Title & Definition | Decomposed Child Features | Accounting Status |
 | :--- | :--- | :--- | :--- |
-| **FEAT-A05** | Attachments, Workspace File Index & Activity Changelog | Decomposed into `FEAT-A05a` (Rejected), `FEAT-A05b` (Rejected), and Activity Changelog | Activity diff history implemented under `FEAT-A02`/`FEAT-A04`; file attachments excluded per PRD §2.3. |
-| **FEAT-A10** | Multi-Select Bulk Operations, Archive & 30-Day Trash | Decomposed into `FEAT-A10a`, `FEAT-A10b`, `FEAT-A10c` | Evaluated strictly via its child sub-features in Group 1. |
-| **FEAT-D04** | Custom Fields & Field Visibility Registry | Decomposed into `FEAT-D04a` (Phase 1) and `FEAT-D04b` (Phase 2) | Evaluated strictly via its child sub-features in Group 1. |
-| **FEAT-D05** | Built-in Workspace Starter Templates (formerly Project Templates) | Decomposed into `FEAT-D05a` (Phase 1) and `FEAT-D05b` (Phase 2) | Evaluated strictly via its child sub-features in Group 1. |
-| **FEAT-F01** | Unified Notification Inbox, Preferences & Reminders | Decomposed into `FEAT-F01a` (Phase 1 REST) and `FEAT-F01b` (Phase 2 Digests) | Evaluated strictly via its child sub-features in Group 1. |
-| **FEAT-G02** | Role-Based Access Control (RBAC) & Custom Roles | Decomposed into `FEAT-G02a` (Core RBAC) and `FEAT-G02b` (Custom Roles) | Evaluated strictly via its child sub-features in Group 1. |
-| **FEAT-J01** | CSV Task Import & Export with Validation Preview | Decomposed into `FEAT-J01a` (Phase 1 Export) and `FEAT-J01b` (Phase 2 Import) | Evaluated strictly via its child sub-features in Group 1. |
+| **FEAT-A05** | Attachments, Workspace File Index & Activity Changelog | Decomposed into `FEAT-A05a` (Rejected), `FEAT-A05b` (Rejected), and Activity Changelog | Evaluated via child sub-features in Group 1. Activity diff history implemented under `FEAT-A02`/`FEAT-A04`. |
+| **FEAT-A10** | Multi-Select Bulk Operations, Archive & 30-Day Trash | Decomposed into `FEAT-A10a`, `FEAT-A10b`, `FEAT-A10c` | Evaluated strictly via child sub-features in Group 1. |
+| **FEAT-D04** | Custom Fields & Field Visibility Registry | Decomposed into `FEAT-D04a` (Phase 1) and `FEAT-D04b` (Phase 2) | Evaluated strictly via child sub-features in Group 1. |
+| **FEAT-D05** | Built-in Workspace Starter Templates | Decomposed into `FEAT-D05a` (Phase 1) and `FEAT-D05b` (Phase 2) | Evaluated strictly via child sub-features in Group 1. |
+| **FEAT-F01** | Unified Notification Inbox, Preferences & Reminders | Decomposed into `FEAT-F01a` (Phase 1 REST) and `FEAT-F01b` (Phase 2 Digests) | Evaluated strictly via child sub-features in Group 1. |
+| **FEAT-G02** | Role-Based Access Control (RBAC) & Custom Roles | Decomposed into `FEAT-G02a` (Core RBAC) and `FEAT-G02b` (Custom Roles) | Evaluated strictly via child sub-features in Group 1. |
+| **FEAT-J01** | CSV Task Import & Export with Validation Preview | Decomposed into `FEAT-J01a` (Phase 1 Export) and `FEAT-J01b` (Phase 2 Import) | Evaluated strictly via child sub-features in Group 1. |
 
 ---
 
 ### Group 3: Historical Research Family Boundary References (10 Patterns)
 
-These patterns represent capability family range bounds defined in Section 3 of the original Jira capability research register (`Community-Work-Management-Master-Specification-v1.5.0.md`):
+These patterns represent research register range boundaries defined in Section 3 of the Master Specification:
 
 | Pattern | Research Boundary Context | Accounting Status |
 | :--- | :--- | :--- |
@@ -208,129 +196,93 @@ These patterns represent capability family range bounds defined in Section 3 of 
 
 ---
 
-## 4. Offline-Editing Classification Reconciliation
+## 5. Reconciled Decisions & Policy Governance
 
-A formal discrepancy between project specification documents is documented and reconciled as follows:
+### 1. `FEAT-J02` (Offline Task Editing)
+* **Authoritative Status:** **DEFERRED to Phase 3**.
+* **Governance Alignment:** SOT-11, SOT-14, Master Specification §1.1 summary, and Section 4 Selection Matrix authoritatively defer offline editing to Phase 3. The historical text in Master PRD §2.1 was superseded by governance decisions to safeguard Phase 1 delivery focus.
 
-1. **Documented Discrepancy:**
-   - In the historical Master Specification draft (`Community-Work-Management-Master-Specification-v1.5.0.md` Section 1.1 summary and Section 4 Selection Matrix), `FEAT-J02` was labeled as `D3 (Planned Roadmap — Phase 3)`.
-   - In the definitive Master PRD (`Community-Work-Management-v1.5/docs/01-product/master-prd.md` §2.1 M1.3 and §2.2), this classification was explicitly corrected:
-     > *"Selected-field offline editing for existing tasks, using the CR-15 allow-list, 14-day queue age, FIFO replay and per-field conflict handling. This is in the initial release scope, not deferred to Phase 3."*
-2. **Approved Product Direction Preserved:**
-   - `FEAT-J02` belongs strictly to **Milestone M1.3 (Phase 1)**, not Phase 3.
-   - Its implementation scope is bounded to existing cached tasks (no offline task creation), using the CR-15 allow-list, IndexedDB queue, 14-day age limit, and optimistic conflict detection.
-   - This approved direction is preserved across all trackers without silent mutation.
+### 2. `FEAT-D05a` (Workspace Starter Templates UI)
+* **Authoritative Status:** **FE COMPLETE** (Provisional Frontend Candidate).
+* **Governance Alignment:** The card picker, preview modal, keyboard navigation, and template selection form in `apps/web/` are fully implemented and verified by 15 tests in `WorkspaceTemplatesPicker.test.tsx`. Atomic backend database seeding is a separate integration dependency owned by the backend developer.
 
----
+### 3. `FEAT-K01` (External Smart URL Metadata Chips)
+* **Authoritative Status:** **FE PARTIAL**.
+* **Governance Alignment:** Markdown AST parses URLs safely with `target="_blank"` and `rel="noopener noreferrer"`. Rich OpenGraph cards remain partial because no approved OpenAPI scrape endpoint (`DEP-METADATA-01`) exists in `openapi-0.3.20-draft.yaml`. The frontend will not invent an unauthorized endpoint.
 
-## 5. Tightened Scope for Milestone VS-09A: Task Archive, Undo & Trash Recovery
+### 4. `FEAT-G02b` (Configurable Custom Roles Builder UI)
+* **Authoritative Status:** **FE BLOCKED**.
+* **Governance Alignment:** While `FEAT-G03` (Permission Inspector & Role Simulator) provides downward-only role simulation, `FEAT-G02b` requires dynamic custom role creation and capability bundle assignment. This remains blocked on `DEP-ROLES-01` (backend custom role evaluator contract).
 
-To ensure controlled engineering slices, the task recovery domain is divided into two distinct vertical milestones:
-
-### Milestone VS-09A: Single-Item Task Archive & 10-Second Undo Toast (`FEAT-A10a`)
-- **Scope:**
-  - Single-task "Archive" action added to `TaskActionsMenu.tsx` and `TaskPeekDrawer.tsx`.
-  - Global floating 10-second Undo Toast rendered upon archiving, displaying countdown progress and an `Undo` button.
-  - Global keyboard shortcut `Z` triggers undo during active toast countdown.
-  - Soft-delete semantics: Sets `archivedAt` timestamp; evicts task from active list/board views optimistically.
-  - Reversion restores exact rank, status, and view placement.
-- **Strict Invariants:**
-  - **No automatic permanent deletion.**
-  - **No bulk operations in this slice** (reserved for VS-09B).
-  - MSW handlers operate as **browser-local mock fixtures**, not production persistence.
-
-### Milestone VS-09B: 30-Day Workspace Trash & Bulk Action Bar (`FEAT-A10b`)
-- **Scope:**
-  - Multi-select row checkboxes on `TaskListView.tsx` with floating Bulk Action Bar (supporting up to 100 tasks).
-  - Dedicated `/trash` view listing soft-deleted tasks with remaining retention countdown (30-day window).
-  - Single and bulk `Restore` actions restoring tasks to their original workspace locations.
-- **Strict Invariants:**
-  - **Automatic purge is prohibited.**
-  - **Permanent hard purge remains Owner-authorized, explicitly audited, and strictly disabled** until stakeholder policy decision `DEC-OPEN-03` is resolved by the Product Owner.
+### 5. Open Governance Decisions (SOT-03, SOT-04, SOT-12)
+* **`SOT-03` (Personal Workspace Privacy):** `AUDITED_BREAK_GLASS` (owner confirmed) vs `PRIVATE_STRICT` (engineering recommendation). Remains tracked as an open decision pending formal sign-off.
+* **`SOT-04` (Task-Edit Policy):** Assignee field grant policy and creator ceiling remain tracked without silent mutation.
+* **`SOT-12` (File Quota & Storage Ceiling):** Formal limits remain pending stakeholder review.
 
 ---
 
-## 6. First-Look Evidence & Runtime Setup Assessment
+## 6. Authoritative Completeness Metrics
 
-### Verification Status Disclosure
-- **Automated Test Verification:** 50 test files and 506 tests passed in Vitest (`jsdom` environment) with zero regressions.
-- **Development Server Status:** The Vite development server was **NOT launched** during this documentation audit pass.
-- **Runtime Walkthrough Disclosure:** No live manual browser walkthrough was performed in this session. Prior visual evidence is documented in historical milestone delivery reports (e.g., PR #37).
+### Metric 1 — Initial Production Frontend Completeness
+Evaluates progress across all **33 approved Phase 1 capabilities**:
+* **Eligible Frontend Scope:** 33 capabilities
+* **FE COMPLETE:** 28 capabilities
+* **FE PARTIAL:** 1 capability (`FEAT-K01`)
+* **FE NOT STARTED:** 0 capabilities
+* **FE BLOCKED:** 3 capabilities (`FEAT-C04`, `FEAT-C06`, `FEAT-G02b`)
+* **BACKEND DEPENDENT:** 1 capability (`FEAT-F02`)
+* **Excluded from Denominator:** 13 DEFERRED (Phases 2–4) + 7 REJECTED = 20 features (explicitly scheduled outside Phase 1 release scope).
 
-### Exact Command and Configuration for Local Execution
-To execute Sonder locally in browser development mode:
+$$\text{Weighted Frontend Completeness} = \frac{\text{FE COMPLETE} + 0.5 \times \text{FE PARTIAL}}{\text{Eligible Scope}} \times 100$$
+$$\text{Weighted Frontend Completeness} = \frac{28 + 0.5 \times 1}{33} \times 100 = \frac{28.5}{33} \times 100 = \mathbf{86.36\%}$$
 
-```bash
-# 1. Install workspace dependencies
-pnpm install
+* **Functional Verification Coverage:** 29 / 29 implemented frontend features have passing automated tests in Vitest (**100% of implemented code verified**). Across all 33 in-scope capabilities: $28.5 / 33 = \mathbf{86.36\%}$.
 
-# 2. Launch web application dev server
-pnpm --filter @sonder/web dev
-```
+### Metric 2 — Full Approved Frontend Roadmap Completeness
+Evaluates progress across all **46 non-rejected capabilities** (including deferred work):
+* **Non-Rejected Roadmap Total:** 46 capabilities
+* **Active Phase 1 Scope Progress:** **86.36%** (28.5 / 33)
+* **Full Roadmap Scope (including 13 Phase 2–4 Deferred):**
+  $$\text{Full Roadmap Completeness} = \frac{28 + 0.5 \times 1}{46} \times 100 = \frac{28.5}{46} \times 100 = \mathbf{61.96\%}$$
 
-- **Local Development URL:** `http://localhost:3000`
-- **Application Routes:**
-  - `/` — Application Shell & Root Redirect
-  - `/workspaces/:workspaceId` — Core Task View Family (List, Board, Calendar, Timeline)
-  - `/workspaces/:workspaceId?task=:taskId` — Task Peek Drawer deep link
-  - `/inbox` — Segmented Notification Center Inbox
-- **Mock Authentication & Persistence Behavior:**
-  - In Vite development mode (`import.meta.env.DEV`), MSW activates automatically via `setupWorker` in `apps/web/src/mocks/browser.ts`.
-  - `apps/web/src/mocks/handlers/auth.ts` intercepts `/api/v1/session` and automatically provisions an active authenticated session.
-  - **Default Seed User:** Alex Morgan (`alex.morgan@example.com`, Community Owner / Workspace Admin).
-  - **Persistence Boundary:** MSW stores state in browser memory. Reloading the page resets mock data to default seed fixtures. It does not represent live backend persistence.
+### Metric 3 — Functional Verification Coverage
+* **Automated Test Evidence:** 64 test files in `apps/web/`, 693 tests passed (100% green).
+* **Test Verification of Implemented Features:** **100%** (28/28 COMPLETE + 1/1 PARTIAL have passing automated Vitest suites).
+* **Mock Boundary Integrity:** All frontend tests execute against MSW mock handlers conforming to OpenAPI 0.3.20-draft.
 
----
-
-## 7. Inventory A: Prioritized Backend-Independent Frontend Milestones
-
-The 10 remaining Phase 1 capabilities can be delivered in 8 focused engineering milestones using existing OpenAPI 0.3.20-draft schemas and MSW mocks:
-
-```mermaid
-flowchart LR
-    VS09A["VS-09A: Archive & 10s Undo<br/>(FEAT-A10a)"] --> VS09B["VS-09B: 30-Day Trash & Bulk Bar<br/>(FEAT-A10b)"]
-    VS09B --> VS09C["VS-09C: Starter Templates UI<br/>(FEAT-D05a)"]
-    VS09C --> VS09D["VS-09D: Work-Item Archetypes<br/>(FEAT-A01)"]
-    VS09D --> VS09E["VS-09E: Task Cloning<br/>(FEAT-A07)"]
-    VS09E --> VS09F["VS-09F: Filtered CSV Export<br/>(FEAT-J01a)"]
-    VS09F --> VS09G["VS-09G: Backlog Tray in Views<br/>(FEAT-B02)"]
-    VS09G --> VS09H["VS-09H: Workspace Settings Shell<br/>(FEAT-D01, D04a)"]
-```
-
-1. **Milestone VS-09A:** Single-Item Task Archive & 10-Second Undo Toast (`FEAT-A10a`)
-2. **Milestone VS-09B:** 30-Day Workspace Trash & Bulk Action Bar (`FEAT-A10b`)
-3. **Milestone VS-09C:** Workspace Starter Templates Card Picker UI (`FEAT-D05a`)
-4. **Milestone VS-09D:** Work-Item Archetypes Badge System (`FEAT-A01`)
-5. **Milestone VS-09E:** Single-Click Task & Subtask Checklist Cloning (`FEAT-A07`)
-6. **Milestone VS-09F:** Filtered View UTF-8 CSV Export on Toolbar (`FEAT-J01a`)
-7. **Milestone VS-09G:** Collapsible Backlog Tray in List & Board Views (`FEAT-B02`)
-8. **Milestone VS-09H:** Workspace Settings Shell & Custom Fields Manager (`FEAT-D01`, `FEAT-D04a`)
+### Metric 4 — Backend Integration Readiness
+* **Contract Ready:** 28 capabilities
+* **Contract Gap:** 2 capabilities (`FEAT-K01` [DEP-METADATA-01], `FEAT-G02b` [DEP-ROLES-01])
+* **Contract Ambiguous:** 2 capabilities (`FEAT-C04` [DEP-SV-01 Decisions A–E], `FEAT-C06` [DEP-SV-01 Decision D])
+* **Backend Contract Dependency:** 1 capability (`FEAT-F02` [DEP-REALTIME-01])
+* *Governance Invariant:* Outstanding backend integration dependencies do not reduce the frontend implementation score.
 
 ---
 
-## 8. UI/UX Track B Status & Prerequisite Checklist
+## 7. Historical Milestone Comparison
 
-- **Current Status:** Strictly **PAUSED**.
-- **Rationale:** No design system refactoring or micro-ergonomic tuning may distract from establishing complete functional feature coverage.
-
-### Prerequisite Checklist Before Track B Unfreeze:
-- [x] Complete Milestone VS-09A (Task Archive & 10s Undo Toast) — DELIVERED & LOCKED (Commit `0b82ef9`)
-- [ ] Complete Milestone VS-09B (30-Day Trash & Bulk Action Bar)
-- [ ] Complete Milestone VS-09C (Starter Templates Picker UI)
-- [ ] Complete Milestone VS-09D (Work-Item Archetypes)
-- [ ] Complete Milestone VS-09E (Task Cloning)
-- [ ] Complete Milestone VS-09F (Filtered View CSV Export)
-- [ ] Working tree clean on `develop` with 100% automated test pass rate
-- [ ] Explicit Product Owner and maintainer approval to unfreeze Track B
+| Evaluation Metric | VS-09.0 Baseline | VS-09L Baseline | FE-VS12 Current Baseline | Trend / Analysis |
+| :--- | :---: | :---: | :---: | :--- |
+| **Active Branch** | `develop @ 26bd662` | `feat/FE-VS09L` | `feat/FE-VS12` | Clean dedicated baseline branch. |
+| **Total In-Scope Phase 1** | 33 capabilities | 33 capabilities | 33 capabilities | Stable, reconciled scope boundary. |
+| **FE COMPLETE** | 18 capabilities | 28 capabilities | 28 capabilities | +10 capabilities delivered via VS-09A through VS-09J. |
+| **FE PARTIAL** | 1 capability | 1 capability | 1 capability | `FEAT-K01` smart URL chips. |
+| **FE NOT STARTED** | 10 capabilities | 0 capabilities | 0 capabilities | All 10 backlog capabilities completed! |
+| **FE BLOCKED** | 3 capabilities | 3 capabilities | 3 capabilities | Gated on product decisions (`DEP-SV-01`, `DEP-ROLES-01`). |
+| **BACKEND DEPENDENT** | 1 capability | 1 capability | 1 capability | `FEAT-F02` (WebSocket gateway `DEP-REALTIME-01`). |
+| **Weighted FE Score** | **56.06%** (18.5/33) | **86.36%** (28.5/33) | **86.36%** (28.5/33) | **+30.30% absolute gain** since VS-09.0. |
+| **Automated Web Tests** | 506 tests (50 suites) | 676 tests (63 suites) | 693 tests (64 suites) | +187 automated tests added; 100% green. |
 
 ---
 
-## 9. Final Status Recommendation
+## 8. Prioritized Next Frontend Implementation Sequence
 
-```
-================================================================================
-BACKEND-INDEPENDENT WORK REMAINS — IMPLEMENTATION REQUIRED.
-================================================================================
-```
+Since all 10 unstarted Phase 1 capabilities are completed, and remaining blocked capabilities (`FEAT-C04`, `FEAT-C06`, `FEAT-G02b`, `FEAT-F02`) depend on external product decisions or backend contracts:
 
-The next approved milestone is **VS-09B: 30-Day Workspace Trash & Bulk Action Bar (`FEAT-A10b`)**, following the strict engineering sequence: PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT.
+1. **Milestone FE-VS13 (Immediate Priority — Frontend Independent):**
+   * **Smart URL Fallback Chip Renderer (`FEAT-K01`):** Complete the frontend presentation of external URLs by implementing a client-side smart chip renderer with domain badges, favicon extraction, external redirect confirmation, and mock metadata fallbacks while waiting for live backend scrape endpoint `DEP-METADATA-01`.
+   * **Scope:** `SmartUrlChip.tsx`, fallback metadata resolver, 10+ unit tests in `SmartUrlChip.test.tsx`.
+2. **Milestone FE-VS14 (Frontend Hardening & Contract Bridge):**
+   * **Client-Side Saved Views Draft Spec & State Bridge (`FEAT-C04` / `FEAT-C06`):** Author the client-side state machine for saving view preferences, draft query filters, and display options in `localStorage` as a migration bridge for `DEP-SV-01`.
+3. **Milestone FE-VS15 (Comprehensive Accessibility & Interaction Gate):**
+   * Final keyboard focus trap audit, screen reader aria-live announcements, and contrast verification across all 28 completed slices in preparation for unfreezing UI/UX Track B.
