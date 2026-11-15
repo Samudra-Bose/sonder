@@ -197,5 +197,21 @@ describe("Safe Markdown AST Parser & Renderer", () => {
       expect(link).toHaveAttribute("target", "_blank");
       expect(link).toHaveAttribute("rel", "noopener noreferrer");
     });
+
+    it("renders smart url chips for GitHub and Figma links inside markdown AST", () => {
+      const ast = parseMarkdownToAst(
+        "Check PR [sonder-app/platform#42](https://github.com/sonder-app/platform/pull/42) and [Design](https://figma.com/design/123/mockup)."
+      );
+
+      render(<CommentAstRenderer ast={ast} />);
+
+      const ghLink = screen.getByRole("link", { name: "sonder-app/platform#42" });
+      expect(ghLink).toHaveAttribute("href", "https://github.com/sonder-app/platform/pull/42");
+      expect(screen.getByTestId("provider-icon-github")).toBeInTheDocument();
+
+      const figmaLink = screen.getByRole("link", { name: "Design" });
+      expect(figmaLink).toHaveAttribute("href", "https://figma.com/design/123/mockup");
+      expect(screen.getByTestId("provider-icon-figma")).toBeInTheDocument();
+    });
   });
 });

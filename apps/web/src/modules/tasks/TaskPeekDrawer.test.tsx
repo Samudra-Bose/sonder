@@ -14,7 +14,7 @@ import {
   MOCK_USER_ID,
 } from "@/mocks/data/my-work.js";
 import { resetTaskMockState, setMockTasksError } from "@/mocks/handlers/tasks.js";
-import { TaskPeekDrawer } from "./TaskPeekDrawer.js";
+import { TaskPeekDrawer, extractTaskExternalLinks } from "./TaskPeekDrawer.js";
 import { useTaskPeekDrawer } from "./useTaskPeekDrawer.js";
 import { MyWorkView } from "@/modules/my-work/MyWorkView.js";
 
@@ -559,6 +559,55 @@ describe("VS-03 Stage 2: Task Peek Drawer & Deep Linking", () => {
         expect(screen.getByTestId("task-peek-drawer-desktop")).toBeInTheDocument();
         expect(screen.getByRole("heading", { name: "Fix critical auth token refresh race condition" })).toBeInTheDocument();
       });
+    });
+  });
+
+  describe("External Links & Smart URL Chips (FEAT-K01)", () => {
+    it("extracts structured externalLinks from task DTO", () => {
+      const mockTask = {
+        id: "task-1",
+        workspaceId: WS_SHARED_ENG_ID,
+        taskKey: "ENG-200",
+        title: "Test Task",
+        externalLinks: [
+          { url: "https://github.com/sonder/frontend/pull/42", title: "PR 42" },
+          { url: "https://figma.com/design/abc/mockup", title: "Figma Board" },
+        ],
+      } as any;
+
+      const links = extractTaskExternalLinks(mockTask);
+      expect(links).toHaveLength(2);
+      expect(links[0]).toEqual({ url: "https://github.com/sonder/frontend/pull/42", title: "PR 42" });
+      expect(links[1]).toEqual({ url: "https://figma.com/design/abc/mockup", title: "Figma Board" });
+    });
+
+    it("extracts Markdown links and raw URLs from task description without duplicates", () => {
+      const mockTask = {
+        id: "task-2",
+        workspaceId: WS_SHARED_ENG_ID,
+        taskKey: "ENG-201",
+        title: "Test Task with Description Links",
+        description:
+          "Design specs: [Figma Spec](https://figma.com/design/123/Spec) and see https://github.com/sonder/repo/pull/99. Also https://figma.com/design/123/Spec duplicate check.",
+      } as any;
+
+      const links = extractTaskExternalLinks(mockTask);
+      expect(links).toHaveLength(2);
+      expect(links[0]).toEqual({ url: "https://figma.com/design/123/Spec", title: "Figma Spec" });
+      expect(links[1]).toEqual({ url: "https://github.com/sonder/repo/pull/99" });
+    });
+
+    it("returns empty array when task has no external links or description", () => {
+      const mockTask = {
+        id: "task-3",
+        workspaceId: WS_SHARED_ENG_ID,
+        taskKey: "ENG-202",
+        title: "Task with no links",
+        description: null,
+      } as any;
+
+      expect(extractTaskExternalLinks(mockTask)).toEqual([]);
+      expect(extractTaskExternalLinks(undefined)).toEqual([]);
     });
   });
 });

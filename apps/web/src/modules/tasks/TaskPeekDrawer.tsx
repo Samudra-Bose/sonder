@@ -12,6 +12,7 @@ import {
   Archive,
   CopyPlus,
   Loader2,
+  Link2,
 } from "lucide-react";
 import {
   Dialog,
@@ -45,7 +46,72 @@ import { ReparentTaskModal } from "./ReparentTaskModal.js";
 import { TaskActivityTab } from "./comments/TaskActivityTab.js";
 import { TaskWatchButton } from "./comments/TaskWatchButton.js";
 import { useTaskWatchState } from "./comments/useTaskComments.js";
+import { SmartUrlChip } from "@/components/ui/SmartUrlChip.js";
 import type { TaskDto } from "./types.js";
+
+export interface TaskExternalLink {
+  id?: string;
+  url: string;
+  title?: string;
+  provider?: string;
+}
+
+/**
+ * Extracts structured external links from task DTO or embedded Markdown description links.
+ */
+export function extractTaskExternalLinks(task?: TaskDto): TaskExternalLink[] {
+  if (!task) return [];
+  const links: TaskExternalLink[] = [];
+  const seenUrls = new Set<string>();
+
+  // 1. Structured externalLinks on task DTO if provided
+  const structured = (task as unknown as { externalLinks?: TaskExternalLink[] }).externalLinks;
+  if (Array.isArray(structured)) {
+    for (const item of structured) {
+      if (item && typeof item.url === "string") {
+        const trimmed = item.url.trim();
+        if (trimmed && !seenUrls.has(trimmed)) {
+          seenUrls.add(trimmed);
+          links.push(item);
+        }
+      }
+    }
+  }
+
+  // 2. Extract markdown links [Title](https://...) and standalone URLs from task.description
+  if (task.description && typeof task.description === "string") {
+    // Markdown links: [Title](url)
+    const mdLinkRegex = /\[([^\]]+)\]\(((?:https?:\/\/)[^\s)]+)\)/g;
+    let match: RegExpExecArray | null;
+    while ((match = mdLinkRegex.exec(task.description)) !== null) {
+      const title = match[1];
+      const url = match[2];
+      if (url) {
+        const trimmed = url.trim();
+        if (trimmed && !seenUrls.has(trimmed)) {
+          seenUrls.add(trimmed);
+          links.push({ url: trimmed, title });
+        }
+      }
+    }
+
+    // Standalone URLs (https://... or http://...)
+    const rawUrlRegex = /(?<!\()https?:\/\/[^\s<>)"]+/g;
+    while ((match = rawUrlRegex.exec(task.description)) !== null) {
+      const url = match[0];
+      if (url) {
+        // Strip trailing punctuation often found at the end of sentences
+        const trimmed = url.replace(/[.,!?;:]+$/, "").trim();
+        if (trimmed && !seenUrls.has(trimmed)) {
+          seenUrls.add(trimmed);
+          links.push({ url: trimmed });
+        }
+      }
+    }
+  }
+
+  return links;
+}
 import {
   InlineTitleEditor,
   InlineDescriptionEditor,
@@ -182,6 +248,7 @@ export function TaskPeekDrawer({
   });
 
   const task: TaskDto | undefined = taskQuery.data;
+  const externalLinks = useMemo(() => extractTaskExternalLinks(task), [task]);
   const isLoading =
     resolveQuery.isLoading ||
     (resolveQuery.isSuccess && taskQuery.isLoading) ||
@@ -649,6 +716,27 @@ export function TaskPeekDrawer({
           workspaceId={task.workspaceId}
           isArchived={isArchived}
         />
+
+        {/* External Links Section (FEAT-K01) */}
+        {externalLinks.length > 0 && (
+          <div className="space-y-2.5" data-testid="task-external-links-section">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1.5">
+              <Link2 className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>External Links ({externalLinks.length})</span>
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {externalLinks.map((link, idx) => (
+                <SmartUrlChip
+                  key={link.id || `${link.url}-${idx}`}
+                  url={link.url}
+                  title={link.title}
+                  provider={link.provider}
+                  showCopyButton
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Subtasks Section */}
         <SubtaskList

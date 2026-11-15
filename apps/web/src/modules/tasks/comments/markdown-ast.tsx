@@ -1,5 +1,6 @@
 import React from "react";
 import type { CommentMarkdownAst, CommentMarkdownNode } from "./types.js";
+import { SmartUrlChip, isSafeExternalUrl } from "@/components/ui/SmartUrlChip.js";
 
 /**
  * Supported safe URL protocols.
@@ -486,6 +487,21 @@ export function CommentAstRenderer({
             </span>
           );
         }
+
+        // Render external web links using domain-aware SmartUrlChip in inline mode
+        if (isSafeExternalUrl(node.href)) {
+          return (
+            <SmartUrlChip
+              key={key}
+              url={node.href}
+              inline
+              showCopyButton={false}
+            >
+              {node.children?.map((child, idx) => renderNode(child, `${key}-${idx}`))}
+            </SmartUrlChip>
+          );
+        }
+
         return (
           <a
             key={key}

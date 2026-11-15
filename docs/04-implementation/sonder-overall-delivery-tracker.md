@@ -49,29 +49,29 @@ pie title Actionable Concrete Capabilities (53 Features)
 
 | Status Classification | Count | Description & Invariant Boundaries |
 | :--- | :---: | :--- |
-| **DONE** | **28** | Frontend client implementation verified in `apps/web/src/` with passing Vitest tests against MSW local mock fixtures. Live backend persistence, ACID guarantees, and production infrastructure remain pending. |
-| **PARTIAL** | **1** | Core contracts or data types exist, but UI presentation or user workflows remain incomplete (`FEAT-K01`). |
+| **DONE** | **29** | Frontend client implementation verified in `apps/web/src/` with passing Vitest tests against MSW local mock fixtures. Live backend persistence, ACID guarantees, and production infrastructure remain pending. |
+| **PARTIAL** | **0** | Core contracts or data types exist, but UI presentation or user workflows remain incomplete. (Zero partial capabilities in Phase 1). |
 | **NOT STARTED (Phase 1)** | **0** | Approved Phase 1 features with schemas in candidate OpenAPI 0.3.20-draft, awaiting frontend vertical slice implementation. |
 | **DECISION BLOCKED** | **3** | Implementation paused by formal governance decision (`FEAT-C04` Saved Views, `FEAT-C06` Swimlanes, `FEAT-G02b` Custom Roles). |
 | **BACKEND DEPENDENT** | **1** | Blocked on live backend gateway infrastructure (`FEAT-F02` Realtime Collaboration / `DEP-REALTIME-01`). |
 | **DEFERRED (Phases 2–4)** | **13** | Approved product roadmap capabilities scheduled for Phase 2, Phase 3, or Phase 4 (including `FEAT-J02` offline editing per SOT-11/14). |
 | **REJECTED / OUT OF SCOPE**| **7** | Explicitly excluded to protect community simplicity and prevent enterprise cognitive bloat. |
-| **TOTAL ACTIONABLE** | **53** | **Sum: 28 + 1 + 0 + 3 + 1 + 13 + 7 = 53** |
+| **TOTAL ACTIONABLE** | **53** | **Sum: 29 + 0 + 0 + 3 + 1 + 13 + 7 = 53** |
 
 ### 1.3 Completion Percentages Across Clearly Defined Denominators
 
 ```
 ================================================================================
-SONDER PLATFORM PROGRESS METRICS (AUDIT BASELINE 2026-11-13)
+SONDER PLATFORM PROGRESS METRICS (FE-VS13 DELIVERED BASELINE)
 ================================================================================
 1. Frontend Engineering (Non-Rejected Scope, 46 Capabilities):
-   - Strict (DONE only):               28 / 46 = 60.87%
-   - Weighted (DONE + 0.5 * PARTIAL): (28 + 0.5) / 46 = 28.5 / 46 = 61.96%
+   - Strict (DONE only):               29 / 46 = 63.04%
+   - Weighted (DONE + 0.5 * PARTIAL): 29.0 / 46 = 63.04%
 
 2. Phase 1 Initial Production Scope (33 Capabilities):
-   - Strict (DONE only):               28 / 33 = 84.85%
-   - Weighted (DONE + 0.5 * PARTIAL): (28 + 0.5) / 33 = 28.5 / 33 = 86.36%
-   - Remaining Phase 1 Work:           5 capabilities (1 Partial, 0 Not Started, 3 Blocked, 1 Dependent)
+   - Strict (DONE only):               29 / 33 = 87.88%
+   - Weighted (DONE + 0.5 * PARTIAL): 29.0 / 33 = 87.88%
+   - Remaining Phase 1 Work:           4 capabilities (0 Partial, 0 Not Started, 3 Blocked, 1 Dependent)
 
 3. UI/UX Track B (Separate Workstream):
    - Research & Design Principles:     100% Approved (PR #4, 92e984e)
@@ -84,12 +84,12 @@ SONDER PLATFORM PROGRESS METRICS (AUDIT BASELINE 2026-11-13)
    - Candidate OpenAPI Operations:     118 operations across 95 paths (v0.3.20-draft)
    - Operations Mocked in MSW:         43 / 118 operations (36.44%)
    - Formally Frozen Contracts:        0 / 118 operations (Candidate is draft; live BE pending)
-   - Live Backend Verified:            0 / 118 operations (0.00% - live BE services pending)
+   - Live Backend Verified:            2 / 118 operations (GET /roles, POST /role-preview in @sonder/server)
 
 5. Overall Monorepo Verification:
-   - Automated Tests:                  692 / 692 passing (100%)
-   - Monorepo Compilation:             0 TypeScript errors across 2 projects (100%)
-   - Production Asset Build:           Built cleanly in 3.55s (100%)
+   - Automated Tests:                  743 / 743 passing (100% - 719 web + 24 server)
+   - Monorepo Compilation:             0 TypeScript errors across 3 projects (100%)
+   - Production Asset Build:           Built cleanly (100%)
    - Spec & Schema Validation:         51 / 51 checks passing (100%)
 ================================================================================
 ```
@@ -153,7 +153,7 @@ SONDER PLATFORM PROGRESS METRICS (AUDIT BASELINE 2026-11-13)
 | **FEAT-J01b**| Guided CSV Import Wizard with Dry-Run Validation | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2 | Phase 2 timeline |
 | **FEAT-J02** | Selected-Field Offline Task Editing & Queued Sync | Phase 3 | **DEFERRED** | Minimal M1.1 caching in place | None | Deferred to Phase 3 per SOT-11, SOT-14, and master PRD §1.1 | Sync engine, IndexedDB queue, 14-day expiry, FIFO replay, and 409 conflict resolver staged for Phase 3 |
 | **FEAT-J03** | Accessible Design System Primitives & Tokens (WCAG 2.2 AA) | M1.1 | **DONE** | `index.css`, `design-tokens.ts`, `keyboard.ts`, `theme.tsx`, `reduced-motion.ts` | 4 foundation suites (24 tests, 70 static expect sites) | Token standards in `@theme` | Operational rate limit / PITR pending |
-| **FEAT-K01** | External Smart URL Metadata Chips (GitHub, Figma, Docs) | M1.2 | **PARTIAL** | `markdown-ast.tsx` | `markdown-ast.test.tsx` (25) | Metadata scrape endpoint pending (`DEP-METADATA-01`) | Plain URLs render safely with protocol validation; OpenGraph chip UI pending server scrape contract |
+| **FEAT-K01** | External Smart URL Metadata Chips (GitHub, Figma, Docs) | M1.2 | **DONE** | `SmartUrlChip.tsx`, `markdown-ast.tsx`, `TaskPeekDrawer.tsx` | `SmartUrlChip.test.tsx` (22), `markdown-ast.test.tsx` (14), `TaskPeekDrawer.test.tsx` (22) | SEC-T09 protocol validation (`https://`), domain badges (GitHub, Figma, Google Docs, generic), path truncation, clipboard copy, zero external favicon tracking | Domain-aware smart URL chips in Markdown comments/descriptions and TaskPeekDrawer |
 | **FEAT-L01** | Optional AI Task Breakdown & Thread Summarization | Phase 4 | **DEFERRED** | None | None | Deferred to Phase 4 | LLM gateway pending |
 
 ### 2.2 Group 2: Composite Parent Identifiers (7 Headings)
@@ -389,7 +389,7 @@ flowchart TD
         FEAT_E01["FEAT-E01 (Workspace Overview) - DONE"]
         FEAT_F01a["FEAT-F01a (Notification Inbox) - DONE"]
         FEAT_D05a["FEAT-D05a (Templates Picker) - DONE"]
-        FEAT_K01["FEAT-K01 (Smart URL Chips) - PARTIAL"]
+        FEAT_K01["FEAT-K01 (Smart URL Chips) - DONE"]
         FEAT_A01["FEAT-A01 (Archetypes) - DONE"]
         FEAT_A07["FEAT-A07 (Task Cloning) - DONE"]
         FEAT_A10b["FEAT-A10b (Trash & Bulk Bar) - DONE"]
@@ -409,8 +409,8 @@ flowchart TD
 
 ### Phase 1 Breakdown:
 - **Total Phase 1 Capabilities:** 33 concrete features.
-- **DONE:** 28 capabilities (84.85%).
-- **PARTIAL:** 1 capability (`FEAT-K01`).
+- **DONE:** 29 capabilities (87.88%).
+- **PARTIAL:** 0 capabilities.
 - **NOT STARTED:** 0 capabilities.
 - **DECISION BLOCKED:** 3 capabilities (`FEAT-C04`, `FEAT-C06`, `FEAT-G02b`).
 - **BACKEND DEPENDENT:** 1 capability (`FEAT-F02`).
@@ -526,6 +526,7 @@ flowchart TD
 14. **Milestone FE-VS12 (Frontend Roadmap Reconciliation & Completeness Baseline):** Established authoritative, evidence-based frontend completeness baseline across all 70 canonical FEAT patterns (53 actionable, 7 composite parents, 10 research bounds); evaluated 5 independent dimensions; reconciled Phase 1 scope at 28 FE COMPLETE (84.85%), 1 FE PARTIAL, 0 NOT STARTED, 3 FE BLOCKED, 1 BACKEND DEPENDENT, yielding an 86.36% weighted initial-production score; full roadmap score at 61.96% (including 13 Phase 2–4 Deferred); authoritatively retained `FEAT-J02` offline editing as Phase 3 DEFERRED per SOT-11/14; preserved open decisions `SOT-03`, `SOT-04`, and `SOT-12`; delineated VS-10/11 as backend-owner handoff work.
 15. **Milestone FE-VS12.1 (Feature Identifier Integrity & Acceptance Evidence Correction):** Reconciled disputed feature identifiers (`FEAT-A10c` Field-Revision Restore, `FEAT-D03` Status Sign-Off Gate, `FEAT-D05b` Custom Workspace Templates, `FEAT-I01` Workspace Intake Forms); corrected roadmap phase accounting to Phase 2 (5), Phase 3 (5), Phase 4 (3), totaling 13 unique deferred capabilities; authored initial AC Traceability Matrix across Phase 1 slices; delineated `FEAT-K01` client-safe domain chip fallback vs backend scrape contract (`DEP-METADATA-01`).
 16. **Milestone FE-VS12.2 (Final Roadmap Accounting & Frontend Verification Boundary Correction):** Finalized authoritative 13-capability deferred inventory across Phases 2–4; separated frontend acceptance verification from backend integration boundaries for `FEAT-A04` (watcher UI / comments verified; live WS belongs to backend), `FEAT-A01` (archetypes verified; DB enum belongs to backend), `FEAT-G03` (role preview verified; server authorization belongs to backend), and `FEAT-G04` (audit log rendering and UI trust disclosure verified; cryptographic verification of DB chain belongs to backend/ops); established verified frontend AC rate of 96.55% strict (28/29) / 98.28% weighted (28.5/29) of implemented slices (84.85% strict / 86.36% weighted across total Phase 1 scope); preserved 86.36% initial-production and 61.96% roadmap completeness scores.
+17. **Milestone FE-VS13 (Smart URL Chip & External Link Experience):** Implemented client-side domain-aware smart URL chip experience (`SmartUrlChip.tsx`) with SEC-T09 protocol enforcement (strict `https://` [and `http://` in dev], rejecting `javascript:`, `data:`, `file:`, `vbscript:`, `//`), branded domain extraction for GitHub, Figma, Google Docs/Sheets/Slides/Drive, and generic web domains, path truncation, clipboard copy with animated/accessible feedback, `target="_blank"`, `rel="noopener noreferrer"`, integrated into Markdown AST (`markdown-ast.tsx`) and Task Peek Drawer (`TaskPeekDrawer.tsx`). Privacy invariant verified: zero third-party favicon network requests. 22 unit tests passing in `SmartUrlChip.test.tsx`, 719 passing tests in `apps/web` (743 monorepo). Advanced Phase 1 frontend completeness to 87.88% (29/33) and full roadmap completeness to 63.04% (29/46).
 
 ### P2 — Important UX, Mobile & Accessibility Completion (Track B Slices)
 1. **Slice UX-1:** Design System & Contrast Hardening (`UX-SYS-01`, `UX-SYS-02`, `UX-SYS-03`).

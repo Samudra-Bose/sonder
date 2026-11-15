@@ -15,3 +15,4 @@ export * from "./EmptyState";
 export * from "./Card";
 export * from "./KeyboardShortcut";
 export * from "./Feedback";
+export * from "./SmartUrlChip";

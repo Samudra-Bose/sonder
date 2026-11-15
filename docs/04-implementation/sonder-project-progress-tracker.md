@@ -63,7 +63,8 @@
 | **VS-11**    | Live Backend Runtime & First Persisted Authorization Slice | Track C / Backend Handoff | — | `048f70d` | 24 tests in `@sonder/server` (717 total across workspace) | **DELIVERED & VERIFIED** (Real Node.js/TypeScript `@sonder/server` modular monolith, PostgreSQL RLS migrations, connection pool tenant context isolation, RFC 9457 error handler, `/health/live`, `/health/ready`, live HTTP roles & role-preview downward-only intersection slice; delineated as backend-owner handoff) |
 | **FE-VS12**  | Frontend Roadmap Reconciliation & Completeness Baseline | Track A / Governance Audit | — | `757ac5a` | 693 tests in `apps/web` (717 total monorepo) | **DELIVERED & VERIFIED** (Authoritative frontend completeness baseline: 28 FE COMPLETE [84.85%], 1 FE PARTIAL, 0 NOT STARTED, 3 FE BLOCKED, 1 BACKEND DEPENDENT; weighted score 86.36%; FEAT-J02 retained Phase 3 DEFERRED; VS-10/11 delineated as backend-owner handoff) |
 | **FE-VS12.1**| Feature Identifier Integrity & Acceptance Evidence Correction | Track A / Governance Audit | — | `f1eeeb1` | 693 tests in `apps/web` (717 total monorepo) | **DELIVERED & VERIFIED** (Reconciled disputed feature IDs FEAT-A10c, D03, D05b, I01; corrected deferred phase accounting to 5+5+3=13; established initial AC Traceability Matrix; delineated FEAT-K01 safe fallback vs DEP-METADATA-01) |
-| **FE-VS12.2**| Final Roadmap Accounting & Frontend Verification Boundary Correction | Track A / Governance Audit | — | Current | 693 tests in `apps/web` (717 total monorepo) | **DELIVERED & VERIFIED** (Finalized 13 deferred capabilities inventory; separated frontend acceptance verification from backend integration boundaries for FEAT-A04, A01, G03, G04; established 96.55% strict / 98.28% weighted frontend AC verification rate; preserved 86.36% initial-production and 61.96% roadmap completeness scores) |
+| **FE-VS12.2**| Final Roadmap Accounting & Frontend Verification Boundary Correction | Track A / Governance Audit | — | `fd52c47` | 693 tests in `apps/web` (717 total monorepo) | **DELIVERED & VERIFIED** (Finalized 13 deferred capabilities inventory; separated frontend acceptance verification from backend integration boundaries for FEAT-A04, A01, G03, G04; established 96.55% strict / 98.28% weighted frontend AC verification rate; preserved 86.36% initial-production and 61.96% roadmap completeness scores) |
+| **FE-VS13**  | Smart URL Chip & External Link Experience | Track A / `FEAT-K01` | — | Current | 22 tests in `SmartUrlChip.test.tsx` (719 in `apps/web` / 743 total) | **DELIVERED & VERIFIED** (SmartUrlChip.tsx, SEC-T09 protocol validation, branded domain badges for GitHub/Figma/Google Docs/generic, path truncation, copy-to-clipboard, markdown AST and TaskPeekDrawer integration, zero third-party favicon network calls; FEAT-K01 marked FE COMPLETE & VERIFIED) |
 
 ### A.2 Current Engineering Status & Next Milestones
 
@@ -232,9 +233,9 @@ flowchart LR
 SONDER PLATFORM PROGRESS SUMMARY
 ================================================================================
 Monorepo Status:           Clean, 100% Green
-Active Baseline:           feat/FE-VS12-frontend-completeness-baseline @ 048f70d
-Total Passing Test Suites: 69 suites (64 in apps/web + 5 in apps/server)
-Total Automated Tests:     717 tests (693 in apps/web + 24 in apps/server, 100% passing)
+Active Baseline:           feat/FE-VS13-smart-url-chips
+Total Passing Test Suites: 70 suites (65 in apps/web + 5 in apps/server)
+Total Automated Tests:     743 tests (719 in apps/web + 24 in apps/server, 100% passing)
 Documentation Checks:      51 / 51 passed (pnpm validate:docs)
 
 Track A (Frontend Engineering):
@@ -242,16 +243,16 @@ Track A (Frontend Engineering):
                            - 53 Actionable Concrete Capabilities
                            - 7 Composite Parent Identifiers
                            - 10 Research Family Range Bounds
-- Phase 1 Status (33):     28 FE COMPLETE (84.85%), 1 FE PARTIAL (FEAT-K01), 0 FE NOT STARTED,
+- Phase 1 Status (33):     29 FE COMPLETE (87.88%), 0 FE PARTIAL, 0 FE NOT STARTED,
                            3 FE BLOCKED (FEAT-C04, FEAT-C06, FEAT-G02b), 1 BACKEND DEPENDENT (FEAT-F02)
-- Weighted Phase 1 Score:  86.36% ((28 + 0.5 * 1) / 33 * 100)
-- Full Roadmap Score (46): 61.96% ((28 + 0.5 * 1) / 46 * 100, including 13 Phase 2-4 Deferred: 5 in Phase 2, 5 in Phase 3, 3 in Phase 4)
-- AC Verification (29):    96.55% Strict (28/29), 98.28% Weighted (28.5/29) across implemented slices; 84.85% Strict / 86.36% Weighted across all 33 Phase 1 capabilities
-- Automated Test Proof:    64 test files in apps/web, 693 tests passing (100% green); 717 tests monorepo
-- Contract Readiness:      28 Contract Ready, 2 Contract Gap, 2 Ambiguous, 1 Backend Dependent
-- Latest Hardened Feature: FE-VS12.2: Final Roadmap Accounting & Frontend Verification Boundary Correction
-- Current Milestone:       FE-VS12.2: Final Roadmap Accounting & Frontend Verification Boundary Correction (DELIVERED & VERIFIED)
-- Next Frontend Target:    FE-VS13: External Smart URL Fallback Chip Renderer (FEAT-K01)
+- Weighted Phase 1 Score:  87.88% (29.0 / 33 * 100)
+- Full Roadmap Score (46): 63.04% (29.0 / 46 * 100, including 13 Phase 2-4 Deferred: 5 in Phase 2, 5 in Phase 3, 3 in Phase 4)
+- AC Verification (29):    100.00% Strict & Weighted across all 29 implemented Phase 1 capabilities; 87.88% across all 33 Phase 1 capabilities
+- Automated Test Proof:    65 test files in apps/web, 719 tests passing (100% green); 743 tests monorepo
+- Contract Readiness:      29 Contract Ready, 1 Contract Gap (FEAT-G02b), 2 Ambiguous, 1 Backend Dependent
+- Latest Hardened Feature: FE-VS13: Smart URL Chip & External Link Experience (FEAT-K01)
+- Current Milestone:       FE-VS13: Smart URL Chip & External Link Experience (DELIVERED & VERIFIED)
+- Next Frontend Target:    Accessibility & Keyboard Navigation Audit Gate / Track B Unfreeze Authorization
 
 Track C (Backend Infrastructure — Backend Developer Owned):
 - Status:                  VS-10 & VS-11 established real modular-monolith package (@sonder/server),
