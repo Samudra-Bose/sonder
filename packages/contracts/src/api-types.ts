@@ -2299,6 +2299,20 @@ export interface components {
             assigneeAssignments: components["schemas"]["TaskAssigneeAssignmentList"];
             /** @description Task-specific additional field groups delegated to all active assignees by the Task Creator or a Workspace Owner. Effective rights are always intersected with the current Workspace ceiling and recomputed by the server. */
             assigneeEditableFieldGroups: components["schemas"]["AssigneeEditableFieldGroup"][];
+            /** @description Structured external URL links (GitHub, Figma, Google Docs, etc.) attached to this task conforming to FEAT-K01 and SEC-T09. */
+            externalLinks?: {
+                /** @description Unique link identifier within the task. */
+                id: string;
+                /**
+                 * Format: uri
+                 * @description Destination URL validating safe https/http schemes.
+                 */
+                url: string;
+                /** @description Display title or label for the external link. */
+                title?: string;
+                /** @description Identified external provider (github, figma, google-docs, generic). */
+                provider?: string;
+            }[];
         };
         /** @description Task creation. Every assignee must be an active member of the selected workspace. Each assignment relation records the authenticated creator as assignedByUserId. Initial customFieldValues may be supplied under task:create; the server validates workspace definition IDs, scalar types, active option IDs and all active required definitions. */
         CreateTaskRequest: {
@@ -2320,6 +2334,20 @@ export interface components {
             customFieldValues?: components["schemas"]["TaskCustomFieldValuesCreate"];
             /** @description Optional per-task assignee field grants. If omitted, the Workspace default is applied. If supplied, the values must be a subset of the Workspace allowed ceiling. The authenticated creator configures this task-specific subset. */
             assigneeEditableFieldGroups?: components["schemas"]["AssigneeEditableFieldGroup"][];
+            /** @description Structured external URL links (GitHub, Figma, Google Docs, etc.) attached to this task conforming to FEAT-K01 and SEC-T09. */
+            externalLinks?: {
+                /** @description Unique link identifier within the task. */
+                id?: string;
+                /**
+                 * Format: uri
+                 * @description Destination URL validating safe https/http schemes.
+                 */
+                url: string;
+                /** @description Display title or label for the external link. */
+                title?: string;
+                /** @description Identified external provider (github, figma, google-docs, generic). */
+                provider?: string;
+            }[];
         };
         /** @description Atomic field patch. Every supplied field is separately authorized using the matching TaskPermissions action; if any field is unauthorized, the entire request is rejected with 403 and no field is changed. assigneeIds replacement maintains per-assignee provenance server-side. customFieldValues is a partial map keyed by definition ID; null clears one field, omission preserves it. Each changed custom field requires its own baseFieldRevisions entry customFieldValues.{definitionId}; server validates active definition/type/option and required constraints. */
         UpdateTaskRequest: {
@@ -2345,6 +2373,20 @@ export interface components {
             customFieldValues?: components["schemas"]["TaskCustomFieldValuesPatch"];
             /** @description Optional per-task assignee field grant update. Only the Task Creator or an active Workspace Owner may change it. Values must be a subset of the current Workspace allowed ceiling. Include baseFieldRevisions.assigneeEditableFieldGroups for optimistic concurrency. */
             assigneeEditableFieldGroups?: components["schemas"]["AssigneeEditableFieldGroup"][];
+            /** @description Structured external URL links (GitHub, Figma, Google Docs, etc.) attached to this task conforming to FEAT-K01 and SEC-T09. */
+            externalLinks?: {
+                /** @description Unique link identifier within the task. */
+                id?: string;
+                /**
+                 * Format: uri
+                 * @description Destination URL validating safe https/http schemes.
+                 */
+                url: string;
+                /** @description Display title or label for the external link. */
+                title?: string;
+                /** @description Identified external provider (github, figma, google-docs, generic). */
+                provider?: string;
+            }[];
         };
         RankPlacement: {
             afterTaskId?: components["schemas"]["Uuid"];

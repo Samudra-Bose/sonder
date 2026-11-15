@@ -14,6 +14,7 @@ import {
   MOCK_USER_ID,
 } from "@/mocks/data/my-work.js";
 import { resetTaskMockState, setMockTasksError } from "@/mocks/handlers/tasks.js";
+import type { TaskDto } from "./types.js";
 import { TaskPeekDrawer, extractTaskExternalLinks } from "./TaskPeekDrawer.js";
 import { useTaskPeekDrawer } from "./useTaskPeekDrawer.js";
 import { MyWorkView } from "@/modules/my-work/MyWorkView.js";
@@ -562,52 +563,129 @@ describe("VS-03 Stage 2: Task Peek Drawer & Deep Linking", () => {
     });
   });
 
-  describe("External Links & Smart URL Chips (FEAT-K01)", () => {
-    it("extracts structured externalLinks from task DTO", () => {
-      const mockTask = {
-        id: "task-1",
-        workspaceId: WS_SHARED_ENG_ID,
-        taskKey: "ENG-200",
-        title: "Test Task",
-        externalLinks: [
-          { url: "https://github.com/sonder/frontend/pull/42", title: "PR 42" },
-          { url: "https://figma.com/design/abc/mockup", title: "Figma Board" },
-        ],
-      } as any;
+  describe("External Links & Smart URL Chips (FEAT-K01 & SEC-T09)", () => {
+    describe("Extraction & DTO Reconciliation", () => {
+      it("extracts structured externalLinks from task DTO without casts", () => {
+        const mockTask: Partial<TaskDto> = {
+          id: "task-1",
+          workspaceId: WS_SHARED_ENG_ID,
+          taskKey: "ENG-200",
+          title: "Test Task",
+          externalLinks: [
+            { id: "link-1", url: "https://github.com/sonder/frontend/pull/42", title: "PR 42", provider: "github" },
+            { id: "link-2", url: "https://figma.com/design/abc/mockup", title: "Figma Board", provider: "figma" },
+          ],
+        };
 
-      const links = extractTaskExternalLinks(mockTask);
-      expect(links).toHaveLength(2);
-      expect(links[0]).toEqual({ url: "https://github.com/sonder/frontend/pull/42", title: "PR 42" });
-      expect(links[1]).toEqual({ url: "https://figma.com/design/abc/mockup", title: "Figma Board" });
+        const links = extractTaskExternalLinks(mockTask);
+        expect(links).toHaveLength(2);
+        expect(links[0]).toEqual({ id: "link-1", url: "https://github.com/sonder/frontend/pull/42", title: "PR 42", provider: "github" });
+        expect(links[1]).toEqual({ id: "link-2", url: "https://figma.com/design/abc/mockup", title: "Figma Board", provider: "figma" });
+      });
+
+      it("extracts Markdown links and raw URLs from task description without duplicates", () => {
+        const mockTask: Partial<TaskDto> = {
+          id: "task-2",
+          workspaceId: WS_SHARED_ENG_ID,
+          taskKey: "ENG-201",
+          title: "Test Task with Description Links",
+          description:
+            "Design specs: [Figma Spec](https://figma.com/design/123/Spec) and see https://github.com/sonder/repo/pull/99. Also https://figma.com/design/123/Spec duplicate check.",
+        };
+
+        const links = extractTaskExternalLinks(mockTask);
+        expect(links).toHaveLength(2);
+        expect(links[0]).toEqual({ url: "https://figma.com/design/123/Spec", title: "Figma Spec" });
+        expect(links[1]).toEqual({ url: "https://github.com/sonder/repo/pull/99" });
+      });
+
+      it("returns empty array when task has no external links or description", () => {
+        const mockTask: Partial<TaskDto> = {
+          id: "task-3",
+          workspaceId: WS_SHARED_ENG_ID,
+          taskKey: "ENG-202",
+          title: "Task with no links",
+          description: null,
+        };
+
+        expect(extractTaskExternalLinks(mockTask)).toEqual([]);
+        expect(extractTaskExternalLinks(undefined)).toEqual([]);
+      });
     });
 
-    it("extracts Markdown links and raw URLs from task description without duplicates", () => {
-      const mockTask = {
-        id: "task-2",
-        workspaceId: WS_SHARED_ENG_ID,
-        taskKey: "ENG-201",
-        title: "Test Task with Description Links",
-        description:
-          "Design specs: [Figma Spec](https://figma.com/design/123/Spec) and see https://github.com/sonder/repo/pull/99. Also https://figma.com/design/123/Spec duplicate check.",
-      } as any;
+    describe("Component-Level Drawer Live Rendering Integration", () => {
+      it("renders external links section with structured links and provider badges for ENG-101", async () => {
+        const user = userEvent.setup();
+        const writeTextMock = vi.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, "clipboard", {
+          value: { writeText: writeTextMock },
+          configurable: true,
+          writable: true,
+        });
 
-      const links = extractTaskExternalLinks(mockTask);
-      expect(links).toHaveLength(2);
-      expect(links[0]).toEqual({ url: "https://figma.com/design/123/Spec", title: "Figma Spec" });
-      expect(links[1]).toEqual({ url: "https://github.com/sonder/repo/pull/99" });
-    });
+        renderTaskDrawerTest({ initialEntries: ["/?task=ENG-101"] });
 
-    it("returns empty array when task has no external links or description", () => {
-      const mockTask = {
-        id: "task-3",
-        workspaceId: WS_SHARED_ENG_ID,
-        taskKey: "ENG-202",
-        title: "Task with no links",
-        description: null,
-      } as any;
+        // Wait for task peek drawer to open and render external links section
+        await waitFor(() => {
+          expect(screen.getByTestId("task-external-links-section")).toBeInTheDocument();
+        });
 
-      expect(extractTaskExternalLinks(mockTask)).toEqual([]);
-      expect(extractTaskExternalLinks(undefined)).toEqual([]);
+        // Section header specifies link count (2 structured links on ENG-101)
+        expect(screen.getByText(/External Links \(2\)/i)).toBeInTheDocument();
+
+        // Verify chips render
+        const chips = screen.getAllByTestId("smart-url-chip");
+        expect(chips).toHaveLength(2);
+
+        // Verify provider labels and anchor targets
+        const prAnchor = screen.getByRole("link", { name: /github/i });
+        expect(prAnchor).toHaveAttribute("href", "https://github.com/sonder/work-management/pull/42");
+        expect(prAnchor).toHaveAttribute("target", "_blank");
+        expect(prAnchor).toHaveAttribute("rel", "noopener noreferrer");
+
+        const figmaAnchor = screen.getByRole("link", { name: /figma/i });
+        expect(figmaAnchor).toHaveAttribute("href", "https://figma.com/design/auth-flow-specs");
+        expect(figmaAnchor).toHaveAttribute("target", "_blank");
+        expect(figmaAnchor).toHaveAttribute("rel", "noopener noreferrer");
+
+        // Copy button in chip copies URL to clipboard
+        const copyBtns = screen.getAllByTestId("smart-url-copy-btn");
+        expect(copyBtns.length).toBeGreaterThanOrEqual(1);
+        const firstCopyBtn = copyBtns[0]!;
+        await user.click(firstCopyBtn);
+        expect(writeTextMock).toHaveBeenCalledWith("https://github.com/sonder/work-management/pull/42");
+      });
+
+      it("renders external links section extracted from task description for ENG-102", async () => {
+        renderTaskDrawerTest({ initialEntries: ["/?task=ENG-102"] });
+
+        await waitFor(() => {
+          expect(screen.getByTestId("task-external-links-section")).toBeInTheDocument();
+        });
+
+        expect(screen.getByText(/External Links \(2\)/i)).toBeInTheDocument();
+        const chips = screen.getAllByTestId("smart-url-chip");
+        expect(chips).toHaveLength(2);
+
+        const figmaLink = screen.getByRole("link", { name: /figma/i });
+        expect(figmaLink).toHaveAttribute("href", "https://figma.com/design/my-work-spec");
+
+        const githubLink = screen.getByRole("link", { name: /github/i });
+        expect(githubLink).toHaveAttribute("href", "https://github.com/sonder/frontend/pull/104");
+      });
+
+      it("does not render external links section when task has no external links (ALEX-1)", async () => {
+        renderTaskDrawerTest({
+          initialEntries: ["/?task=ALEX-1"],
+          initialWorkspaceId: WS_PERSONAL_ALEX_ID,
+        });
+
+        await waitFor(() => {
+          expect(screen.getByTestId("task-peek-drawer-desktop")).toBeInTheDocument();
+        });
+
+        expect(screen.queryByTestId("task-external-links-section")).not.toBeInTheDocument();
+      });
     });
   });
 });

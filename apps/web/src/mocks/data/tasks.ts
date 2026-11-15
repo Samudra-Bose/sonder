@@ -109,6 +109,20 @@ export const initialMockTasks: TaskDto[] = [
     archivedAt: null,
     assigneeAssignments: makeTaskAssignments([MOCK_USER_ID], OTHER_USER_ID),
     assigneeEditableFieldGroups: [],
+    externalLinks: [
+      {
+        id: "link-018f-pr-42",
+        url: "https://github.com/sonder/work-management/pull/42",
+        title: "PR #42: Mutex lock around token refresh",
+        provider: "github",
+      },
+      {
+        id: "link-018f-figma-spec",
+        url: "https://figma.com/design/auth-flow-specs",
+        title: "Auth Flow Sequence Specs",
+        provider: "figma",
+      },
+    ],
   },
 
   // --- SUBTASK 1.1: ENG-105 (Subtask of ENG-101, depth 1) ---
@@ -188,7 +202,7 @@ export const initialMockTasks: TaskDto[] = [
     parentTaskId: null,
     taskKey: "ENG-102",
     title: "Ship VS-02E My Work cross-workspace dashboard",
-    description: "Personal triage experience covering overdue, today, upcoming, and unscheduled.",
+    description: "Personal triage experience covering overdue, today, upcoming, and unscheduled. Design specs: [Figma Architecture](https://figma.com/design/my-work-spec) and see [GitHub PR #104](https://github.com/sonder/frontend/pull/104).",
     itemType: "TASK",
     statusCategory: "IN_PROGRESS",
     priority: "HIGH",

@@ -64,7 +64,8 @@
 | **FE-VS12**  | Frontend Roadmap Reconciliation & Completeness Baseline | Track A / Governance Audit | — | `757ac5a` | 693 tests in `apps/web` (717 total monorepo) | **DELIVERED & VERIFIED** (Authoritative frontend completeness baseline: 28 FE COMPLETE [84.85%], 1 FE PARTIAL, 0 NOT STARTED, 3 FE BLOCKED, 1 BACKEND DEPENDENT; weighted score 86.36%; FEAT-J02 retained Phase 3 DEFERRED; VS-10/11 delineated as backend-owner handoff) |
 | **FE-VS12.1**| Feature Identifier Integrity & Acceptance Evidence Correction | Track A / Governance Audit | — | `f1eeeb1` | 693 tests in `apps/web` (717 total monorepo) | **DELIVERED & VERIFIED** (Reconciled disputed feature IDs FEAT-A10c, D03, D05b, I01; corrected deferred phase accounting to 5+5+3=13; established initial AC Traceability Matrix; delineated FEAT-K01 safe fallback vs DEP-METADATA-01) |
 | **FE-VS12.2**| Final Roadmap Accounting & Frontend Verification Boundary Correction | Track A / Governance Audit | — | `fd52c47` | 693 tests in `apps/web` (717 total monorepo) | **DELIVERED & VERIFIED** (Finalized 13 deferred capabilities inventory; separated frontend acceptance verification from backend integration boundaries for FEAT-A04, A01, G03, G04; established 96.55% strict / 98.28% weighted frontend AC verification rate; preserved 86.36% initial-production and 61.96% roadmap completeness scores) |
-| **FE-VS13**  | Smart URL Chip & External Link Experience | Track A / `FEAT-K01` | — | Current | 22 tests in `SmartUrlChip.test.tsx` (719 in `apps/web` / 743 total) | **DELIVERED & VERIFIED** (SmartUrlChip.tsx, SEC-T09 protocol validation, branded domain badges for GitHub/Figma/Google Docs/generic, path truncation, copy-to-clipboard, markdown AST and TaskPeekDrawer integration, zero third-party favicon network calls; FEAT-K01 marked FE COMPLETE & VERIFIED) |
+| **FE-VS13**  | Smart URL Chip & External Link Experience | Track A / `FEAT-K01` | — | `4a29863` | 22 tests in `SmartUrlChip.test.tsx` (719 in `apps/web` / 743 total) | **DELIVERED & VERIFIED** (SmartUrlChip.tsx, SEC-T09 protocol validation, branded domain badges for GitHub/Figma/Google Docs/generic, path truncation, copy-to-clipboard, markdown AST and TaskPeekDrawer integration, zero third-party favicon network calls; FEAT-K01 marked FE COMPLETE & VERIFIED) |
+| **FE-VS13.1**| Smart URL Chip Contract & Verification Closeout | Track A / `FEAT-K01` | — | Current | 25 tests in `TaskPeekDrawer.test.tsx` (722 in `apps/web` / 746 total) | **DELIVERED & VERIFIED** (Candidate OpenAPI mirrors updated with `externalLinks` on `TaskDto`/`CreateTaskRequest`/`UpdateTaskRequest`; `@sonder/contracts` regenerated with zero `as any`/`as unknown`; MSW fixtures updated; component-level live drawer integration tests; direct navigation policy confirmed; OpenGraph scraper reclassified to P3; 51/51 `validate_v1_5.py` checks passing) |
 
 ### A.2 Current Engineering Status & Next Milestones
 
@@ -248,10 +249,10 @@ Track A (Frontend Engineering):
 - Weighted Phase 1 Score:  87.88% (29.0 / 33 * 100)
 - Full Roadmap Score (46): 63.04% (29.0 / 46 * 100, including 13 Phase 2-4 Deferred: 5 in Phase 2, 5 in Phase 3, 3 in Phase 4)
 - AC Verification (29):    100.00% Strict & Weighted across all 29 implemented Phase 1 capabilities; 87.88% across all 33 Phase 1 capabilities
-- Automated Test Proof:    65 test files in apps/web, 719 tests passing (100% green); 743 tests monorepo
+- Automated Test Proof:    65 test files in apps/web, 722 tests passing (100% green); 746 tests monorepo
 - Contract Readiness:      29 Contract Ready, 1 Contract Gap (FEAT-G02b), 2 Ambiguous, 1 Backend Dependent
-- Latest Hardened Feature: FE-VS13: Smart URL Chip & External Link Experience (FEAT-K01)
-- Current Milestone:       FE-VS13: Smart URL Chip & External Link Experience (DELIVERED & VERIFIED)
+- Latest Hardened Feature: FE-VS13.1: Smart URL Chip Contract & Verification Closeout (FEAT-K01)
+- Current Milestone:       FE-VS13.1: Smart URL Chip Contract & Verification Closeout (DELIVERED & VERIFIED)
 - Next Frontend Target:    Accessibility & Keyboard Navigation Audit Gate / Track B Unfreeze Authorization
 
 Track C (Backend Infrastructure — Backend Developer Owned):

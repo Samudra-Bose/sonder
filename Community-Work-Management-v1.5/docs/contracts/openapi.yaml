@@ -7679,6 +7679,28 @@ components:
             ceiling and recomputed by the server.
           minItems: 0
           maxItems: 3
+        externalLinks:
+          type: array
+          description: Structured external URL links (GitHub, Figma, Google Docs, etc.) attached to this task conforming to FEAT-K01 and SEC-T09.
+          items:
+            type: object
+            required:
+            - id
+            - url
+            properties:
+              id:
+                type: string
+                description: Unique link identifier within the task.
+              url:
+                type: string
+                format: uri
+                description: Destination URL validating safe https/http schemes.
+              title:
+                type: string
+                description: Display title or label for the external link.
+              provider:
+                type: string
+                description: Identified external provider (github, figma, google-docs, generic).
       description: Canonical task response. effectivePermissions and assignment provenance are 
         actor/context-sensitive. statusCategory is the active API status dimension.
     CreateTaskRequest:
@@ -7737,6 +7759,28 @@ components:
             creator configures this task-specific subset.
           minItems: 0
           maxItems: 3
+        externalLinks:
+          type: array
+          description: Structured external URL links (GitHub, Figma, Google Docs, etc.) attached to this task conforming to FEAT-K01 and SEC-T09.
+          items:
+            type: object
+            required:
+            - url
+            properties:
+              id:
+                type: string
+                description: Unique link identifier within the task.
+              url:
+                type: string
+                format: uri
+                description: Destination URL validating safe https/http schemes.
+              title:
+                type: string
+                description: Display title or label for the external link.
+              provider:
+                type: string
+                description: Identified external provider (github, figma, google-docs, generic).
+
       description: Task creation. Every assignee must be an active member of the selected workspace. Each 
         assignment relation records the authenticated creator as assignedByUserId. Initial customFieldValues 
         may be supplied under task:create; the server validates workspace definition IDs, scalar types, active
@@ -7817,6 +7861,28 @@ components:
             Include baseFieldRevisions.assigneeEditableFieldGroups for optimistic concurrency.
           minItems: 0
           maxItems: 3
+        externalLinks:
+          type: array
+          description: Structured external URL links (GitHub, Figma, Google Docs, etc.) attached to this task conforming to FEAT-K01 and SEC-T09.
+          items:
+            type: object
+            required:
+            - url
+            properties:
+              id:
+                type: string
+                description: Unique link identifier within the task.
+              url:
+                type: string
+                format: uri
+                description: Destination URL validating safe https/http schemes.
+              title:
+                type: string
+                description: Display title or label for the external link.
+              provider:
+                type: string
+                description: Identified external provider (github, figma, google-docs, generic).
+
       description: Atomic field patch. Every supplied field is separately authorized using the matching 
         TaskPermissions action; if any field is unauthorized, the entire request is rejected with 403 and no 
         field is changed. assigneeIds replacement maintains per-assignee provenance server-side. 

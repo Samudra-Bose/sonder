@@ -59,13 +59,13 @@ export interface TaskExternalLink {
 /**
  * Extracts structured external links from task DTO or embedded Markdown description links.
  */
-export function extractTaskExternalLinks(task?: TaskDto): TaskExternalLink[] {
+export function extractTaskExternalLinks(task?: Partial<TaskDto> | null): TaskExternalLink[] {
   if (!task) return [];
   const links: TaskExternalLink[] = [];
   const seenUrls = new Set<string>();
 
   // 1. Structured externalLinks on task DTO if provided
-  const structured = (task as unknown as { externalLinks?: TaskExternalLink[] }).externalLinks;
+  const structured = task.externalLinks;
   if (Array.isArray(structured)) {
     for (const item of structured) {
       if (item && typeof item.url === "string") {
