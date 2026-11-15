@@ -12,6 +12,8 @@ import type {
   AuditEventPageDto,
 } from "@/modules/workspace/settings/types.js";
 import { generateAuditEventsCsv } from "@/modules/workspace/settings/auditExportCsv.js";
+import { evaluateAuthorization } from "@/lib/authorization.js";
+import { initialMockWorkspaceRoles } from "../data/roles.js";
 
 let auditDelayMs = 0;
 let auditErrorOverride: {
@@ -34,7 +36,7 @@ export { resetMockAuditState };
 
 /**
  * Checks if actor possesses the required audit capability.
- * Strictly respects role simulation preview headers (FEAT-G03).
+ * Strictly enforces: effectiveCapabilities = callerCapabilities ∩ previewRoleCapabilities (FEAT-G02b, FEAT-G03).
  */
 function hasAuditCapability(
   communityId: string,
@@ -42,23 +44,7 @@ function hasAuditCapability(
   capability: "audit:read" | "audit:export",
   previewRoleId?: string | null
 ): boolean {
-  // 1. Role simulation preview override
-  if (previewRoleId) {
-    if (previewRoleId.includes("viewer") || previewRoleId === "role-viewer") {
-      return false;
-    }
-    if (previewRoleId.includes("member") || previewRoleId === "role-member") {
-      return false;
-    }
-    if (previewRoleId.includes("coord") || previewRoleId === "role-coordinator") {
-      return capability === "audit:read";
-    }
-    if (previewRoleId.includes("owner") || previewRoleId === "role-owner") {
-      return true;
-    }
-  }
-
-  // 2. Standard workspace role check
+  // 1. Resolve workspace within community boundary
   const workspaces = mockWorkspacesByCommunityId[communityId] || mockWorkspacesCommunity1;
   const ws = workspaces.find((w) => w.id === workspaceId) as
     | (WorkspaceDto & { effectiveCapabilities?: string[] })
@@ -66,12 +52,16 @@ function hasAuditCapability(
 
   if (!ws) return false;
 
-  if (Array.isArray(ws.effectiveCapabilities)) {
-    return ws.effectiveCapabilities.includes(capability);
-  }
+  // 2. Evaluate authorization using canonical intersection engine
+  // effectiveCapabilities = callerCapabilities ∩ previewRoleCapabilities
+  const result = evaluateAuthorization({
+    callerCapabilities: ws.effectiveCapabilities,
+    previewRoleId,
+    availableRoles: initialMockWorkspaceRoles,
+    requiredCapability: capability,
+  });
 
-  // Fails closed if capability context is absent. Role names are not authorization proof.
-  return false;
+  return result.allowed;
 }
 
 export const auditHandlers = [

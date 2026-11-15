@@ -82,12 +82,12 @@ SONDER PLATFORM PROGRESS METRICS (AUDIT BASELINE 2026-11-13)
 
 4. Backend Integration Readiness (Track C):
    - Candidate OpenAPI Operations:     118 operations across 95 paths (v0.3.20-draft)
-   - Operations Mocked in MSW:         42 / 118 operations (35.59%)
+   - Operations Mocked in MSW:         43 / 118 operations (36.44%)
    - Formally Frozen Contracts:        0 / 118 operations (Candidate is draft; live BE pending)
    - Live Backend Verified:            0 / 118 operations (0.00% - live BE services pending)
 
 5. Overall Monorepo Verification:
-   - Automated Tests:                  673 / 673 passing (100%)
+   - Automated Tests:                  692 / 692 passing (100%)
    - Monorepo Compilation:             0 TypeScript errors across 2 projects (100%)
    - Production Asset Build:           Built cleanly in 3.55s (100%)
    - Spec & Schema Validation:         51 / 51 checks passing (100%)
@@ -521,6 +521,7 @@ flowchart TD
 9. **Milestone M1.3 Governance (VS-09J):** Append-Only Hash-Chained Audit Log Table & CSV Export (`FEAT-G04`) — DELIVERED & LOCKED.
 10. **Milestone M1.3 Governance Complete & Roadmap Reconciliation (VS-09K):** Phase 1 governance requirements complete (`FEAT-G03`, `FEAT-G04`, commit `67c4bf0`). Offline task editing (`FEAT-J02`) authoritatively deferred to Phase 3 per SOT-11, SOT-14, and Master Spec §1.1. Custom Roles Builder UI (`FEAT-G02b`) remains blocked on `DEP-ROLES-01` and live backend evaluator.
 11. **Milestone VS-09L (Phase 1 Partial-Scope Closure & Release Readiness):** Replaced substring POST exceptions with strict non-mutating POST allowlist in role preview; separated audit `actorId` and `targetId` structured filters; recursive metadata sanitization (CR-14); `FEAT-D05a` verified DONE (15 tests in `WorkspaceTemplatesPicker.test.tsx`); `FEAT-K01` verified PARTIAL pending backend scrape contract (`DEP-METADATA-01`). Phase 1 status reconciled: 28 DONE (84.85%), 1 PARTIAL, 0 NOT STARTED, 3 DECISION BLOCKED, 1 BACKEND DEPENDENT.
+12. **Milestone VS-10 (Backend Integration & Authorization Foundation):** Established real backend integration baseline; closed critical authorization boundary with canonical intersection engine (`effectiveCapabilities = callerCapabilities ∩ previewRoleCapabilities`, 19 tests in `authorization.test.ts`); implemented `POST .../role-preview` contract endpoint; verified privilege escalation prevention and grant ceiling; documented concrete blockers for `DEP-ROLES-01` and Track C live services.
 
 ### P2 — Important UX, Mobile & Accessibility Completion (Track B Slices)
 1. **Slice UX-1:** Design System & Contrast Hardening (`UX-SYS-01`, `UX-SYS-02`, `UX-SYS-03`).

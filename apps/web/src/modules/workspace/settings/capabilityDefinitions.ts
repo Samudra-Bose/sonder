@@ -253,7 +253,31 @@ export function evaluateCapability(
   const roleKey = role.systemKey ?? "CUSTOM";
   const hasCapInList = role.capabilities.includes(def.code);
 
-  // 1. OWNER-specific handling
+  // 1. Universal enforcement: If the capability is not in effective capabilities, fail closed
+  if (!hasCapInList) {
+    let rationale = `Denied: Role '${role.name}' does not possess '${def.code}'.`;
+    if (def.ownerOnly) {
+      rationale = `Denied: '${def.name}' is strictly reserved to the active Workspace Owner and cannot be delegated or simulated for other roles.`;
+    } else if (roleKey === "MEMBER") {
+      rationale = `Denied: Member role does not possess '${def.code}'. Requires Coordinator or Owner role.`;
+    } else if (roleKey === "VIEWER") {
+      rationale = "Denied: Viewer role is strictly read-only and cannot mutate workspace or task state.";
+    } else if (roleKey === "OWNER") {
+      rationale = `Denied: Capability '${def.code}' is not held by your active role. Role preview cannot grant capabilities exceeding your active permissions.`;
+    }
+
+    return {
+      code: def.code,
+      name: def.name,
+      category: def.category,
+      description: def.description,
+      granted: false,
+      rationale,
+      modifiers,
+    };
+  }
+
+  // 2. OWNER-specific handling
   if (roleKey === "OWNER") {
     let rationale = "Granted: Built-in Workspace Owner role possesses full authoritative capability across all operations.";
 
@@ -275,7 +299,7 @@ export function evaluateCapability(
     };
   }
 
-  // 2. Strict Owner-only capabilities (never grantable to non-owners)
+  // 3. Strict Owner-only capabilities (never grantable to non-owners)
   if (def.ownerOnly) {
     return {
       code: def.code,
@@ -288,7 +312,7 @@ export function evaluateCapability(
     };
   }
 
-  // 3. Coordinator-specific contextual rules
+  // 4. Coordinator-specific contextual rules
   if (roleKey === "COORDINATOR") {
     if (def.code === "workspace:invite_members") {
       if (coordinatorCanInvite && !isPersonal) {

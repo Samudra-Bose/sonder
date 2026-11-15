@@ -7,6 +7,7 @@ import {
   mockWorkspaceTemplates,
 } from "../data/workspaces";
 import { initialMockWorkspaceRoles } from "../data/roles.js";
+import { computeEffectiveCapabilities } from "@/lib/authorization.js";
 import type {
   WorkspaceDto,
   WorkspaceListDto,
@@ -438,10 +439,9 @@ export const workspaceHandlers = [
       );
     }
 
-    // Permission check: capability workspace:update_settings (defaults to OWNER)
-    const canUpdate = Array.isArray((ws as any).effectiveCapabilities)
-      ? (ws as any).effectiveCapabilities.includes("workspace:update_settings")
-      : ws.myRole === "OWNER";
+    // Permission check: capability workspace:update_settings (fails closed if absent)
+    const canUpdate = Array.isArray((ws as any).effectiveCapabilities) &&
+      (ws as any).effectiveCapabilities.includes("workspace:update_settings");
 
     if (!canUpdate) {
       return HttpResponse.json(
@@ -624,4 +624,140 @@ export const workspaceHandlers = [
       }
     );
   }),
+
+  // POST /api/v1/communities/:communityId/workspaces/:workspaceId/role-preview
+  http.post(
+    "/api/v1/communities/:communityId/workspaces/:workspaceId/role-preview",
+    async ({ params, request }) => {
+      if (workspacesDelayMs > 0) {
+        await delay(workspacesDelayMs);
+      }
+
+      // Check CSRF token
+      const csrfToken = request.headers.get("X-CSRF-Token");
+      if (!csrfToken || !csrfToken.trim()) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/csrf-error",
+            title: "CSRF Token Required",
+            status: 400,
+            detail: "A valid CSRF synchronizer token is required.",
+            code: "CSRF_TOKEN_REQUIRED",
+          },
+          { status: 400, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      const { communityId, workspaceId } = params as {
+        communityId: string;
+        workspaceId: string;
+      };
+
+      const workspaces = mockWorkspacesByCommunityId[communityId] || mockWorkspacesCommunity1;
+      const ws = workspaces.find((w) => w.id === workspaceId) as
+        | (WorkspaceDto & { effectiveCapabilities?: string[] })
+        | undefined;
+
+      if (!ws) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/not-found",
+            title: "Not Found",
+            status: 404,
+            detail: `Workspace '${workspaceId}' not found in community '${communityId}'.`,
+            code: "RESOURCE_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      // Policy: Only an active Workspace Owner or caller with workspace:administer_roles may inspect role preview
+      const callerCaps = ws.effectiveCapabilities;
+      const canAdministerRoles =
+        Array.isArray(callerCaps) &&
+        (callerCaps.includes("workspace:administer_roles") || ws.myRole === "OWNER");
+
+      if (!canAdministerRoles) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/forbidden",
+            title: "Forbidden",
+            status: 403,
+            detail: "Only an active Workspace Owner may inspect a role as part of role administration.",
+            code: "INSUFFICIENT_CAPABILITY",
+          },
+          { status: 403, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      let body: any;
+      try {
+        body = await request.json();
+      } catch {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/bad-request",
+            title: "Bad Request",
+            status: 400,
+            detail: "Request body must be valid JSON.",
+            code: "BAD_REQUEST",
+          },
+          { status: 400, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      const roleId = body?.roleId;
+      if (!roleId || typeof roleId !== "string") {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/bad-request",
+            title: "Bad Request",
+            status: 400,
+            detail: "Field 'roleId' is required.",
+            code: "VALIDATION_FAILED",
+          },
+          { status: 400, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      const targetRole = initialMockWorkspaceRoles.find(
+        (r) => r.id === roleId || r.systemKey === roleId
+      );
+
+      if (!targetRole) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/not-found",
+            title: "Role Not Found",
+            status: 404,
+            detail: `Role with ID '${roleId}' not found in workspace.`,
+            code: "RESOURCE_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
+      // Compute downward-only intersection: callerCapabilities ∩ targetRole.capabilities
+      const effectiveCaps = computeEffectiveCapabilities(
+        callerCaps,
+        targetRole.capabilities
+      );
+
+      return HttpResponse.json(
+        {
+          roleId: targetRole.id,
+          roleName: targetRole.name,
+          capabilities: effectiveCaps,
+          previewOnly: true,
+        },
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "private, no-store",
+          },
+        }
+      );
+    }
+  ),
 ];

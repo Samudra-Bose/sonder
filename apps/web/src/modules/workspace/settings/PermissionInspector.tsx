@@ -25,6 +25,7 @@ import {
   mockMemberRole,
   mockViewerRole,
 } from "@/mocks/data/roles.js";
+import { computeEffectiveCapabilities } from "@/lib/authorization.js";
 
 export interface PermissionInspectorProps {
   workspace: WorkspaceDto | null | undefined;
@@ -65,7 +66,17 @@ export const PermissionInspector: React.FC<PermissionInspectorProps> = ({
   const activeEvaluatedRole = useMemo<WorkspaceRoleDto>(() => {
     if (simulatedRoleId) {
       const sim = allRoles.find((r) => r.id === simulatedRoleId);
-      if (sim) return sim;
+      if (sim) {
+        // Enforce downward-only intersection: callerCapabilities ∩ previewRoleCapabilities
+        const effectiveCaps = computeEffectiveCapabilities(
+          actualRole.capabilities,
+          sim.capabilities
+        );
+        return {
+          ...sim,
+          capabilities: effectiveCaps as WorkspaceRoleDto["capabilities"],
+        };
+      }
     }
     return actualRole;
   }, [simulatedRoleId, allRoles, actualRole]);

@@ -14,12 +14,20 @@ import type { RoleCapability } from "./types.js";
  */
 export function hasWorkspaceCapability(
   workspace: (WorkspaceDto & { effectiveCapabilities?: string[] }) | null | undefined,
-  capability: RoleCapability
+  capability: RoleCapability,
+  previewRoleCapabilities?: string[] | null
 ): boolean {
   if (!workspace) return false;
 
   // Authoritative explicit capability array (provided by server responses and role simulator)
   if (Array.isArray(workspace.effectiveCapabilities)) {
+    if (previewRoleCapabilities) {
+      // Invariant: effective = caller ∩ preview (FEAT-G02b, FEAT-G03)
+      return (
+        workspace.effectiveCapabilities.includes(capability) &&
+        previewRoleCapabilities.includes(capability)
+      );
+    }
     return workspace.effectiveCapabilities.includes(capability);
   }
 

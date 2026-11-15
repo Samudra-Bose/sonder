@@ -58,7 +58,8 @@
 | **VS-09I**   | Plain-Language Permission Inspector & Role Simulator | `FEAT-G03` | — | `a6f04a2` | 7 tests | **VERIFIED & LOCKED** (`RoleSimulator.test.tsx`) |
 | **VS-09J**   | Append-Only Hash-Chained Audit Log Table & CSV Export | `FEAT-G04` | — | `59a9511` | 19 tests | **VERIFIED & LOCKED** (`AuditLog.test.tsx`) |
 | **VS-09K**   | M1.3 Scope Reconciliation, Audit Authorization Hardening & Governance Gate | Governance / `FEAT-G04` | — | `67c4bf0` | 667 tests (63 suites) | **MERGED & VERIFIED** (Fail-closed audit capabilities, metadata sanitization, and SOT-11/14 reconciliation) |
-| **VS-09L**   | Phase 1 Partial Scope Closure & Release Readiness | Multi (`FEAT-D05a`, `FEAT-K01`, `FEAT-G04`, `FEAT-G03`) | — | Current | 31 tests (22 in `AuditLog.test.tsx`, 9 in `api-client.test.ts`) | **VERIFIED & COMPLETED** (Role-preview non-mutating POST allowlist, audit actorId/targetId separation, recursive metadata sanitization, FEAT-D05a verified DONE, FEAT-K01 PARTIAL with DEP-METADATA-01) |
+| **VS-09L**   | Phase 1 Partial Scope Closure & Release Readiness | Multi (`FEAT-D05a`, `FEAT-K01`, `FEAT-G04`, `FEAT-G03`) | — | `5ab2436` | 31 tests (22 in `AuditLog.test.tsx`, 9 in `api-client.test.ts`) | **MERGED & VERIFIED** (Role-preview non-mutating POST allowlist, audit actorId/targetId separation, recursive metadata sanitization, FEAT-D05a verified DONE, FEAT-K01 PARTIAL with DEP-METADATA-01) |
+| **VS-10**    | Backend Integration & Authorization Foundation | Track C / `FEAT-G02b`, `FEAT-G03` | — | Current | 19 tests in `authorization.test.ts` (692 total) | **VERIFIED & COMPLETED** (Canonical intersection engine `effectiveCapabilities = callerCapabilities ∩ previewRoleCapabilities`, privilege escalation defense, downward-only role preview, grant ceiling validation, and live backend baseline audit) |
 
 ### A.2 Current Engineering Status & Next Milestones
 
@@ -228,8 +229,8 @@ SONDER PLATFORM PROGRESS SUMMARY
 ================================================================================
 Monorepo Status:           Clean, 100% Green
 Active Baseline:           develop @ 26bd662 (PR #40 merged)
-Total Passing Test Suites: 63 suites (apps/web + packages/contracts)
-Total Automated Tests:     673 tests (100% passing)
+Total Passing Test Suites: 64 suites (apps/web + packages/contracts)
+Total Automated Tests:     692 tests (100% passing)
 Documentation Checks:      51 / 51 passed (pnpm validate:docs)
 
 Track A (Engineering):
@@ -240,9 +241,9 @@ Track A (Engineering):
 - Actionable Status (53):  28 DONE, 1 PARTIAL, 0 NOT STARTED (Phase 1), 3 DECISION BLOCKED,
                            1 BACKEND DEPENDENT, 13 DEFERRED, 7 REJECTED (Total: 53)
 - Contract Readiness:      Candidate OpenAPI 0.3.20-draft (Live Backend Pending)
-- Latest Hardened Feature: VS-09L: Phase 1 Partial Scope Closure & Release Readiness
-- Current Milestone:       VS-09L: Phase 1 Partial Scope Closure & Release Readiness (DELIVERED & VERIFIED)
-- Next Engineering Target: Evaluate Next Approved Workstream (Track B UI/UX Slices or Backend Integration)
+- Latest Hardened Feature: VS-10: Backend Integration & Authorization Foundation
+- Current Milestone:       VS-10: Backend Integration & Authorization Foundation (DELIVERED & VERIFIED)
+- Next Engineering Target: Track C Live Database Migrations & Runtime Service Provisioning (DEP-ROLES-01)
 
 Track B (UI/UX Workstream - PAUSED):
 - Research & Principles:   Approved (PR #4, 92e984e)
