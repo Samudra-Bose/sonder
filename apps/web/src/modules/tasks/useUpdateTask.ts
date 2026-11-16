@@ -72,6 +72,16 @@ export function useUpdateTask(): UseMutationResult<
           }
         }
 
+        let updatedExternalLinks = previousTask.externalLinks;
+        if (data.externalLinks !== undefined) {
+          updatedExternalLinks = data.externalLinks.map((link, idx) => ({
+            id: link.id || `temp-link-${Date.now()}-${idx}`,
+            url: link.url,
+            title: link.title || link.url,
+            provider: link.provider || "generic",
+          }));
+        }
+
         const optimisticTask: TaskDto = {
           ...previousTask,
           ...(data.title !== undefined && { title: data.title }),
@@ -85,6 +95,7 @@ export function useUpdateTask(): UseMutationResult<
           ...(data.labelIds !== undefined && { labelIds: data.labelIds }),
           ...(data.milestoneId !== undefined && { milestoneId: data.milestoneId }),
           ...(data.customFieldValues !== undefined && { customFieldValues: updatedCustomFieldValues }),
+          ...(data.externalLinks !== undefined && { externalLinks: updatedExternalLinks }),
           updatedAt: new Date().toISOString(),
         };
 

@@ -2309,9 +2309,9 @@ export interface components {
                  */
                 url: string;
                 /** @description Display title or label for the external link. */
-                title?: string;
+                title: string;
                 /** @description Identified external provider (github, figma, google-docs, generic). */
-                provider?: string;
+                provider: string;
             }[];
         };
         /** @description Task creation. Every assignee must be an active member of the selected workspace. Each assignment relation records the authenticated creator as assignedByUserId. Initial customFieldValues may be supplied under task:create; the server validates workspace definition IDs, scalar types, active option IDs and all active required definitions. */

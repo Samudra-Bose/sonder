@@ -12,7 +12,6 @@ import {
   Archive,
   CopyPlus,
   Loader2,
-  Link2,
 } from "lucide-react";
 import {
   Dialog,
@@ -42,11 +41,11 @@ import { useTaskClone, canCloneTask } from "./TaskCloneContext.js";
 import { SubtaskList } from "./SubtaskList.js";
 import { TaskDependencies } from "./TaskDependencies.js";
 import { TaskCustomFieldsSection } from "./TaskCustomFieldsSection.js";
+import { TaskExternalLinksSection } from "./TaskExternalLinksSection.js";
 import { ReparentTaskModal } from "./ReparentTaskModal.js";
 import { TaskActivityTab } from "./comments/TaskActivityTab.js";
 import { TaskWatchButton } from "./comments/TaskWatchButton.js";
 import { useTaskWatchState } from "./comments/useTaskComments.js";
-import { SmartUrlChip } from "@/components/ui/SmartUrlChip.js";
 import type { TaskDto } from "./types.js";
 
 export interface TaskExternalLink {
@@ -248,7 +247,6 @@ export function TaskPeekDrawer({
   });
 
   const task: TaskDto | undefined = taskQuery.data;
-  const externalLinks = useMemo(() => extractTaskExternalLinks(task), [task]);
   const isLoading =
     resolveQuery.isLoading ||
     (resolveQuery.isSuccess && taskQuery.isLoading) ||
@@ -718,25 +716,12 @@ export function TaskPeekDrawer({
         />
 
         {/* External Links Section (FEAT-K01) */}
-        {externalLinks.length > 0 && (
-          <div className="space-y-2.5" data-testid="task-external-links-section">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1.5">
-              <Link2 className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>External Links ({externalLinks.length})</span>
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {externalLinks.map((link, idx) => (
-                <SmartUrlChip
-                  key={link.id || `${link.url}-${idx}`}
-                  url={link.url}
-                  title={link.title}
-                  provider={link.provider}
-                  showCopyButton
-                />
-              ))}
-            </div>
-          </div>
-        )}
+        <TaskExternalLinksSection
+          task={task}
+          communityId={currentCommunityId}
+          workspaceId={task.workspaceId}
+          isArchived={isArchived}
+        />
 
         {/* Subtasks Section */}
         <SubtaskList

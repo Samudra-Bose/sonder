@@ -1,8 +1,8 @@
 # SONDER — CANONICAL PROJECT PROGRESS TRACKER
 
-**Document Version:** 1.6.0<br/>
-**Last Synchronized:** 2026-11-11<br/>
-**Current Baseline Commit:** `develop @ 26bd662` (with PR #39 audit merge `a9b093c` and PR #40 documentation lock `26bd662`)<br/>
+**Document Version:** 1.7.0<br/>
+**Last Synchronized:** 2026-11-16<br/>
+**Current Baseline Commit:** `feat/FE-VS13-smart-url-chips`<br/>
 **Governance Standard:** Dual-Track Engineering & UI/UX Governance (PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT)<br/>
 **Maintenance Rule:** This tracker is updated upon the completion of every milestone or UI/UX slice. Never fabricate completion percentages. Every completed item must link to verified Git commits, PRs, or test suites.
 
@@ -65,7 +65,8 @@
 | **FE-VS12.1**| Feature Identifier Integrity & Acceptance Evidence Correction | Track A / Governance Audit | — | `f1eeeb1` | 693 tests in `apps/web` (717 total monorepo) | **DELIVERED & VERIFIED** (Reconciled disputed feature IDs FEAT-A10c, D03, D05b, I01; corrected deferred phase accounting to 5+5+3=13; established initial AC Traceability Matrix; delineated FEAT-K01 safe fallback vs DEP-METADATA-01) |
 | **FE-VS12.2**| Final Roadmap Accounting & Frontend Verification Boundary Correction | Track A / Governance Audit | — | `fd52c47` | 693 tests in `apps/web` (717 total monorepo) | **DELIVERED & VERIFIED** (Finalized 13 deferred capabilities inventory; separated frontend acceptance verification from backend integration boundaries for FEAT-A04, A01, G03, G04; established 96.55% strict / 98.28% weighted frontend AC verification rate; preserved 86.36% initial-production and 61.96% roadmap completeness scores) |
 | **FE-VS13**  | Smart URL Chip & External Link Experience | Track A / `FEAT-K01` | — | `4a29863` | 22 tests in `SmartUrlChip.test.tsx` (719 in `apps/web` / 743 total) | **DELIVERED & VERIFIED** (SmartUrlChip.tsx, SEC-T09 protocol validation, branded domain badges for GitHub/Figma/Google Docs/generic, path truncation, copy-to-clipboard, markdown AST and TaskPeekDrawer integration, zero third-party favicon network calls; FEAT-K01 marked FE COMPLETE & VERIFIED) |
-| **FE-VS13.1**| Smart URL Chip Contract & Verification Closeout | Track A / `FEAT-K01` | — | Current | 25 tests in `TaskPeekDrawer.test.tsx` (722 in `apps/web` / 746 total) | **DELIVERED & VERIFIED** (Candidate OpenAPI mirrors updated with `externalLinks` on `TaskDto`/`CreateTaskRequest`/`UpdateTaskRequest`; `@sonder/contracts` regenerated with zero `as any`/`as unknown`; MSW fixtures updated; component-level live drawer integration tests; direct navigation policy confirmed; OpenGraph scraper reclassified to P3; 51/51 `validate_v1_5.py` checks passing) |
+| **FE-VS13.1**| Smart URL Chip Contract & Verification Closeout | Track A / `FEAT-K01` | — | `e2880fc` | 25 tests in `TaskPeekDrawer.test.tsx` (722 in `apps/web` / 746 total) | **DELIVERED & VERIFIED** (Candidate OpenAPI mirrors updated with `externalLinks` on `TaskDto`/`CreateTaskRequest`/`UpdateTaskRequest`; `@sonder/contracts` regenerated with zero `as any`/`as unknown`; MSW fixtures updated; component-level live drawer integration tests; direct navigation policy confirmed; OpenGraph scraper reclassified to P3; 51/51 `validate_v1_5.py` checks passing) |
+| **FE-VS13.2**| Structured External Link Management | Track A / `FEAT-K01` | — | Current | 13 tests in `TaskExternalLinksManagement.test.tsx` + 26 in `TaskPeekDrawer.test.tsx` (75 total for FEAT-K01; 736 in `apps/web` / 760 total) | **DELIVERED & VERIFIED** (TaskExternalLinksSection with attach, inline edit, remove; auto-provider detection; SEC-T09 scheme validation; `canEditCustomFieldsLinks` permission gating; optimistic cache mutation with automatic rollback on error; 409 conflict detection using `task.fieldRevisions.externalLinks`; candidate OpenAPI 0.3.20-draft reconciled with required `[id, url, title, provider]`; 51/51 `validate_v1_5.py` checks passing) |
 
 ### A.2 Current Engineering Status & Next Milestones
 

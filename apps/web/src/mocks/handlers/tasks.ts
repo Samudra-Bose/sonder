@@ -605,6 +605,14 @@ export const taskHandlers = [
         assigneeAssignments: makeTaskAssignments(body.assigneeIds ?? [], MOCK_USER_ID, now),
         assigneeEditableFieldGroups: body.assigneeEditableFieldGroups ?? [],
         customFieldValues: {},
+        externalLinks: body.externalLinks
+          ? body.externalLinks.map((l, i) => ({
+              id: l.id || `link-${Date.now()}-${i}`,
+              url: l.url,
+              title: l.title || l.url,
+              provider: l.provider || "generic",
+            }))
+          : [],
       };
 
       currentMockTasks.push(newTask);
@@ -821,7 +829,7 @@ export const taskHandlers = [
       }
 
       if (
-        (body.labelIds !== undefined || body.customFieldValues !== undefined) &&
+        (body.labelIds !== undefined || body.customFieldValues !== undefined || body.externalLinks !== undefined) &&
         task.effectivePermissions.canEditCustomFieldsLinks === false
       ) {
         return HttpResponse.json(
@@ -829,7 +837,7 @@ export const taskHandlers = [
             type: "https://errors.sonder.platform/forbidden",
             title: "Permission Denied",
             status: 403,
-            detail: "You do not have permission to modify custom fields or labels in this workspace.",
+            detail: "You do not have permission to modify custom fields, labels, or external links in this workspace.",
             code: "PERMISSION_DENIED",
           },
           { status: 403, headers: { "Content-Type": "application/problem+json" } }
@@ -944,6 +952,155 @@ export const taskHandlers = [
         }
       }
 
+      // Validate external links per SEC-T09
+      let normalizedExternalLinks: NonNullable<TaskDto["externalLinks"]> | undefined = undefined;
+      if (body.externalLinks !== undefined) {
+        if (!Array.isArray(body.externalLinks)) {
+          return HttpResponse.json(
+            {
+              type: "https://errors.sonder.platform/validation-error",
+              title: "Validation Error",
+              status: 422,
+              detail: "externalLinks must be an array.",
+              code: "VALIDATION_FAILED",
+            },
+            { status: 422, headers: { "Content-Type": "application/problem+json" } }
+          );
+        }
+
+        const seenUrls = new Set<string>();
+        normalizedExternalLinks = [];
+
+        for (let i = 0; i < body.externalLinks.length; i++) {
+          const item = body.externalLinks[i];
+          if (!item || typeof item.url !== "string" || !item.url.trim()) {
+            return HttpResponse.json(
+              {
+                type: "https://errors.sonder.platform/validation-error",
+                title: "Validation Error",
+                status: 422,
+                detail: `External link at index ${i} must have a valid url string.`,
+                code: "VALIDATION_FAILED",
+                field: `externalLinks[${i}].url`,
+              },
+              { status: 422, headers: { "Content-Type": "application/problem+json" } }
+            );
+          }
+
+          const rawUrl = item.url.trim();
+
+          // Reject protocol-relative schemes per SEC-T09
+          if (rawUrl.startsWith("//") || rawUrl.startsWith("\\\\")) {
+            return HttpResponse.json(
+              {
+                type: "https://errors.sonder.platform/validation-error",
+                title: "Validation Error",
+                status: 422,
+                detail: `External link '${rawUrl}' uses an unsafe protocol-relative scheme.`,
+                code: "INVALID_URL_SCHEME",
+                field: `externalLinks[${i}].url`,
+              },
+              { status: 422, headers: { "Content-Type": "application/problem+json" } }
+            );
+          }
+
+          // Parse URL
+          let parsedUrl: URL;
+          try {
+            parsedUrl = new URL(rawUrl);
+          } catch {
+            return HttpResponse.json(
+              {
+                type: "https://errors.sonder.platform/validation-error",
+                title: "Validation Error",
+                status: 422,
+                detail: `External link '${rawUrl}' is not a valid URL.`,
+                code: "VALIDATION_FAILED",
+                field: `externalLinks[${i}].url`,
+              },
+              { status: 422, headers: { "Content-Type": "application/problem+json" } }
+            );
+          }
+
+          // Protocol enforcement per SEC-T09
+          if (parsedUrl.protocol !== "https:" && parsedUrl.protocol !== "http:") {
+            return HttpResponse.json(
+              {
+                type: "https://errors.sonder.platform/validation-error",
+                title: "Validation Error",
+                status: 422,
+                detail: `External link '${rawUrl}' uses an unsupported scheme '${parsedUrl.protocol}'. Only https/http is permitted.`,
+                code: "INVALID_URL_SCHEME",
+                field: `externalLinks[${i}].url`,
+              },
+              { status: 422, headers: { "Content-Type": "application/problem+json" } }
+            );
+          }
+
+          // Duplicate URL check
+          if (seenUrls.has(rawUrl)) {
+            return HttpResponse.json(
+              {
+                type: "https://errors.sonder.platform/validation-error",
+                title: "Validation Error",
+                status: 422,
+                detail: `Duplicate external link URL: '${rawUrl}'. Each attached link must have a unique URL.`,
+                code: "DUPLICATE_URL",
+                field: `externalLinks[${i}].url`,
+              },
+              { status: 422, headers: { "Content-Type": "application/problem+json" } }
+            );
+          }
+          seenUrls.add(rawUrl);
+
+          // Provider detection
+          const host = parsedUrl.hostname.toLowerCase().replace(/^www\./, "");
+          let detectedProvider = item.provider || "generic";
+          let defaultTitle = item.title;
+
+          if (!item.provider || item.provider === "generic") {
+            if (host === "github.com" || host.endsWith(".github.com")) {
+              detectedProvider = "github";
+            } else if (host === "figma.com" || host.endsWith(".figma.com")) {
+              detectedProvider = "figma";
+            } else if (host === "docs.google.com" || host === "drive.google.com") {
+              if (parsedUrl.pathname.includes("/spreadsheets")) detectedProvider = "google-sheets";
+              else if (parsedUrl.pathname.includes("/presentation")) detectedProvider = "google-slides";
+              else if (host === "drive.google.com") detectedProvider = "google-drive";
+              else detectedProvider = "google-docs";
+            } else {
+              detectedProvider = "generic";
+            }
+          }
+
+          if (!defaultTitle || !defaultTitle.trim()) {
+            if (detectedProvider === "github") {
+              const prMatch = parsedUrl.pathname.match(/^\/([^/]+)\/([^/]+)\/pull\/(\d+)/i);
+              const issueMatch = parsedUrl.pathname.match(/^\/([^/]+)\/([^/]+)\/issues\/(\d+)/i);
+              const repoMatch = parsedUrl.pathname.match(/^\/([^/]+)\/([^/]+)/);
+              if (prMatch) defaultTitle = `${prMatch[1]}/${prMatch[2]}#${prMatch[3]}`;
+              else if (issueMatch) defaultTitle = `${issueMatch[1]}/${issueMatch[2]}#${issueMatch[3]}`;
+              else if (repoMatch) defaultTitle = `${repoMatch[1]}/${repoMatch[2]}`;
+              else defaultTitle = host;
+            } else if (detectedProvider === "figma") {
+              const figmaMatch = parsedUrl.pathname.match(/^\/(?:file|design|proto)\/[^/]+\/([^/?#]+)/i);
+              defaultTitle = figmaMatch && figmaMatch[1] ? decodeURIComponent(figmaMatch[1]).replace(/[-_]+/g, " ") : host;
+            } else if (detectedProvider.startsWith("google-")) {
+              defaultTitle = detectedProvider.replace("google-", "Google ");
+            } else {
+              defaultTitle = host;
+            }
+          }
+
+          normalizedExternalLinks.push({
+            id: item.id || `link-${Date.now()}-${i}`,
+            url: rawUrl,
+            title: defaultTitle,
+            provider: detectedProvider,
+          });
+        }
+      }
+
       // Optimistic concurrency check via baseFieldRevisions
       const baseRevisions = body.baseFieldRevisions ?? {};
       const conflictingFields: string[] = [];
@@ -962,6 +1119,7 @@ export const taskHandlers = [
         "labelIds",
         "milestoneId",
         "assigneeEditableFieldGroups",
+        "externalLinks",
       ] as const;
 
       const changedFields = editableFields.filter(
@@ -1088,6 +1246,11 @@ export const taskHandlers = [
           const revKey = `customFieldValues.${defId}`;
           task.fieldRevisions[revKey] = (task.fieldRevisions[revKey] ?? 1) + 1;
         }
+      }
+
+      if (normalizedExternalLinks !== undefined) {
+        task.externalLinks = normalizedExternalLinks;
+        task.fieldRevisions.externalLinks = (task.fieldRevisions.externalLinks ?? 1) + 1;
       }
 
       task.version += 1;

@@ -674,10 +674,10 @@ describe("VS-03 Stage 2: Task Peek Drawer & Deep Linking", () => {
         expect(githubLink).toHaveAttribute("href", "https://github.com/sonder/frontend/pull/104");
       });
 
-      it("does not render external links section when task has no external links (ALEX-1)", async () => {
+      it("does not render external links section when task has no external links for read-only user (ENG-050)", async () => {
         renderTaskDrawerTest({
-          initialEntries: ["/?task=ALEX-1"],
-          initialWorkspaceId: WS_PERSONAL_ALEX_ID,
+          initialEntries: ["/?task=ENG-050"],
+          initialWorkspaceId: WS_SHARED_ENG_ID,
         });
 
         await waitFor(() => {
@@ -685,6 +685,20 @@ describe("VS-03 Stage 2: Task Peek Drawer & Deep Linking", () => {
         });
 
         expect(screen.queryByTestId("task-external-links-section")).not.toBeInTheDocument();
+      });
+
+      it("renders empty external links section with add button when task has no external links (ALEX-1)", async () => {
+        renderTaskDrawerTest({
+          initialEntries: ["/?task=ALEX-1"],
+          initialWorkspaceId: WS_PERSONAL_ALEX_ID,
+        });
+
+        await waitFor(() => {
+          expect(screen.getByTestId("task-external-links-section")).toBeInTheDocument();
+        });
+
+        expect(screen.getByText(/External Links \(0\)/i)).toBeInTheDocument();
+        expect(screen.getByTestId("add-external-link-btn")).toBeInTheDocument();
       });
     });
   });

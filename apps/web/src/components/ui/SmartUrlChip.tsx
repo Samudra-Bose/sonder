@@ -238,6 +238,8 @@ export interface SmartUrlChipProps extends React.HTMLAttributes<HTMLDivElement> 
   showCopyButton?: boolean;
   /** Chip size density */
   size?: "sm" | "md";
+  /** Optional custom action elements (e.g. edit, remove buttons) */
+  actions?: React.ReactNode;
   /** Optional children override */
   children?: React.ReactNode;
 }
@@ -255,6 +257,7 @@ export function SmartUrlChip({
   inline = false,
   showCopyButton = true,
   size = "md",
+  actions,
   children,
   className,
   ...rest
@@ -363,6 +366,8 @@ export function SmartUrlChip({
             <span className="sr-only">{copied ? "Copied" : "Copy"}</span>
           </button>
         )}
+
+        {actions}
       </span>
     );
   }
@@ -444,6 +449,8 @@ export function SmartUrlChip({
           <span className="sr-only">{copied ? "Copied" : "Copy"}</span>
         </button>
       )}
+
+      {actions}
     </div>
   );
 }
