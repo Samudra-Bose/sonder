@@ -1,8 +1,8 @@
 # SONDER — CANONICAL PROJECT PROGRESS TRACKER
 
-**Document Version:** 1.7.0<br/>
+**Document Version:** 1.8.0<br/>
 **Last Synchronized:** 2026-11-16<br/>
-**Current Baseline Commit:** `feat/FE-VS13-smart-url-chips`<br/>
+**Current Baseline Commit:** `feat/FE-VS13-smart-url-chips @ b4a514a`<br/>
 **Governance Standard:** Dual-Track Engineering & UI/UX Governance (PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT)<br/>
 **Maintenance Rule:** This tracker is updated upon the completion of every milestone or UI/UX slice. Never fabricate completion percentages. Every completed item must link to verified Git commits, PRs, or test suites.
 
@@ -66,7 +66,8 @@
 | **FE-VS12.2**| Final Roadmap Accounting & Frontend Verification Boundary Correction | Track A / Governance Audit | — | `fd52c47` | 693 tests in `apps/web` (717 total monorepo) | **DELIVERED & VERIFIED** (Finalized 13 deferred capabilities inventory; separated frontend acceptance verification from backend integration boundaries for FEAT-A04, A01, G03, G04; established 96.55% strict / 98.28% weighted frontend AC verification rate; preserved 86.36% initial-production and 61.96% roadmap completeness scores) |
 | **FE-VS13**  | Smart URL Chip & External Link Experience | Track A / `FEAT-K01` | — | `4a29863` | 22 tests in `SmartUrlChip.test.tsx` (719 in `apps/web` / 743 total) | **DELIVERED & VERIFIED** (SmartUrlChip.tsx, SEC-T09 protocol validation, branded domain badges for GitHub/Figma/Google Docs/generic, path truncation, copy-to-clipboard, markdown AST and TaskPeekDrawer integration, zero third-party favicon network calls; FEAT-K01 marked FE COMPLETE & VERIFIED) |
 | **FE-VS13.1**| Smart URL Chip Contract & Verification Closeout | Track A / `FEAT-K01` | — | `e2880fc` | 25 tests in `TaskPeekDrawer.test.tsx` (722 in `apps/web` / 746 total) | **DELIVERED & VERIFIED** (Candidate OpenAPI mirrors updated with `externalLinks` on `TaskDto`/`CreateTaskRequest`/`UpdateTaskRequest`; `@sonder/contracts` regenerated with zero `as any`/`as unknown`; MSW fixtures updated; component-level live drawer integration tests; direct navigation policy confirmed; OpenGraph scraper reclassified to P3; 51/51 `validate_v1_5.py` checks passing) |
-| **FE-VS13.2**| Structured External Link Management | Track A / `FEAT-K01` | — | Current | 13 tests in `TaskExternalLinksManagement.test.tsx` + 26 in `TaskPeekDrawer.test.tsx` (75 total for FEAT-K01; 736 in `apps/web` / 760 total) | **DELIVERED & VERIFIED** (TaskExternalLinksSection with attach, inline edit, remove; auto-provider detection; SEC-T09 scheme validation; `canEditCustomFieldsLinks` permission gating; optimistic cache mutation with automatic rollback on error; 409 conflict detection using `task.fieldRevisions.externalLinks`; candidate OpenAPI 0.3.20-draft reconciled with required `[id, url, title, provider]`; 51/51 `validate_v1_5.py` checks passing) |
+| **FE-VS13.2**| Structured External Link Management | Track A / `FEAT-K01` | — | `b4a514a` | 13 tests in `TaskExternalLinksManagement.test.tsx` + 26 in `TaskPeekDrawer.test.tsx` (75 total for FEAT-K01; 736 in `apps/web` / 760 total) | **DELIVERED & VERIFIED** (TaskExternalLinksSection with attach, inline edit, remove; auto-provider detection; SEC-T09 scheme validation; `canEditCustomFieldsLinks` permission gating; optimistic cache mutation with automatic rollback on error; 409 conflict detection using `task.fieldRevisions.externalLinks`; candidate OpenAPI 0.3.20-draft reconciled with required `[id, url, title, provider]`; 51/51 `validate_v1_5.py` checks passing) |
+| **FE-VS13.2.1**| Governance and Backend Handoff Consistency | Track A / Governance Closeout | — | Current | Reconciled tracker metrics across 760 monorepo tests (736 web + 24 server) | **DELIVERED & VERIFIED** (Reconciled OpenGraph P3 references under DEP-METADATA-01 without affecting FEAT-K01 completion; documented provider vs provider_icon backend mapping; verified DEP-LINKS-01 is unapproved and omitted; verified 51/51 validate_v1_5.py checks and typegen check) |
 
 ### A.2 Current Engineering Status & Next Milestones
 
@@ -235,9 +236,9 @@ flowchart LR
 SONDER PLATFORM PROGRESS SUMMARY
 ================================================================================
 Monorepo Status:           Clean, 100% Green
-Active Baseline:           feat/FE-VS13-smart-url-chips
-Total Passing Test Suites: 70 suites (65 in apps/web + 5 in apps/server)
-Total Automated Tests:     743 tests (719 in apps/web + 24 in apps/server, 100% passing)
+Active Baseline:           feat/FE-VS13-smart-url-chips @ b4a514a
+Total Passing Test Suites: 71 suites (66 in apps/web + 5 in apps/server)
+Total Automated Tests:     760 tests (736 in apps/web + 24 in apps/server, 100% passing)
 Documentation Checks:      51 / 51 passed (pnpm validate:docs)
 
 Track A (Frontend Engineering):
@@ -250,16 +251,19 @@ Track A (Frontend Engineering):
 - Weighted Phase 1 Score:  87.88% (29.0 / 33 * 100)
 - Full Roadmap Score (46): 63.04% (29.0 / 46 * 100, including 13 Phase 2-4 Deferred: 5 in Phase 2, 5 in Phase 3, 3 in Phase 4)
 - AC Verification (29):    100.00% Strict & Weighted across all 29 implemented Phase 1 capabilities; 87.88% across all 33 Phase 1 capabilities
-- Automated Test Proof:    65 test files in apps/web, 722 tests passing (100% green); 746 tests monorepo
+- Automated Test Proof:    66 test files in apps/web, 736 tests passing (100% green); 760 tests monorepo
 - Contract Readiness:      29 Contract Ready, 1 Contract Gap (FEAT-G02b), 2 Ambiguous, 1 Backend Dependent
-- Latest Hardened Feature: FE-VS13.1: Smart URL Chip Contract & Verification Closeout (FEAT-K01)
-- Current Milestone:       FE-VS13.1: Smart URL Chip Contract & Verification Closeout (DELIVERED & VERIFIED)
+- Latest Hardened Feature: FE-VS13.2: Structured External Link Management (FEAT-K01)
+- Current Milestone:       FE-VS13.2.1: Governance and Backend Handoff Consistency (DELIVERED & VERIFIED)
 - Next Frontend Target:    Accessibility & Keyboard Navigation Audit Gate / Track B Unfreeze Authorization
 
 Track C (Backend Infrastructure — Backend Developer Owned):
 - Status:                  VS-10 & VS-11 established real modular-monolith package (@sonder/server),
                            PostgreSQL migrations, RLS policies, RFC 9457 errors, and live role-preview slice.
                            Backend developer owns ongoing database and infrastructure deployment.
+                           Task external links (FEAT-K01) candidate OpenAPI reconciled with [id, url, title, provider];
+                           live persistence in task_external_links / tasks.external_links_jsonb and RLS authorization
+                           belong to backend developer handoff. DEP-LINKS-01 is unapproved and omitted.
 
 Track B (UI/UX Workstream — PAUSED):
 - Research & Principles:   Approved (PR #4, 92e984e)

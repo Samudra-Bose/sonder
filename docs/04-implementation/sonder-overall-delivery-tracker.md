@@ -1,12 +1,12 @@
 # SONDER — MASTER FRONTEND DELIVERY AUDIT & OVERALL DELIVERY TRACKER
 
-**Document Version:** 1.2.0  
+**Document Version:** 1.3.0  
 **Audit Date:** 2026-11-16  
 **Active Feature Branch:** `feat/FE-VS13-smart-url-chips`  
-**Frozen Implementation HEAD:** `0b82ef93110b18f6f2b032d66f5b632cde7975fa` (`0b82ef9`)  
-**Latest Documentation Commit:** `60fc318eebadd052337ceced899ef6f33131ee54` (`60fc318`)  
+**Frozen Implementation HEAD:** `b4a514abdda73963fbb5c2ecbe1490d47502cac1` (`b4a514a`)  
+**Latest Documentation Commit:** `b4a514abdda73963fbb5c2ecbe1490d47502cac1` (`b4a514a`)  
 **Develop Baseline Commit:** `develop @ 7f295bf472a0af6482d19622f4b72bdac22c3882`  
-**Branch Commit Distance:** 9 commits ahead of develop (8 implementation + 1 documentation)  
+**Branch Commit Distance:** 58 commits ahead of develop  
 **Working Tree Status:** Clean  
 **Governing Standard:** Dual-Track Engineering & UI/UX Governance (PLAN → GRILL → IMPLEMENT → TEST → REVIEW → LOCK → DOCUMENT)  
 **Audit Authorization:** Project Owner Formal Master Delivery Audit (Request 10)  
@@ -153,7 +153,7 @@ SONDER PLATFORM PROGRESS METRICS (FE-VS13 DELIVERED BASELINE)
 | **FEAT-J01b**| Guided CSV Import Wizard with Dry-Run Validation | Phase 2 | **DEFERRED** | None | None | Deferred to Phase 2 | Phase 2 timeline |
 | **FEAT-J02** | Selected-Field Offline Task Editing & Queued Sync | Phase 3 | **DEFERRED** | Minimal M1.1 caching in place | None | Deferred to Phase 3 per SOT-11, SOT-14, and master PRD §1.1 | Sync engine, IndexedDB queue, 14-day expiry, FIFO replay, and 409 conflict resolver staged for Phase 3 |
 | **FEAT-J03** | Accessible Design System Primitives & Tokens (WCAG 2.2 AA) | M1.1 | **DONE** | `index.css`, `design-tokens.ts`, `keyboard.ts`, `theme.tsx`, `reduced-motion.ts` | 4 foundation suites (24 tests, 70 static expect sites) | Token standards in `@theme` | Operational rate limit / PITR pending |
-| **FEAT-K01** | External Smart URL Metadata Chips & Link Management (GitHub, Figma, Docs) | M1.2 | **DONE** | `SmartUrlChip.tsx`, `markdown-ast.tsx`, `TaskPeekDrawer.tsx`, `TaskExternalLinksSection.tsx` | `SmartUrlChip.test.tsx` (22), `markdown-ast.test.tsx` (14), `TaskPeekDrawer.test.tsx` (26), `TaskExternalLinksManagement.test.tsx` (13) | SEC-T09 protocol validation (`https://`), domain badges (GitHub, Figma, Google Docs, generic), path truncation, clipboard copy, zero external favicon tracking, structured attach/edit/remove, 409 conflict detection | Domain-aware smart URL chips in Markdown comments/descriptions and full link management lifecycle in TaskPeekDrawer |
+| **FEAT-K01** | External Smart URL Metadata Chips & Link Management (GitHub, Figma, Docs) | M1.2 | **DONE** | `SmartUrlChip.tsx`, `markdown-ast.tsx`, `TaskPeekDrawer.tsx`, `TaskExternalLinksSection.tsx` | `SmartUrlChip.test.tsx` (22), `markdown-ast.test.tsx` (14), `TaskPeekDrawer.test.tsx` (26), `TaskExternalLinksManagement.test.tsx` (13) | SEC-T09 protocol validation (`https://`), domain badges (GitHub, Figma, Google Docs, generic), path truncation, clipboard copy, zero external favicon tracking, structured attach/edit/remove, 409 conflict detection | Frontend complete. Domain-aware smart URL chips in Markdown and full link management in TaskPeekDrawer. Rich OpenGraph card scraper deferred to Phase 3 under DEP-METADATA-01 (separate FEAT ID pending approval). |
 | **FEAT-L01** | Optional AI Task Breakdown & Thread Summarization | Phase 4 | **DEFERRED** | None | None | Deferred to Phase 4 | LLM gateway pending |
 
 ### 2.2 Group 2: Composite Parent Identifiers (7 Headings)
@@ -461,7 +461,7 @@ flowchart TD
 | **DEP-REALTIME-01** | `FEAT-F02`, `FEAT-A04` | Deployment of live WebSocket gateway, ticket authentication handshake, and stream event routing. | Blocks live multi-client collaborative synchronization | Platform Infra & Backend Lead |
 | **DEP-COLLAB-01** | `FEAT-A04` | Cross-session database persistence for task watchers. | Watchers reset upon browser session termination | Backend Lead |
 | **DEP-ROLES-01** | `FEAT-G02b` | Finalization of custom role capability bundles and preview simulator schema. | Blocks Custom Roles Builder UI | Backend Lead |
-| **DEP-METADATA-01** | `FEAT-K01` | Server-side OpenGraph / smart URL metadata scrape endpoint and DTO contract. | Blocks rich OpenGraph smart URL preview chips | Backend Lead & Product Owner |
+| **DEP-METADATA-01** | Phase 3 Rich Metadata Enhancement (separate FEAT ID pending approval) | Server-side OpenGraph / smart URL metadata scrape endpoint and DTO contract. | Does not block Phase 1 FEAT-K01 (smart URL chips & link management complete). Blocks future Phase 3 rich OpenGraph metadata preview card enhancement. | Backend Lead & Product Owner |
 | **DEC-ARCHIVE-01** | `FEAT-A10a` | Client-side retention period for advisory undo toast (10s fixed vs configurable). | Fixed 10s advisory timer in place; open for future policy review | Product Owner |
 | **DEC-ARCHIVE-02** | `FEAT-A10a` | Multi-task concurrent undo queue eviction policy (FIFO vs independent timer expiration). | Independent timers active; open for future policy review | Product Owner |
 | **DEC-ARCHIVE-03** | `FEAT-A10a` | Subtask undo token invalidation if parent task is modified while child is queued. | Subtask restore verifies parent existence; open for future edge review | Backend Lead |
@@ -487,6 +487,23 @@ flowchart TD
 4. **WebSocket Gateway:** Gateway server validating tickets produced via `POST /communities/{id}/realtime-ticket`.
 5. **Notification Event Outbox:** Triggering notifications upon `@mention`, task assignment, and status changes.
 
+### 9.3 Task External Links (`FEAT-K01`) Persistence Handoff
+1. **Four-Way Boundary Delineation:**
+   - Frontend Implementation & MSW: **DELIVERED** (75 tests across 4 suites, full attach/edit/remove lifecycle).
+   - Candidate OpenAPI Contract: **RECONCILED** (mirrors require `[id, url, title, provider]` on `TaskDto.externalLinks.items`, validated by 51/51 checks).
+   - Live Database Persistence & Production Authorization: **BACKEND-OWNER RESPONSIBILITIES**.
+   - Formal Contract Freeze: **PENDING JOINT APPROVAL**.
+2. **Field Naming & Schema Mapping:**
+   - *API Field:* `provider` (semantic string identifier: `github`, `figma`, `google`, `generic`).
+   - *Database Sketch:* Master Spec research sketch referenced `task_external_links (id, task_id, url, title, provider_icon)`.
+   - *Intended Mapping:* In a relational schema, column `provider_icon` (or `provider`) maps directly to/from API `provider`. In a document/JSONB schema (e.g. `tasks.external_links_jsonb`), it stores the DTO object directly `{ id, url, title, provider }`. Branded icons are rendered purely client-side from the UI icon system; no image binaries or SVG payloads are stored or transmitted.
+3. **Dependency Identifier Disambiguation:**
+   - Note that `DEP-LINKS-01` was a provisional working label in previous development notes and does **NOT** exist in the authoritative Decision Register (`decision-register.md`). It is not an approved dependency ID. Backend persistence is unblocked standard implementation of candidate OpenAPI endpoints.
+4. **Concurrency & Authorization Rules:**
+   - Concurrency: `task.field_revisions.externalLinks` must be tracked and incremented on mutation (returning RFC 9457 Problem Details `409 FIELD_REVISION_CONFLICT` when base revisions do not match).
+   - Authorization: Enforce `task:edit_custom_fields_and_links` (`canEditCustomFieldsLinks`).
+   - Scheme Validation: Enforce `SEC-T09` URL scheme safety rejecting `javascript:`, `data:`, `file:`, `vbscript:`, and relative schemes.
+
 ---
 
 ## 10. Prioritized Remaining-Work Backlog
@@ -496,7 +513,7 @@ flowchart TD
     P0["P0: Critical Governance & Contract Prerequisites<br/>(DEP-SV-01, DEP-NOTIF-02, DEC-OPEN-03, DEP-REALTIME-01)"]
     P1["P1: Essential Initial-Release Frontend Slices<br/>(VS-09B through VS-09H, M1.3 Governance & Offline)"]
     P2["P2: UI/UX Quality & Mobile Ergonomics<br/>(Slices UX-1 through UX-4 - Unfrozen Post-P1)"]
-    P3["P3: Visual Polish & Metadata Chips<br/>(FEAT-K01 OpenGraph, 60fps Virtualization)"]
+    P3["P3: Visual Polish & Metadata Cards<br/>(Phase 3 OpenGraph Cards, 60fps Virtualization)"]
     Deferred["DEFERRED: Phases 2-4 Roadmap<br/>(Intake Forms, Automations, Iterations, AI)"]
 
     P0 --> P1 --> P2 --> P3
@@ -528,7 +545,8 @@ flowchart TD
 16. **Milestone FE-VS12.2 (Final Roadmap Accounting & Frontend Verification Boundary Correction):** Finalized authoritative 13-capability deferred inventory across Phases 2–4; separated frontend acceptance verification from backend integration boundaries for `FEAT-A04` (watcher UI / comments verified; live WS belongs to backend), `FEAT-A01` (archetypes verified; DB enum belongs to backend), `FEAT-G03` (role preview verified; server authorization belongs to backend), and `FEAT-G04` (audit log rendering and UI trust disclosure verified; cryptographic verification of DB chain belongs to backend/ops); established verified frontend AC rate of 96.55% strict (28/29) / 98.28% weighted (28.5/29) of implemented slices (84.85% strict / 86.36% weighted across total Phase 1 scope); preserved 86.36% initial-production and 61.96% roadmap completeness scores.
 17. **Milestone FE-VS13 (Smart URL Chip & External Link Experience):** Implemented client-side domain-aware smart URL chip experience (`SmartUrlChip.tsx`) with SEC-T09 protocol enforcement (strict `https://` [and `http://` in dev], rejecting `javascript:`, `data:`, `file:`, `vbscript:`, `//`), branded domain extraction for GitHub, Figma, Google Docs/Sheets/Slides/Drive, and generic web domains, path truncation, clipboard copy with animated/accessible feedback, `target="_blank"`, `rel="noopener noreferrer"`, integrated into Markdown AST (`markdown-ast.tsx`) and Task Peek Drawer (`TaskPeekDrawer.tsx`). Privacy invariant verified: zero third-party favicon network requests. 22 unit tests passing in `SmartUrlChip.test.tsx`, 719 passing tests in `apps/web` (743 monorepo). Advanced Phase 1 frontend completeness to 87.88% (29/33) and full roadmap completeness to 63.04% (29/46).
 18. **Milestone FE-VS13.1 (Smart URL Chip Contract & Verification Closeout):** Reconciled structured external links candidate OpenAPI contract (`externalLinks?: Array<{ id: string, url: string, title?: string, provider?: string }>`) in `TaskDto`, `CreateTaskRequest`, and `UpdateTaskRequest` across all 3 mirror files (`openapi-0.3.20-draft.yaml`, `Community-Work-Management-v1.5/contracts/openapi-0.3.20-draft.yaml`, `Community-Work-Management-v1.5/docs/contracts/openapi.yaml`). Regenerated `@sonder/contracts` with `openapi-typescript`; removed all `as any` and `as unknown` casts in `TaskPeekDrawer.tsx` and tests. Updated MSW mock fixtures (`ENG-101` with structured external links, `ENG-102` with Markdown links). Verified live drawer integration in `TaskPeekDrawer.test.tsx` (25 tests). Confirmed that external redirect confirmation dialogs are not required per Master Spec/PRD. Reclassified rich OpenGraph card scraping (`DEP-METADATA-01`) as Phase 3 metadata enhancement. Monorepo builds cleanly (`pnpm build`), typechecks with 0 errors (`pnpm typecheck`), passes all 51 validation checks (`validate_v1_5.py`), and 722 tests pass in `apps/web` (746 monorepo). Delivered at commit `e2880fc`.
-19. **Milestone FE-VS13.2 (Structured External Link Management):** Implemented interactive external links management section (`TaskExternalLinksSection.tsx`) within `TaskPeekDrawer.tsx`. Supports full CRUD operations: attach new external URLs, live provider icon detection (GitHub, Figma, Google, generic), title inputs (auto-generated fallback or custom), inline editing, and link removal with confirmation. Reconciled candidate OpenAPI 0.3.20-draft requiring `[id, url, title, provider]` on `TaskDto.externalLinks.items` across all 3 mirror files (51/51 `validate_v1_5.py` checks passing). Regenerated `@sonder/contracts` with non-optional fields. Implemented optimistic cache mutations in `useUpdateTask` with automatic rollback on error. Implemented 409 conflict detection against `task.fieldRevisions.externalLinks` with user error banners. Gated mutation controls behind `canEditCustomFieldsLinks`. Updated MSW handlers to validate SEC-T09 protocols, reject duplicates, and enforce field revisions. Added dedicated tests in `TaskExternalLinksManagement.test.tsx` (13 tests) and updated `TaskPeekDrawer.test.tsx` (26 tests), bringing total FEAT-K01 test coverage to 75 tests across 4 suites (736 web tests, 760 monorepo tests passing 100% green).
+19. **Milestone FE-VS13.2 (Structured External Link Management):** Implemented interactive external links management section (`TaskExternalLinksSection.tsx`) within `TaskPeekDrawer.tsx`. Supports full CRUD operations: attach new external URLs, live provider icon detection (GitHub, Figma, Google, generic), title inputs (auto-generated fallback or custom), inline editing, and link removal with confirmation. Reconciled candidate OpenAPI 0.3.20-draft requiring `[id, url, title, provider]` on `TaskDto.externalLinks.items` across all 3 mirror files (51/51 `validate_v1_5.py` checks passing). Regenerated `@sonder/contracts` with non-optional fields. Implemented optimistic cache mutations in `useUpdateTask` with automatic rollback on error. Implemented 409 conflict detection against `task.fieldRevisions.externalLinks` with user error banners. Gated mutation controls behind `canEditCustomFieldsLinks`. Updated MSW handlers to validate SEC-T09 protocols, reject duplicates, and enforce field revisions. Added dedicated tests in `TaskExternalLinksManagement.test.tsx` (13 tests) and updated `TaskPeekDrawer.test.tsx` (26 tests), bringing total FEAT-K01 test coverage to 75 tests across 4 suites (736 web tests, 760 monorepo tests passing 100% green). Delivered at commit `b4a514a`.
+20. **Milestone FE-VS13.2.1 (Governance and Backend Handoff Consistency):** Reconciled implementation trackers to eliminate stale OpenGraph references; clarified that server-side scraping belongs to Phase 3 under `DEP-METADATA-01` (separate FEAT ID pending approval) and does not block `FEAT-K01`; documented the mapping between API field `provider` and database sketch `provider_icon`; confirmed `DEP-LINKS-01` is unapproved and omitted; verified 51/51 `validate_v1_5.py` static checks, `typegen:openapi:check`, and 760 monorepo tests (736 web + 24 server).
 
 ### P2 — Important UX, Mobile & Accessibility Completion (Track B Slices)
 1. **Slice UX-1:** Design System & Contrast Hardening (`UX-SYS-01`, `UX-SYS-02`, `UX-SYS-03`).
@@ -537,7 +555,7 @@ flowchart TD
 4. **Slice UX-4:** Deep Accessibility & Screen Reader Assurance (`UX-A11Y-01`, `UX-A11Y-02`).
 
 ### P3 — Polish & Enhancements
-1. External Smart URL Metadata OpenGraph Preview Chips (`FEAT-K01`).
+1. Rich External URL OpenGraph Preview Cards (`DEP-METADATA-01`, Phase 3 metadata enhancement; separate FEAT ID pending approval; Phase 1 `FEAT-K01` smart URL chips and link management complete).
 2. Timeline SVG connector 60fps requestAnimationFrame redraw optimization.
 3. Multi-toast stacking and countdown queue visual transitions.
 
@@ -567,12 +585,12 @@ flowchart TD
 
 ## 12. Last-Audited Git Baseline and Audit Date
 
-- **Audit Date:** 2026-11-12
-- **Audit Type:** Repository-Wide Master Delivery Audit (Tracks A, B, C)
-- **Active Branch:** `feat/FE-VS09A-task-archive-undo`
-- **Frozen Implementation SHA:** `0b82ef93110b18f6f2b032d66f5b632cde7975fa` (`0b82ef9`)
-- **Documentation Commit SHA:** `60fc318eebadd052337ceced899ef6f33131ee54` (`60fc318`)
+- **Audit Date:** 2026-11-16
+- **Audit Type:** Governance & Backend Handoff Consistency Closeout (FE-VS13.2.1)
+- **Active Branch:** `feat/FE-VS13-smart-url-chips`
+- **Frozen Implementation SHA:** `b4a514abdda73963fbb5c2ecbe1490d47502cac1` (`b4a514a`)
+- **Documentation Commit SHA:** `b4a514abdda73963fbb5c2ecbe1490d47502cac1` (`b4a514a`)
 - **Develop Baseline SHA:** `7f295bf472a0af6482d19622f4b72bdac22c3882`
 - **Working Tree State:** Clean
-- **Monorepo Passing Suites:** 51 test files, 538 tests passing (100%)
+- **Monorepo Passing Suites:** 71 test files, 760 tests passing (100% green; 736 web + 24 server)
 - **Governance Invariant:** No application code, tests, mocks, contracts, or build configurations were altered during this audit.
