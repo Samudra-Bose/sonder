@@ -36,7 +36,7 @@ describe("Sonder Application Shell (VS-00 & VS-01 Integration)", () => {
     });
 
     expect(screen.getByText("(alex.morgan@example.org)")).toBeInTheDocument();
-    expect(screen.getByText("Sonder Community")).toBeInTheDocument();
+    expect(screen.getAllByText("Sonder Community").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
   });
 });

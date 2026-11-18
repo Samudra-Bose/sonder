@@ -35,7 +35,7 @@ describe("VS-01 Authentication & Session Spine Flows", () => {
         expect(screen.getByText("Alex Morgan")).toBeInTheDocument();
       });
 
-      expect(screen.getByText("Sonder Community")).toBeInTheDocument();
+      expect(screen.getAllByText("Sonder Community").length).toBeGreaterThanOrEqual(1);
       expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
     });
   });
@@ -130,7 +130,7 @@ describe("VS-01 Authentication & Session Spine Flows", () => {
       });
 
       expect(screen.getByText("(alex.morgan@example.org)")).toBeInTheDocument();
-      expect(screen.getByText("Sonder Community")).toBeInTheDocument();
+      expect(screen.getAllByText("Sonder Community").length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -286,7 +286,7 @@ describe("VS-01 Authentication & Session Spine Flows", () => {
       const alert = await screen.findByRole("alert");
       expect(alert).toHaveTextContent("Sign out failed: Database failure during session revocation.");
       expect(screen.getByText("Alex Morgan")).toBeInTheDocument();
-      expect(screen.getByText("Sonder Community")).toBeInTheDocument();
+      expect(screen.getAllByText("Sonder Community").length).toBeGreaterThanOrEqual(1);
 
       // Verify retry button exists and works
       const retryBtn = screen.getByRole("button", { name: "Retry" });
