@@ -14,6 +14,8 @@ import { formatDueDisplay } from "@/modules/my-work/date-utils.js";
 import { ApiProblemError } from "@/lib/api-client.js";
 import { getTaskById } from "./api.js";
 import { useUpdateTask } from "./useUpdateTask.js";
+import { MemberSelector } from "@/modules/workspace/MemberSelector.js";
+import type { WorkspaceMemberDto } from "@/modules/workspace/settings/types.js";
 import type { TaskDto, TaskStatusCategory, TaskPriority } from "./types.js";
 
 // ============================================================================
@@ -1516,13 +1518,47 @@ export interface InlineAssigneeEditorProps {
 
 export function InlineAssigneeEditor({
   task,
-  communityId: _communityId,
-  workspaceId: _workspaceId,
-  isArchived: _isArchived = false,
+  communityId,
+  workspaceId,
+  isArchived = false,
 }: InlineAssigneeEditorProps): React.JSX.Element {
-  // Authoritative workspace member lookup is currently unavailable in the frontend.
-  // Per VS-03 Stage 3.1 requirements, existing assignees remain fully readable with avatars and names,
-  // but changing assignees is deferred until a real workspace membership data source is wired.
+  const updateMutation = useUpdateTask();
+  const [error, setError] = useState<string | null>(null);
+
+  const canEdit = !isArchived && task.effectivePermissions?.canAssign !== false;
+  const currentAssigneeId = task.assigneeIds?.[0] ?? null;
+  const initialMember = task.assigneeAssignments?.[0]
+    ? {
+        id: task.assigneeAssignments[0].userId,
+        displayName: task.assigneeAssignments[0].user.displayName,
+        avatarUrl: task.assigneeAssignments[0].user.avatarUrl,
+      }
+    : null;
+
+  const handleSelectMember = async (member: WorkspaceMemberDto | null) => {
+    setError(null);
+    const newAssigneeIds = member ? [member.user.id] : [];
+    try {
+      await updateMutation.mutateAsync({
+        communityId: communityId ?? "",
+        workspaceId,
+        taskId: task.id,
+        data: {
+          assigneeIds: newAssigneeIds,
+          baseFieldRevisions: {
+            assigneeIds: task.fieldRevisions?.assigneeIds ?? 1,
+          },
+        },
+      });
+    } catch (err) {
+      setError(
+        err instanceof ApiProblemError
+          ? err.detail || err.message
+          : (err as Error).message
+      );
+    }
+  };
+
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between">
@@ -1532,11 +1568,22 @@ export function InlineAssigneeEditor({
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-        {task.assigneeAssignments && task.assigneeAssignments.length > 0 ? (
+        {canEdit ? (
+          <MemberSelector
+            communityId={communityId}
+            workspaceId={workspaceId}
+            selectedMemberId={currentAssigneeId}
+            initialMember={initialMember}
+            onSelectMember={handleSelectMember}
+            disabled={updateMutation.isPending}
+            placeholder="+ Assign person"
+          />
+        ) : task.assigneeAssignments && task.assigneeAssignments.length > 0 ? (
           task.assigneeAssignments.map((assignee) => (
             <div
               key={assignee.userId}
               className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[var(--surface-card)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-medium text-xs shadow-2xs"
+              title="You do not have permission to modify task assignees"
             >
               <Avatar
                 name={assignee.user.displayName}
@@ -1547,9 +1594,15 @@ export function InlineAssigneeEditor({
             </div>
           ))
         ) : (
-          <span className="text-[var(--text-muted)] italic">Unassigned</span>
+          <span className="text-[var(--text-muted)] italic text-xs">Unassigned</span>
         )}
       </div>
+
+      {error && (
+        <p className="text-[11px] text-[var(--state-error)] font-medium pt-1">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

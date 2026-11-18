@@ -17,7 +17,7 @@ import {
   WS_SHARED_ENG_ID,
   WS_SHARED_GALA_ID,
 } from "../data/my-work.js";
-import { mockWorkspacesCommunity1 } from "../data/workspaces.js";
+import { findMockWorkspace } from "../data/workspaces.js";
 import { resetMockMilestones } from "../data/milestones.js";
 import { getMockTaskLinks, resetMockTaskLinks } from "../data/task-links.js";
 import { resetMockCommentsState } from "../data/comments.js";
@@ -487,7 +487,7 @@ export const taskHandlers = [
       }
 
       // Find workspace and its maxSubtaskDepth
-      const workspace = mockWorkspacesCommunity1.find((w) => w.id === workspaceId);
+      const workspace = findMockWorkspace(workspaceId, params.communityId as string | undefined);
       if (!workspace) {
         return HttpResponse.json(
           {
@@ -1290,7 +1290,7 @@ export const taskHandlers = [
       const body = (await request.json().catch(() => ({}))) as Partial<ApiSchema<"TaskViewQueryRequest">>;
 
       // Check workspace exists
-      const workspace = mockWorkspacesCommunity1.find((w) => w.id === workspaceId);
+      const workspace = findMockWorkspace(workspaceId, params.communityId as string | undefined);
       if (!workspace) {
         return HttpResponse.json(
           {
@@ -2014,7 +2014,7 @@ export const taskHandlers = [
       }
 
       // Destination depth check
-      const workspace = mockWorkspacesCommunity1.find((w) => w.id === workspaceId);
+      const workspace = findMockWorkspace(workspaceId, params.communityId as string | undefined);
       const maxSubtaskDepth = workspace?.maxSubtaskDepth ?? 1;
 
       if (targetParentId) {
@@ -2172,7 +2172,7 @@ export const taskHandlers = [
       }
 
       // Verify workspace exists
-      const workspace = mockWorkspacesCommunity1.find((w) => w.id === workspaceId);
+      const workspace = findMockWorkspace(workspaceId, params.communityId as string | undefined);
       if (!workspace) {
         return HttpResponse.json(
           {
@@ -2432,7 +2432,7 @@ export const taskHandlers = [
         taskId: string;
       };
 
-      const workspace = mockWorkspacesCommunity1.find((w) => w.id === workspaceId);
+      const workspace = findMockWorkspace(workspaceId, params.communityId as string | undefined);
       if (!workspace) {
         return HttpResponse.json(
           {
@@ -2550,7 +2550,7 @@ export const taskHandlers = [
         taskId: string;
       };
 
-      const workspace = mockWorkspacesCommunity1.find((w) => w.id === workspaceId);
+      const workspace = findMockWorkspace(workspaceId, params.communityId as string | undefined);
       if (!workspace) {
         return HttpResponse.json(
           {
@@ -2677,7 +2677,7 @@ export const taskHandlers = [
         workspaceId: string;
       };
 
-      const workspace = mockWorkspacesCommunity1.find((w) => w.id === workspaceId);
+      const workspace = findMockWorkspace(workspaceId, params.communityId as string | undefined);
       if (!workspace) {
         return HttpResponse.json(
           {
@@ -2742,7 +2742,7 @@ export const taskHandlers = [
         workspaceId: string;
       };
 
-      const workspace = mockWorkspacesCommunity1.find((w) => w.id === workspaceId);
+      const workspace = findMockWorkspace(workspaceId, params.communityId as string | undefined);
       if (!workspace) {
         return HttpResponse.json(
           {

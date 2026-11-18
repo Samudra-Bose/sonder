@@ -49,10 +49,15 @@ export function makeTaskAssignments(
   assignedBy = OTHER_USER_ID,
   assignedAt = "2026-10-20T09:00:00Z"
 ): TaskDto["assigneeAssignments"] {
+  const memberNames: Record<string, string> = {
+    "018f98a2-3f12-7890-a123-456789abcdef": "Alex Morgan",
+    "018f98a2-3f12-7890-a123-456789bbcdef": "Jordan Lee",
+    "018f98a2-3f12-7890-a123-456789cccdef": "Taylor Swift",
+  };
   return userIds.map((uid) => ({
     user: {
       id: uid,
-      displayName: uid === MOCK_USER_ID ? "Alex Morgan" : "Jordan Lee",
+      displayName: memberNames[uid] ?? (uid === MOCK_USER_ID ? "Alex Morgan" : "Jordan Lee"),
       avatarUrl: null,
     },
     userId: uid,

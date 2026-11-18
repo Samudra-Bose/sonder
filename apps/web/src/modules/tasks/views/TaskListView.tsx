@@ -8,6 +8,7 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
+import { Avatar } from "@/components/ui/Avatar";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Feedback } from "@/components/ui/Feedback";
@@ -349,6 +350,11 @@ export function TaskListView({
                 Status
               </th>
 
+              {/* Non-sortable: Assignee */}
+              <th scope="col" className="py-2.5 px-3 w-32">
+                Assignee
+              </th>
+
               {/* Sortable: Priority */}
               <th
                 scope="col"
@@ -514,6 +520,28 @@ export function TaskListView({
                     <Badge status={task.statusCategory}>
                       {formatStatus(task.statusCategory)}
                     </Badge>
+                  </td>
+
+                  {/* Assignee */}
+                  <td className="py-2.5 px-3" data-testid={`task-list-assignee-${task.taskKey}`}>
+                    {(() => {
+                      const firstAssignee = task.assigneeAssignments?.[0];
+                      if (firstAssignee) {
+                        return (
+                          <div className="flex items-center gap-1.5" title={firstAssignee.user.displayName}>
+                            <Avatar
+                              name={firstAssignee.user.displayName}
+                              src={firstAssignee.user.avatarUrl ?? undefined}
+                              size="xs"
+                            />
+                            <span className="text-xs text-[var(--text-secondary)] truncate max-w-[100px]">
+                              {firstAssignee.user.displayName}
+                            </span>
+                          </div>
+                        );
+                      }
+                      return <span className="text-xs text-[var(--text-muted)] italic">Unassigned</span>;
+                    })()}
                   </td>
 
                   {/* Priority Badge */}

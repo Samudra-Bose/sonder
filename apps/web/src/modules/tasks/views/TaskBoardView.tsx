@@ -5,6 +5,7 @@ import {
   GitFork,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
+import { Avatar } from "@/components/ui/Avatar";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Feedback } from "@/components/ui/Feedback";
@@ -371,10 +372,30 @@ export function TaskBoardView({
                           </div>
                         )}
 
-                        {/* Bottom Row: Due Date + Non-Drag Move Control */}
+                        {/* Bottom Row: Assignee & Due Date + Non-Drag Move Control */}
                         <div className="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between gap-2 text-[11px]">
-                          {/* Due date */}
-                          <div className="text-[var(--text-secondary)] font-mono text-[10px]">
+                          {/* Assignee & Due date */}
+                          <div className="flex items-center gap-2 text-[var(--text-secondary)] font-mono text-[10px]">
+                            {(() => {
+                              const firstAssignee = task.assigneeAssignments?.[0];
+                              if (!firstAssignee) return null;
+                              return (
+                                <div
+                                  className="flex items-center gap-1"
+                                  title={`Assigned to ${task.assigneeAssignments?.map((a) => a.user.displayName).join(", ")}`}
+                                  data-testid={`board-card-assignee-${task.taskKey}`}
+                                >
+                                  <Avatar
+                                    name={firstAssignee.user.displayName}
+                                    src={firstAssignee.user.avatarUrl ?? undefined}
+                                    size="xs"
+                                  />
+                                  <span className="text-[10px] text-[var(--text-secondary)] truncate max-w-[65px]">
+                                    {firstAssignee.user.displayName}
+                                  </span>
+                                </div>
+                              );
+                            })()}
                             {task.dueDate ? (
                               <span className="inline-flex items-center gap-1">
                                 <Calendar className="h-2.5 w-2.5 text-[var(--text-muted)]" />

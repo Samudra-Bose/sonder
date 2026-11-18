@@ -6,6 +6,7 @@ import {
   Moon,
   Laptop,
   LogOut,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -35,6 +36,7 @@ export interface AppHeaderProps {
   onLogout: () => void;
   isLoggingOut: boolean;
   menuTriggerRef?: React.RefObject<HTMLButtonElement | null>;
+  onOpenQuickComposer?: () => void;
 }
 
 export function AppHeader({
@@ -45,6 +47,7 @@ export function AppHeader({
   onLogout,
   isLoggingOut,
   menuTriggerRef,
+  onOpenQuickComposer,
 }: AppHeaderProps): React.JSX.Element {
   const { theme, resolvedTheme, setTheme, toggleTheme } = useTheme();
   const { currentCommunity, activeWorkspace } = useWorkspace();
@@ -123,6 +126,22 @@ export function AppHeader({
 
       {/* Right: Actions, Theme Toggle, User Profile & Sign Out */}
       <div className="flex items-center space-x-2 md:space-x-3">
+        {/* Global Create Task Action */}
+        {onOpenQuickComposer && (
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            onClick={onOpenQuickComposer}
+            className="text-xs h-7 px-2.5 font-medium flex items-center gap-1.5"
+            data-testid="global-header-create-task-btn"
+            aria-label="Create new task"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">New Task</span>
+          </Button>
+        )}
+
         {/* Mobile Omnibar Search Button */}
         <div className="sm:hidden">
           <MobileOmnibarTrigger variant="icon" />

@@ -9,7 +9,7 @@ import {
   DialogFooter,
 } from "@/components/ui/Dialog.js";
 import { Button, type ButtonProps } from "@/components/ui/Button.js";
-import { useWorkspace } from "@/modules/workspace/index.js";
+import { useWorkspace, MemberSelector } from "@/modules/workspace/index.js";
 import { ApiProblemError } from "@/lib/api-client.js";
 import { useCreateTask } from "./useCreateTask.js";
 import { useTaskPeekDrawer } from "./useTaskPeekDrawer.js";
@@ -54,6 +54,7 @@ export function QuickTaskComposer({
   const [itemType, setItemType] = useState<TaskType>("TASK");
   const [priority, setPriority] = useState<TaskPriority>("NONE");
   const [dueDate, setDueDate] = useState("");
+  const [selectedAssigneeId, setSelectedAssigneeId] = useState<string | null>(null);
 
   // Error States
   const [validationErrors, setValidationErrors] = useState<FormValidationErrors>({});
@@ -79,6 +80,7 @@ export function QuickTaskComposer({
       setItemType(initialValues?.itemType ?? "TASK");
       setTitle(initialValues?.title ?? "");
       setDescription("");
+      setSelectedAssigneeId(null);
       setValidationErrors({});
       setServerError(null);
     }
@@ -100,6 +102,7 @@ export function QuickTaskComposer({
     setItemType("TASK");
     setPriority("NONE");
     setDueDate("");
+    setSelectedAssigneeId(null);
     setValidationErrors({});
     setServerError(null);
   };
@@ -146,6 +149,7 @@ export function QuickTaskComposer({
         data: {
           title: trimmedTitle,
           itemType,
+          ...(selectedAssigneeId ? { assigneeIds: [selectedAssigneeId] } : {}),
           ...(trimmedDesc ? { description: trimmedDesc } : {}),
           ...(priority !== "NONE" ? { priority } : {}),
           ...(dueDate ? { dueDate } : {}),
@@ -317,9 +321,50 @@ export function QuickTaskComposer({
             )}
           </div>
 
-          {/* Fields 4, 5 & 6: Archetype, Priority & Due Date */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {/* Field 4: Archetype */}
+          {/* Attributes Grid: Assignee & Due Date */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Assignee */}
+            <div className="space-y-1">
+              <label
+                className="text-xs font-semibold text-[var(--text-secondary)] select-none"
+              >
+                Assignee
+              </label>
+              <MemberSelector
+                communityId={currentCommunityId}
+                workspaceId={selectedWorkspaceId}
+                selectedMemberId={selectedAssigneeId}
+                onSelectMember={(member) => setSelectedAssigneeId(member ? member.user.id : null)}
+                disabled={createMutation.isPending}
+                className="w-full h-9 justify-start text-xs"
+                placeholder="Unassigned (click to assign)"
+              />
+            </div>
+
+            {/* Due Date */}
+            <div className="space-y-1">
+              <label
+                htmlFor="composer-due-date-input"
+                className="text-xs font-semibold text-[var(--text-secondary)] select-none"
+              >
+                Due Date
+              </label>
+              <input
+                id="composer-due-date-input"
+                type="date"
+                data-testid="composer-due-date-input"
+                aria-label="Due date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                disabled={createMutation.isPending}
+                className="w-full h-9 px-2 text-xs rounded-md border border-[var(--border-subtle)] bg-[var(--surface-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)] cursor-pointer"
+              />
+            </div>
+          </div>
+
+          {/* Attributes Grid: Archetype & Priority */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Archetype */}
             <div className="space-y-1">
               <label
                 htmlFor="composer-archetype-select"
@@ -343,7 +388,7 @@ export function QuickTaskComposer({
               </select>
             </div>
 
-            {/* Field 5: Priority */}
+            {/* Priority */}
             <div className="space-y-1">
               <label
                 htmlFor="composer-priority-select"
@@ -366,26 +411,6 @@ export function QuickTaskComposer({
                 <option value="HIGH">High</option>
                 <option value="URGENT">Urgent</option>
               </select>
-            </div>
-
-            {/* Field 6: Due Date */}
-            <div className="space-y-1">
-              <label
-                htmlFor="composer-due-date-input"
-                className="text-xs font-semibold text-[var(--text-secondary)] select-none"
-              >
-                Due Date
-              </label>
-              <input
-                id="composer-due-date-input"
-                type="date"
-                data-testid="composer-due-date-input"
-                aria-label="Due date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                disabled={createMutation.isPending}
-                className="w-full h-9 px-2 text-xs rounded-md border border-[var(--border-subtle)] bg-[var(--surface-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)] cursor-pointer"
-              />
             </div>
           </div>
 

@@ -1,6 +1,7 @@
 import React from "react";
 import { GitFork, Milestone, AlertTriangle, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/Badge.js";
+import { Avatar } from "@/components/ui/Avatar.js";
 import { cn } from "@/lib/utils";
 import type { TaskDto } from "@/modules/tasks/types.js";
 import type { MilestoneDto } from "@/modules/milestones/types.js";
@@ -114,6 +115,18 @@ export function TimelineTaskRow({
               <span className="max-w-[50px] truncate">{milestone.name}</span>
             </span>
           )}
+          {(() => {
+            const first = task.assigneeAssignments?.[0];
+            if (!first) return null;
+            return (
+              <Avatar
+                name={first.user.displayName}
+                src={first.user.avatarUrl ?? undefined}
+                size="xs"
+                className="h-4 w-4 text-[9px] flex-shrink-0"
+              />
+            );
+          })()}
           <Badge status={task.statusCategory} size="sm">
             {task.statusCategory.replace("_", " ")}
           </Badge>

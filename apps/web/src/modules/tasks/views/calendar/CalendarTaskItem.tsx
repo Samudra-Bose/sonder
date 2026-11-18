@@ -2,6 +2,7 @@ import React from "react";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge.js";
+import { Avatar } from "@/components/ui/Avatar.js";
 import type { TaskDto } from "../../types";
 
 export interface CalendarTaskItemProps {
@@ -84,6 +85,20 @@ export function CalendarTaskItem({
       <span className="truncate flex-1 font-medium text-[var(--text-primary)]">
         {task.title}
       </span>
+
+      {/* Mini Assignee Avatar */}
+      {(() => {
+        const first = task.assigneeAssignments?.[0];
+        if (!first) return null;
+        return (
+          <Avatar
+            name={first.user.displayName}
+            src={first.user.avatarUrl ?? undefined}
+            size="xs"
+            className="h-3.5 w-3.5 text-[8px] flex-shrink-0"
+          />
+        );
+      })()}
 
       {/* Non-compact priority badge */}
       {!compact && task.priority !== "NONE" && (

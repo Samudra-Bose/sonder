@@ -1,4 +1,5 @@
-import React, { useState, useId, useTransition } from "react";
+import React, { useState, useId, useTransition, useContext } from "react";
+import { useNavigate, UNSAFE_NavigationContext as NavigationContext } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,8 @@ export function CreateWorkspaceDialog({
   onSuccess,
 }: CreateWorkspaceDialogProps): React.JSX.Element {
   const { csrfToken } = useAuth();
+  const inRouter = useContext(NavigationContext) != null;
+  const navigate = inRouter ? useNavigate() : null;
   const { selectWorkspace, currentCommunityId } = useWorkspace();
   const effectiveCommunityId = communityId || currentCommunityId;
   const queryClient = useQueryClient();
@@ -155,6 +158,13 @@ export function CreateWorkspaceDialog({
 
       onSuccess?.(created);
       handleClose();
+      if (navigate) {
+        if (effectiveCommunityId) {
+          navigate(`/c/${effectiveCommunityId}/w/${created.id}/list`);
+        } else {
+          navigate(`/workspaces/${created.id}/list`);
+        }
+      }
     } catch (err: unknown) {
       const message =
         err instanceof Error

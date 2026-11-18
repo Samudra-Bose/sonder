@@ -154,6 +154,22 @@ export const mockWorkspacesByCommunityId: Record<string, WorkspaceDto[]> = {
   "018f98a2-3f12-7890-b888-456789abcdef": mockWorkspacesCommunity3NoShared,
 };
 
+/**
+ * Authoritative mock workspace resolver across all communities.
+ * Fallback to searching all mockWorkspacesByCommunityId lists, then mockWorkspacesCommunity1.
+ */
+export function findMockWorkspace(workspaceId: string, communityId?: string): WorkspaceDto | undefined {
+  if (communityId && mockWorkspacesByCommunityId[communityId]) {
+    const ws = mockWorkspacesByCommunityId[communityId].find((w) => w.id === workspaceId);
+    if (ws) return ws;
+  }
+  for (const list of Object.values(mockWorkspacesByCommunityId)) {
+    const ws = list.find((w) => w.id === workspaceId);
+    if (ws) return ws;
+  }
+  return mockWorkspacesCommunity1.find((w) => w.id === workspaceId);
+}
+
 export const mockWorkspaceTemplates: WorkspaceTemplateDto[] = [
   {
     key: "GENERAL_PURPOSE",

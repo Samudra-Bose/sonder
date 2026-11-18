@@ -5,7 +5,7 @@ import {
   getMockAuditIntegrity,
   resetMockAuditState,
 } from "../data/audit.js";
-import { mockWorkspacesByCommunityId, mockWorkspacesCommunity1 } from "../data/workspaces.js";
+import { findMockWorkspace } from "../data/workspaces.js";
 import type { WorkspaceDto } from "@/modules/workspace/types.js";
 import type {
   AuditEventExportRequest,
@@ -45,8 +45,7 @@ function hasAuditCapability(
   previewRoleId?: string | null
 ): boolean {
   // 1. Resolve workspace within community boundary
-  const workspaces = mockWorkspacesByCommunityId[communityId] || mockWorkspacesCommunity1;
-  const ws = workspaces.find((w) => w.id === workspaceId) as
+  const ws = findMockWorkspace(workspaceId, communityId) as
     | (WorkspaceDto & { effectiveCapabilities?: string[] })
     | undefined;
 

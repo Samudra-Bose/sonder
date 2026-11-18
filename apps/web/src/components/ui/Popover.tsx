@@ -33,11 +33,11 @@ export const PopoverContent = React.forwardRef<
 ) {
   return (
     <BasePopover.Portal>
-      <BasePopover.Positioner side={side} align={align} sideOffset={sideOffset}>
+      <BasePopover.Positioner side={side} align={align} sideOffset={sideOffset} className="z-[70]">
         <BasePopover.Popup
           ref={ref}
           className={cn(
-            "z-50 w-72 rounded-lg border border-[var(--border-strong)]",
+            "z-[70] w-72 rounded-lg border border-[var(--border-strong)]",
             "bg-[var(--surface-drawer)] p-4 text-[var(--text-primary)] shadow-lg outline-none",
             "transition-all duration-150",
             className

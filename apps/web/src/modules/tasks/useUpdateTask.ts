@@ -82,6 +82,30 @@ export function useUpdateTask(): UseMutationResult<
           }));
         }
 
+        let updatedAssigneeAssignments = previousTask.assigneeAssignments;
+        if (data.assigneeIds !== undefined) {
+          const knownNames: Record<string, string> = {
+            "018f98a2-3f12-7890-a123-456789abcdef": "Alex Morgan",
+            "018f98a2-3f12-7890-a123-456789bbcdef": "Jordan Lee",
+            "018f98a2-3f12-7890-a123-456789cccdef": "Taylor Swift",
+          };
+          updatedAssigneeAssignments = data.assigneeIds.map((uid) => {
+            const existing = previousTask.assigneeAssignments?.find((a) => a.userId === uid);
+            if (existing) return existing;
+            return {
+              userId: uid,
+              user: {
+                id: uid,
+                displayName: knownNames[uid] ?? "Team Member",
+                email: "",
+                avatarUrl: null,
+              },
+              assignedByUserId: uid,
+              assignedAt: new Date().toISOString(),
+            };
+          });
+        }
+
         const optimisticTask: TaskDto = {
           ...previousTask,
           ...(data.title !== undefined && { title: data.title }),
@@ -91,7 +115,10 @@ export function useUpdateTask(): UseMutationResult<
           ...(data.startDate !== undefined && { startDate: data.startDate }),
           ...(data.dueDate !== undefined && { dueDate: data.dueDate }),
           ...(data.estimatePoints !== undefined && { estimatePoints: data.estimatePoints }),
-          ...(data.assigneeIds !== undefined && { assigneeIds: data.assigneeIds }),
+          ...(data.assigneeIds !== undefined && {
+            assigneeIds: data.assigneeIds,
+            assigneeAssignments: updatedAssigneeAssignments,
+          }),
           ...(data.labelIds !== undefined && { labelIds: data.labelIds }),
           ...(data.milestoneId !== undefined && { milestoneId: data.milestoneId }),
           ...(data.customFieldValues !== undefined && { customFieldValues: updatedCustomFieldValues }),

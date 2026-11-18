@@ -102,6 +102,7 @@ function AppShellContent({ children }: AppShellProps): React.JSX.Element {
         onLogout={handleLogout}
         isLoggingOut={isLoggingOut}
         menuTriggerRef={menuTriggerRef}
+        onOpenQuickComposer={() => openQuickComposer()}
       />
 
       {/* Accessible Sign Out Error Alert with Retry Path */}

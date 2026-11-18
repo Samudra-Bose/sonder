@@ -5,8 +5,9 @@ import {
   mockWorkspacesByCommunityId,
   mockWorkspacesCommunity1,
   mockWorkspaceTemplates,
+  findMockWorkspace,
 } from "../data/workspaces";
-import { initialMockWorkspaceRoles } from "../data/roles.js";
+import { initialMockWorkspaceRoles, mockOwnerRole } from "../data/roles.js";
 import { computeEffectiveCapabilities } from "@/lib/authorization.js";
 import type {
   WorkspaceDto,
@@ -323,6 +324,7 @@ export const workspaceHandlers = [
       keyPrefix: newPrefix,
       ownerIds: ["018f98a2-3f12-7890-a123-456789abcdef"],
       myRole: "OWNER",
+      effectiveCapabilities: [...mockOwnerRole.capabilities],
       taskEditPolicy: "CREATOR_COORDINATOR_STRICT",
       personalWorkspaceAdminPolicy: "AUDITED_BREAK_GLASS",
       coordinatorCanInviteMembers: true,
@@ -364,8 +366,7 @@ export const workspaceHandlers = [
     }
 
     const { communityId, workspaceId } = params as { communityId: string; workspaceId: string };
-    const workspaces = mockWorkspacesByCommunityId[communityId] || mockWorkspacesCommunity1;
-    const ws = workspaces.find((w) => w.id === workspaceId);
+    const ws = findMockWorkspace(workspaceId, communityId);
 
     if (!ws) {
       return HttpResponse.json(
@@ -423,8 +424,7 @@ export const workspaceHandlers = [
     }
 
     const { communityId, workspaceId } = params as { communityId: string; workspaceId: string };
-    const workspaces = mockWorkspacesByCommunityId[communityId] || mockWorkspacesCommunity1;
-    const ws = workspaces.find((w) => w.id === workspaceId);
+    const ws = findMockWorkspace(workspaceId, communityId);
 
     if (!ws) {
       return HttpResponse.json(
@@ -653,8 +653,7 @@ export const workspaceHandlers = [
         workspaceId: string;
       };
 
-      const workspaces = mockWorkspacesByCommunityId[communityId] || mockWorkspacesCommunity1;
-      const ws = workspaces.find((w) => w.id === workspaceId) as
+      const ws = findMockWorkspace(workspaceId, communityId) as
         | (WorkspaceDto & { effectiveCapabilities?: string[] })
         | undefined;
 

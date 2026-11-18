@@ -7,7 +7,7 @@ import {
   type CustomFieldDefinitionDto,
   type CustomFieldOptionDto,
 } from "../data/custom-fields.js";
-import { mockWorkspacesByCommunityId, mockWorkspacesCommunity1 } from "../data/workspaces.js";
+import { findMockWorkspace } from "../data/workspaces.js";
 import type { WorkspaceDto } from "@/modules/workspace/types.js";
 
 let customFieldsDelayMs = 0;
@@ -30,8 +30,7 @@ export function setMockCustomFieldsError(
 export { resetCustomFieldsMockState };
 
 function hasManageCustomFieldsCapability(communityId: string, workspaceId: string): boolean {
-  const workspaces = mockWorkspacesByCommunityId[communityId] || mockWorkspacesCommunity1;
-  const ws = workspaces.find((w) => w.id === workspaceId) as (WorkspaceDto & { effectiveCapabilities?: string[] }) | undefined;
+  const ws = findMockWorkspace(workspaceId, communityId) as (WorkspaceDto & { effectiveCapabilities?: string[] }) | undefined;
   if (!ws) return false;
   if (Array.isArray(ws.effectiveCapabilities)) {
     return ws.effectiveCapabilities.includes("workspace:manage_custom_fields");
