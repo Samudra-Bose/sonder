@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/modules/auth";
-import { AlertCircle, Building2, Sparkles } from "lucide-react";
+import { AlertCircle, Building2 } from "lucide-react";
 import { createCommunityApi } from "./api";
 import { useWorkspace } from "./WorkspaceContext";
 import type { CommunityMembershipDto } from "./types";
