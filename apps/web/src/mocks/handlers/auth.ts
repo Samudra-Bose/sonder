@@ -10,6 +10,8 @@
  */
 import { http, HttpResponse } from "msw";
 import type { ApiSchema } from "@sonder/contracts";
+import { generateUuidV7 } from "../../lib/uuid.js";
+import { mockWorkspacesByCommunityId } from "../data/workspaces.js";
 
 export const mockUser: ApiSchema<"MeContextDto">["user"] = {
   id: "018f98a2-3f12-7890-a123-456789abcdef",
@@ -313,6 +315,89 @@ export const authHandlers = [
       headers: {
         "Set-Cookie": "__Host-session=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0",
         "Cache-Control": "private, no-store",
+      },
+    });
+  }),
+
+  // POST /api/v1/communities
+  http.post("/api/v1/communities", async ({ request }) => {
+    const csrfToken = request.headers.get("X-CSRF-Token");
+    const mutationId = request.headers.get("X-Mutation-Id");
+
+    if (!csrfToken || csrfToken.trim() === "") {
+      const problem: ApiSchema<"Problem"> = {
+        type: "https://errors.sonder.platform/csrf-error",
+        title: "CSRF Token Required",
+        status: 400,
+        detail: "A valid CSRF synchronizer token is required for mutating requests.",
+        code: "CSRF_TOKEN_REQUIRED",
+      };
+      return HttpResponse.json(problem, {
+        status: 400,
+        headers: { "Content-Type": "application/problem+json" },
+      });
+    }
+
+    if (!mutationId || mutationId.trim() === "") {
+      const problem: ApiSchema<"Problem"> = {
+        type: "https://errors.sonder.platform/idempotency-error",
+        title: "Mutation ID Required",
+        status: 400,
+        detail: "Missing required X-Mutation-Id idempotency key.",
+        code: "MUTATION_ID_REQUIRED",
+      };
+      return HttpResponse.json(problem, {
+        status: 400,
+        headers: { "Content-Type": "application/problem+json" },
+      });
+    }
+
+    let body: { name?: string };
+    try {
+      body = (await request.json()) as { name?: string };
+    } catch {
+      const problem: ApiSchema<"Problem"> = {
+        type: "https://errors.sonder.platform/bad-request",
+        title: "Invalid Request Body",
+        status: 400,
+        detail: "Malformed JSON payload.",
+        code: "INVALID_JSON",
+      };
+      return HttpResponse.json(problem, {
+        status: 400,
+        headers: { "Content-Type": "application/problem+json" },
+      });
+    }
+
+    if (!body?.name || body.name.trim().length === 0 || body.name.trim().length > 120) {
+      const problem: ApiSchema<"Problem"> = {
+        type: "https://errors.sonder.platform/validation-error",
+        title: "Validation Error",
+        status: 400,
+        detail: "Community name is required and must be between 1 and 120 characters.",
+        code: "VALIDATION_FAILED",
+      };
+      return HttpResponse.json(problem, {
+        status: 400,
+        headers: { "Content-Type": "application/problem+json" },
+      });
+    }
+
+    const newCommunity: ApiSchema<"CommunityMembershipDto"> = {
+      communityId: generateUuidV7(),
+      name: body.name.trim(),
+      membershipStatus: "ACTIVE",
+      isCommunityAdmin: true,
+      isDefaultCoordinator: false,
+    };
+
+    mockCommunities.push(newCommunity);
+    mockWorkspacesByCommunityId[newCommunity.communityId] = [];
+
+    return HttpResponse.json(newCommunity, {
+      status: 201,
+      headers: {
+        "Content-Type": "application/json",
       },
     });
   }),

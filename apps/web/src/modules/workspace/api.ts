@@ -6,6 +6,8 @@ import type {
   SetActiveCommunityRequest,
   WorkspaceTemplateListDto,
   CreateWorkspaceRequest,
+  CreateCommunityRequest,
+  CommunityMembershipDto,
 } from "./types";
 
 /**
@@ -65,6 +67,22 @@ export async function setActiveCommunityApi(
   return apiRequest<ActiveCommunityDto>("/me/active-community", {
     method: "PUT",
     body: JSON.stringify(payload),
+    csrfToken,
+  });
+}
+
+/**
+ * Create a new community organization.
+ * Candidate Endpoint: POST /api/v1/communities
+ * Headers: X-Mutation-Id, X-CSRF-Token
+ */
+export async function createCommunityApi(
+  data: CreateCommunityRequest,
+  csrfToken: string
+): Promise<CommunityMembershipDto> {
+  return apiRequest<CommunityMembershipDto>("/communities", {
+    method: "POST",
+    body: JSON.stringify(data),
     csrfToken,
   });
 }

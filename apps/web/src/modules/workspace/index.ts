@@ -10,3 +10,4 @@ export * from "./useWorkspaceTemplates";
 export * from "./WorkspaceTemplateCard";
 export * from "./WorkspaceTemplatePreviewModal";
 export * from "./CreateWorkspaceDialog";
+export * from "./CreateCommunityDialog";

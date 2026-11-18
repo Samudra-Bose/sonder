@@ -17,6 +17,10 @@ export type WorkspaceTemplateDto = ApiSchema<"WorkspaceTemplateDto">;
 export type WorkspaceTemplateListDto = ApiSchema<"WorkspaceTemplateListDto">;
 export type CreateWorkspaceRequest = ApiSchema<"CreateWorkspaceRequest">;
 
+export interface CreateCommunityRequest {
+  name: string;
+}
+
 export interface WorkspaceContextValue {
   /** The currently active Community ID (null if unselected) */
   currentCommunityId: string | null;

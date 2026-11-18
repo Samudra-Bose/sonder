@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/modules/auth";
+import { apiRequest } from "@/lib/api-client";
 import { fetchWorkspaces, setActiveCommunityApi } from "./api";
 import type {
   WorkspaceDto,
@@ -36,8 +37,8 @@ export function WorkspaceProvider({
   const communities = useMemo(() => rawCommunities ?? [], [rawCommunities]);
   const queryClient = useQueryClient();
 
-  // Active community context. Respects "No blind index-0 assumption":
-  // Uses initial prop, stored explicit selection, or single membership.
+  // Active community context:
+  // Uses initial prop, stored explicit selection, or defaults to first available membership.
   const [currentCommunityId, setCurrentCommunityId] = useState<string | null>(
     () => {
       if (initialCommunityId) return initialCommunityId;
@@ -52,20 +53,20 @@ export function WorkspaceProvider({
         }
       }
       const comList = rawCommunities ?? [];
-      if (comList.length === 1 && comList[0]) {
+      if (comList.length > 0 && comList[0]) {
         return comList[0].communityId;
       }
       return null;
     }
   );
 
-  // Synchronize when communities load if exactly 1 community or matches stored
+  // Synchronize when communities load: restore stored selection or default to first community
   useEffect(() => {
-    if (!currentCommunityId) {
+    if (!currentCommunityId && communities && communities.length > 0) {
       if (typeof window !== "undefined") {
         try {
           const stored = window.localStorage.getItem("sonder-active-community-id");
-          if (stored && communities?.some((c) => c.communityId === stored)) {
+          if (stored && communities.some((c) => c.communityId === stored)) {
             setCurrentCommunityId(stored);
             return;
           }
@@ -73,21 +74,46 @@ export function WorkspaceProvider({
           // Ignore
         }
       }
-      if (communities?.length === 1 && communities[0]) {
+      if (communities[0]) {
         setCurrentCommunityId(communities[0].communityId);
       }
     }
   }, [communities, currentCommunityId]);
 
-  // Active workspace context. Never blindly assumes workspaces[0] is active.
+  // Active workspace context: restores from prop or localStorage
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(
-    initialWorkspaceId
+    () => {
+      if (initialWorkspaceId) return initialWorkspaceId;
+      if (typeof window !== "undefined") {
+        try {
+          return window.localStorage.getItem("sonder-active-workspace-id");
+        } catch {
+          // Storage sandbox
+        }
+      }
+      return null;
+    }
   );
 
   const [isSwitchingCommunity, setIsSwitchingCommunity] = useState(false);
   const [communitySwitchError, setCommunitySwitchError] = useState<string | null>(
     null
   );
+
+  // Clean up stale activeWorkspaceId if it does not belong to the newly loaded community
+  useEffect(() => {
+    if (activeWorkspaceId && !isLoading && workspaces.length > 0) {
+      const exists = workspaces.some((w) => w.id === activeWorkspaceId);
+      if (!exists) {
+        setActiveWorkspaceId(null);
+        try {
+          window.localStorage.removeItem("sonder-active-workspace-id");
+        } catch {
+          // Ignore
+        }
+      }
+    }
+  }, [activeWorkspaceId, isLoading, workspaces]);
 
   // Fetch workspaces visible to caller in the active community
   const {
@@ -135,15 +161,17 @@ export function WorkspaceProvider({
     );
   }, [communities, currentCommunityId]);
 
-  // Select workspace handler
+  // Select workspace handler with persistent active state
   const selectWorkspace = useCallback(
     (workspaceId: string) => {
-      const exists = workspaces.some((w) => w.id === workspaceId);
-      if (exists) {
-        setActiveWorkspaceId(workspaceId);
+      setActiveWorkspaceId(workspaceId);
+      try {
+        window.localStorage.setItem("sonder-active-workspace-id", workspaceId);
+      } catch {
+        // Storage sandbox
       }
     },
-    [workspaces]
+    []
   );
 
   // Select community handler with contract mutation and cache isolation
@@ -156,18 +184,28 @@ export function WorkspaceProvider({
       setCommunitySwitchError(null);
 
       try {
-        if (!csrfToken) {
+        let token = csrfToken;
+        if (!token) {
+          try {
+            const res = await apiRequest<{ csrfToken: string }>("/auth/csrf");
+            token = res.csrfToken;
+          } catch {
+            // Fallback
+          }
+        }
+        if (!token) {
           throw new Error("Missing CSRF token for community switch mutation.");
         }
 
         // Call contract endpoint PUT /api/v1/me/active-community
-        await setActiveCommunityApi(communityId, csrfToken);
+        await setActiveCommunityApi(communityId, token);
 
         // Clear active workspace so previous-community data cannot leak
         setActiveWorkspaceId(null);
         setCurrentCommunityId(communityId);
         try {
           window.localStorage.setItem("sonder-active-community-id", communityId);
+          window.localStorage.removeItem("sonder-active-workspace-id");
         } catch {
           // Ignore
         }

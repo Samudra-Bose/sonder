@@ -40,7 +40,8 @@ export function CreateWorkspaceDialog({
   onSuccess,
 }: CreateWorkspaceDialogProps): React.JSX.Element {
   const { csrfToken } = useAuth();
-  const { selectWorkspace } = useWorkspace();
+  const { selectWorkspace, currentCommunityId } = useWorkspace();
+  const effectiveCommunityId = communityId || currentCommunityId;
   const queryClient = useQueryClient();
 
   const nameInputId = useId();
@@ -71,7 +72,7 @@ export function CreateWorkspaceDialog({
     isError: isTemplatesError,
     error: templatesError,
     refetch: refetchTemplates,
-  } = useWorkspaceTemplates(communityId);
+  } = useWorkspaceTemplates(effectiveCommunityId);
 
   // Reset form when dialog closes
   const handleClose = () => {
@@ -115,7 +116,7 @@ export function CreateWorkspaceDialog({
 
     if (!validateForm()) return;
 
-    if (!communityId) {
+    if (!effectiveCommunityId) {
       setSubmitError("No active community selected.");
       return;
     }
@@ -134,20 +135,20 @@ export function CreateWorkspaceDialog({
     setIsSubmitting(true);
     try {
       const created = await createWorkspaceApi(
-        communityId,
+        effectiveCommunityId,
         payload,
         csrfToken ?? ""
       );
 
       // Invalidate and refetch workspace list queries to ensure immediate visibility
       await queryClient.invalidateQueries({
-        queryKey: ["communities", communityId, "workspaces"],
+        queryKey: ["communities", effectiveCommunityId, "workspaces"],
       });
       await queryClient.refetchQueries({
-        queryKey: ["communities", communityId, "workspaces"],
+        queryKey: ["communities", effectiveCommunityId, "workspaces"],
       });
 
-      // Switch to new workspace
+      // Switch to new workspace immediately
       startTransition(() => {
         selectWorkspace(created.id);
       });
