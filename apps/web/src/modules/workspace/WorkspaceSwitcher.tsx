@@ -18,6 +18,7 @@ import { WorkspaceBadge } from "./WorkspaceBadge";
 import { WorkspaceRolePill } from "./WorkspaceRolePill";
 import { WorkspaceListItem } from "./WorkspaceListItem";
 import { CreateWorkspaceDialog } from "./CreateWorkspaceDialog";
+import { CreateCommunityDialog } from "./CreateCommunityDialog";
 import type { WorkspaceDto } from "./types";
 
 export interface WorkspaceSwitcherProps {
@@ -49,6 +50,7 @@ export function WorkspaceSwitcher({
   const [searchQuery, setSearchQuery] = useState("");
   const [isCommunityMenuOpen, setIsCommunityMenuOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isCreateCommunityOpen, setIsCreateCommunityOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   // Filter workspaces based on search query (matches name or keyPrefix)
