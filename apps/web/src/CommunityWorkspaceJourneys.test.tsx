@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { setMockSessionActive, resetAuthMockState, mockCommunities } from "./mocks/handlers/auth.js";
+import { setMockSessionActive, resetAuthMockState } from "./mocks/handlers/auth.js";
 import { resetWorkspaceMockState, getMockActiveCommunityId } from "./mocks/handlers/workspaces.js";
 import { resetMyWorkMockState } from "./mocks/handlers/my-work.js";
 import { clearShortcutRegistry } from "./lib/keyboard.js";
@@ -100,7 +100,8 @@ describe("Stage 2: Core User Journeys & Functional Integrity", () => {
       const restoredMatching = screen.getAllByText("Emerald Coast Cooperative");
       const restoredTitleEl = restoredMatching.find((el) => el.tagName === "P" && el.className.includes("font-semibold"));
       expect(restoredTitleEl).toBeDefined();
-      const restoredCommCard = restoredTitleEl!.closest(".rounded-lg");
+      const restoredCommCard = restoredTitleEl!.closest<HTMLElement>(".rounded-lg");
+      expect(restoredCommCard).not.toBeNull();
       expect(within(restoredCommCard!).getByText("Active")).toBeInTheDocument();
     });
   });
@@ -197,14 +198,16 @@ describe("Stage 2: Core User Journeys & Functional Integrity", () => {
       const artsTitles = screen.getAllByText("Regional Arts Guild");
       const artsCardTitle = artsTitles.find((el) => el.tagName === "P" && el.className.includes("font-semibold"));
       expect(artsCardTitle).toBeDefined();
-      const artsCard = artsCardTitle!.closest(".rounded-lg");
+      const artsCard = artsCardTitle!.closest<HTMLElement>(".rounded-lg");
+      expect(artsCard).not.toBeNull();
       expect(within(artsCard!).getByText("Active")).toBeInTheDocument();
 
       // And Sonder Community now has "Select this community"
       const sonderTitles = screen.getAllByText("Sonder Community");
       const sonderCardTitle = sonderTitles.find((el) => el.tagName === "P" && el.className.includes("font-semibold"));
       expect(sonderCardTitle).toBeDefined();
-      const sonderCard = sonderCardTitle!.closest(".rounded-lg");
+      const sonderCard = sonderCardTitle!.closest<HTMLElement>(".rounded-lg");
+      expect(sonderCard).not.toBeNull();
       expect(within(sonderCard!).getByRole("button", { name: /select this community/i })).toBeInTheDocument();
     });
   });
