@@ -252,6 +252,18 @@ export function WorkspaceSwitcher({
                     </button>
                   );
                 })}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    setIsCreateCommunityOpen(true);
+                  }}
+                  data-testid="create-community-trigger"
+                  className="w-full flex items-center gap-1.5 px-2 py-1.5 mt-1 rounded text-xs text-[var(--brand-accent-text)] hover:bg-[var(--surface-muted)] transition-colors focus-ring cursor-pointer font-medium"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Create Community</span>
+                </button>
               </div>
             )}
 
@@ -380,6 +392,11 @@ export function WorkspaceSwitcher({
         isOpen={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         communityId={currentCommunity?.communityId ?? null}
+      />
+
+      <CreateCommunityDialog
+        isOpen={isCreateCommunityOpen}
+        onOpenChange={setIsCreateCommunityOpen}
       />
     </div>
   );

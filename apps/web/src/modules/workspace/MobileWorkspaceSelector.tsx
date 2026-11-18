@@ -16,6 +16,7 @@ import { WorkspaceBadge } from "./WorkspaceBadge";
 import { WorkspaceRolePill } from "./WorkspaceRolePill";
 import { WorkspaceListItem } from "./WorkspaceListItem";
 import { CreateWorkspaceDialog } from "./CreateWorkspaceDialog";
+import { CreateCommunityDialog } from "./CreateCommunityDialog";
 import type { WorkspaceDto } from "./types";
 
 export interface MobileWorkspaceSelectorProps {
@@ -47,6 +48,7 @@ export function MobileWorkspaceSelector({
   const [searchQuery, setSearchQuery] = useState("");
   const [isCommunitySelectorOpen, setIsCommunitySelectorOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isCreateCommunityOpen, setIsCreateCommunityOpen] = useState(false);
 
   const query = searchQuery.trim().toLowerCase();
 
@@ -145,6 +147,18 @@ export function MobileWorkspaceSelector({
               </button>
             );
           })}
+          <button
+            type="button"
+            onClick={() => {
+              setIsCommunitySelectorOpen(false);
+              setIsCreateCommunityOpen(true);
+            }}
+            data-testid="mobile-create-community-trigger"
+            className="w-full min-h-[44px] flex items-center justify-center gap-1.5 px-3 py-2 mt-1 rounded text-xs text-[var(--brand-accent-text)] hover:bg-[var(--surface-muted)] transition-colors focus-ring cursor-pointer font-medium"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Create Community</span>
+          </button>
         </div>
       )}
 
@@ -324,6 +338,11 @@ export function MobileWorkspaceSelector({
         onOpenChange={setIsCreateDialogOpen}
         communityId={currentCommunity?.communityId ?? null}
         onSuccess={() => onWorkspaceSelected?.()}
+      />
+
+      <CreateCommunityDialog
+        isOpen={isCreateCommunityOpen}
+        onOpenChange={setIsCreateCommunityOpen}
       />
     </div>
   );
