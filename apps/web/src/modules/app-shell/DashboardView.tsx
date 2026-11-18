@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/modules/auth";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -13,10 +13,8 @@ export function DashboardView(): React.JSX.Element {
     currentCommunity,
     selectCommunity,
     activeWorkspace,
-    workspaces,
     isSwitchingCommunity,
   } = useWorkspace();
-  const navigate = useNavigate();
 
   const [isCreateCommunityOpen, setIsCreateCommunityOpen] = useState(false);
   const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
