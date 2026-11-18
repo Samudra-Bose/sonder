@@ -100,21 +100,6 @@ export function WorkspaceProvider({
     null
   );
 
-  // Clean up stale activeWorkspaceId if it does not belong to the newly loaded community
-  useEffect(() => {
-    if (activeWorkspaceId && !isLoading && workspaces.length > 0) {
-      const exists = workspaces.some((w) => w.id === activeWorkspaceId);
-      if (!exists) {
-        setActiveWorkspaceId(null);
-        try {
-          window.localStorage.removeItem("sonder-active-workspace-id");
-        } catch {
-          // Ignore
-        }
-      }
-    }
-  }, [activeWorkspaceId, isLoading, workspaces]);
-
   // Fetch workspaces visible to caller in the active community
   const {
     data: workspaceListData,
@@ -153,6 +138,21 @@ export function WorkspaceProvider({
     if (!activeWorkspaceId) return null;
     return workspaces.find((w) => w.id === activeWorkspaceId) ?? null;
   }, [workspaces, activeWorkspaceId]);
+
+  // Clean up stale activeWorkspaceId if it does not belong to the newly loaded community
+  useEffect(() => {
+    if (activeWorkspaceId && !isLoading && workspaces.length > 0) {
+      const exists = workspaces.some((w) => w.id === activeWorkspaceId);
+      if (!exists) {
+        setActiveWorkspaceId(null);
+        try {
+          window.localStorage.removeItem("sonder-active-workspace-id");
+        } catch {
+          // Ignore
+        }
+      }
+    }
+  }, [activeWorkspaceId, isLoading, workspaces]);
 
   const currentCommunity = useMemo<CommunityMembershipDto | null>(() => {
     if (!currentCommunityId) return null;
