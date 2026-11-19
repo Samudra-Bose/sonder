@@ -97,7 +97,6 @@ export function useUpdateTask(): UseMutationResult<
               user: {
                 id: uid,
                 displayName: knownNames[uid] ?? "Team Member",
-                email: "",
                 avatarUrl: null,
               },
               assignedByUserId: uid,

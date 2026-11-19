@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Plus } from "lucide-react";
+import { Plus, AlertCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -190,7 +190,25 @@ export function QuickTaskComposer({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        {workspaces.length === 0 ? (
+          <div data-testid="composer-no-workspaces" className="p-6 text-center space-y-3">
+            <div className="w-10 h-10 mx-auto rounded-full bg-[var(--surface-muted)] flex items-center justify-center text-[var(--text-muted)]">
+              <AlertCircle className="h-5 w-5" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-[var(--text-primary)]">No workspaces available</p>
+              <p className="text-xs text-[var(--text-muted)]">
+                You must create a workspace in this community before authoring tasks.
+              </p>
+            </div>
+            <div className="pt-2 flex justify-center">
+              <Button variant="outline" size="sm" onClick={handleCancel}>
+                Close
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           {/* Server Error Alert */}
           {serverError && (
             <div
@@ -436,6 +454,7 @@ export function QuickTaskComposer({
             </Button>
           </DialogFooter>
         </form>
+        )}
       </DialogContent>
     </Dialog>
   );

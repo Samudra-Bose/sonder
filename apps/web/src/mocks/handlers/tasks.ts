@@ -2070,8 +2070,7 @@ export const taskHandlers = [
       }
 
       // Destination depth check
-      const workspace = findMockWorkspace(workspaceId, params.communityId as string | undefined);
-      const maxSubtaskDepth = workspace?.maxSubtaskDepth ?? 1;
+      const maxSubtaskDepth = workspace.maxSubtaskDepth ?? 1;
 
       if (targetParentId) {
         const destParent = currentMockTasks.find(

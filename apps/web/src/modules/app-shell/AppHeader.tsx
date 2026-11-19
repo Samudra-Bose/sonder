@@ -50,7 +50,8 @@ export function AppHeader({
   onOpenQuickComposer,
 }: AppHeaderProps): React.JSX.Element {
   const { theme, resolvedTheme, setTheme, toggleTheme } = useTheme();
-  const { currentCommunity, activeWorkspace } = useWorkspace();
+  const { currentCommunity, activeWorkspace, workspaces } = useWorkspace();
+  const hasAvailableWorkspace = Boolean(currentCommunity && workspaces && workspaces.length > 0);
 
   return (
     <header
@@ -128,18 +129,44 @@ export function AppHeader({
       <div className="flex items-center space-x-2 md:space-x-3">
         {/* Global Create Task Action */}
         {onOpenQuickComposer && (
-          <Button
-            type="button"
-            variant="primary"
-            size="sm"
-            onClick={onOpenQuickComposer}
-            className="text-xs h-7 px-2.5 font-medium flex items-center gap-1.5"
-            data-testid="global-header-create-task-btn"
-            aria-label="Create new task"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">New Task</span>
-          </Button>
+          hasAvailableWorkspace ? (
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={onOpenQuickComposer}
+              className="text-xs h-7 px-2.5 font-medium flex items-center gap-1.5"
+              data-testid="global-header-create-task-btn"
+              aria-label="Create new task"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">New Task</span>
+            </Button>
+          ) : (
+            <Tooltip
+              content={
+                !currentCommunity
+                  ? "Select or create a community first."
+                  : "No workspaces available. Create a workspace first."
+              }
+              side="bottom"
+            >
+              <span>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  disabled
+                  className="text-xs h-7 px-2.5 font-medium flex items-center gap-1.5 opacity-50 cursor-not-allowed"
+                  data-testid="global-header-create-task-btn"
+                  aria-label="Create new task (disabled)"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">New Task</span>
+                </Button>
+              </span>
+            </Tooltip>
+          )
         )}
 
         {/* Mobile Omnibar Search Button */}
