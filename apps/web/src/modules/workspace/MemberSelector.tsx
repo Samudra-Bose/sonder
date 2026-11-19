@@ -65,11 +65,10 @@ export function MemberSelector({
     const q = searchQuery.trim().toLowerCase();
     if (!q) return members;
     return members.filter((m) => {
-      const email = (m.user as { email?: string }).email;
       return (
         m.user.displayName.toLowerCase().includes(q) ||
-        (email && email.toLowerCase().includes(q)) ||
-        (m.roleName && m.roleName.toLowerCase().includes(q))
+        (m.roleName && m.roleName.toLowerCase().includes(q)) ||
+        (m.roleSystemKey && m.roleSystemKey.toLowerCase().includes(q))
       );
     });
   }, [members, searchQuery]);
@@ -135,7 +134,7 @@ export function MemberSelector({
               type="text"
               data-testid="member-selector-search"
               aria-label="Search workspace members"
-              placeholder="Search members by name or email..."
+              placeholder="Search members by name or role..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-8 pl-8 pr-3 text-xs rounded-md bg-[var(--surface-card)] border border-[var(--border-subtle)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] focus:border-[var(--border-focus)] transition-all"
