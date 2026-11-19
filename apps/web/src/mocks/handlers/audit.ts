@@ -87,6 +87,20 @@ export const auditHandlers = [
         workspaceId: string;
       };
 
+      const ws = findMockWorkspace(workspaceId, communityId);
+      if (!ws) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/not-found",
+            title: "Workspace Not Found",
+            status: 404,
+            detail: `Workspace '${workspaceId}' not found in community '${communityId}'.`,
+            code: "RESOURCE_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
       const previewRoleId = request.headers.get("X-Preview-Role-Id");
 
       if (!hasAuditCapability(communityId, workspaceId, "audit:read", previewRoleId)) {
@@ -209,6 +223,20 @@ export const auditHandlers = [
         communityId: string;
         workspaceId: string;
       };
+
+      const ws = findMockWorkspace(workspaceId, communityId);
+      if (!ws) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/not-found",
+            title: "Workspace Not Found",
+            status: 404,
+            detail: `Workspace '${workspaceId}' not found in community '${communityId}'.`,
+            code: "RESOURCE_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
 
       // Check audit:export capability (evaluates previewRoleId if active simulation is in effect)
       if (!hasAuditCapability(communityId, workspaceId, "audit:export", previewRoleId)) {

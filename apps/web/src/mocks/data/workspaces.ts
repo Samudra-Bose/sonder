@@ -148,20 +148,31 @@ export const mockWorkspacesCommunity3NoShared: WorkspaceDto[] = [
   },
 ];
 
-export const mockWorkspacesByCommunityId: Record<string, WorkspaceDto[]> = {
-  "018f98a2-3f12-7890-b123-456789abcdef": mockWorkspacesCommunity1,
-  "018f98a2-3f12-7890-b999-456789abcdef": mockWorkspacesCommunity2,
-  "018f98a2-3f12-7890-b888-456789abcdef": mockWorkspacesCommunity3NoShared,
+export let mockWorkspacesByCommunityId: Record<string, WorkspaceDto[]> = {
+  "018f98a2-3f12-7890-b123-456789abcdef": [...mockWorkspacesCommunity1],
+  "018f98a2-3f12-7890-b999-456789abcdef": [...mockWorkspacesCommunity2],
+  "018f98a2-3f12-7890-b888-456789abcdef": [...mockWorkspacesCommunity3NoShared],
 };
 
+export function resetWorkspacesDataState(): void {
+  mockWorkspacesByCommunityId = {
+    "018f98a2-3f12-7890-b123-456789abcdef": [...mockWorkspacesCommunity1],
+    "018f98a2-3f12-7890-b999-456789abcdef": [...mockWorkspacesCommunity2],
+    "018f98a2-3f12-7890-b888-456789abcdef": [...mockWorkspacesCommunity3NoShared],
+  };
+}
+
 /**
- * Authoritative mock workspace resolver across all communities.
- * Fallback to searching all mockWorkspacesByCommunityId lists, then mockWorkspacesCommunity1.
+ * Authoritative mock workspace resolver with strict community-scoped isolation.
+ * When communityId is supplied, ONLY search the specified community's workspaces.
+ * Cross-community fallback is strictly rejected.
+ * Unscoped search across all communities is only allowed when communityId is omitted.
  */
 export function findMockWorkspace(workspaceId: string, communityId?: string): WorkspaceDto | undefined {
-  if (communityId && mockWorkspacesByCommunityId[communityId]) {
-    const ws = mockWorkspacesByCommunityId[communityId].find((w) => w.id === workspaceId);
-    if (ws) return ws;
+  if (communityId !== undefined && communityId !== null && communityId !== "") {
+    const list = mockWorkspacesByCommunityId[communityId];
+    if (!list) return undefined;
+    return list.find((w) => w.id === workspaceId);
   }
   for (const list of Object.values(mockWorkspacesByCommunityId)) {
     const ws = list.find((w) => w.id === workspaceId);

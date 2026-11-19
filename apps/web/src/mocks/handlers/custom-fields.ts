@@ -54,7 +54,22 @@ export const customFieldHandlers = [
         });
       }
 
-      const { workspaceId } = params as { workspaceId: string; communityId: string };
+      const { workspaceId, communityId } = params as { workspaceId: string; communityId: string };
+
+      const ws = findMockWorkspace(workspaceId, communityId);
+      if (!ws) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/not-found",
+            title: "Workspace Not Found",
+            status: 404,
+            detail: `Workspace '${workspaceId}' not found in community '${communityId}'.`,
+            code: "RESOURCE_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
       const fields = getMockCustomFields(workspaceId);
 
       return HttpResponse.json(
@@ -89,6 +104,20 @@ export const customFieldHandlers = [
         communityId: string;
         workspaceId: string;
       };
+
+      const ws = findMockWorkspace(workspaceId, communityId);
+      if (!ws) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/not-found",
+            title: "Workspace Not Found",
+            status: 404,
+            detail: `Workspace '${workspaceId}' not found in community '${communityId}'.`,
+            code: "RESOURCE_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
 
       const csrfToken = request.headers.get("X-CSRF-Token");
       if (!csrfToken || !csrfToken.trim()) {
@@ -271,6 +300,20 @@ export const customFieldHandlers = [
         fieldId: string;
       };
 
+      const ws = findMockWorkspace(workspaceId, communityId);
+      if (!ws) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/not-found",
+            title: "Workspace Not Found",
+            status: 404,
+            detail: `Workspace '${workspaceId}' not found in community '${communityId}'.`,
+            code: "RESOURCE_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
       if (!hasManageCustomFieldsCapability(communityId, workspaceId)) {
         return HttpResponse.json(
           {
@@ -391,6 +434,20 @@ export const customFieldHandlers = [
         fieldId: string;
       };
 
+      const ws = findMockWorkspace(workspaceId, communityId);
+      if (!ws) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/not-found",
+            title: "Workspace Not Found",
+            status: 404,
+            detail: `Workspace '${workspaceId}' not found in community '${communityId}'.`,
+            code: "RESOURCE_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
+
       if (!hasManageCustomFieldsCapability(communityId, workspaceId)) {
         return HttpResponse.json(
           {
@@ -458,6 +515,20 @@ export const customFieldHandlers = [
         workspaceId: string;
         fieldId: string;
       };
+
+      const ws = findMockWorkspace(workspaceId, communityId);
+      if (!ws) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/not-found",
+            title: "Workspace Not Found",
+            status: 404,
+            detail: `Workspace '${workspaceId}' not found in community '${communityId}'.`,
+            code: "RESOURCE_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
 
       if (!hasManageCustomFieldsCapability(communityId, workspaceId)) {
         return HttpResponse.json(

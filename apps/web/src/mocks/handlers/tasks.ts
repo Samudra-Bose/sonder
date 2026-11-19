@@ -221,11 +221,25 @@ export const taskHandlers = [
         });
       }
 
-      const { workspaceId, taskKey } = params as {
+      const { communityId, workspaceId, taskKey } = params as {
         communityId: string;
         workspaceId: string;
         taskKey: string;
       };
+
+      const workspace = findMockWorkspace(workspaceId, communityId);
+      if (!workspace) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/workspace-not-found",
+            title: "Workspace Not Found",
+            status: 404,
+            detail: `Workspace '${workspaceId}' not found in community.`,
+            code: "WORKSPACE_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
 
       // 1. Direct match in current workspace
       const directMatch = currentMockTasks.find(
@@ -311,11 +325,25 @@ export const taskHandlers = [
         });
       }
 
-      const { workspaceId, taskId } = params as {
+      const { communityId, workspaceId, taskId } = params as {
         communityId: string;
         workspaceId: string;
         taskId: string;
       };
+
+      const workspace = findMockWorkspace(workspaceId, communityId);
+      if (!workspace) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/workspace-not-found",
+            title: "Workspace Not Found",
+            status: 404,
+            detail: `Workspace '${workspaceId}' not found in community.`,
+            code: "WORKSPACE_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
 
       const task = currentMockTasks.find(
         (t) => t.id === taskId && t.workspaceId === workspaceId
@@ -648,11 +676,25 @@ export const taskHandlers = [
         });
       }
 
-      const { workspaceId, taskId } = params as {
+      const { communityId, workspaceId, taskId } = params as {
         communityId: string;
         workspaceId: string;
         taskId: string;
       };
+
+      const workspace = findMockWorkspace(workspaceId, communityId);
+      if (!workspace) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/workspace-not-found",
+            title: "Workspace Not Found",
+            status: 404,
+            detail: `Workspace '${workspaceId}' not found in community.`,
+            code: "WORKSPACE_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
 
       // Header verification
       const csrfToken = request.headers.get("X-CSRF-Token");
@@ -815,7 +857,7 @@ export const taskHandlers = [
         );
       }
 
-      if (body.assigneeIds !== undefined && task.effectivePermissions.canAssign === false) {
+      if (body.assigneeIds !== undefined && !task.effectivePermissions?.canAssign) {
         return HttpResponse.json(
           {
             type: "https://errors.sonder.platform/forbidden",
@@ -1914,11 +1956,25 @@ export const taskHandlers = [
         });
       }
 
-      const { workspaceId, taskId } = params as {
+      const { communityId, workspaceId, taskId } = params as {
         communityId: string;
         workspaceId: string;
         taskId: string;
       };
+
+      const workspace = findMockWorkspace(workspaceId, communityId);
+      if (!workspace) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/workspace-not-found",
+            title: "Workspace Not Found",
+            status: 404,
+            detail: `Workspace '${workspaceId}' not found in community.`,
+            code: "WORKSPACE_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
 
       const rawBody = await request.text();
       let body: ApiSchema<"MoveTaskRequest">;
@@ -2099,11 +2155,25 @@ export const taskHandlers = [
         });
       }
 
-      const { workspaceId, taskId } = params as {
+      const { communityId, workspaceId, taskId } = params as {
         communityId: string;
         workspaceId: string;
         taskId: string;
       };
+
+      const workspace = findMockWorkspace(workspaceId, communityId);
+      if (!workspace) {
+        return HttpResponse.json(
+          {
+            type: "https://errors.sonder.platform/workspace-not-found",
+            title: "Workspace Not Found",
+            status: 404,
+            detail: `Workspace '${workspaceId}' not found in community.`,
+            code: "WORKSPACE_NOT_FOUND",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } }
+        );
+      }
 
       // Header verification
       const csrfToken = request.headers.get("X-CSRF-Token");
@@ -2426,20 +2496,20 @@ export const taskHandlers = [
         });
       }
 
-      const { workspaceId, taskId } = params as {
+      const { communityId, workspaceId, taskId } = params as {
         communityId: string;
         workspaceId: string;
         taskId: string;
       };
 
-      const workspace = findMockWorkspace(workspaceId, params.communityId as string | undefined);
+      const workspace = findMockWorkspace(workspaceId, communityId);
       if (!workspace) {
         return HttpResponse.json(
           {
             type: "https://errors.sonder.platform/workspace-not-found",
             title: "Workspace Not Found",
             status: 404,
-            detail: `Workspace '${workspaceId}' not found.`,
+            detail: `Workspace '${workspaceId}' not found in community.`,
             code: "WORKSPACE_NOT_FOUND",
           },
           { status: 404, headers: { "Content-Type": "application/problem+json" } }
@@ -2544,20 +2614,20 @@ export const taskHandlers = [
         });
       }
 
-      const { workspaceId, taskId } = params as {
+      const { communityId, workspaceId, taskId } = params as {
         communityId: string;
         workspaceId: string;
         taskId: string;
       };
 
-      const workspace = findMockWorkspace(workspaceId, params.communityId as string | undefined);
+      const workspace = findMockWorkspace(workspaceId, communityId);
       if (!workspace) {
         return HttpResponse.json(
           {
             type: "https://errors.sonder.platform/workspace-not-found",
             title: "Workspace Not Found",
             status: 404,
-            detail: `Workspace '${workspaceId}' not found.`,
+            detail: `Workspace '${workspaceId}' not found in community.`,
             code: "WORKSPACE_NOT_FOUND",
           },
           { status: 404, headers: { "Content-Type": "application/problem+json" } }
