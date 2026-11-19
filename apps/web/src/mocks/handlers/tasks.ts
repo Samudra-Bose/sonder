@@ -2240,24 +2240,6 @@ export const taskHandlers = [
         }
       }
 
-      // Verify workspace exists
-      const workspace = findMockWorkspace(workspaceId, params.communityId as string | undefined);
-      if (!workspace) {
-        return HttpResponse.json(
-          {
-            type: "https://errors.sonder.platform/workspace-not-found",
-            title: "Workspace Not Found",
-            status: 404,
-            detail: `Workspace '${workspaceId}' not found.`,
-            code: "WORKSPACE_NOT_FOUND",
-          },
-          {
-            status: 404,
-            headers: { "Content-Type": "application/problem+json" },
-          }
-        );
-      }
-
       // Permission check: VIEWER cannot create or clone tasks in workspace
       if (workspace.myRole === "VIEWER") {
         return HttpResponse.json(
