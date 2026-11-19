@@ -241,7 +241,7 @@ export function MemberSelector({
                         <div className="flex flex-col min-w-0">
                           <span className="truncate font-medium">{member.user.displayName}</span>
                           <span className="text-[10px] text-[var(--text-muted)] truncate">
-                            {(member.user as { email?: string }).email ?? member.roleName ?? "Member"}
+                            {member.roleName ?? "Member"}
                           </span>
                         </div>
                       </div>

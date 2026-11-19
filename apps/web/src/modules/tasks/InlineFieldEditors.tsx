@@ -1525,7 +1525,7 @@ export function InlineAssigneeEditor({
   const updateMutation = useUpdateTask();
   const [error, setError] = useState<string | null>(null);
 
-  const canEdit = !isArchived && task.effectivePermissions?.canAssign !== false;
+  const canEdit = !isArchived && Boolean(task.effectivePermissions?.canAssign);
   const currentAssigneeId = task.assigneeIds?.[0] ?? null;
   const initialMember = task.assigneeAssignments?.[0]
     ? {
