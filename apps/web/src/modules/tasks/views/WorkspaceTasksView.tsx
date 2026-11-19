@@ -83,18 +83,33 @@ function WorkspaceTasksViewInner({
     workspaces,
     isLoading: isWorkspacesLoading,
     selectWorkspace,
+    selectCommunity,
   } = useWorkspace();
 
   // Resolve target community & workspace
   const effectiveCommunityId = params.communityId || currentCommunityId;
   const effectiveWorkspaceId = params.workspaceId || activeWorkspaceId || workspaces[0]?.id || null;
 
-  // Sync route params with WorkspaceContext if different
+  // Sync route community param with WorkspaceContext if different
   useEffect(() => {
-    if (params.workspaceId && params.workspaceId !== activeWorkspaceId) {
+    if (params.communityId && params.communityId !== currentCommunityId) {
+      selectCommunity(params.communityId).catch(() => {
+        // Silently catch switch errors; handled by WorkspaceContext
+      });
+    }
+  }, [params.communityId, currentCommunityId, selectCommunity]);
+
+  // Sync route workspace param with WorkspaceContext only when it belongs to current community
+  useEffect(() => {
+    if (
+      params.workspaceId &&
+      params.workspaceId !== activeWorkspaceId &&
+      !isWorkspacesLoading &&
+      workspaces.some((w) => w.id === params.workspaceId)
+    ) {
       selectWorkspace(params.workspaceId);
     }
-  }, [params.workspaceId, activeWorkspaceId, selectWorkspace]);
+  }, [params.workspaceId, activeWorkspaceId, isWorkspacesLoading, workspaces, selectWorkspace]);
 
   // Determine active view: route pathname (/timeline vs /calendar vs /board vs /list) has priority, then query param ?view=, then defaultView
   const routeView = location.pathname.endsWith("/timeline")

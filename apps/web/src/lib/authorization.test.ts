@@ -335,8 +335,8 @@ describe("VS-10: Critical Authorization Boundary & Role Preview Security", () =>
           `/communities/${communityId}/workspaces/non-existent-workspace-uuid/audit-events`
         )
       ).rejects.toMatchObject({
-        status: 403,
-        code: "FORBIDDEN",
+        status: 404,
+        code: "RESOURCE_NOT_FOUND",
       });
     });
   });

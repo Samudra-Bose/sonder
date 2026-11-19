@@ -34,14 +34,15 @@ const mockAuthValue: AuthContextType = {
     email: "alex.morgan@example.org",
     avatarUrl: null,
   },
-  isLoading: false,
-  isAuthenticated: true,
+  communities: [],
+  status: "authenticated",
   csrfToken: "mock-session-csrf-token",
-  isLoggingOut: false,
   error: null,
   login: vi.fn(),
+  register: vi.fn(),
   logout: vi.fn(),
-  refetchUser: vi.fn(),
+  refreshSession: vi.fn(),
+  clearError: vi.fn(),
 };
 
 function TestWrapper({ children }: { children: React.ReactNode }) {
@@ -269,7 +270,7 @@ describe("Sonder — Task Assignment Integrity, Permissions & Global Header Cont
       render(
         <TestWrapper>
           <AppHeader
-            user={{ id: "user-1", displayName: "Alex", avatarUrl: null }}
+            user={{ id: "user-1", displayName: "Alex", email: "alex@example.org", avatarUrl: null }}
             isSidebarCollapsed={false}
             onToggleSidebar={vi.fn()}
             onOpenMobileNav={vi.fn()}
@@ -314,6 +315,7 @@ describe("Sonder — Task Assignment Integrity, Permissions & Global Header Cont
         isOpen: true,
         open: vi.fn(),
         close: vi.fn(),
+        toggle: vi.fn(),
         initialValues: null,
       });
 
