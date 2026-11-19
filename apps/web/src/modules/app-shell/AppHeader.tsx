@@ -51,7 +51,7 @@ export function AppHeader({
 }: AppHeaderProps): React.JSX.Element {
   const { theme, resolvedTheme, setTheme, toggleTheme } = useTheme();
   const { currentCommunity, activeWorkspace, workspaces } = useWorkspace();
-  const hasAvailableWorkspace = Boolean(currentCommunity && workspaces && workspaces.length > 0);
+  const hasAvailableWorkspace = Boolean(currentCommunity && (activeWorkspace || (workspaces && workspaces.length > 0)));
 
   return (
     <header

@@ -248,11 +248,12 @@ describe("Sonder — Community Workspace Isolation & Handler Verification (Cases
 
   describe("Task Assignment, Unassignment & Permission Invariants", () => {
     const TASK_ALEX_1 = "018f98a2-task-004-today-personal";
-    const WS_PERSONAL = "018f98a2-3f12-7890-w002-456789abcdef";
-    const TASK_READ_ONLY = "018f98a2-task-009-completed-done"; // has canAssign: false
+    const WS_PERSONAL = "018f98a2-3f12-7890-w001-456789abcdef";
+    const WS_ENG = "018f98a2-3f12-7890-w002-456789abcdef";
+    const TASK_READ_ONLY = "018f98a2-task-009-completed-done"; // has canAssign: false in WS_ENG
 
     it("successfully unassigns a task by sending assigneeIds: []", async () => {
-      // Alex-1 is initially assigned to Alex Morgan
+      // Alex-1 is initially assigned to Alex Morgan in WS_PERSONAL
       const res = await fetch(
         `/api/v1/communities/${COMMUNITY_1}/workspaces/${WS_PERSONAL}/tasks/${TASK_ALEX_1}`,
         {
@@ -277,7 +278,7 @@ describe("Sonder — Community Workspace Isolation & Handler Verification (Cases
 
     it("fails closed with 403 Permission Denied when task has canAssign: false", async () => {
       const res = await fetch(
-        `/api/v1/communities/${COMMUNITY_1}/workspaces/${WS_COMMUNITY_1}/tasks/${TASK_READ_ONLY}`,
+        `/api/v1/communities/${COMMUNITY_1}/workspaces/${WS_ENG}/tasks/${TASK_READ_ONLY}`,
         {
           method: "PATCH",
           headers: {
@@ -319,7 +320,7 @@ describe("Sonder — Community Workspace Isolation & Handler Verification (Cases
       expect(res.status).toBe(409);
       const problem = await res.json();
       expect(problem.status).toBe(409);
-      expect(problem.code).toBe("REVISION_CONFLICT");
+      expect(problem.code).toBe("FIELD_REVISION_CONFLICT");
     });
   });
 });

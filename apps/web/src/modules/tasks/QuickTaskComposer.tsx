@@ -41,7 +41,8 @@ export function QuickTaskComposer({
   className,
 }: QuickTaskComposerProps): React.JSX.Element | null {
   const { isOpen, close, initialValues } = useQuickTaskComposer();
-  const { currentCommunityId, workspaces, activeWorkspaceId } = useWorkspace();
+  const { currentCommunityId, workspaces, activeWorkspaceId, isLoading: isWorkspaceLoading } = useWorkspace();
+  const hasNoWorkspaces = !activeWorkspaceId && !isWorkspaceLoading && workspaces.length === 0;
   const createMutation = useCreateTask();
   const { openTask } = useTaskPeekDrawer();
 
@@ -190,7 +191,7 @@ export function QuickTaskComposer({
           </DialogDescription>
         </DialogHeader>
 
-        {workspaces.length === 0 ? (
+        {hasNoWorkspaces ? (
           <div data-testid="composer-no-workspaces" className="p-6 text-center space-y-3">
             <div className="w-10 h-10 mx-auto rounded-full bg-[var(--surface-muted)] flex items-center justify-center text-[var(--text-muted)]">
               <AlertCircle className="h-5 w-5" />
