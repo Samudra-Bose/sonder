@@ -67,6 +67,10 @@
     --feedback-info-text: #1d4ed8;
     --feedback-info-border: #bfdbfe;
 
+    /* Popover Geometry Tokens */
+    --popover-compact-padding: 0.375rem;
+    --popover-compact-min-width: 140px;
+
     /* Legacy Compatibility Variables */
     --background: var(--surface-canvas);
     --foreground: var(--text-primary);
@@ -145,6 +149,10 @@
     --feedback-info-text: #93c5fd;
     --feedback-info-border: #1e40af;
 
+    /* Popover Geometry Tokens */
+    --popover-compact-padding: 0.375rem;
+    --popover-compact-min-width: 140px;
+
     /* Legacy Compatibility Variables */
     --background: var(--surface-canvas);
     --foreground: var(--text-primary);
@@ -207,6 +215,10 @@
   .focus-ring {
     outline: none;
     box-shadow: 0 0 0 2px var(--surface-canvas), 0 0 0 4px var(--border-focus);
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }
 

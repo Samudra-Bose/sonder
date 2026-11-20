@@ -484,7 +484,7 @@ export function TaskListView({
                   </td>
 
                   {/* Task Key */}
-                  <td className="py-2.5 px-3 font-mono font-bold text-[var(--brand-accent-text)]">
+                  <td className="py-2.5 px-3 font-mono font-bold text-[var(--brand-accent-text)] tabular-nums">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -552,7 +552,7 @@ export function TaskListView({
                   </td>
 
                   {/* Due Date */}
-                  <td className="py-2.5 px-3 text-[var(--text-secondary)] font-mono text-[11px]">
+                  <td className="py-2.5 px-3 text-[var(--text-secondary)] font-mono text-[11px] tabular-nums">
                     {task.dueDate ? (
                       <span className="inline-flex items-center gap-1">
                         <Calendar className="h-3 w-3 text-[var(--text-muted)]" />

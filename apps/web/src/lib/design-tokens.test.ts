@@ -116,4 +116,162 @@ describe("Design System Tokens & Radius Scale Specification", () => {
     expect(focusRingBlock).not.toContain("ring-offset-white");
     expect(focusRingBlock).not.toContain("slate-900");
   });
+
+  it("verifies the .tabular-nums utility is defined in @layer utilities", () => {
+    const tabularNumsBlock = cssContent.match(/\.tabular-nums\s*\{([^}]+)\}/)?.[1] || "";
+    expect(tabularNumsBlock).toMatch(/font-variant-numeric:\s*tabular-nums;/);
+  });
+
+  it("verifies compact popover geometry tokens exist in both light and dark theme blocks", () => {
+    const rootBlock = cssContent.match(/:root\s*\{([^}]+)\}/)?.[1] || "";
+    const darkBlock = cssContent.match(/\.dark\s*\{([^}]+)\}/)?.[1] || "";
+
+    expect(rootBlock).toMatch(/--popover-compact-padding:\s*0\.375rem;/);
+    expect(rootBlock).toMatch(/--popover-compact-min-width:\s*140px;/);
+    expect(darkBlock).toMatch(/--popover-compact-padding:\s*0\.375rem;/);
+    expect(darkBlock).toMatch(/--popover-compact-min-width:\s*140px;/);
+  });
+
+  it("dynamically verifies light-theme text tokens achieve WCAG 2.2 AA normal text contrast (>= 4.5:1)", () => {
+    const rootBlock = cssContent.match(/:root\s*\{([^}]+)\}/)?.[1] || "";
+
+    const getToken = (name: string) => {
+      const match = rootBlock.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6});`));
+      expect(match, `Token ${name} must be declared in :root`).not.toBeNull();
+      return match![1]!;
+    };
+
+    const canvas = getToken("--surface-canvas");
+    const card = getToken("--surface-card");
+    const muted = getToken("--surface-muted");
+
+    const textPrimary = getToken("--text-primary");
+    const textSecondary = getToken("--text-secondary");
+    const textMuted = getToken("--text-muted");
+
+    // Primary text >= 16:1
+    expect(getContrastRatio(textPrimary, canvas)).toBeGreaterThanOrEqual(16.0);
+    expect(getContrastRatio(textPrimary, card)).toBeGreaterThanOrEqual(16.0);
+    expect(getContrastRatio(textPrimary, muted)).toBeGreaterThanOrEqual(16.0);
+
+    // Secondary text >= 9.0:1 (WCAG AA requirement: >= 4.5:1)
+    expect(getContrastRatio(textSecondary, canvas)).toBeGreaterThanOrEqual(9.0);
+    expect(getContrastRatio(textSecondary, card)).toBeGreaterThanOrEqual(9.0);
+    expect(getContrastRatio(textSecondary, muted)).toBeGreaterThanOrEqual(9.0);
+
+    // Muted text >= 6.5:1 (WCAG AA requirement: >= 4.5:1)
+    expect(getContrastRatio(textMuted, canvas)).toBeGreaterThanOrEqual(6.5);
+    expect(getContrastRatio(textMuted, card)).toBeGreaterThanOrEqual(6.5);
+    expect(getContrastRatio(textMuted, muted)).toBeGreaterThanOrEqual(6.5);
+
+    // Verify rejected muted proposal (#94a3b8) fails on white card
+    const rejectedMutedRatio = getContrastRatio("#94a3b8", card);
+    expect(rejectedMutedRatio).toBeLessThan(4.5);
+  });
+
+  it("dynamically verifies dark-theme text tokens achieve WCAG 2.2 AA normal text contrast (>= 4.5:1)", () => {
+    const darkBlock = cssContent.match(/\.dark\s*\{([^}]+)\}/)?.[1] || "";
+
+    const getToken = (name: string) => {
+      const match = darkBlock.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6});`));
+      expect(match, `Token ${name} must be declared in .dark`).not.toBeNull();
+      return match![1]!;
+    };
+
+    const canvas = getToken("--surface-canvas");
+    const card = getToken("--surface-card");
+    const muted = getToken("--surface-muted");
+
+    const textPrimary = getToken("--text-primary");
+    const textSecondary = getToken("--text-secondary");
+    const textMuted = getToken("--text-muted");
+
+    // Primary text >= 13:1
+    expect(getContrastRatio(textPrimary, canvas)).toBeGreaterThanOrEqual(13.0);
+    expect(getContrastRatio(textPrimary, card)).toBeGreaterThanOrEqual(13.0);
+    expect(getContrastRatio(textPrimary, muted)).toBeGreaterThanOrEqual(13.0);
+
+    // Secondary text >= 9.0:1 (WCAG AA requirement: >= 4.5:1)
+    expect(getContrastRatio(textSecondary, canvas)).toBeGreaterThanOrEqual(9.0);
+    expect(getContrastRatio(textSecondary, card)).toBeGreaterThanOrEqual(9.0);
+    expect(getContrastRatio(textSecondary, muted)).toBeGreaterThanOrEqual(9.0);
+
+    // Muted text >= 5.5:1 (WCAG AA requirement: >= 4.5:1)
+    expect(getContrastRatio(textMuted, canvas)).toBeGreaterThanOrEqual(5.5);
+    expect(getContrastRatio(textMuted, card)).toBeGreaterThanOrEqual(5.5);
+    expect(getContrastRatio(textMuted, muted)).toBeGreaterThanOrEqual(5.5);
+  });
+
+  it("dynamically verifies all 5 semantic status text tokens achieve WCAG 2.2 AA contrast (>= 4.5:1) in both themes", () => {
+    const rootBlock = cssContent.match(/:root\s*\{([^}]+)\}/)?.[1] || "";
+    const darkBlock = cssContent.match(/\.dark\s*\{([^}]+)\}/)?.[1] || "";
+
+    const statuses = ["todo", "progress", "review", "done", "cancelled"];
+
+    for (const s of statuses) {
+      // Light mode
+      const lightBgMatch = rootBlock.match(new RegExp(`--status-${s}-bg:\\s*(#[0-9a-fA-F]{6});`));
+      const lightTextMatch = rootBlock.match(new RegExp(`--status-${s}-text:\\s*(#[0-9a-fA-F]{6});`));
+      expect(lightBgMatch).not.toBeNull();
+      expect(lightTextMatch).not.toBeNull();
+      const lightRatio = getContrastRatio(lightTextMatch![1]!, lightBgMatch![1]!);
+      expect(lightRatio, `Light status ${s} must have >= 4.5:1 contrast`).toBeGreaterThanOrEqual(4.5);
+
+      // Dark mode
+      const darkBgMatch = darkBlock.match(new RegExp(`--status-${s}-bg:\\s*(#[0-9a-fA-F]{6});`));
+      const darkTextMatch = darkBlock.match(new RegExp(`--status-${s}-text:\\s*(#[0-9a-fA-F]{6});`));
+      expect(darkBgMatch).not.toBeNull();
+      expect(darkTextMatch).not.toBeNull();
+      const darkRatio = getContrastRatio(darkTextMatch![1]!, darkBgMatch![1]!);
+      expect(darkRatio, `Dark status ${s} must have >= 4.5:1 contrast`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("dynamically verifies interactive UI boundaries achieve WCAG 2.2 SC 1.4.11 non-text contrast (>= 3.0:1)", () => {
+    const rootBlock = cssContent.match(/:root\s*\{([^}]+)\}/)?.[1] || "";
+    const darkBlock = cssContent.match(/\.dark\s*\{([^}]+)\}/)?.[1] || "";
+
+    const getLightToken = (name: string) => rootBlock.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6});`))![1]!;
+    const getDarkToken = (name: string) => darkBlock.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6});`))![1]!;
+
+    const lightCanvas = getLightToken("--surface-canvas");
+    const lightCard = getLightToken("--surface-card");
+    const lightFocus = getLightToken("--border-focus");
+    const lightControl = getLightToken("--border-control");
+
+    expect(getContrastRatio(lightFocus, lightCanvas)).toBeGreaterThanOrEqual(3.0);
+    expect(getContrastRatio(lightFocus, lightCard)).toBeGreaterThanOrEqual(3.0);
+    expect(getContrastRatio(lightControl, lightCanvas)).toBeGreaterThanOrEqual(3.0);
+    expect(getContrastRatio(lightControl, lightCard)).toBeGreaterThanOrEqual(3.0);
+
+    const darkCanvas = getDarkToken("--surface-canvas");
+    const darkCard = getDarkToken("--surface-card");
+    const darkFocus = getDarkToken("--border-focus");
+    const darkControl = getDarkToken("--border-control");
+
+    expect(getContrastRatio(darkFocus, darkCanvas)).toBeGreaterThanOrEqual(3.0);
+    expect(getContrastRatio(darkFocus, darkCard)).toBeGreaterThanOrEqual(3.0);
+    expect(getContrastRatio(darkControl, darkCanvas)).toBeGreaterThanOrEqual(3.0);
+    expect(getContrastRatio(darkControl, darkCard)).toBeGreaterThanOrEqual(3.0);
+  });
+
+  it("evaluates status border tokens under WCAG SC 1.4.11 to confirm decorative classification (< 3.0:1)", () => {
+    const rootBlock = cssContent.match(/:root\s*\{([^}]+)\}/)?.[1] || "";
+    const darkBlock = cssContent.match(/\.dark\s*\{([^}]+)\}/)?.[1] || "";
+
+    const statuses = ["todo", "progress", "review", "done", "cancelled"];
+
+    for (const s of statuses) {
+      const lightBorder = rootBlock.match(new RegExp(`--status-${s}-border:\\s*(#[0-9a-fA-F]{6});`))![1]!;
+      const lightBg = rootBlock.match(new RegExp(`--status-${s}-bg:\\s*(#[0-9a-fA-F]{6});`))![1]!;
+      const lightBorderRatio = getContrastRatio(lightBorder, lightBg);
+      // Status borders achieve < 3.0:1, confirming they are decorative aesthetic outlines and cannot serve as outline-only controls
+      expect(lightBorderRatio).toBeLessThan(3.0);
+
+      const darkBorder = darkBlock.match(new RegExp(`--status-${s}-border:\\s*(#[0-9a-fA-F]{6});`))![1]!;
+      const darkBg = darkBlock.match(new RegExp(`--status-${s}-bg:\\s*(#[0-9a-fA-F]{6});`))![1]!;
+      const darkBorderRatio = getContrastRatio(darkBorder, darkBg);
+      expect(darkBorderRatio).toBeLessThan(3.0);
+    }
+  });
 });

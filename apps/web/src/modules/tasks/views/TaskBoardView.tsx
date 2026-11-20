@@ -255,7 +255,7 @@ export function TaskBoardView({
               )}
             >
               <span>{group.label}</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[var(--surface-card)] border border-[var(--border-subtle)] font-mono">
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[var(--surface-card)] border border-[var(--border-subtle)] font-mono tabular-nums">
                 {group.total}
               </span>
             </button>
@@ -288,7 +288,7 @@ export function TaskBoardView({
                 </h3>
                 <span
                   data-testid={`board-column-count-${group.key}`}
-                  className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[var(--surface-muted)] text-[var(--text-muted)] border border-[var(--border-subtle)] font-medium"
+                  className="text-[11px] font-mono tabular-nums px-2 py-0.5 rounded-full bg-[var(--surface-muted)] text-[var(--text-muted)] border border-[var(--border-subtle)] font-medium"
                 >
                   {group.total}
                 </span>
@@ -339,7 +339,7 @@ export function TaskBoardView({
                                 e.stopPropagation();
                                 handleCardClick();
                               }}
-                              className="font-mono text-xs font-bold text-[var(--brand-accent-text)] hover:underline focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] rounded"
+                              className="font-mono text-xs font-bold text-[var(--brand-accent-text)] tabular-nums hover:underline focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] rounded"
                             >
                               {task.taskKey}
                             </button>
@@ -375,7 +375,7 @@ export function TaskBoardView({
                         {/* Bottom Row: Assignee & Due Date + Non-Drag Move Control */}
                         <div className="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between gap-2 text-[11px]">
                           {/* Assignee & Due date */}
-                          <div className="flex items-center gap-2 text-[var(--text-secondary)] font-mono text-[10px]">
+                          <div className="flex items-center gap-2 text-[var(--text-secondary)] font-mono text-[10px] tabular-nums">
                             {(() => {
                               const firstAssignee = task.assigneeAssignments?.[0];
                               if (!firstAssignee) return null;
@@ -397,7 +397,7 @@ export function TaskBoardView({
                               );
                             })()}
                             {task.dueDate ? (
-                              <span className="inline-flex items-center gap-1">
+                              <span className="inline-flex items-center gap-1 tabular-nums">
                                 <Calendar className="h-2.5 w-2.5 text-[var(--text-muted)]" />
                                 <span>{task.dueDate}</span>
                               </span>

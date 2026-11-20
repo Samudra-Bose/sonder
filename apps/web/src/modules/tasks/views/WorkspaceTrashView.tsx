@@ -368,7 +368,7 @@ export function WorkspaceTrashView({ className }: WorkspaceTrashViewProps): Reac
                       </td>
 
                       {/* Task Key */}
-                      <td className="py-2.5 px-3 font-mono font-bold text-[var(--text-muted)] line-through">
+                      <td className="py-2.5 px-3 font-mono font-bold text-[var(--text-muted)] line-through tabular-nums">
                         {task.taskKey}
                       </td>
 
@@ -392,7 +392,7 @@ export function WorkspaceTrashView({ className }: WorkspaceTrashViewProps): Reac
                       </td>
 
                       {/* Archived Date */}
-                      <td className="py-2.5 px-3 text-[var(--text-secondary)] whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-[var(--text-secondary)] whitespace-nowrap tabular-nums">
                         {new Date(archivedAt).toLocaleDateString(undefined, {
                           month: "short",
                           day: "numeric",
@@ -405,7 +405,7 @@ export function WorkspaceTrashView({ className }: WorkspaceTrashViewProps): Reac
                         <span
                           data-testid={`retention-badge-${task.taskKey}`}
                           className={cn(
-                            "inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium whitespace-nowrap",
+                            "inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium whitespace-nowrap tabular-nums",
                             retention.isUrgent
                               ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
                               : "bg-[var(--surface-muted)] text-[var(--text-secondary)] border border-[var(--border-subtle)]"

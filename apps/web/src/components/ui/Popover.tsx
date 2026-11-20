@@ -9,13 +9,21 @@ export const PopoverClose = BasePopover.Close;
 export const PopoverTitle = BasePopover.Title;
 export const PopoverDescription = BasePopover.Description;
 
+export type PopoverSize = "default" | "compact";
+
 export interface PopoverContentProps
   extends React.ComponentPropsWithoutRef<typeof BasePopover.Popup> {
   side?: "top" | "bottom" | "left" | "right";
   align?: "start" | "center" | "end";
   sideOffset?: number;
+  size?: PopoverSize;
   className?: string;
 }
+
+const sizeStyles: Record<PopoverSize, string> = {
+  default: "w-72 p-4 rounded-lg",
+  compact: "w-auto min-w-[140px] p-1.5 rounded-md",
+};
 
 export const PopoverContent = React.forwardRef<
   HTMLDivElement,
@@ -26,6 +34,7 @@ export const PopoverContent = React.forwardRef<
     side = "bottom",
     align = "center",
     sideOffset = 4,
+    size = "default",
     children,
     ...props
   },
@@ -37,9 +46,10 @@ export const PopoverContent = React.forwardRef<
         <BasePopover.Popup
           ref={ref}
           className={cn(
-            "z-[70] w-72 rounded-lg border border-[var(--border-strong)]",
-            "bg-[var(--surface-drawer)] p-4 text-[var(--text-primary)] shadow-lg outline-none",
+            "z-[70] border border-[var(--border-strong)]",
+            "bg-[var(--surface-drawer)] text-[var(--text-primary)] shadow-lg outline-none",
             "transition-all duration-150",
+            sizeStyles[size],
             className
           )}
           {...props}
