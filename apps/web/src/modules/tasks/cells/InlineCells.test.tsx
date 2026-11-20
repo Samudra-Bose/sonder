@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthContext, type AuthContextType } from "@/modules/auth/AuthContext.js";
 import { InlineStatusCell } from "./InlineStatusCell.js";
@@ -462,11 +462,15 @@ describe("Stage 5.2: Standalone Inline Cell Primitives", () => {
       expect(failingMutation).toHaveBeenCalledWith("URGENT");
       // Remains in document, displays original priority, and displays error feedback
       const trigger = screen.getByTestId("inline-priority-trigger-task-001");
-      expect(trigger).toHaveAttribute("title", "Priority update failed");
+      await waitFor(() => {
+        expect(trigger).toHaveAttribute("title", "Priority update failed");
+      });
 
       // Retry: clicking trigger clears error and allows another selection
       fireEvent.click(trigger);
-      expect(trigger).not.toHaveAttribute("title");
+      await waitFor(() => {
+        expect(trigger).not.toHaveAttribute("title");
+      });
     });
   });
 
@@ -599,11 +603,15 @@ describe("Stage 5.2: Standalone Inline Cell Primitives", () => {
       fireEvent.click(todayBtn);
 
       const trigger = screen.getByTestId("inline-duedate-trigger-task-001");
-      expect(trigger).toHaveAttribute("title", "Date update failed");
+      await waitFor(() => {
+        expect(trigger).toHaveAttribute("title", "Date update failed");
+      });
 
       // Retry: clicking trigger clears error
       fireEvent.click(trigger);
-      expect(trigger).not.toHaveAttribute("title");
+      await waitFor(() => {
+        expect(trigger).not.toHaveAttribute("title");
+      });
     });
   });
 
@@ -821,11 +829,15 @@ describe("Stage 5.2: Standalone Inline Cell Primitives", () => {
       fireEvent.click(memberOption);
 
       const trigger = screen.getByTestId("inline-assignee-trigger-task-001");
-      expect(trigger).toHaveAttribute("title", "Assignee update failed");
+      await waitFor(() => {
+        expect(trigger).toHaveAttribute("title", "Assignee update failed");
+      });
 
       // Retry: clicking trigger clears error
       fireEvent.click(trigger);
-      expect(trigger).not.toHaveAttribute("title");
+      await waitFor(() => {
+        expect(trigger).not.toHaveAttribute("title");
+      });
     });
 
     it("renders inert text when permissions forbid assigning", () => {
