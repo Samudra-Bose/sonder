@@ -1,14 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
-  Calendar,
   RefreshCw,
   GitFork,
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
 } from "lucide-react";
-import { Badge } from "@/components/ui/Badge";
-import { Avatar } from "@/components/ui/Avatar";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Feedback } from "@/components/ui/Feedback";
@@ -20,6 +17,13 @@ import { TaskArchetypeBadge } from "../TaskArchetypeBadge.js";
 import { BulkActionBar } from "./BulkActionBar.js";
 import { BacklogTaskTray } from "./BacklogTaskTray.js";
 import { useBulkMutateTasks } from "../useBulkMutateTasks.js";
+import { InlineTitleCell } from "../cells/InlineTitleCell.js";
+import { InlineStatusCell } from "../cells/InlineStatusCell.js";
+import { InlinePriorityCell } from "../cells/InlinePriorityCell.js";
+import { InlineAssigneeCell } from "../cells/InlineAssigneeCell.js";
+import { InlineDueDateCell } from "../cells/InlineDueDateCell.js";
+import { InlineCreationRow, type PendingTaskItem } from "../InlineCreationRow.js";
+import { PendingTaskRow } from "./PendingTaskRow.js";
 import type { TaskDto, TaskStatusCategory, TaskPriority } from "../types";
 
 export interface TaskListViewProps {
@@ -40,40 +44,6 @@ export interface TaskListViewProps {
   className?: string;
 }
 
-function formatStatus(status: TaskStatusCategory): string {
-  switch (status) {
-    case "BACKLOG":
-      return "Backlog";
-    case "TODO":
-      return "To Do";
-    case "IN_PROGRESS":
-      return "In Progress";
-    case "DONE":
-      return "Done";
-    case "CANCELED":
-      return "Canceled";
-    default:
-      return status;
-  }
-}
-
-function formatPriority(priority: TaskPriority): string {
-  switch (priority) {
-    case "URGENT":
-      return "Urgent";
-    case "HIGH":
-      return "High";
-    case "MEDIUM":
-      return "Medium";
-    case "LOW":
-      return "Low";
-    case "NONE":
-      return "None";
-    default:
-      return priority;
-  }
-}
-
 export function TaskListView({
   tasks,
   backlogTasks,
@@ -85,7 +55,7 @@ export function TaskListView({
   error,
   onRetry,
   workspaceId,
-  communityId: _communityId,
+  communityId,
   sortBy = "priority",
   sortOrder = "desc",
   onSortChange,
@@ -93,6 +63,7 @@ export function TaskListView({
 }: TaskListViewProps): React.JSX.Element {
   const { openTask } = useTaskPeekDrawer();
   const [internalBacklogOpen, setInternalBacklogOpen] = useState(false);
+  const [pendingTask, setPendingTask] = useState<PendingTaskItem | null>(null);
   const isTrayOpen = propIsBacklogOpen ?? internalBacklogOpen;
   const handleToggleTray = propOnToggleBacklog ?? (() => setInternalBacklogOpen((prev) => !prev));
 
@@ -143,7 +114,7 @@ export function TaskListView({
     if (selectedTaskIds.size === 0) return;
     try {
       await bulkMutate.mutateAsync({
-        communityId: _communityId,
+        communityId,
         workspaceId,
         data: {
           taskIds: Array.from(selectedTaskIds),
@@ -160,7 +131,7 @@ export function TaskListView({
     if (selectedTaskIds.size === 0) return;
     try {
       await bulkMutate.mutateAsync({
-        communityId: _communityId,
+        communityId,
         workspaceId,
         data: {
           taskIds: Array.from(selectedTaskIds),
@@ -178,7 +149,7 @@ export function TaskListView({
     if (selectedTaskIds.size === 0) return;
     try {
       await bulkMutate.mutateAsync({
-        communityId: _communityId,
+        communityId,
         workspaceId,
         data: {
           taskIds: Array.from(selectedTaskIds),
@@ -245,7 +216,7 @@ export function TaskListView({
   }
 
   // Empty state
-  if (tasks.length === 0) {
+  if (tasks.length === 0 && !pendingTask) {
     return (
       <div
         id="tasks-list-panel"
@@ -267,7 +238,7 @@ export function TaskListView({
           onToggle={handleToggleTray}
           onTaskClick={(task) => openTask(task.taskKey, { workspaceId })}
           workspaceId={workspaceId}
-          communityId={_communityId}
+          communityId={communityId}
           viewType="list"
         />
       </div>
@@ -498,69 +469,60 @@ export function TaskListView({
                   </td>
 
                   {/* Title & Hierarchy parent badge */}
-                  <td className="py-2.5 px-3">
+                  <td className="py-2.5 px-3 min-w-[200px]">
                     <div className="flex items-center gap-2">
                       <TaskArchetypeBadge archetype={task.itemType} size="sm" showLabel={false} />
                       {task.parentTaskId && (
                         <span
                           title="Subtask"
-                          className="inline-flex items-center text-[var(--text-muted)]"
+                          className="inline-flex items-center text-[var(--text-muted)] shrink-0"
                         >
                           <GitFork className="h-3 w-3 rotate-180" />
                         </span>
                       )}
-                      <span className="font-medium text-[var(--text-primary)] group-hover:text-[var(--brand-accent-text)] transition-colors line-clamp-1">
-                        {task.title}
-                      </span>
+                      <InlineTitleCell
+                        task={task}
+                        communityId={communityId}
+                        workspaceId={workspaceId}
+                        className="flex-1 min-w-0"
+                      />
                     </div>
                   </td>
 
-                  {/* Status Category Badge */}
-                  <td className="py-2.5 px-3">
-                    <Badge status={task.statusCategory}>
-                      {formatStatus(task.statusCategory)}
-                    </Badge>
+                  {/* Status Category */}
+                  <td className="py-2.5 px-3 w-32">
+                    <InlineStatusCell
+                      task={task}
+                      communityId={communityId}
+                      workspaceId={workspaceId}
+                    />
                   </td>
 
                   {/* Assignee */}
-                  <td className="py-2.5 px-3" data-testid={`task-list-assignee-${task.taskKey}`}>
-                    {(() => {
-                      const firstAssignee = task.assigneeAssignments?.[0];
-                      if (firstAssignee) {
-                        return (
-                          <div className="flex items-center gap-1.5" title={firstAssignee.user.displayName}>
-                            <Avatar
-                              name={firstAssignee.user.displayName}
-                              src={firstAssignee.user.avatarUrl ?? undefined}
-                              size="xs"
-                            />
-                            <span className="text-xs text-[var(--text-secondary)] truncate max-w-[100px]">
-                              {firstAssignee.user.displayName}
-                            </span>
-                          </div>
-                        );
-                      }
-                      return <span className="text-xs text-[var(--text-muted)] italic">Unassigned</span>;
-                    })()}
+                  <td className="py-2.5 px-3 w-32" data-testid={`task-list-assignee-${task.taskKey}`}>
+                    <InlineAssigneeCell
+                      task={task}
+                      communityId={communityId}
+                      workspaceId={workspaceId}
+                    />
                   </td>
 
-                  {/* Priority Badge */}
-                  <td className="py-2.5 px-3">
-                    <Badge priority={task.priority}>
-                      {formatPriority(task.priority)}
-                    </Badge>
+                  {/* Priority */}
+                  <td className="py-2.5 px-3 w-28">
+                    <InlinePriorityCell
+                      task={task}
+                      communityId={communityId}
+                      workspaceId={workspaceId}
+                    />
                   </td>
 
                   {/* Due Date */}
-                  <td className="py-2.5 px-3 text-[var(--text-secondary)] font-mono text-[11px] tabular-nums">
-                    {task.dueDate ? (
-                      <span className="inline-flex items-center gap-1">
-                        <Calendar className="h-3 w-3 text-[var(--text-muted)]" />
-                        <span>{task.dueDate}</span>
-                      </span>
-                    ) : (
-                      <span className="text-[var(--text-muted)]">—</span>
-                    )}
+                  <td className="py-2.5 px-3 w-32">
+                    <InlineDueDateCell
+                      task={task}
+                      communityId={communityId}
+                      workspaceId={workspaceId}
+                    />
                   </td>
 
                   {/* Subtask indicator */}
@@ -582,12 +544,26 @@ export function TaskListView({
                     <TaskActionsMenu
                       task={task}
                       workspaceId={workspaceId}
-                      communityId={_communityId}
+                      communityId={communityId}
                     />
                   </td>
                 </tr>
               );
             })}
+
+            {/* Transient Pending-Task Row (WP-A4) */}
+            {pendingTask && (
+              <PendingTaskRow pendingTask={pendingTask} />
+            )}
+
+            {/* Persistent Inline Task Creation Row (WP-A3) */}
+            <InlineCreationRow
+              communityId={communityId}
+              workspaceId={workspaceId}
+              variant="list"
+              colSpan={9}
+              onPendingChange={setPendingTask}
+            />
           </tbody>
         </table>
       </div>
@@ -601,7 +577,7 @@ export function TaskListView({
           onToggle={handleToggleTray}
           onTaskClick={(task) => openTask(task.taskKey, { workspaceId })}
           workspaceId={workspaceId}
-          communityId={_communityId}
+          communityId={communityId}
           viewType="list"
         />
       </div>

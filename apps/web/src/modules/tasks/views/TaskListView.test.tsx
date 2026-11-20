@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useSearchParams } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthContext, type AuthContextType } from "@/modules/auth/AuthContext.js";
 import { WorkspaceProvider } from "@/modules/workspace/WorkspaceContext.js";
@@ -14,7 +14,13 @@ import {
 import { TaskListView, type TaskListViewProps } from "./TaskListView";
 import { TaskViewToolbar } from "./TaskViewToolbar";
 import { QuickTaskComposerProvider } from "../QuickTaskComposerContext";
+import * as tasksApi from "../api.js";
 import type { TaskDto } from "../types";
+
+function LocationDisplay() {
+  const [searchParams] = useSearchParams();
+  return <div data-testid="location-display">{searchParams.toString()}</div>;
+}
 
 const testAuthUser = {
   id: MOCK_USER_ID,
@@ -61,8 +67,9 @@ function renderTaskListView(props: Partial<TaskListViewProps>) {
           initialCommunityId={MOCK_COMMUNITY_1_ID}
           initialWorkspaceId={WS_SHARED_ENG_ID}
         >
-          <MemoryRouter>
+          <MemoryRouter initialEntries={["/tasks"]}>
             <TaskListView {...defaultProps} />
+            <LocationDisplay />
           </MemoryRouter>
         </WorkspaceProvider>
       </AuthContext.Provider>
@@ -236,6 +243,313 @@ describe("TaskListView — Interactive Column Sorting & Accessibility", () => {
     });
 
     expect(screen.getByTestId("task-list-empty")).toBeInTheDocument();
+  });
+});
+
+describe("Stage 5.3B / WP-A: Task List View Transformation", () => {
+  const sampleTask = makeSampleTask({
+    id: "task-001",
+    taskKey: "ENG-101",
+    title: "Implement List Inline Cells",
+    statusCategory: "IN_PROGRESS",
+    priority: "HIGH",
+    dueDate: "2026-11-20",
+    assigneeIds: ["user-123"],
+    assigneeAssignments: [
+      {
+        userId: "user-123",
+        user: { id: "user-123", displayName: "Alex Morgan", avatarUrl: null },
+        assignedByUserId: "user-admin",
+        assignedAt: "2026-11-01T10:00:00Z",
+      },
+    ],
+  });
+
+  describe("WP-A1: Inline Cell Primitives Integration (AC-1)", () => {
+    it("renders all five inline cell primitives directly within the task row", () => {
+      renderTaskListView({ tasks: [sampleTask] });
+
+      // 1. Title cell
+      expect(screen.getByTestId("inline-title-cell-task-001")).toBeInTheDocument();
+      expect(screen.getByTestId("inline-title-cell-task-001")).toHaveTextContent("Implement List Inline Cells");
+
+      // 2. Status cell
+      expect(screen.getByTestId("inline-status-trigger-task-001")).toBeInTheDocument();
+      expect(screen.getByTestId("inline-status-trigger-task-001")).toHaveTextContent("In Progress");
+
+      // 3. Priority cell
+      expect(screen.getByTestId("inline-priority-trigger-task-001")).toBeInTheDocument();
+      expect(screen.getByTestId("inline-priority-trigger-task-001")).toHaveTextContent("High");
+
+      // 4. Assignee cell
+      expect(screen.getByTestId("inline-assignee-trigger-task-001")).toBeInTheDocument();
+      expect(screen.getByTestId("inline-assignee-trigger-task-001")).toHaveTextContent("Alex Morgan");
+
+      // 5. Due date cell
+      expect(screen.getByTestId("inline-duedate-trigger-task-001")).toBeInTheDocument();
+      expect(screen.getByTestId("inline-duedate-trigger-task-001")).toHaveTextContent("2026-11-20");
+    });
+
+    it("clicking title cell enters title editing mode directly inside table row", () => {
+      renderTaskListView({ tasks: [sampleTask] });
+
+      const titleTrigger = screen.getByTestId("inline-title-cell-task-001");
+      fireEvent.click(titleTrigger);
+
+      expect(screen.getByTestId("inline-title-input-task-001")).toBeInTheDocument();
+      expect(screen.getByTestId("inline-title-input-task-001")).toHaveValue("Implement List Inline Cells");
+    });
+
+    it("clicking status cell opens status popover selector", async () => {
+      renderTaskListView({ tasks: [sampleTask] });
+
+      const statusTrigger = screen.getByTestId("inline-status-trigger-task-001");
+      fireEvent.click(statusTrigger);
+
+      expect(await screen.findByRole("menu", { name: /select status/i })).toBeInTheDocument();
+      expect(screen.getByTestId("inline-status-option-DONE")).toBeInTheDocument();
+    });
+
+    it("clicking priority cell opens priority popover selector", async () => {
+      renderTaskListView({ tasks: [sampleTask] });
+
+      const priorityTrigger = screen.getByTestId("inline-priority-trigger-task-001");
+      fireEvent.click(priorityTrigger);
+
+      expect(await screen.findByRole("menu", { name: /select priority/i })).toBeInTheDocument();
+      expect(screen.getByTestId("inline-priority-option-URGENT")).toBeInTheDocument();
+    });
+
+    it("clicking assignee cell opens assignee popover selector", async () => {
+      renderTaskListView({ tasks: [sampleTask] });
+
+      const assigneeTrigger = screen.getByTestId("inline-assignee-trigger-task-001");
+      fireEvent.click(assigneeTrigger);
+
+      expect(await screen.findByRole("dialog", { name: /assign task/i })).toBeInTheDocument();
+    });
+
+    it("clicking due date cell opens date popover selector", async () => {
+      renderTaskListView({ tasks: [sampleTask] });
+
+      const dueDateTrigger = screen.getByTestId("inline-duedate-trigger-task-001");
+      fireEvent.click(dueDateTrigger);
+
+      expect(await screen.findByRole("dialog", { name: /set due date/i })).toBeInTheDocument();
+    });
+  });
+
+  describe("WP-A2: Row Navigation and Event Isolation (AC-2, AC-3)", () => {
+    it("AC-3: clicking row whitespace or task key opens Task Peek Drawer via URL query param", () => {
+      renderTaskListView({ tasks: [sampleTask] });
+
+      // Click task key button
+      const taskKeyBtn = screen.getByRole("button", { name: "ENG-101" });
+      fireEvent.click(taskKeyBtn);
+
+      expect(screen.getByTestId("location-display")).toHaveTextContent("task=ENG-101");
+    });
+
+    it("AC-3: clicking row background opens Task Peek Drawer", () => {
+      renderTaskListView({ tasks: [sampleTask] });
+
+      const row = screen.getByTestId("task-list-row-ENG-101");
+      fireEvent.click(row);
+
+      expect(screen.getByTestId("location-display")).toHaveTextContent("task=ENG-101");
+    });
+
+    it("AC-2: clicking title cell enters edit mode WITHOUT opening Task Peek Drawer", () => {
+      renderTaskListView({ tasks: [sampleTask] });
+
+      const titleTrigger = screen.getByTestId("inline-title-cell-task-001");
+      fireEvent.click(titleTrigger);
+
+      expect(screen.getByTestId("inline-title-input-task-001")).toBeInTheDocument();
+      // Must NOT open Task Peek Drawer
+      expect(screen.getByTestId("location-display")).not.toHaveTextContent("task=ENG-101");
+    });
+
+    it("AC-2: clicking status cell opens status popover WITHOUT opening Task Peek Drawer", () => {
+      renderTaskListView({ tasks: [sampleTask] });
+
+      const statusTrigger = screen.getByTestId("inline-status-trigger-task-001");
+      fireEvent.click(statusTrigger);
+
+      expect(screen.getByRole("menu", { name: /select status/i })).toBeInTheDocument();
+      expect(screen.getByTestId("location-display")).not.toHaveTextContent("task=ENG-101");
+    });
+
+    it("AC-2: clicking priority cell opens priority popover WITHOUT opening Task Peek Drawer", () => {
+      renderTaskListView({ tasks: [sampleTask] });
+
+      const priorityTrigger = screen.getByTestId("inline-priority-trigger-task-001");
+      fireEvent.click(priorityTrigger);
+
+      expect(screen.getByRole("menu", { name: /select priority/i })).toBeInTheDocument();
+      expect(screen.getByTestId("location-display")).not.toHaveTextContent("task=ENG-101");
+    });
+
+    it("AC-2: clicking assignee cell opens assignee popover WITHOUT opening Task Peek Drawer", () => {
+      renderTaskListView({ tasks: [sampleTask] });
+
+      const assigneeTrigger = screen.getByTestId("inline-assignee-trigger-task-001");
+      fireEvent.click(assigneeTrigger);
+
+      expect(screen.getByRole("dialog", { name: /assign task/i })).toBeInTheDocument();
+      expect(screen.getByTestId("location-display")).not.toHaveTextContent("task=ENG-101");
+    });
+
+    it("AC-2: clicking due date cell opens date popover WITHOUT opening Task Peek Drawer", () => {
+      renderTaskListView({ tasks: [sampleTask] });
+
+      const dueDateTrigger = screen.getByTestId("inline-duedate-trigger-task-001");
+      fireEvent.click(dueDateTrigger);
+
+      expect(screen.getByRole("dialog", { name: /set due date/i })).toBeInTheDocument();
+      expect(screen.getByTestId("location-display")).not.toHaveTextContent("task=ENG-101");
+    });
+
+    it("AC-2: clicking selection checkbox toggles selection WITHOUT opening Task Peek Drawer", () => {
+      renderTaskListView({ tasks: [sampleTask] });
+
+      const checkbox = screen.getByTestId("bulk-select-task-ENG-101");
+      fireEvent.click(checkbox);
+
+      expect(checkbox).toBeChecked();
+      expect(screen.getByTestId("location-display")).not.toHaveTextContent("task=ENG-101");
+    });
+  });
+
+  describe("WP-A3: Persistent Inline Task Creation (AC-4, AC-5, AC-6, AC-7)", () => {
+    it("AC-4: renders persistent creation trigger at bottom of table with colSpan=9", () => {
+      renderTaskListView({ tasks: [sampleTask] });
+
+      const creationTrigger = screen.getByTestId("inline-creation-trigger");
+      expect(creationTrigger).toBeInTheDocument();
+      expect(creationTrigger).toHaveTextContent("New task...");
+
+      const td = creationTrigger.querySelector("td");
+      expect(td).toHaveAttribute("colspan", "9");
+    });
+
+    it("AC-4 & AC-5: clicking trigger reveals input and supports creation flow with focus retention", async () => {
+      const mockCreatedTask: TaskDto = {
+        ...sampleTask,
+        id: "task-002",
+        taskKey: "ENG-102",
+        title: "Second Created Task",
+      };
+      vi.spyOn(tasksApi, "createTask").mockResolvedValue(mockCreatedTask);
+
+      renderTaskListView({ tasks: [sampleTask] });
+
+      const trigger = screen.getByTestId("inline-creation-trigger");
+      fireEvent.click(trigger);
+
+      const input = screen.getByTestId("inline-creation-input");
+      expect(input).toBeInTheDocument();
+      expect(input).toHaveFocus();
+
+      fireEvent.change(input, { target: { value: "Second Created Task" } });
+      fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+
+      await waitFor(() => {
+        expect(tasksApi.createTask).toHaveBeenCalledTimes(1);
+        // Input cleared for rapid-fire creation
+        expect(input).toHaveValue("");
+        expect(input).toHaveFocus();
+      });
+    });
+
+    it("AC-7: failed creation preserves recoverable input and shows error message", async () => {
+      vi.spyOn(tasksApi, "createTask").mockRejectedValue(new Error("Network timeout"));
+
+      renderTaskListView({ tasks: [sampleTask] });
+
+      fireEvent.click(screen.getByTestId("inline-creation-trigger"));
+      const input = screen.getByTestId("inline-creation-input");
+
+      fireEvent.change(input, { target: { value: "Retryable Task" } });
+      fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("inline-creation-error")).toHaveTextContent("Network timeout");
+        expect(input).toHaveValue("Retryable Task");
+      });
+    });
+  });
+
+  describe("WP-A4: Transient Pending-Task Row (AC-8, AC-9, AC-10, AC-11)", () => {
+    it("AC-8 & AC-9: displays temporary pending row while creation is unresolved, removes on server success", async () => {
+      let resolveCreation: (val: TaskDto) => void;
+      const creationPromise = new Promise<TaskDto>((resolve) => {
+        resolveCreation = resolve;
+      });
+      vi.spyOn(tasksApi, "createTask").mockImplementation(() => creationPromise);
+
+      renderTaskListView({ tasks: [sampleTask] });
+
+      fireEvent.click(screen.getByTestId("inline-creation-trigger"));
+      const input = screen.getByTestId("inline-creation-input");
+
+      fireEvent.change(input, { target: { value: "In-Flight Pending Task" } });
+      fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+
+      // AC-8: Pending row immediately rendered above the creation row
+      const pendingRow = screen.getByTestId("task-list-pending-row");
+      expect(pendingRow).toBeInTheDocument();
+      expect(screen.getByTestId("pending-task-title")).toHaveTextContent("In-Flight Pending Task");
+      expect(screen.getByTestId("pending-task-badge")).toHaveTextContent("Pending");
+      expect(pendingRow).toHaveClass("opacity-60");
+
+      // AC-11: Non-interactive, clicking pending row does NOT open Task Peek Drawer
+      fireEvent.click(pendingRow);
+      expect(screen.getByTestId("location-display")).not.toHaveTextContent("task=");
+
+      // AC-9: Server confirms creation
+      const canonicalTask: TaskDto = {
+        ...sampleTask,
+        id: "task-canonical-99",
+        taskKey: "ENG-99",
+        title: "In-Flight Pending Task",
+      };
+      resolveCreation!(canonicalTask);
+
+      // Pending row removed upon resolution
+      await waitFor(() => {
+        expect(screen.queryByTestId("task-list-pending-row")).not.toBeInTheDocument();
+      });
+    });
+
+    it("AC-10: removes pending row on failure without leaving orphaned state", async () => {
+      let rejectCreation: (err: Error) => void;
+      const creationPromise = new Promise<TaskDto>((_, reject) => {
+        rejectCreation = reject;
+      });
+      vi.spyOn(tasksApi, "createTask").mockImplementation(() => creationPromise);
+
+      renderTaskListView({ tasks: [sampleTask] });
+
+      fireEvent.click(screen.getByTestId("inline-creation-trigger"));
+      const input = screen.getByTestId("inline-creation-input");
+
+      fireEvent.change(input, { target: { value: "Failing Pending Task" } });
+      fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+
+      // Pending row visible
+      expect(screen.getByTestId("task-list-pending-row")).toBeInTheDocument();
+
+      // Reject server mutation
+      rejectCreation!(new Error("Server 500 error"));
+
+      await waitFor(() => {
+        // Pending row is removed
+        expect(screen.queryByTestId("task-list-pending-row")).not.toBeInTheDocument();
+        // Error displayed on creation row
+        expect(screen.getByTestId("inline-creation-error")).toHaveTextContent("Server 500 error");
+      });
+    });
   });
 });
 
