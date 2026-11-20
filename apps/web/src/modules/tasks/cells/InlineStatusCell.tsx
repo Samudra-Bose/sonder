@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Badge } from "@/components/ui/Badge.js";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/Popover.js";
 import { cn } from "@/lib/utils.js";
@@ -18,6 +18,7 @@ export interface InlineStatusCellProps {
   communityId: string;
   workspaceId: string;
   isArchived?: boolean;
+  disabled?: boolean;
   className?: string;
   onStatusChange?: (newStatus: TaskStatusCategory) => Promise<void> | void;
 }
@@ -52,17 +53,26 @@ export function InlineStatusCell({
   communityId,
   workspaceId,
   isArchived = false,
+  disabled = false,
   className,
   onStatusChange,
 }: InlineStatusCellProps): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const updateMutation = useUpdateTask();
 
-  const canEdit = !isArchived && (task.effectivePermissions?.canUpdateStatus ?? true);
+  const canEdit = !disabled && !isArchived && (task.effectivePermissions?.canUpdateStatus ?? true);
 
   if (!canEdit) {
     return (
-      <span className={cn("inline-flex items-center", className)}>
+      <span
+        className={cn(
+          "inline-flex items-center",
+          disabled && "opacity-60 cursor-not-allowed",
+          className
+        )}
+        data-testid={`inline-status-cell-${task.id}`}
+      >
         <Badge status={task.statusCategory}>{formatStatus(task.statusCategory)}</Badge>
       </span>
     );
@@ -95,7 +105,28 @@ export function InlineStatusCell({
         },
       });
     } catch {
-      // Error rollback is handled optimistically by useUpdateTask
+      // Optimistic update rollback handled by useUpdateTask
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    e.stopPropagation();
+    if (e.key === "Escape") {
+      setIsOpen(false);
+      return;
+    }
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const buttons = menuRef.current?.querySelectorAll<HTMLButtonElement>("button[role='menuitem']");
+      if (!buttons || buttons.length === 0) return;
+      const currentIndex = Array.from(buttons).indexOf(document.activeElement as HTMLButtonElement);
+      if (e.key === "ArrowDown") {
+        const nextIndex = (currentIndex + 1) % buttons.length;
+        buttons[nextIndex]?.focus();
+      } else {
+        const prevIndex = (currentIndex - 1 + buttons.length) % buttons.length;
+        buttons[prevIndex]?.focus();
+      }
     }
   };
 
@@ -111,8 +142,14 @@ export function InlineStatusCell({
           onClick={(e) => {
             e.stopPropagation();
           }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.stopPropagation();
+            }
+          }}
           className={cn(
             "inline-flex items-center rounded focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] transition-opacity hover:opacity-80 cursor-pointer select-none",
+            updateMutation.isPending && "opacity-70 animate-pulse",
             className
           )}
           aria-label={`Status: ${formatStatus(task.statusCategory)}. Click to change.`}
@@ -127,8 +164,10 @@ export function InlineStatusCell({
           onClick={(e) => e.stopPropagation()}
         >
           <div
+            ref={menuRef}
             role="menu"
             aria-label="Select status"
+            onKeyDown={handleKeyDown}
             className="flex flex-col gap-0.5 p-0.5 min-w-[140px]"
           >
             {STATUS_OPTIONS.map(({ category, label }) => {

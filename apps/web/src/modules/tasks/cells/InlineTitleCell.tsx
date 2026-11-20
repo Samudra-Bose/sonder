@@ -16,6 +16,7 @@ export interface InlineTitleCellProps {
   communityId: string;
   workspaceId: string;
   isArchived?: boolean;
+  disabled?: boolean;
   className?: string;
   onTitleChange?: (newTitle: string) => Promise<void> | void;
 }
@@ -25,6 +26,7 @@ export function InlineTitleCell({
   communityId,
   workspaceId,
   isArchived = false,
+  disabled = false,
   className,
   onTitleChange,
 }: InlineTitleCellProps): React.JSX.Element {
@@ -33,7 +35,7 @@ export function InlineTitleCell({
   const inputRef = useRef<HTMLInputElement>(null);
   const updateMutation = useUpdateTask();
 
-  const canEdit = !isArchived && (task.effectivePermissions?.canEditTitleDescription ?? true);
+  const canEdit = !disabled && !isArchived && (task.effectivePermissions?.canEditTitleDescription ?? true);
 
   useEffect(() => {
     setCurrentTitle(task.title);
@@ -50,8 +52,13 @@ export function InlineTitleCell({
     const trimmed = titleToSave.trim();
     setIsEditing(false);
 
-    if (!trimmed || trimmed === task.title) {
+    // Validation: Title cannot be empty/whitespace or unchanged
+    if (!trimmed) {
       setCurrentTitle(task.title);
+      return;
+    }
+
+    if (trimmed === task.title) {
       return;
     }
 
@@ -86,7 +93,11 @@ export function InlineTitleCell({
   if (!canEdit) {
     return (
       <span
-        className={cn("font-medium text-[var(--text-primary)] line-clamp-1", className)}
+        className={cn(
+          "font-medium text-[var(--text-primary)] line-clamp-1",
+          disabled && "opacity-60 cursor-not-allowed",
+          className
+        )}
         data-testid={`inline-title-cell-${task.id}`}
       >
         {task.title}
@@ -126,7 +137,11 @@ export function InlineTitleCell({
 
   return (
     <div
-      className={cn("inline-flex items-center group/title cursor-text", className)}
+      className={cn(
+        "inline-flex items-center group/title cursor-text select-none",
+        updateMutation.isPending && "opacity-70 animate-pulse",
+        className
+      )}
       onClick={(e) => {
         e.stopPropagation();
         setIsEditing(true);

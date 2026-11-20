@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { User, UserX, Check, Search } from "lucide-react";
+import { User, UserX, Check, Search, Loader2 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar.js";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/Popover.js";
 import { cn } from "@/lib/utils.js";
@@ -20,6 +20,7 @@ export interface InlineAssigneeCellProps {
   communityId: string;
   workspaceId: string;
   isArchived?: boolean;
+  disabled?: boolean;
   className?: string;
   onAssigneeChange?: (newAssigneeIds: string[]) => Promise<void> | void;
 }
@@ -29,6 +30,7 @@ export function InlineAssigneeCell({
   communityId,
   workspaceId,
   isArchived = false,
+  disabled = false,
   className,
   onAssigneeChange,
 }: InlineAssigneeCellProps): React.JSX.Element {
@@ -36,15 +38,17 @@ export function InlineAssigneeCell({
   const [searchQuery, setSearchQuery] = useState("");
   const updateMutation = useUpdateTask();
 
-  const { data: membersData } = useWorkspaceMembers(communityId, workspaceId);
+  const { data: membersData, isLoading: isMembersLoading } = useWorkspaceMembers(communityId, workspaceId);
   const members = useMemo(() => membersData?.items ?? [], [membersData]);
 
-  const canEdit = !isArchived && (task.effectivePermissions?.canAssignTask ?? true);
+  const canEdit = !disabled && !isArchived && (task.effectivePermissions?.canAssignTask ?? true);
 
-  const firstAssignment = task.assigneeAssignments?.[0];
+  const assignments = task.assigneeAssignments ?? [];
+  const firstAssignment = assignments[0];
   const assignedUserId = task.assigneeIds?.[0] ?? firstAssignment?.userId ?? null;
   const assignedUserName = firstAssignment?.user?.displayName ?? null;
   const assignedUserAvatar = firstAssignment?.user?.avatarUrl ?? undefined;
+  const additionalCount = assignments.length > 1 ? assignments.length - 1 : 0;
 
   const filteredMembers = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -57,16 +61,25 @@ export function InlineAssigneeCell({
   if (!canEdit) {
     return (
       <div
-        className={cn("inline-flex items-center gap-1.5", className)}
+        className={cn(
+          "inline-flex items-center gap-1.5",
+          disabled && "opacity-60 cursor-not-allowed",
+          className
+        )}
         data-testid={`inline-assignee-cell-${task.id}`}
       >
         {assignedUserName ? (
-          <>
+          <div className="flex items-center gap-1.5 truncate max-w-[120px]">
             <Avatar name={assignedUserName} src={assignedUserAvatar} size="xs" />
-            <span className="text-xs text-[var(--text-secondary)] truncate max-w-[100px]">
+            <span className="text-xs text-[var(--text-secondary)] truncate">
               {assignedUserName}
             </span>
-          </>
+            {additionalCount > 0 && (
+              <span className="text-[10px] text-[var(--text-muted)] font-mono">
+                +{additionalCount}
+              </span>
+            )}
+          </div>
         ) : (
           <span className="text-xs text-[var(--text-muted)] italic">Unassigned</span>
         )}
@@ -85,7 +98,7 @@ export function InlineAssigneeCell({
 
     if (
       (userId === null && (!task.assigneeIds || task.assigneeIds.length === 0)) ||
-      (userId !== null && task.assigneeIds?.includes(userId))
+      (userId !== null && task.assigneeIds?.length === 1 && task.assigneeIds[0] === userId)
     ) {
       return;
     }
@@ -108,7 +121,7 @@ export function InlineAssigneeCell({
         },
       });
     } catch {
-      // Handled optimistically by useUpdateTask
+      // Optimistic update rollback handled by useUpdateTask
     }
   };
 
@@ -130,9 +143,15 @@ export function InlineAssigneeCell({
           onClick={(e) => {
             e.stopPropagation();
           }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.stopPropagation();
+            }
+          }}
           className={cn(
             "inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded text-xs transition-colors cursor-pointer select-none",
             "focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] hover:bg-[var(--surface-muted)]",
+            updateMutation.isPending && "opacity-70 animate-pulse",
             className
           )}
           aria-label={`Assignee: ${assignedUserName ?? "Unassigned"}. Click to change.`}
@@ -143,6 +162,11 @@ export function InlineAssigneeCell({
               <span className="text-xs text-[var(--text-secondary)] truncate max-w-[110px]">
                 {assignedUserName}
               </span>
+              {additionalCount > 0 && (
+                <span className="text-[10px] text-[var(--text-muted)] font-mono">
+                  +{additionalCount}
+                </span>
+              )}
             </>
           ) : (
             <>
@@ -197,32 +221,43 @@ export function InlineAssigneeCell({
 
             {/* Members List */}
             <div className="max-h-48 overflow-y-auto space-y-0.5 border-t border-[var(--border-subtle)] pt-1">
-              {filteredMembers.map((member) => {
-                const isSelected = assignedUserId === member.user.id;
-                return (
-                  <button
-                    key={member.user.id}
-                    type="button"
-                    data-testid={`inline-assignee-option-${member.user.id}`}
-                    onClick={(e) => handleSelectMember(e, member.user.id)}
-                    className={cn(
-                      "flex items-center justify-between px-2 py-1 rounded text-xs text-left w-full transition-colors cursor-pointer",
-                      "hover:bg-[var(--surface-muted)] focus:bg-[var(--surface-muted)] focus:outline-none",
-                      isSelected && "font-semibold text-[var(--brand-accent-text)] bg-[var(--surface-muted)]"
-                    )}
-                  >
-                    <div className="flex items-center gap-1.5 truncate">
-                      <Avatar
-                        name={member.user.displayName}
-                        src={member.user.avatarUrl ?? undefined}
-                        size="xs"
-                      />
-                      <span className="truncate">{member.user.displayName}</span>
-                    </div>
-                    {isSelected && <Check className="h-3 w-3 shrink-0 ml-1" />}
-                  </button>
-                );
-              })}
+              {isMembersLoading ? (
+                <div className="flex items-center justify-center p-3 text-xs text-[var(--text-muted)] gap-1.5">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Loading members...</span>
+                </div>
+              ) : filteredMembers.length === 0 ? (
+                <div className="p-2 text-xs text-center text-[var(--text-muted)] italic">
+                  No members found
+                </div>
+              ) : (
+                filteredMembers.map((member) => {
+                  const isSelected = assignedUserId === member.user.id;
+                  return (
+                    <button
+                      key={member.user.id}
+                      type="button"
+                      data-testid={`inline-assignee-option-${member.user.id}`}
+                      onClick={(e) => handleSelectMember(e, member.user.id)}
+                      className={cn(
+                        "flex items-center justify-between px-2 py-1 rounded text-xs text-left w-full transition-colors cursor-pointer",
+                        "hover:bg-[var(--surface-muted)] focus:bg-[var(--surface-muted)] focus:outline-none",
+                        isSelected && "font-semibold text-[var(--brand-accent-text)] bg-[var(--surface-muted)]"
+                      )}
+                    >
+                      <div className="flex items-center gap-1.5 truncate">
+                        <Avatar
+                          name={member.user.displayName}
+                          src={member.user.avatarUrl ?? undefined}
+                          size="xs"
+                        />
+                        <span className="truncate">{member.user.displayName}</span>
+                      </div>
+                      {isSelected && <Check className="h-3 w-3 shrink-0 ml-1" />}
+                    </button>
+                  );
+                })
+              )}
             </div>
           </div>
         </PopoverContent>

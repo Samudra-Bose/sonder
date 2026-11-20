@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Calendar, X } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/Popover.js";
 import { cn } from "@/lib/utils.js";
+import { getDefaultReferenceDate, addCalendarDays } from "@/modules/my-work/date-utils.js";
 import { useUpdateTask } from "../useUpdateTask.js";
 import type { TaskDto } from "../types.js";
 
@@ -18,24 +19,9 @@ export interface InlineDueDateCellProps {
   communityId: string;
   workspaceId: string;
   isArchived?: boolean;
+  disabled?: boolean;
   className?: string;
   onDueDateChange?: (newDueDate: string | null) => Promise<void> | void;
-}
-
-function getTodayString(): string {
-  return new Date().toISOString().split("T")[0] ?? "";
-}
-
-function getTomorrowString(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return d.toISOString().split("T")[0] ?? "";
-}
-
-function getNextWeekString(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 7);
-  return d.toISOString().split("T")[0] ?? "";
 }
 
 export function InlineDueDateCell({
@@ -43,21 +29,24 @@ export function InlineDueDateCell({
   communityId,
   workspaceId,
   isArchived = false,
+  disabled = false,
   className,
   onDueDateChange,
 }: InlineDueDateCellProps): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   const updateMutation = useUpdateTask();
 
-  const canEdit = !isArchived && (task.effectivePermissions?.canEditDatesPriority ?? true);
+  const canEdit = !disabled && !isArchived && (task.effectivePermissions?.canEditDatesPriority ?? true);
 
   if (!canEdit) {
     return (
       <span
         className={cn(
           "inline-flex items-center gap-1 font-mono text-[11px] tabular-nums text-[var(--text-secondary)]",
+          disabled && "opacity-60 cursor-not-allowed",
           className
         )}
+        data-testid={`inline-duedate-cell-${task.id}`}
       >
         {task.dueDate ? (
           <>
@@ -70,6 +59,10 @@ export function InlineDueDateCell({
       </span>
     );
   }
+
+  const todayStr = getDefaultReferenceDate();
+  const tomorrowStr = addCalendarDays(todayStr, 1);
+  const nextWeekStr = addCalendarDays(todayStr, 7);
 
   const handleApplyDate = async (
     e: React.MouseEvent | React.ChangeEvent<HTMLInputElement>,
@@ -98,7 +91,7 @@ export function InlineDueDateCell({
         },
       });
     } catch {
-      // Error rollback is handled optimistically by useUpdateTask
+      // Optimistic update rollback handled by useUpdateTask
     }
   };
 
@@ -114,12 +107,18 @@ export function InlineDueDateCell({
           onClick={(e) => {
             e.stopPropagation();
           }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.stopPropagation();
+            }
+          }}
           className={cn(
             "inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded text-[11px] font-mono tabular-nums transition-colors cursor-pointer select-none",
             "focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)]",
             task.dueDate
               ? "text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]"
               : "text-[var(--text-muted)] italic hover:text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]",
+            updateMutation.isPending && "opacity-70 animate-pulse",
             className
           )}
           aria-label={`Due date: ${task.dueDate ?? "None"}. Click to change.`}
@@ -146,7 +145,7 @@ export function InlineDueDateCell({
                 data-testid={`inline-duedate-input-${task.id}`}
                 defaultValue={task.dueDate ?? ""}
                 onChange={(e) => handleApplyDate(e, e.target.value || null)}
-                className="w-full text-xs px-2 py-1 rounded bg-[var(--surface-canvas)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)]"
+                className="w-full text-xs px-2 py-1 rounded bg-[var(--surface-canvas)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] cursor-pointer"
               />
             </div>
 
@@ -155,7 +154,7 @@ export function InlineDueDateCell({
               <button
                 type="button"
                 data-testid="inline-duedate-today"
-                onClick={(e) => handleApplyDate(e, getTodayString())}
+                onClick={(e) => handleApplyDate(e, todayStr)}
                 className="text-xs text-left px-2 py-1 rounded hover:bg-[var(--surface-muted)] transition-colors cursor-pointer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               >
                 Today
@@ -163,7 +162,7 @@ export function InlineDueDateCell({
               <button
                 type="button"
                 data-testid="inline-duedate-tomorrow"
-                onClick={(e) => handleApplyDate(e, getTomorrowString())}
+                onClick={(e) => handleApplyDate(e, tomorrowStr)}
                 className="text-xs text-left px-2 py-1 rounded hover:bg-[var(--surface-muted)] transition-colors cursor-pointer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               >
                 Tomorrow
@@ -171,7 +170,7 @@ export function InlineDueDateCell({
               <button
                 type="button"
                 data-testid="inline-duedate-next-week"
-                onClick={(e) => handleApplyDate(e, getNextWeekString())}
+                onClick={(e) => handleApplyDate(e, nextWeekStr)}
                 className="text-xs text-left px-2 py-1 rounded hover:bg-[var(--surface-muted)] transition-colors cursor-pointer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               >
                 Next week
