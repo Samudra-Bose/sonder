@@ -206,8 +206,8 @@ describe("Sonder — Functional Recovery: Core Workflow & Assignment Verificatio
       });
 
       // Click on ALEX-1 row to open TaskPeekDrawer
-      const taskTitle = screen.getByText("Review quarter 4 personal development goals");
-      await user.click(taskTitle);
+      const taskKeyBtn = screen.getByRole("button", { name: "ALEX-1" });
+      await user.click(taskKeyBtn);
 
       // Peek drawer opens
       await waitFor(() => {
