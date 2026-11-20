@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { User, UserX, Check, Search, Loader2, AlertCircle } from "lucide-react";
+import { User, UserX, Check, Search, Loader2, AlertCircle, UserPlus } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar.js";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/Popover.js";
 import { cn } from "@/lib/utils.js";
@@ -38,6 +38,7 @@ export function InlineAssigneeCell({
   onAssigneeChange,
 }: InlineAssigneeCellProps): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
+  const [isMultiMode, setIsMultiMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const updateMutation = useUpdateTask();
@@ -57,6 +58,8 @@ export function InlineAssigneeCell({
   const assignedUserName = firstAssignment?.user?.displayName ?? null;
   const assignedUserAvatar = firstAssignment?.user?.avatarUrl ?? undefined;
   const additionalCount = assignments.length > 1 ? assignments.length - 1 : 0;
+
+  const isMulti = isMultiMode || currentAssigneeIds.length > 1 || mode === "toggle";
 
   const filteredMembers = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -100,7 +103,6 @@ export function InlineAssigneeCell({
     userId: string | null
   ) => {
     e.stopPropagation();
-    setIsOpen(false);
     setError(null);
 
     let newAssigneeIds: string[];
@@ -108,18 +110,29 @@ export function InlineAssigneeCell({
     if (userId === null) {
       // Explicit unassignment
       newAssigneeIds = [];
+      setIsMultiMode(false);
+      setIsOpen(false);
     } else {
       const isAlreadyAssigned = currentAssigneeIds.includes(userId);
 
-      if (isAlreadyAssigned) {
-        // Toggle off: remove this assignee
-        newAssigneeIds = currentAssigneeIds.filter((id) => id !== userId);
-      } else if (currentAssigneeIds.length > 1 || mode === "toggle") {
-        // Multi-assignee additive toggle: keep existing, add new member
-        newAssigneeIds = [...currentAssigneeIds, userId];
+      if (isMulti) {
+        if (isAlreadyAssigned) {
+          // Toggle off: remove this assignee
+          newAssigneeIds = currentAssigneeIds.filter((id) => id !== userId);
+        } else {
+          // Multi-assignee additive toggle: keep existing, add new member
+          newAssigneeIds = [...currentAssigneeIds, userId];
+        }
+        // In multi mode, remain open for subsequent toggles
       } else {
-        // Single replacement: replace with new member
-        newAssigneeIds = [userId];
+        if (isAlreadyAssigned) {
+          // Single mode clicking currently assigned member: unassign
+          newAssigneeIds = [];
+        } else {
+          // Single replacement: replace with new member
+          newAssigneeIds = [userId];
+        }
+        setIsOpen(false);
       }
     }
 
@@ -158,6 +171,7 @@ export function InlineAssigneeCell({
           if (open) {
             setSearchQuery("");
             setError(null);
+            setIsMultiMode(mode === "toggle" || currentAssigneeIds.length > 1);
           }
         }}
       >
@@ -229,6 +243,22 @@ export function InlineAssigneeCell({
               />
             </div>
 
+            {/* Explicit Multi-Assignee Mode Action (Option 3 requirement) */}
+            {currentAssigneeIds.length === 1 && !isMulti && (
+              <button
+                type="button"
+                data-testid="inline-assignee-add-another"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMultiMode(true);
+                }}
+                className="flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium text-[var(--brand-accent-text)] hover:bg-[var(--surface-muted)] cursor-pointer transition-colors text-left"
+              >
+                <UserPlus className="h-3 w-3" />
+                <span>Add another assignee...</span>
+              </button>
+            )}
+
             {/* Unassigned button */}
             <button
               type="button"
@@ -245,7 +275,7 @@ export function InlineAssigneeCell({
                 <UserX className="h-3 w-3 text-[var(--text-muted)]" />
                 <span>Unassigned</span>
               </div>
-              {currentAssigneeIds.length === 0 && <Check className="h-3 w-3" />}
+              {currentAssigneeIds.length === 0 && <Check className="h-3 w-3 text-[var(--brand-accent-text)]" />}
             </button>
 
             {/* Members List */}
@@ -275,6 +305,18 @@ export function InlineAssigneeCell({
                       )}
                     >
                       <div className="flex items-center gap-1.5 truncate">
+                        {isMulti ? (
+                          <div
+                            className={cn(
+                              "h-3.5 w-3.5 rounded border flex items-center justify-center shrink-0 transition-colors",
+                              isAssigned
+                                ? "bg-[var(--brand-accent-btn-bg)] border-[var(--brand-accent-btn-bg)] text-white"
+                                : "border-[var(--border-subtle)] bg-[var(--surface-canvas)]"
+                            )}
+                          >
+                            {isAssigned && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                          </div>
+                        ) : null}
                         <Avatar
                           name={member.user.displayName}
                           src={member.user.avatarUrl ?? undefined}
@@ -282,12 +324,34 @@ export function InlineAssigneeCell({
                         />
                         <span className="truncate">{member.user.displayName}</span>
                       </div>
-                      {isAssigned && <Check className="h-3 w-3 shrink-0 ml-1" />}
+                      {!isMulti && isAssigned && (
+                        <Check className="h-3 w-3 shrink-0 ml-1 text-[var(--brand-accent-text)]" />
+                      )}
                     </button>
                   );
                 })
               )}
             </div>
+
+            {/* Multi-assignee Done Footer */}
+            {isMulti && (
+              <div className="border-t border-[var(--border-subtle)] pt-1 mt-0.5 flex items-center justify-between px-1">
+                <span className="text-[10px] text-[var(--text-muted)] font-mono">
+                  {currentAssigneeIds.length} assigned
+                </span>
+                <button
+                  type="button"
+                  data-testid="inline-assignee-done"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsOpen(false);
+                  }}
+                  className="px-2 py-0.5 text-xs font-medium rounded bg-[var(--brand-accent-btn-bg)] text-white hover:opacity-90 cursor-pointer"
+                >
+                  Done
+                </button>
+              </div>
+            )}
           </div>
         </PopoverContent>
       </Popover>

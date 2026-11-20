@@ -139,8 +139,10 @@ export function InlineTitleCell({
           onKeyDown={(e) => {
             e.stopPropagation();
             if (e.key === "Enter") {
+              e.preventDefault();
               handleSave(currentTitle);
             } else if (e.key === "Escape") {
+              e.preventDefault();
               handleCancel();
             }
           }}
@@ -153,9 +155,11 @@ export function InlineTitleCell({
   }
 
   return (
-    <div
+    <button
+      type="button"
       className={cn(
-        "inline-flex items-center gap-1 group/title cursor-text select-none",
+        "inline-flex items-center gap-1 group/title text-left select-none rounded p-0.5 -m-0.5 cursor-pointer",
+        "focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)]",
         updateMutation.isPending && "opacity-70 animate-pulse",
         error && "ring-1 ring-[var(--status-danger-border)]",
         className
@@ -165,8 +169,17 @@ export function InlineTitleCell({
         setError(null);
         setIsEditing(true);
       }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.stopPropagation();
+          e.preventDefault();
+          setError(null);
+          setIsEditing(true);
+        }
+      }}
       data-testid={`inline-title-cell-${task.id}`}
-      title={error ?? "Click to edit title"}
+      aria-label={`Edit title: ${task.title}`}
+      title={error ?? "Click or press Enter to edit title"}
     >
       <span className="font-medium text-[var(--text-primary)] group-hover/title:text-[var(--brand-accent-text)] line-clamp-1 transition-colors">
         {task.title}
@@ -174,6 +187,6 @@ export function InlineTitleCell({
       {error && (
         <AlertCircle className="h-3 w-3 text-[var(--status-danger-text)] shrink-0 ml-0.5" />
       )}
-    </div>
+    </button>
   );
 }

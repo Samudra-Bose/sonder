@@ -870,12 +870,72 @@ describe("Stage 5.2: Standalone Inline Cell Primitives", () => {
       expect(screen.queryByTestId("inline-assignee-trigger-task-001")).not.toBeInTheDocument();
       expect(screen.getByText("Alex Morgan")).toBeInTheDocument();
     });
+
+    it("Option 3: provides 'Add another assignee...' in single-assignee mode and transitions to multi-select with Done footer", async () => {
+      const onAssigneeChange = vi.fn();
+      renderWithProviders(
+        <InlineAssigneeCell
+          task={defaultTask}
+          communityId="comm-1"
+          workspaceId="ws-1"
+          onAssigneeChange={onAssigneeChange}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("inline-assignee-trigger-task-001"));
+      const addAnotherBtn = await screen.findByTestId("inline-assignee-add-another");
+      expect(addAnotherBtn).toBeInTheDocument();
+
+      // Click "Add another assignee..." to enter multi-assignee mode
+      fireEvent.click(addAnotherBtn);
+
+      // Now Done button appears in footer
+      const doneBtn = screen.getByTestId("inline-assignee-done");
+      expect(doneBtn).toBeInTheDocument();
+
+      // Click Jordan Lee (user-456) to add as second assignee
+      const jordanOption = screen.getByTestId("inline-assignee-option-user-456");
+      fireEvent.click(jordanOption);
+
+      // Both user-123 and user-456 are preserved
+      expect(onAssigneeChange).toHaveBeenCalledWith(["user-123", "user-456"]);
+
+      // Popover remains open in multi-mode until Done is clicked
+      expect(screen.getByTestId("inline-assignee-done")).toBeInTheDocument();
+      fireEvent.click(doneBtn);
+    });
   });
 
   // ==========================================================================
   // InlineTitleCell Tests
   // ==========================================================================
   describe("InlineTitleCell", () => {
+    it("keyboard activation in view mode: Enter and Space activate editing without bubbling", async () => {
+      const rowKeyDown = vi.fn();
+      renderWithProviders(
+        <div onKeyDown={rowKeyDown}>
+          <InlineTitleCell
+            task={defaultTask}
+            communityId="comm-1"
+            workspaceId="ws-1"
+          />
+        </div>
+      );
+
+      const titleTrigger = screen.getByTestId("inline-title-cell-task-001");
+      expect(titleTrigger.tagName.toLowerCase()).toBe("button");
+      expect(titleTrigger).toHaveAttribute("aria-label", `Edit title: ${defaultTask.title}`);
+
+      // Press Enter to activate editing
+      fireEvent.keyDown(titleTrigger, { key: "Enter", code: "Enter" });
+
+      // Edit input appears
+      const input = screen.getByTestId("inline-title-input-task-001");
+      expect(input).toBeInTheDocument();
+
+      // Must not bubble to parent row
+      expect(rowKeyDown).not.toHaveBeenCalled();
+    });
     it("allows editing and saves on Enter", async () => {
       const onTitleChange = vi.fn();
       renderWithProviders(
