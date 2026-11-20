@@ -443,6 +443,31 @@ describe("Stage 5.2: Standalone Inline Cell Primitives", () => {
       expect(screen.queryByTestId("inline-priority-trigger-task-001")).not.toBeInTheDocument();
       expect(screen.getByText("High")).toBeInTheDocument();
     });
+
+    it("handles mutation failure, surfaces error, and permits retry", async () => {
+      const failingMutation = vi.fn().mockRejectedValue(new Error("Priority update failed"));
+      renderWithProviders(
+        <InlinePriorityCell
+          task={defaultTask}
+          communityId="comm-1"
+          workspaceId="ws-1"
+          onPriorityChange={failingMutation}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("inline-priority-trigger-task-001"));
+      const urgentOption = await screen.findByTestId("inline-priority-option-URGENT");
+      fireEvent.click(urgentOption);
+
+      expect(failingMutation).toHaveBeenCalledWith("URGENT");
+      // Remains in document, displays original priority, and displays error feedback
+      const trigger = screen.getByTestId("inline-priority-trigger-task-001");
+      expect(trigger).toHaveAttribute("title", "Priority update failed");
+
+      // Retry: clicking trigger clears error and allows another selection
+      fireEvent.click(trigger);
+      expect(trigger).not.toHaveAttribute("title");
+    });
   });
 
   // ==========================================================================
@@ -556,6 +581,29 @@ describe("Stage 5.2: Standalone Inline Cell Primitives", () => {
 
       expect(screen.queryByTestId("inline-duedate-trigger-task-001")).not.toBeInTheDocument();
       expect(screen.getByText("2026-12-01")).toBeInTheDocument();
+    });
+
+    it("handles due date update failure, surfaces error, and permits retry", async () => {
+      const failingMutation = vi.fn().mockRejectedValue(new Error("Date update failed"));
+      renderWithProviders(
+        <InlineDueDateCell
+          task={defaultTask}
+          communityId="comm-1"
+          workspaceId="ws-1"
+          onDueDateChange={failingMutation}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("inline-duedate-trigger-task-001"));
+      const todayBtn = await screen.findByTestId("inline-duedate-today");
+      fireEvent.click(todayBtn);
+
+      const trigger = screen.getByTestId("inline-duedate-trigger-task-001");
+      expect(trigger).toHaveAttribute("title", "Date update failed");
+
+      // Retry: clicking trigger clears error
+      fireEvent.click(trigger);
+      expect(trigger).not.toHaveAttribute("title");
     });
   });
 
@@ -694,6 +742,92 @@ describe("Stage 5.2: Standalone Inline Cell Primitives", () => {
       expect(onAssigneeChange).toHaveBeenCalledWith([]);
     });
 
+    it("toggles off when clicking an already assigned member", async () => {
+      const onAssigneeChange = vi.fn();
+      renderWithProviders(
+        <InlineAssigneeCell
+          task={defaultTask}
+          communityId="comm-1"
+          workspaceId="ws-1"
+          onAssigneeChange={onAssigneeChange}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("inline-assignee-trigger-task-001"));
+      const assignedOption = await screen.findByTestId("inline-assignee-option-user-123");
+      fireEvent.click(assignedOption);
+
+      // Clicking already assigned user toggles them off (unassigns)
+      expect(onAssigneeChange).toHaveBeenCalledWith([]);
+    });
+
+    it("adds member to existing assignees when task already has multiple assignees", async () => {
+      const multiTask = {
+        ...defaultTask,
+        assigneeIds: ["user-123", "user-456"],
+        assigneeAssignments: [
+          { userId: "user-123", user: { id: "user-123", displayName: "Alex Morgan", avatarUrl: null }, assignedByUserId: "u", assignedAt: "d" },
+          { userId: "user-456", user: { id: "user-456", displayName: "Jordan Lee", avatarUrl: null }, assignedByUserId: "u", assignedAt: "d" },
+        ],
+      };
+      const onAssigneeChange = vi.fn();
+      renderWithProviders(
+        <InlineAssigneeCell
+          task={multiTask}
+          communityId="comm-1"
+          workspaceId="ws-1"
+          onAssigneeChange={onAssigneeChange}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("inline-assignee-trigger-task-001"));
+      const taylorOption = await screen.findByTestId("inline-assignee-option-user-789");
+      fireEvent.click(taylorOption);
+
+      // Preserves existing assignees and adds new member
+      expect(onAssigneeChange).toHaveBeenCalledWith(["user-123", "user-456", "user-789"]);
+    });
+
+    it("respects canAssign canonical contract permission", () => {
+      const taskCanAssign = {
+        ...defaultTask,
+        effectivePermissions: { canAssign: false },
+      };
+      renderWithProviders(
+        <InlineAssigneeCell
+          task={taskCanAssign}
+          communityId="comm-1"
+          workspaceId="ws-1"
+        />
+      );
+
+      expect(screen.queryByTestId("inline-assignee-trigger-task-001")).not.toBeInTheDocument();
+      expect(screen.getByText("Alex Morgan")).toBeInTheDocument();
+    });
+
+    it("handles assignee mutation failure, surfaces error, and permits retry", async () => {
+      const failingMutation = vi.fn().mockRejectedValue(new Error("Assignee update failed"));
+      renderWithProviders(
+        <InlineAssigneeCell
+          task={defaultTask}
+          communityId="comm-1"
+          workspaceId="ws-1"
+          onAssigneeChange={failingMutation}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("inline-assignee-trigger-task-001"));
+      const memberOption = await screen.findByTestId("inline-assignee-option-user-456");
+      fireEvent.click(memberOption);
+
+      const trigger = screen.getByTestId("inline-assignee-trigger-task-001");
+      expect(trigger).toHaveAttribute("title", "Assignee update failed");
+
+      // Retry: clicking trigger clears error
+      fireEvent.click(trigger);
+      expect(trigger).not.toHaveAttribute("title");
+    });
+
     it("renders inert text when permissions forbid assigning", () => {
       const taskNoPerm = {
         ...defaultTask,
@@ -747,6 +881,56 @@ describe("Stage 5.2: Standalone Inline Cell Primitives", () => {
       fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
 
       expect(onTitleChange).toHaveBeenCalledWith("Updated Task Title");
+    });
+
+    it("Enter save followed immediately by blur does not fire duplicate mutation", async () => {
+      const onTitleChange = vi.fn();
+      renderWithProviders(
+        <InlineTitleCell
+          task={defaultTask}
+          communityId="comm-1"
+          workspaceId="ws-1"
+          onTitleChange={onTitleChange}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("inline-title-cell-task-001"));
+      const input = screen.getByTestId("inline-title-input-task-001");
+      fireEvent.change(input, { target: { value: "Unique New Title" } });
+
+      // Trigger Enter, then immediately trigger blur
+      fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+      fireEvent.blur(input);
+
+      // Must be called exactly once, never twice
+      expect(onTitleChange).toHaveBeenCalledTimes(1);
+      expect(onTitleChange).toHaveBeenCalledWith("Unique New Title");
+    });
+
+    it("handles title save failure, surfaces error, and permits retry", async () => {
+      const failingMutation = vi.fn().mockRejectedValue(new Error("Title update failed"));
+      renderWithProviders(
+        <InlineTitleCell
+          task={defaultTask}
+          communityId="comm-1"
+          workspaceId="ws-1"
+          onTitleChange={failingMutation}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("inline-title-cell-task-001"));
+      const input = screen.getByTestId("inline-title-input-task-001");
+      fireEvent.change(input, { target: { value: "Failing Title Change" } });
+      fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+
+      const cell = await screen.findByTestId("inline-title-cell-task-001");
+      expect(cell).toHaveAttribute("title", "Title update failed");
+      // Reverts to original title on rollback
+      expect(cell).toHaveTextContent("Implement Inline Primitives");
+
+      // Clicking cell clears error and enters edit mode
+      fireEvent.click(cell);
+      expect(screen.getByTestId("inline-title-input-task-001")).toBeInTheDocument();
     });
 
     it("saves trimmed changes on blur", async () => {

@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/Badge.js";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/Popover.js";
 import { cn } from "@/lib/utils.js";
@@ -58,6 +59,7 @@ export function InlinePriorityCell({
   onPriorityChange,
 }: InlinePriorityCellProps): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const updateMutation = useUpdateTask();
 
@@ -84,6 +86,7 @@ export function InlinePriorityCell({
   ) => {
     e.stopPropagation();
     setIsOpen(false);
+    setError(null);
 
     if (priority === task.priority) return;
 
@@ -104,8 +107,8 @@ export function InlinePriorityCell({
           },
         },
       });
-    } catch {
-      // Optimistic update rollback handled by useUpdateTask
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update priority");
     }
   };
 
@@ -132,11 +135,17 @@ export function InlinePriorityCell({
 
   return (
     <div
-      className="inline-flex items-center"
+      className="inline-flex items-center gap-1"
       onClick={(e) => e.stopPropagation()}
       data-testid={`inline-priority-cell-${task.id}`}
     >
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <Popover
+        open={isOpen}
+        onOpenChange={(open) => {
+          setIsOpen(open);
+          if (open) setError(null);
+        }}
+      >
         <PopoverTrigger
           data-testid={`inline-priority-trigger-${task.id}`}
           onClick={(e) => {
@@ -150,11 +159,16 @@ export function InlinePriorityCell({
           className={cn(
             "inline-flex items-center rounded focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] transition-opacity hover:opacity-80 cursor-pointer select-none",
             updateMutation.isPending && "opacity-70 animate-pulse",
+            error && "ring-1 ring-[var(--status-danger-border)]",
             className
           )}
           aria-label={`Priority: ${formatPriority(task.priority)}. Click to change.`}
+          title={error ?? undefined}
         >
           <Badge priority={task.priority}>{formatPriority(task.priority)}</Badge>
+          {error && (
+            <AlertCircle className="h-3 w-3 text-[var(--status-danger-text)] shrink-0 ml-0.5" />
+          )}
         </PopoverTrigger>
 
         <PopoverContent

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Calendar, X } from "lucide-react";
+import { Calendar, X, AlertCircle } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/Popover.js";
 import { cn } from "@/lib/utils.js";
 import { getDefaultReferenceDate, addCalendarDays } from "@/modules/my-work/date-utils.js";
@@ -34,6 +34,7 @@ export function InlineDueDateCell({
   onDueDateChange,
 }: InlineDueDateCellProps): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const updateMutation = useUpdateTask();
 
   const canEdit = !disabled && !isArchived && (task.effectivePermissions?.canEditDatesPriority ?? true);
@@ -70,6 +71,7 @@ export function InlineDueDateCell({
   ) => {
     e.stopPropagation();
     setIsOpen(false);
+    setError(null);
 
     if (newDate === task.dueDate) return;
 
@@ -90,18 +92,24 @@ export function InlineDueDateCell({
           },
         },
       });
-    } catch {
-      // Optimistic update rollback handled by useUpdateTask
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update due date");
     }
   };
 
   return (
     <div
-      className="inline-flex items-center"
+      className="inline-flex items-center gap-1"
       onClick={(e) => e.stopPropagation()}
       data-testid={`inline-duedate-cell-${task.id}`}
     >
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <Popover
+        open={isOpen}
+        onOpenChange={(open) => {
+          setIsOpen(open);
+          if (open) setError(null);
+        }}
+      >
         <PopoverTrigger
           data-testid={`inline-duedate-trigger-${task.id}`}
           onClick={(e) => {
@@ -119,12 +127,17 @@ export function InlineDueDateCell({
               ? "text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]"
               : "text-[var(--text-muted)] italic hover:text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]",
             updateMutation.isPending && "opacity-70 animate-pulse",
+            error && "ring-1 ring-[var(--status-danger-border)]",
             className
           )}
           aria-label={`Due date: ${task.dueDate ?? "None"}. Click to change.`}
+          title={error ?? undefined}
         >
           <Calendar className="h-3 w-3 text-[var(--text-muted)] shrink-0" />
           <span>{task.dueDate ?? "Set date"}</span>
+          {error && (
+            <AlertCircle className="h-3 w-3 text-[var(--status-danger-text)] shrink-0 ml-0.5" />
+          )}
         </PopoverTrigger>
 
         <PopoverContent

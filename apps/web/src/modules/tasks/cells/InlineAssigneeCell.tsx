@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { User, UserX, Check, Search, Loader2 } from "lucide-react";
+import { User, UserX, Check, Search, Loader2, AlertCircle } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar.js";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/Popover.js";
 import { cn } from "@/lib/utils.js";
@@ -10,6 +10,7 @@ import type { TaskDto } from "../types.js";
 export interface InlineAssigneeCellProps {
   task: Pick<TaskDto, "id" | "assigneeIds" | "assigneeAssignments"> & {
     effectivePermissions?: {
+      canAssign?: boolean;
       canAssignTask?: boolean;
     };
     fieldRevisions?: {
@@ -22,6 +23,7 @@ export interface InlineAssigneeCellProps {
   isArchived?: boolean;
   disabled?: boolean;
   className?: string;
+  mode?: "replace" | "toggle";
   onAssigneeChange?: (newAssigneeIds: string[]) => Promise<void> | void;
 }
 
@@ -32,20 +34,26 @@ export function InlineAssigneeCell({
   isArchived = false,
   disabled = false,
   className,
+  mode = "replace",
   onAssigneeChange,
 }: InlineAssigneeCellProps): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const updateMutation = useUpdateTask();
 
   const { data: membersData, isLoading: isMembersLoading } = useWorkspaceMembers(communityId, workspaceId);
   const members = useMemo(() => membersData?.items ?? [], [membersData]);
 
-  const canEdit = !disabled && !isArchived && (task.effectivePermissions?.canAssignTask ?? true);
+  // Canonical contract permission is canAssign; also supports canAssignTask alias
+  const canEdit =
+    !disabled &&
+    !isArchived &&
+    Boolean(task.effectivePermissions?.canAssign ?? task.effectivePermissions?.canAssignTask ?? true);
 
   const assignments = task.assigneeAssignments ?? [];
+  const currentAssigneeIds = task.assigneeIds ?? assignments.map((a) => a.userId);
   const firstAssignment = assignments[0];
-  const assignedUserId = task.assigneeIds?.[0] ?? firstAssignment?.userId ?? null;
   const assignedUserName = firstAssignment?.user?.displayName ?? null;
   const assignedUserAvatar = firstAssignment?.user?.avatarUrl ?? undefined;
   const additionalCount = assignments.length > 1 ? assignments.length - 1 : 0;
@@ -93,14 +101,26 @@ export function InlineAssigneeCell({
   ) => {
     e.stopPropagation();
     setIsOpen(false);
+    setError(null);
 
-    const newAssigneeIds = userId ? [userId] : [];
+    let newAssigneeIds: string[];
 
-    if (
-      (userId === null && (!task.assigneeIds || task.assigneeIds.length === 0)) ||
-      (userId !== null && task.assigneeIds?.length === 1 && task.assigneeIds[0] === userId)
-    ) {
-      return;
+    if (userId === null) {
+      // Explicit unassignment
+      newAssigneeIds = [];
+    } else {
+      const isAlreadyAssigned = currentAssigneeIds.includes(userId);
+
+      if (isAlreadyAssigned) {
+        // Toggle off: remove this assignee
+        newAssigneeIds = currentAssigneeIds.filter((id) => id !== userId);
+      } else if (currentAssigneeIds.length > 1 || mode === "toggle") {
+        // Multi-assignee additive toggle: keep existing, add new member
+        newAssigneeIds = [...currentAssigneeIds, userId];
+      } else {
+        // Single replacement: replace with new member
+        newAssigneeIds = [userId];
+      }
     }
 
     try {
@@ -120,14 +140,14 @@ export function InlineAssigneeCell({
           },
         },
       });
-    } catch {
-      // Optimistic update rollback handled by useUpdateTask
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update assignees");
     }
   };
 
   return (
     <div
-      className="inline-flex items-center"
+      className="inline-flex items-center gap-1"
       onClick={(e) => e.stopPropagation()}
       data-testid={`inline-assignee-cell-${task.id}`}
     >
@@ -135,7 +155,10 @@ export function InlineAssigneeCell({
         open={isOpen}
         onOpenChange={(open) => {
           setIsOpen(open);
-          if (open) setSearchQuery("");
+          if (open) {
+            setSearchQuery("");
+            setError(null);
+          }
         }}
       >
         <PopoverTrigger
@@ -152,9 +175,11 @@ export function InlineAssigneeCell({
             "inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded text-xs transition-colors cursor-pointer select-none",
             "focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] hover:bg-[var(--surface-muted)]",
             updateMutation.isPending && "opacity-70 animate-pulse",
+            error && "ring-1 ring-[var(--status-danger-border)]",
             className
           )}
           aria-label={`Assignee: ${assignedUserName ?? "Unassigned"}. Click to change.`}
+          title={error ?? undefined}
         >
           {assignedUserName ? (
             <>
@@ -173,6 +198,9 @@ export function InlineAssigneeCell({
               <User className="h-3 w-3 text-[var(--text-muted)] shrink-0" />
               <span className="text-xs text-[var(--text-muted)] italic">Unassigned</span>
             </>
+          )}
+          {error && (
+            <AlertCircle className="h-3 w-3 text-[var(--status-danger-text)] shrink-0 ml-0.5" />
           )}
         </PopoverTrigger>
 
@@ -209,14 +237,15 @@ export function InlineAssigneeCell({
               className={cn(
                 "flex items-center justify-between px-2 py-1 rounded text-xs text-left transition-colors cursor-pointer",
                 "hover:bg-[var(--surface-muted)] focus:bg-[var(--surface-muted)] focus:outline-none",
-                !assignedUserId && "font-semibold text-[var(--brand-accent-text)] bg-[var(--surface-muted)]"
+                currentAssigneeIds.length === 0 &&
+                  "font-semibold text-[var(--brand-accent-text)] bg-[var(--surface-muted)]"
               )}
             >
               <div className="flex items-center gap-1.5">
                 <UserX className="h-3 w-3 text-[var(--text-muted)]" />
                 <span>Unassigned</span>
               </div>
-              {!assignedUserId && <Check className="h-3 w-3" />}
+              {currentAssigneeIds.length === 0 && <Check className="h-3 w-3" />}
             </button>
 
             {/* Members List */}
@@ -232,7 +261,7 @@ export function InlineAssigneeCell({
                 </div>
               ) : (
                 filteredMembers.map((member) => {
-                  const isSelected = assignedUserId === member.user.id;
+                  const isAssigned = currentAssigneeIds.includes(member.user.id);
                   return (
                     <button
                       key={member.user.id}
@@ -242,7 +271,7 @@ export function InlineAssigneeCell({
                       className={cn(
                         "flex items-center justify-between px-2 py-1 rounded text-xs text-left w-full transition-colors cursor-pointer",
                         "hover:bg-[var(--surface-muted)] focus:bg-[var(--surface-muted)] focus:outline-none",
-                        isSelected && "font-semibold text-[var(--brand-accent-text)] bg-[var(--surface-muted)]"
+                        isAssigned && "font-semibold text-[var(--brand-accent-text)] bg-[var(--surface-muted)]"
                       )}
                     >
                       <div className="flex items-center gap-1.5 truncate">
@@ -253,7 +282,7 @@ export function InlineAssigneeCell({
                         />
                         <span className="truncate">{member.user.displayName}</span>
                       </div>
-                      {isSelected && <Check className="h-3 w-3 shrink-0 ml-1" />}
+                      {isAssigned && <Check className="h-3 w-3 shrink-0 ml-1" />}
                     </button>
                   );
                 })

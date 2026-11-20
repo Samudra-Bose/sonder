@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils.js";
 import { useUpdateTask } from "../useUpdateTask.js";
 import type { TaskDto } from "../types.js";
@@ -32,7 +33,9 @@ export function InlineTitleCell({
 }: InlineTitleCellProps): React.JSX.Element {
   const [isEditing, setIsEditing] = useState(false);
   const [currentTitle, setCurrentTitle] = useState(task.title);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isSavingRef = useRef(false);
   const updateMutation = useUpdateTask();
 
   const canEdit = !disabled && !isArchived && (task.effectivePermissions?.canEditTitleDescription ?? true);
@@ -49,18 +52,25 @@ export function InlineTitleCell({
   }, [isEditing]);
 
   const handleSave = async (titleToSave: string) => {
+    if (isSavingRef.current) return;
+
     const trimmed = titleToSave.trim();
-    setIsEditing(false);
 
     // Validation: Title cannot be empty/whitespace or unchanged
     if (!trimmed) {
       setCurrentTitle(task.title);
+      setIsEditing(false);
       return;
     }
 
     if (trimmed === task.title) {
+      setIsEditing(false);
       return;
     }
+
+    isSavingRef.current = true;
+    setIsEditing(false);
+    setError(null);
 
     try {
       if (onTitleChange) {
@@ -79,15 +89,22 @@ export function InlineTitleCell({
           },
         },
       });
-    } catch {
-      // Optimistic rollback handled by useUpdateTask
+    } catch (err) {
+      // Optimistic rollback
       setCurrentTitle(task.title);
+      setError(err instanceof Error ? err.message : "Failed to save title");
+    } finally {
+      isSavingRef.current = false;
     }
   };
 
   const handleCancel = () => {
+    isSavingRef.current = true; // Lock out blur save
     setCurrentTitle(task.title);
     setIsEditing(false);
+    setTimeout(() => {
+      isSavingRef.current = false;
+    }, 50);
   };
 
   if (!canEdit) {
@@ -138,22 +155,25 @@ export function InlineTitleCell({
   return (
     <div
       className={cn(
-        "inline-flex items-center group/title cursor-text select-none",
+        "inline-flex items-center gap-1 group/title cursor-text select-none",
         updateMutation.isPending && "opacity-70 animate-pulse",
+        error && "ring-1 ring-[var(--status-danger-border)]",
         className
       )}
       onClick={(e) => {
         e.stopPropagation();
+        setError(null);
         setIsEditing(true);
       }}
       data-testid={`inline-title-cell-${task.id}`}
+      title={error ?? "Click to edit title"}
     >
-      <span
-        className="font-medium text-[var(--text-primary)] group-hover/title:text-[var(--brand-accent-text)] line-clamp-1 transition-colors"
-        title="Click to edit title"
-      >
+      <span className="font-medium text-[var(--text-primary)] group-hover/title:text-[var(--brand-accent-text)] line-clamp-1 transition-colors">
         {task.title}
       </span>
+      {error && (
+        <AlertCircle className="h-3 w-3 text-[var(--status-danger-text)] shrink-0 ml-0.5" />
+      )}
     </div>
   );
 }
