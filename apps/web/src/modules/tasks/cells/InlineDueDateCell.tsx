@@ -73,12 +73,12 @@ export function InlineDueDateCell({
 
     if (newDate === task.dueDate) return;
 
-    if (onDueDateChange) {
-      await onDueDateChange(newDate);
-      return;
-    }
-
     try {
+      if (onDueDateChange) {
+        await onDueDateChange(newDate);
+        return;
+      }
+
       await updateMutation.mutateAsync({
         communityId,
         workspaceId,

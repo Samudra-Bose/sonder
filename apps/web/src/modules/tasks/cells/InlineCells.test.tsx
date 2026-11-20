@@ -326,6 +326,48 @@ describe("Stage 5.2: Standalone Inline Cell Primitives", () => {
       // Component remains intact and displays original status
       expect(screen.getByTestId("inline-status-trigger-task-001")).toBeInTheDocument();
     });
+
+    it("keyboard navigation: ArrowDown and ArrowUp cycles through menu options", async () => {
+      renderWithProviders(
+        <InlineStatusCell
+          task={defaultTask}
+          communityId="comm-1"
+          workspaceId="ws-1"
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("inline-status-trigger-task-001"));
+      const menu = await screen.findByRole("menu", { name: /select status/i });
+      expect(menu).toBeInTheDocument();
+
+      const backlogOption = screen.getByTestId("inline-status-option-BACKLOG");
+      const todoOption = screen.getByTestId("inline-status-option-TODO");
+      backlogOption.focus();
+      expect(document.activeElement).toBe(backlogOption);
+
+      fireEvent.keyDown(menu, { key: "ArrowDown", code: "ArrowDown" });
+      expect(document.activeElement).toBe(todoOption);
+
+      fireEvent.keyDown(menu, { key: "ArrowUp", code: "ArrowUp" });
+      expect(document.activeElement).toBe(backlogOption);
+    });
+
+    it("keyboard dismissal: Escape closes the menu", async () => {
+      renderWithProviders(
+        <InlineStatusCell
+          task={defaultTask}
+          communityId="comm-1"
+          workspaceId="ws-1"
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("inline-status-trigger-task-001"));
+      const menu = await screen.findByRole("menu", { name: /select status/i });
+      expect(menu).toBeInTheDocument();
+
+      fireEvent.keyDown(menu, { key: "Escape", code: "Escape" });
+      expect(screen.queryByRole("menu", { name: /select status/i })).not.toBeInTheDocument();
+    });
   });
 
   // ==========================================================================

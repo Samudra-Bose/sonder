@@ -62,12 +62,12 @@ export function InlineTitleCell({
       return;
     }
 
-    if (onTitleChange) {
-      await onTitleChange(trimmed);
-      return;
-    }
-
     try {
+      if (onTitleChange) {
+        await onTitleChange(trimmed);
+        return;
+      }
+
       await updateMutation.mutateAsync({
         communityId,
         workspaceId,

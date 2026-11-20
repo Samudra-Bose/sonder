@@ -87,12 +87,12 @@ export function InlinePriorityCell({
 
     if (priority === task.priority) return;
 
-    if (onPriorityChange) {
-      await onPriorityChange(priority);
-      return;
-    }
-
     try {
+      if (onPriorityChange) {
+        await onPriorityChange(priority);
+        return;
+      }
+
       await updateMutation.mutateAsync({
         communityId,
         workspaceId,

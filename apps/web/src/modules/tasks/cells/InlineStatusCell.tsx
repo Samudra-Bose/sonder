@@ -87,12 +87,12 @@ export function InlineStatusCell({
 
     if (status === task.statusCategory) return;
 
-    if (onStatusChange) {
-      await onStatusChange(status);
-      return;
-    }
-
     try {
+      if (onStatusChange) {
+        await onStatusChange(status);
+        return;
+      }
+
       await updateMutation.mutateAsync({
         communityId,
         workspaceId,

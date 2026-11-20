@@ -103,12 +103,12 @@ export function InlineAssigneeCell({
       return;
     }
 
-    if (onAssigneeChange) {
-      await onAssigneeChange(newAssigneeIds);
-      return;
-    }
-
     try {
+      if (onAssigneeChange) {
+        await onAssigneeChange(newAssigneeIds);
+        return;
+      }
+
       await updateMutation.mutateAsync({
         communityId,
         workspaceId,
