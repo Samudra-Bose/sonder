@@ -469,6 +469,12 @@ describe("Stage 5.2: Standalone Inline Cell Primitives", () => {
 
       const todayExpected = getDefaultReferenceDate();
       expect(onDueDateChange).toHaveBeenCalledWith(todayExpected);
+
+      // Re-open and click tomorrow
+      fireEvent.click(trigger);
+      const tomorrowBtn = await screen.findByTestId("inline-duedate-tomorrow");
+      fireEvent.click(tomorrowBtn);
+      expect(onDueDateChange).toHaveBeenCalledWith(addCalendarDays(todayExpected, 1));
     });
 
     it("clears due date when clear button is clicked", async () => {
