@@ -1018,6 +1018,32 @@ describe("Stage 5.2: Standalone Inline Cell Primitives", () => {
   // InlineTitleCell Tests
   // ==========================================================================
   describe("InlineTitleCell", () => {
+    it("regression: fireEvent.click on view-mode title enters edit mode without invoking parent onClick handler", async () => {
+      const parentClick = vi.fn();
+
+      renderWithProviders(
+        <div onClick={parentClick} data-testid="mock-parent-row">
+          <InlineTitleCell
+            task={defaultTask}
+            communityId="comm-1"
+            workspaceId="ws-1"
+          />
+        </div>
+      );
+
+      const titleTrigger = screen.getByTestId("inline-title-cell-task-001");
+      expect(screen.queryByTestId("inline-title-input-task-001")).not.toBeInTheDocument();
+
+      // Fire pure click event without any prior pointerDown event
+      fireEvent.click(titleTrigger);
+
+      // Verify that edit mode was entered
+      expect(screen.getByTestId("inline-title-input-task-001")).toBeInTheDocument();
+
+      // Verify that parent onClick was never invoked
+      expect(parentClick).not.toHaveBeenCalled();
+    });
+
     it("InlineTitleCell pointer and keyboard activation do not bubble to parent row", async () => {
       const parentClick = vi.fn();
       const parentPointerDown = vi.fn();

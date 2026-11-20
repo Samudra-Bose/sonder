@@ -4,12 +4,21 @@ import { cn } from "@/lib/utils.js";
 import { useCreateTask } from "./useCreateTask.js";
 import type { TaskDto, TaskStatusCategory } from "./types.js";
 
+export interface PendingTaskItem {
+  clientSubmissionId: string;
+  title: string;
+  statusCategory?: TaskStatusCategory;
+  parentTaskId?: string;
+  createdAt: string;
+}
+
 export interface InlineCreationRowProps {
   communityId: string;
   workspaceId: string;
   initialStatusCategory?: TaskStatusCategory;
   parentTaskId?: string;
   onTaskCreated?: (task: TaskDto) => void;
+  onPendingChange?: (pendingTask: PendingTaskItem | null) => void;
   onCancel?: () => void;
   className?: string;
   placeholder?: string;
@@ -26,6 +35,7 @@ export function InlineCreationRow({
   initialStatusCategory,
   parentTaskId,
   onTaskCreated,
+  onPendingChange,
   onCancel,
   className,
   placeholder = "Task title... (Press Enter to create)",
@@ -61,8 +71,9 @@ export function InlineCreationRow({
     setTitle("");
     setError(null);
     setIsCreating(false);
+    onPendingChange?.(null);
     onCancel?.();
-  }, [onCancel]);
+  }, [onCancel, onPendingChange]);
 
   const handleSubmit = async () => {
     if (isSubmittingRef.current) return;
@@ -73,8 +84,18 @@ export function InlineCreationRow({
       return;
     }
 
+    const clientSubmissionId = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const pendingItem: PendingTaskItem = {
+      clientSubmissionId,
+      title: trimmed,
+      statusCategory: initialStatusCategory,
+      parentTaskId,
+      createdAt: new Date().toISOString(),
+    };
+
     isSubmittingRef.current = true;
     setError(null);
+    onPendingChange?.(pendingItem);
 
     try {
       const newTask = await createTaskMutation.mutateAsync({
@@ -89,9 +110,11 @@ export function InlineCreationRow({
 
       // Rapid-fire creation: clear title, maintain focus and creation mode
       setTitle("");
+      onPendingChange?.(null);
       onTaskCreated?.(newTask);
       inputRef.current?.focus();
     } catch (err) {
+      onPendingChange?.(null);
       // Preserve input for user correction and retry
       setError(
         err instanceof Error ? err.message : "Failed to create task"

@@ -11,6 +11,11 @@ export interface CreateTaskMutationVariables {
   data: CreateTaskRequest;
 }
 
+export const createTaskMutationKey = (communityId?: string, workspaceId?: string) =>
+  communityId && workspaceId
+    ? (["tasks", "create", communityId, workspaceId] as const)
+    : (["tasks", "create"] as const);
+
 /**
  * Hook to create a task or subtask.
  * Invalidate affected queries and seed the new task into the React Query cache.
@@ -24,6 +29,7 @@ export function useCreateTask(): UseMutationResult<
   const { csrfToken } = useAuth();
 
   return useMutation({
+    mutationKey: ["tasks", "create"],
     mutationFn: async ({ communityId, workspaceId, data }: CreateTaskMutationVariables) => {
       if (!csrfToken) {
         throw new Error("Cannot create task: CSRF token is not initialized.");

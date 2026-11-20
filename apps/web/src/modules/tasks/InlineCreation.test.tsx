@@ -437,4 +437,79 @@ describe("Stage 5.3A: Shared Inline Creation Foundation (InlineCreationRow)", ()
     const td = screen.getByRole("button", { name: "Add new task" }).querySelector("td");
     expect(td).toHaveAttribute("colspan", "10");
   });
+
+  it("notifies onPendingChange with temporary item on submit and clears to null on completion", async () => {
+    let resolveMutation: (val: TaskDto) => void;
+    const mutationPromise = new Promise<TaskDto>((resolve) => {
+      resolveMutation = resolve;
+    });
+    vi.spyOn(tasksApi, "createTask").mockImplementation(() => mutationPromise);
+
+    const onPendingChange = vi.fn();
+    const onTaskCreated = vi.fn();
+
+    renderWithProviders(
+      <InlineCreationRow
+        communityId="comm-1"
+        workspaceId="ws-1"
+        initialStatusCategory="IN_PROGRESS"
+        autoFocus={true}
+        onPendingChange={onPendingChange}
+        onTaskCreated={onTaskCreated}
+      />
+    );
+
+    const input = screen.getByTestId("inline-creation-input");
+    fireEvent.change(input, { target: { value: "Optimistic Pending Task" } });
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+
+    // Verify onPendingChange was called with a temporary pending representation
+    expect(onPendingChange).toHaveBeenCalledTimes(1);
+    const pendingItem = onPendingChange.mock.calls[0]?.[0];
+    expect(pendingItem).toBeDefined();
+    expect(pendingItem?.title).toBe("Optimistic Pending Task");
+    expect(pendingItem?.statusCategory).toBe("IN_PROGRESS");
+    expect(pendingItem?.clientSubmissionId).toMatch(/^pending-/);
+
+    // Resolve the server mutation
+    resolveMutation!(mockCreatedTask);
+
+    await waitFor(() => {
+      // Upon server resolution, onPendingChange is called with null
+      expect(onPendingChange).toHaveBeenCalledWith(null);
+      expect(onTaskCreated).toHaveBeenCalledWith(mockCreatedTask);
+    });
+  });
+
+  it("notifies onPendingChange(null) and preserves user input on creation failure", async () => {
+    vi.spyOn(tasksApi, "createTask").mockRejectedValue(new Error("Server error"));
+
+    const onPendingChange = vi.fn();
+
+    renderWithProviders(
+      <InlineCreationRow
+        communityId="comm-1"
+        workspaceId="ws-1"
+        autoFocus={true}
+        onPendingChange={onPendingChange}
+      />
+    );
+
+    const input = screen.getByTestId("inline-creation-input");
+    fireEvent.change(input, { target: { value: "Failed Task" } });
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+
+    // First called with pending item
+    expect(onPendingChange).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Failed Task" })
+    );
+
+    await waitFor(() => {
+      // On failure, pending representation is cleared
+      expect(onPendingChange).toHaveBeenLastCalledWith(null);
+      // But input value is preserved for user correction
+      expect(input).toHaveValue("Failed Task");
+      expect(screen.getByTestId("inline-creation-error")).toHaveTextContent("Server error");
+    });
+  });
 });
