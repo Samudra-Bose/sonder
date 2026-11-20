@@ -904,12 +904,152 @@ describe("Stage 5.2: Standalone Inline Cell Primitives", () => {
       expect(screen.getByTestId("inline-assignee-done")).toBeInTheDocument();
       fireEvent.click(doneBtn);
     });
+
+    it("Option 3 Case 1: unassigned task -> selecting member assigns single member and closes popover", async () => {
+      const unassignedTask = { ...defaultTask, assigneeIds: [], assigneeAssignments: [] };
+      const onAssigneeChange = vi.fn();
+      renderWithProviders(
+        <InlineAssigneeCell
+          task={unassignedTask}
+          communityId="comm-1"
+          workspaceId="ws-1"
+          onAssigneeChange={onAssigneeChange}
+        />
+      );
+      fireEvent.click(screen.getByTestId("inline-assignee-trigger-task-001"));
+      const memberOption = await screen.findByTestId("inline-assignee-option-user-123");
+      fireEvent.click(memberOption);
+      expect(onAssigneeChange).toHaveBeenCalledWith(["user-123"]);
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      });
+    });
+
+    it("Option 3 Case 6: multi-assignee mode -> removing one member preserves all other assignees", async () => {
+      const multiTask = {
+        ...defaultTask,
+        assigneeIds: ["user-123", "user-456", "user-789"],
+        assigneeAssignments: [
+          { userId: "user-123", user: { id: "user-123", displayName: "Alex Morgan", avatarUrl: null }, assignedByUserId: "u", assignedAt: "d" },
+          { userId: "user-456", user: { id: "user-456", displayName: "Jordan Lee", avatarUrl: null }, assignedByUserId: "u", assignedAt: "d" },
+          { userId: "user-789", user: { id: "user-789", displayName: "Taylor Swift", avatarUrl: null }, assignedByUserId: "u", assignedAt: "d" },
+        ],
+      };
+      const onAssigneeChange = vi.fn();
+      renderWithProviders(
+        <InlineAssigneeCell
+          task={multiTask}
+          communityId="comm-1"
+          workspaceId="ws-1"
+          onAssigneeChange={onAssigneeChange}
+        />
+      );
+      fireEvent.click(screen.getByTestId("inline-assignee-trigger-task-001"));
+      const jordanOption = await screen.findByTestId("inline-assignee-option-user-456");
+      fireEvent.click(jordanOption);
+      expect(onAssigneeChange).toHaveBeenCalledWith(["user-123", "user-789"]);
+    });
+
+    it("Option 3 Case 7: multi-assignee task -> clicking Unassigned clears all assignees", async () => {
+      const multiTask = {
+        ...defaultTask,
+        assigneeIds: ["user-123", "user-456"],
+        assigneeAssignments: [
+          { userId: "user-123", user: { id: "user-123", displayName: "Alex Morgan", avatarUrl: null }, assignedByUserId: "u", assignedAt: "d" },
+          { userId: "user-456", user: { id: "user-456", displayName: "Jordan Lee", avatarUrl: null }, assignedByUserId: "u", assignedAt: "d" },
+        ],
+      };
+      const onAssigneeChange = vi.fn();
+      renderWithProviders(
+        <InlineAssigneeCell
+          task={multiTask}
+          communityId="comm-1"
+          workspaceId="ws-1"
+          onAssigneeChange={onAssigneeChange}
+        />
+      );
+      fireEvent.click(screen.getByTestId("inline-assignee-trigger-task-001"));
+      const unassignBtn = await screen.findByTestId("inline-assignee-option-unassigned");
+      fireEvent.click(unassignBtn);
+      expect(onAssigneeChange).toHaveBeenCalledWith([]);
+    });
+
+    it("Option 3 Case 9 & 10: task with multiple assignees automatically opens in multi-select mode with Done button", async () => {
+      const multiTask = {
+        ...defaultTask,
+        assigneeIds: ["user-123", "user-456"],
+        assigneeAssignments: [
+          { userId: "user-123", user: { id: "user-123", displayName: "Alex Morgan", avatarUrl: null }, assignedByUserId: "u", assignedAt: "d" },
+          { userId: "user-456", user: { id: "user-456", displayName: "Jordan Lee", avatarUrl: null }, assignedByUserId: "u", assignedAt: "d" },
+        ],
+      };
+      renderWithProviders(
+        <InlineAssigneeCell
+          task={multiTask}
+          communityId="comm-1"
+          workspaceId="ws-1"
+        />
+      );
+      fireEvent.click(screen.getByTestId("inline-assignee-trigger-task-001"));
+      const doneBtn = await screen.findByTestId("inline-assignee-done");
+      expect(doneBtn).toBeInTheDocument();
+      expect(screen.getByText("2 assigned")).toBeInTheDocument();
+      fireEvent.click(doneBtn);
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      });
+    });
+
+    it("Option 3 Case 13: keyboard activation opens popover via Enter key on trigger", async () => {
+      renderWithProviders(
+        <InlineAssigneeCell
+          task={defaultTask}
+          communityId="comm-1"
+          workspaceId="ws-1"
+        />
+      );
+      const trigger = screen.getByTestId("inline-assignee-trigger-task-001");
+      fireEvent.keyDown(trigger, { key: "Enter", code: "Enter" });
+      expect(await screen.findByRole("dialog", { name: /assign task/i })).toBeInTheDocument();
+    });
   });
 
   // ==========================================================================
   // InlineTitleCell Tests
   // ==========================================================================
   describe("InlineTitleCell", () => {
+    it("InlineTitleCell pointer and keyboard activation do not bubble to parent row", async () => {
+      const parentClick = vi.fn();
+      const parentPointerDown = vi.fn();
+      const parentKeyDown = vi.fn();
+
+      renderWithProviders(
+        <div onClick={parentClick} onPointerDown={parentPointerDown} onKeyDown={parentKeyDown}>
+          <InlineTitleCell
+            task={defaultTask}
+            communityId="comm-1"
+            workspaceId="ws-1"
+          />
+        </div>
+      );
+
+      const trigger = screen.getByTestId("inline-title-cell-task-001");
+      fireEvent.pointerDown(trigger);
+      expect(parentPointerDown).not.toHaveBeenCalled();
+
+      fireEvent.click(trigger);
+      expect(parentClick).not.toHaveBeenCalled();
+
+      const input = screen.getByTestId("inline-title-input-task-001");
+      fireEvent.pointerDown(input);
+      expect(parentPointerDown).not.toHaveBeenCalled();
+
+      fireEvent.click(input);
+      expect(parentClick).not.toHaveBeenCalled();
+
+      fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+      expect(parentKeyDown).not.toHaveBeenCalled();
+    });
     it("keyboard activation in view mode: Enter and Space activate editing without bubbling", async () => {
       const rowKeyDown = vi.fn();
       renderWithProviders(

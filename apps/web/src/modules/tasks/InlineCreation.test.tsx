@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthContext, type AuthContextType } from "@/modules/auth/AuthContext.js";
-import { makeTaskPermissions } from "@/mocks/handlers/tasks.js";
+import { makeTaskPermissions } from "@/mocks/data/tasks.js";
 import { InlineCreationRow } from "./InlineCreationRow.js";
 import * as tasksApi from "./api.js";
 import type { TaskDto } from "./types.js";
@@ -16,11 +16,12 @@ function createMockAuthContext(overrides?: Partial<AuthContextType>): AuthContex
       displayName: "Alex Morgan",
       avatarUrl: null,
     },
-    isAuthenticated: true,
-    isLoading: false,
-    error: null,
+    communities: [],
     csrfToken: "mock-csrf-token",
+    status: "authenticated",
+    error: null,
     login: vi.fn(),
+    register: vi.fn(),
     logout: vi.fn(),
     refreshSession: vi.fn(),
     clearError: vi.fn(),
@@ -102,6 +103,7 @@ describe("Stage 5.3A: Shared Inline Creation Foundation (InlineCreationRow)", ()
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     archivedAt: null,
+    assigneeEditableFieldGroups: [],
     externalLinks: [],
   };
 
@@ -382,5 +384,57 @@ describe("Stage 5.3A: Shared Inline Creation Foundation (InlineCreationRow)", ()
 
     fireEvent.click(trigger);
     expect(screen.queryByTestId("inline-creation-input")).not.toBeInTheDocument();
+  });
+
+  it("creation trigger click and input typing do not bubble to parent container", () => {
+    const parentClick = vi.fn();
+    const parentKeyDown = vi.fn();
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    const authContext = createMockAuthContext();
+
+    render(
+      <AuthContext.Provider value={authContext}>
+        <QueryClientProvider client={queryClient}>
+          <table onClick={parentClick} onKeyDown={parentKeyDown}>
+            <tbody>
+              <InlineCreationRow
+                communityId="comm-1"
+                workspaceId="ws-1"
+                variant="list"
+                colSpan={9}
+              />
+            </tbody>
+          </table>
+        </QueryClientProvider>
+      </AuthContext.Provider>
+    );
+
+    const trigger = screen.getByTestId("inline-creation-trigger");
+    fireEvent.click(trigger);
+    expect(parentClick).not.toHaveBeenCalled();
+
+    const input = screen.getByTestId("inline-creation-input");
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+    expect(parentKeyDown).not.toHaveBeenCalled();
+  });
+
+  it("renders with correct colSpan in table-row list variant", () => {
+    renderWithProviders(
+      <InlineCreationRow
+        communityId="comm-1"
+        workspaceId="ws-1"
+        variant="list"
+        colSpan={10}
+      />
+    );
+
+    const td = screen.getByRole("button", { name: "Add new task" }).querySelector("td");
+    expect(td).toHaveAttribute("colspan", "10");
   });
 });

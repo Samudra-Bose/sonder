@@ -127,6 +127,7 @@ export function InlineTitleCell({
       <div
         className={cn("inline-flex items-center w-full", className)}
         onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
         data-testid={`inline-title-cell-${task.id}`}
       >
         <input
@@ -135,6 +136,7 @@ export function InlineTitleCell({
           data-testid={`inline-title-input-${task.id}`}
           value={currentTitle}
           onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
           onChange={(e) => setCurrentTitle(e.target.value)}
           onKeyDown={(e) => {
             e.stopPropagation();
@@ -168,6 +170,9 @@ export function InlineTitleCell({
         e.stopPropagation();
         setError(null);
         setIsEditing(true);
+      }}
+      onPointerDown={(e) => {
+        e.stopPropagation();
       }}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {

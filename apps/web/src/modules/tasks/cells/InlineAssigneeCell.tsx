@@ -183,6 +183,8 @@ export function InlineAssigneeCell({
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
               e.stopPropagation();
+              e.preventDefault();
+              setIsOpen(true);
             }
           }}
           className={cn(

@@ -48,13 +48,15 @@ export function InlineCreationRow({
     }
   }, [isCreating]);
 
-  const handleActivate = useCallback(() => {
+  const handleActivate = useCallback((e?: React.MouseEvent | React.KeyboardEvent) => {
+    e?.stopPropagation();
     if (disabled) return;
     setError(null);
     setIsCreating(true);
   }, [disabled]);
 
-  const handleCancel = useCallback(() => {
+  const handleCancel = useCallback((e?: React.MouseEvent | React.KeyboardEvent) => {
+    e?.stopPropagation();
     isSubmittingRef.current = false;
     setTitle("");
     setError(null);
@@ -195,10 +197,11 @@ export function InlineCreationRow({
             className
           )}
           onClick={handleActivate}
+          onPointerDown={(e) => e.stopPropagation()}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
-              handleActivate();
+              handleActivate(e);
             }
           }}
           tabIndex={disabled ? -1 : 0}
@@ -220,6 +223,7 @@ export function InlineCreationRow({
         data-testid="inline-creation-active-row"
         className={cn("bg-[var(--surface-muted)]/50", className)}
         onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
       >
         <td colSpan={colSpan} className="py-2 px-3">
           {formContent}
@@ -239,10 +243,11 @@ export function InlineCreationRow({
           className
         )}
         onClick={handleActivate}
+        onPointerDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            handleActivate();
+            handleActivate(e);
           }
         }}
         tabIndex={disabled ? -1 : 0}
@@ -260,6 +265,7 @@ export function InlineCreationRow({
       data-testid="inline-creation-active-container"
       className={cn("w-full py-1", className)}
       onClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
     >
       {formContent}
     </div>
