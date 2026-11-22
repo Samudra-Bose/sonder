@@ -59,6 +59,11 @@ export function AppHeader({
   const { currentCommunity, activeWorkspace, workspaces } = useWorkspace();
   const hasAvailableWorkspace = Boolean(currentCommunity && (activeWorkspace || (workspaces && workspaces.length > 0)));
 
+  const isPersonalRoute =
+    location.pathname === "/" ||
+    location.pathname.startsWith("/my-work") ||
+    location.pathname.startsWith("/inbox");
+
   const getTerminalBreadcrumb = (pathname: string): string => {
     if (pathname.includes("/list")) return "List";
     if (pathname.includes("/board")) return "Board";
@@ -108,7 +113,7 @@ export function AppHeader({
         {/* Mobile View Title */}
         <div className="flex items-center space-x-2 md:hidden">
           <span className="text-xs font-semibold text-[var(--text-primary)] truncate max-w-[180px]">
-            {activeWorkspace ? activeWorkspace.name : terminalBreadcrumb}
+            {!isPersonalRoute && activeWorkspace ? activeWorkspace.name : terminalBreadcrumb}
           </span>
         </div>
 
@@ -117,7 +122,7 @@ export function AppHeader({
           aria-label="Breadcrumbs"
           className="hidden md:flex items-center space-x-1.5 text-xs text-[var(--text-muted)]"
         >
-          {currentCommunity && (
+          {!isPersonalRoute && currentCommunity && (
             <>
               <span className="text-[var(--text-secondary)] font-medium truncate max-w-[140px]">
                 {currentCommunity.name}
@@ -125,7 +130,7 @@ export function AppHeader({
               <span aria-hidden="true">/</span>
             </>
           )}
-          {activeWorkspace && (
+          {!isPersonalRoute && activeWorkspace && (
             <>
               <span className="text-[var(--text-secondary)] font-medium truncate max-w-[160px]">
                 {activeWorkspace.name}
