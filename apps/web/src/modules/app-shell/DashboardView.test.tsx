@@ -95,9 +95,11 @@ describe("DashboardView — Home Daily Focus Cockpit (Phase 2)", () => {
       renderDashboardView();
 
       await waitFor(() => {
-        expect(screen.getByText(/Active Scope:/i)).toBeInTheDocument();
+        expect(screen.getByTestId("home-community-scope-banner")).toBeInTheDocument();
       });
-      expect(screen.getByText("Sonder Community")).toBeInTheDocument();
+      const banner = screen.getByTestId("home-community-scope-banner");
+      expect(within(banner).getByText(/Active Scope:/i)).toBeInTheDocument();
+      expect(within(banner).getByText("Sonder Community")).toBeInTheDocument();
     });
   });
 

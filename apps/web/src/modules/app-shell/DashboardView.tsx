@@ -135,7 +135,10 @@ export function DashboardView({
         </div>
 
         {/* Community Scope Indicator & Quick Details */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[var(--border-subtle)] text-xs text-[var(--text-secondary)]">
+        <div
+          data-testid="home-community-scope-banner"
+          className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[var(--border-subtle)] text-xs text-[var(--text-secondary)]"
+        >
           <div className="flex items-center gap-2">
             <Building2 className="h-3.5 w-3.5 text-[var(--brand-accent-text)] flex-shrink-0" />
             <span>
