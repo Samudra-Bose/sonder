@@ -329,9 +329,13 @@ describe("VS-04: Synchronized List & Board Views", () => {
       const todoCol = screen.getByTestId("board-column-TODO");
       expect(within(todoCol).getByTestId("task-board-card-ENG-105")).toBeInTheDocument();
 
-      // Use the card's accessible status selector to move ENG-105 to IN_PROGRESS
-      const statusSelect = screen.getByLabelText("Move ENG-105 status");
-      await user.selectOptions(statusSelect, "IN_PROGRESS");
+      // Use the card's accessible inline status cell to move ENG-105 to IN_PROGRESS
+      const card105 = within(todoCol).getByTestId("task-board-card-ENG-105");
+      const statusTrigger = within(card105).getByRole("button", { name: /status: to do/i });
+      await user.click(statusTrigger);
+
+      const inProgressOption = await screen.findByRole("menuitem", { name: /in progress/i });
+      await user.click(inProgressOption);
 
       // Verify ENG-105 has moved to IN_PROGRESS column
       await waitFor(() => {
@@ -484,8 +488,13 @@ describe("VS-04: Synchronized List & Board Views", () => {
       });
 
       // Move ENG-101 from IN_PROGRESS to DONE via Board card status selector
-      const statusSelect = screen.getByLabelText("Move ENG-101 status");
-      await user.selectOptions(statusSelect, "DONE");
+      const inProgressCol = screen.getByTestId("board-column-IN_PROGRESS");
+      const card101 = within(inProgressCol).getByTestId("task-board-card-ENG-101");
+      const statusTrigger = within(card101).getByRole("button", { name: /status: in progress/i });
+      await user.click(statusTrigger);
+
+      const doneOption = await screen.findByRole("menuitem", { name: /done/i });
+      await user.click(doneOption);
 
       await waitFor(() => {
         const doneCol = screen.getByTestId("board-column-DONE");

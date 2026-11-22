@@ -327,6 +327,31 @@ export function TaskPeekDrawer({
     }
   };
 
+  const [hasCopiedKey, setHasCopiedKey] = useState(false);
+
+  const handleCopyKey = async () => {
+    if (!taskKey) return;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(taskKey);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = taskKey;
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
+      setHasCopiedKey(true);
+      setTimeout(() => setHasCopiedKey(false), 2000);
+    } catch {
+      // Best-effort clipboard copy fallback
+    }
+  };
+
   const handleCopyLink = async () => {
     if (!taskKey) return;
     try {
@@ -364,9 +389,25 @@ export function TaskPeekDrawer({
           </div>
         )}
 
-        <span className="font-mono text-xs font-bold text-[var(--brand-accent-text)] px-1.5 py-0.5 rounded bg-[var(--brand-accent-subtle)] border border-[var(--brand-accent-border)] flex-shrink-0">
-          {taskKey}
-        </span>
+        {/* Copy Task Key Action */}
+        <Tooltip content={hasCopiedKey ? "Key copied!" : "Copy task key"}>
+          <button
+            type="button"
+            onClick={handleCopyKey}
+            aria-label={`Copy task key ${taskKey}`}
+            data-testid="copy-task-key-button"
+            className="font-mono text-xs font-bold text-[var(--brand-accent-text)] px-1.5 py-0.5 rounded bg-[var(--brand-accent-subtle)] border border-[var(--brand-accent-border)] flex-shrink-0 hover:bg-[var(--brand-accent-subtle)]/80 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] transition-colors"
+          >
+            {hasCopiedKey ? (
+              <span className="inline-flex items-center gap-1">
+                <Check className="h-3 w-3 text-emerald-500" />
+                <span>{taskKey}</span>
+              </span>
+            ) : (
+              taskKey
+            )}
+          </button>
+        </Tooltip>
 
         {/* Copy Link Action */}
         <Tooltip content={hasCopied ? "Link copied!" : "Copy task link"}>

@@ -71,6 +71,18 @@
     --popover-compact-padding: 0.375rem;
     --popover-compact-min-width: 140px;
 
+    /* Elevation Scale - Dark */
+    --elevation-0: #090d16;
+    --elevation-1: #0f172a;
+    --elevation-2: #151f32;
+    --elevation-3: #1e293b;
+    --elevation-4: #243247;
+    --shadow-elevation-1: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+    --shadow-elevation-2: 0 4px 8px -2px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+    --shadow-elevation-3: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+    --shadow-elevation-4: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.6);
+    --border-specular: rgba(255, 255, 255, 0.08);
+
     /* Legacy Compatibility Variables */
     --background: var(--surface-canvas);
     --foreground: var(--text-primary);
@@ -152,6 +164,18 @@
     /* Popover Geometry Tokens */
     --popover-compact-padding: 0.375rem;
     --popover-compact-min-width: 140px;
+
+    /* Elevation Scale - Dark */
+    --elevation-0: #090d16;
+    --elevation-1: #0f172a;
+    --elevation-2: #151f32;
+    --elevation-3: #1e293b;
+    --elevation-4: #243247;
+    --shadow-elevation-1: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+    --shadow-elevation-2: 0 4px 8px -2px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+    --shadow-elevation-3: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+    --shadow-elevation-4: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.6);
+    --border-specular: rgba(255, 255, 255, 0.08);
 
     /* Legacy Compatibility Variables */
     --background: var(--surface-canvas);

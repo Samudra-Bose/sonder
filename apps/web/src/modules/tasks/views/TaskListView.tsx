@@ -5,6 +5,7 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
+  Loader2,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -216,7 +217,7 @@ export function TaskListView({
   }
 
   // Empty state
-  if (tasks.length === 0 && !pendingTask) {
+  if (tasks.length === 0) {
     return (
       <div
         id="tasks-list-panel"
@@ -229,6 +230,40 @@ export function TaskListView({
           <EmptyState
             title="No tasks match the active filters"
             description="Adjust your search query, priority, or status filters, or press 'C' to create a new task."
+            action={
+              <div className="w-full max-w-xs mt-2 flex flex-col items-center">
+                {pendingTask && (
+                  <div
+                    data-testid="task-list-pending-row"
+                    role="status"
+                    aria-label={`Creating task: ${pendingTask.title}`}
+                    className="flex items-center gap-2 p-2 mb-2 rounded-lg bg-[var(--surface-muted)]/50 border border-[var(--border-subtle)] opacity-70 text-xs w-full text-left"
+                  >
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--brand-accent-text)] shrink-0" aria-hidden="true" />
+                    <span
+                      data-testid="pending-task-badge"
+                      className="px-1.5 py-0.5 rounded bg-[var(--surface-muted)] font-mono text-[10px] font-semibold text-[var(--text-muted)] tracking-wider uppercase"
+                    >
+                      Pending
+                    </span>
+                    <span
+                      data-testid="pending-task-title"
+                      className="font-medium text-[var(--text-secondary)] italic truncate"
+                    >
+                      {pendingTask.title}
+                    </span>
+                  </div>
+                )}
+                <InlineCreationRow
+                  communityId={communityId}
+                  workspaceId={workspaceId}
+                  variant="plain"
+                  triggerLabel="New task..."
+                  onPendingChange={setPendingTask}
+                  className="w-full justify-center"
+                />
+              </div>
+            }
           />
         </div>
         <BacklogTaskTray

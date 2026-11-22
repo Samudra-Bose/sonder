@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { MoreHorizontal, Copy, Archive, Check, CopyPlus, Loader2 } from "lucide-react";
+import { MoreHorizontal, Copy, Archive, Check, CopyPlus, Loader2, Hash } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -29,7 +29,9 @@ export function TaskActionsMenu({
   const { archiveTask } = useTaskUndo();
   const { cloneTask, isCloning, cloningTaskId } = useTaskClone();
   const { activeWorkspace, workspaces } = useWorkspace();
-  const [hasCopied, setHasCopied] = useState(false);
+  const [hasCopiedLink, setHasCopiedLink] = useState(false);
+  const [hasCopiedKey, setHasCopiedKey] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState<"key" | "link" | null>(null);
   const [open, setOpen] = useState(false);
 
   const isCurrentTaskCloning = isCloning && cloningTaskId === task.id;
@@ -42,21 +44,77 @@ export function TaskActionsMenu({
   const targetWorkspace = workspaces.find((w) => w.id === workspaceId) || activeWorkspace;
   const canClone = canCloneTask(task, targetWorkspace);
 
+  const handleCopyKey = useCallback(
+    async (e: React.MouseEvent | React.KeyboardEvent) => {
+      e.stopPropagation();
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(task.taskKey);
+        } else {
+          const textArea = document.createElement("textarea");
+          textArea.value = task.taskKey;
+          textArea.style.position = "fixed";
+          textArea.style.opacity = "0";
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          document.execCommand("copy");
+          document.body.removeChild(textArea);
+        }
+        setHasCopiedKey(true);
+        setCopyFeedback("key");
+        setTimeout(() => {
+          setHasCopiedKey(false);
+          setCopyFeedback((prev) => (prev === "key" ? null : prev));
+        }, 2000);
+      } catch {
+        // Fallback or clipboard error handled silently
+      }
+      setOpen(false);
+    },
+    [task.taskKey]
+  );
+
   const handleCopyLink = useCallback(
-    (e: React.MouseEvent | React.KeyboardEvent) => {
+    async (e: React.MouseEvent | React.KeyboardEvent) => {
       e.stopPropagation();
       const origin =
         typeof window !== "undefined" ? window.location.origin : "";
-      const path = communityId
-        ? `/community/${communityId}/workspaces/${workspaceId}/tasks?task=${task.taskKey}`
-        : `/workspaces/${workspaceId}/tasks?task=${task.taskKey}`;
+      let path = "";
+      if (typeof window !== "undefined" && window.location.pathname.includes(`/workspaces/${workspaceId}`)) {
+        const url = new URL(window.location.href);
+        url.searchParams.set("task", task.taskKey);
+        path = url.pathname + url.search;
+      } else {
+        path = communityId
+          ? `/community/${communityId}/workspaces/${workspaceId}/tasks?task=${task.taskKey}`
+          : `/workspaces/${workspaceId}/tasks?task=${task.taskKey}`;
+      }
       const url = `${origin}${path}`;
 
-      if (navigator.clipboard?.writeText) {
-        navigator.clipboard.writeText(url).catch(() => {});
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(url);
+        } else {
+          const textArea = document.createElement("textarea");
+          textArea.value = url;
+          textArea.style.position = "fixed";
+          textArea.style.opacity = "0";
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          document.execCommand("copy");
+          document.body.removeChild(textArea);
+        }
+        setHasCopiedLink(true);
+        setCopyFeedback("link");
+        setTimeout(() => {
+          setHasCopiedLink(false);
+          setCopyFeedback((prev) => (prev === "link" ? null : prev));
+        }, 2000);
+      } catch {
+        // Fallback or clipboard error handled silently
       }
-      setHasCopied(true);
-      setTimeout(() => setHasCopied(false), 2000);
       setOpen(false);
     },
     [communityId, workspaceId, task.taskKey]
@@ -112,9 +170,18 @@ export function TaskActionsMenu({
     >
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger
-          aria-label={`Task actions for ${task.taskKey}`}
+          aria-label={
+            copyFeedback === "key"
+              ? `Copied ${task.taskKey} key`
+              : copyFeedback === "link"
+                ? `Copied ${task.taskKey} link`
+                : `Task actions for ${task.taskKey}`
+          }
           data-testid={`task-actions-trigger-${task.taskKey}`}
-          className="h-7 w-7 inline-flex items-center justify-center rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-muted)] focus-ring transition-colors cursor-pointer"
+          className={cn(
+            "h-7 w-7 inline-flex items-center justify-center rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-muted)] focus-ring transition-colors cursor-pointer",
+            copyFeedback && "text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20"
+          )}
           onClick={(e) => {
             e.stopPropagation();
           }}
@@ -125,25 +192,42 @@ export function TaskActionsMenu({
             e.stopPropagation();
           }}
         >
-          <MoreHorizontal className="h-3.5 w-3.5" />
+          {copyFeedback ? (
+            <Check className="h-3.5 w-3.5 text-emerald-500" />
+          ) : (
+            <MoreHorizontal className="h-3.5 w-3.5" />
+          )}
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="end"
           sideOffset={4}
-          className="w-40 z-50"
+          className="w-44 z-50"
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Copy Key Option */}
+          <DropdownMenuItem
+            onClick={handleCopyKey}
+            data-testid={`task-action-copy-key-${task.taskKey}`}
+          >
+            {hasCopiedKey ? (
+              <Check className="h-3.5 w-3.5 text-emerald-500" />
+            ) : (
+              <Hash className="h-3.5 w-3.5 text-[var(--text-muted)]" />
+            )}
+            <span>{hasCopiedKey ? "Key Copied" : "Copy Task Key"}</span>
+          </DropdownMenuItem>
+
           {/* Copy Link Option */}
           <DropdownMenuItem
             onClick={handleCopyLink}
             data-testid={`task-action-copy-link-${task.taskKey}`}
           >
-            {hasCopied ? (
+            {hasCopiedLink ? (
               <Check className="h-3.5 w-3.5 text-emerald-500" />
             ) : (
               <Copy className="h-3.5 w-3.5 text-[var(--text-muted)]" />
             )}
-            <span>{hasCopied ? "Link Copied" : "Copy Link"}</span>
+            <span>{hasCopiedLink ? "Link Copied" : "Copy Task Link"}</span>
           </DropdownMenuItem>
 
           {/* Clone / Duplicate Task Option */}

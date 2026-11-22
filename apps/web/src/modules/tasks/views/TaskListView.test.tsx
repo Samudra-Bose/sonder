@@ -551,6 +551,97 @@ describe("Stage 5.3B / WP-A: Task List View Transformation", () => {
       });
     });
   });
+
+  describe("Empty-State Inline Creation (AC-Empty-1, AC-Empty-2)", () => {
+    it("renders inline creation trigger in empty state when tasks array is empty", () => {
+      renderTaskListView({ tasks: [] });
+
+      expect(screen.getByTestId("task-list-empty")).toBeInTheDocument();
+      expect(screen.getByText("No tasks match the active filters")).toBeInTheDocument();
+      const trigger = screen.getByTestId("inline-creation-trigger");
+      expect(trigger).toBeInTheDocument();
+      expect(trigger).toHaveTextContent("New task...");
+    });
+
+    it("allows creating first task from empty state with pending feedback", async () => {
+      let resolveCreation: (val: TaskDto) => void;
+      const creationPromise = new Promise<TaskDto>((resolve) => {
+        resolveCreation = resolve;
+      });
+      vi.spyOn(tasksApi, "createTask").mockImplementation(() => creationPromise);
+
+      renderTaskListView({ tasks: [] });
+
+      // Click trigger in empty state
+      fireEvent.click(screen.getByTestId("inline-creation-trigger"));
+      const input = screen.getByTestId("inline-creation-input");
+      expect(input).toBeInTheDocument();
+      expect(input).toHaveFocus();
+
+      // Enter task title and submit
+      fireEvent.change(input, { target: { value: "First Task in Project" } });
+      fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+
+      await waitFor(() => {
+        expect(tasksApi.createTask).toHaveBeenCalledWith(
+          expect.objectContaining({
+            communityId: MOCK_COMMUNITY_1_ID,
+            workspaceId: WS_SHARED_ENG_ID,
+            data: expect.objectContaining({
+              title: "First Task in Project",
+            }),
+          })
+        );
+      });
+
+      // Pending row visible inside empty state
+      const pendingRow = screen.getByTestId("task-list-pending-row");
+      expect(pendingRow).toBeInTheDocument();
+      expect(pendingRow).toHaveAttribute("role", "status");
+      expect(pendingRow).toHaveAttribute("aria-label", "Creating task: First Task in Project");
+      expect(screen.getByTestId("pending-task-title")).toHaveTextContent("First Task in Project");
+      expect(screen.getByTestId("pending-task-badge")).toHaveTextContent("Pending");
+
+      // Resolve creation
+      resolveCreation!(
+        makeSampleTask({
+          id: "task-first-1",
+          taskKey: "ENG-1",
+          title: "First Task in Project",
+        })
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByTestId("task-list-pending-row")).not.toBeInTheDocument();
+      });
+    });
+
+    it("retains draft and shows inline error when empty-state creation fails", async () => {
+      let rejectCreation: (err: Error) => void;
+      const creationPromise = new Promise<TaskDto>((_, reject) => {
+        rejectCreation = reject;
+      });
+      vi.spyOn(tasksApi, "createTask").mockImplementation(() => creationPromise);
+
+      renderTaskListView({ tasks: [] });
+
+      fireEvent.click(screen.getByTestId("inline-creation-trigger"));
+      const input = screen.getByTestId("inline-creation-input");
+
+      fireEvent.change(input, { target: { value: "Failing Empty Task" } });
+      fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+
+      expect(screen.getByTestId("task-list-pending-row")).toBeInTheDocument();
+
+      rejectCreation!(new Error("Network connection dropped"));
+
+      await waitFor(() => {
+        expect(screen.queryByTestId("task-list-pending-row")).not.toBeInTheDocument();
+        expect(screen.getByTestId("inline-creation-error")).toHaveTextContent("Network connection dropped");
+        expect(input).toHaveValue("Failing Empty Task");
+      });
+    });
+  });
 });
 
 describe("TaskViewToolbar — Sort Controls & Direction Toggle", () => {

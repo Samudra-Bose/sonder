@@ -1,11 +1,9 @@
 import React, { useState } from "react";
 import {
-  Calendar,
   RefreshCw,
   GitFork,
+  Loader2,
 } from "lucide-react";
-import { Badge } from "@/components/ui/Badge";
-import { Avatar } from "@/components/ui/Avatar";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Feedback } from "@/components/ui/Feedback";
@@ -16,11 +14,16 @@ import { useUpdateTask } from "../useUpdateTask";
 import { TaskActionsMenu } from "../TaskActionsMenu.js";
 import { TaskArchetypeBadge } from "../TaskArchetypeBadge.js";
 import { BacklogTaskTray } from "./BacklogTaskTray.js";
+import { InlineTitleCell } from "../cells/InlineTitleCell.js";
+import { InlineStatusCell } from "../cells/InlineStatusCell.js";
+import { InlinePriorityCell } from "../cells/InlinePriorityCell.js";
+import { InlineAssigneeCell } from "../cells/InlineAssigneeCell.js";
+import { InlineDueDateCell } from "../cells/InlineDueDateCell.js";
+import { InlineCreationRow, type PendingTaskItem } from "../InlineCreationRow.js";
 import type {
   TaskDto,
   TaskQueryBucketDto,
   TaskStatusCategory,
-  TaskPriority,
 } from "../types";
 
 export interface TaskBoardViewProps {
@@ -39,31 +42,6 @@ export interface TaskBoardViewProps {
   onSelectMobileStage?: (stage: string) => void;
   className?: string;
 }
-
-function formatPriority(priority: TaskPriority): string {
-  switch (priority) {
-    case "URGENT":
-      return "Urgent";
-    case "HIGH":
-      return "High";
-    case "MEDIUM":
-      return "Medium";
-    case "LOW":
-      return "Low";
-    case "NONE":
-      return "None";
-    default:
-      return priority;
-  }
-}
-
-const ALL_STATUS_OPTIONS: Array<{ value: TaskStatusCategory; label: string }> = [
-  { value: "BACKLOG", label: "Backlog" },
-  { value: "TODO", label: "To Do" },
-  { value: "IN_PROGRESS", label: "In Progress" },
-  { value: "DONE", label: "Done" },
-  { value: "CANCELED", label: "Canceled" },
-];
 
 export function TaskBoardView({
   groups,
@@ -95,6 +73,18 @@ export function TaskBoardView({
     return groups[0]?.key ?? "TODO";
   });
   const [mutationError, setMutationError] = useState<string | null>(null);
+  const [pendingTasksByColumn, setPendingTasksByColumn] = useState<Record<string, PendingTaskItem | null>>({});
+
+  const handlePendingChange = (columnKey: string, pending: PendingTaskItem | null) => {
+    setPendingTasksByColumn((prev) => {
+      if (!pending) {
+        const next = { ...prev };
+        delete next[columnKey];
+        return next;
+      }
+      return { ...prev, [columnKey]: pending };
+    });
+  };
 
   const activeMobileStage = propMobileStage ?? internalMobileStage;
   const handleSelectMobileStage = (stage: string) => {
@@ -127,6 +117,7 @@ export function TaskBoardView({
     } catch (err: unknown) {
       const e = err as { message?: string; detail?: string };
       setMutationError(e.detail || e.message || "Failed to update task status.");
+      throw err;
     }
   };
 
@@ -177,9 +168,7 @@ export function TaskBoardView({
     );
   }
 
-  const totalTasksAcrossGroups = groups.reduce((acc, g) => acc + g.total, 0);
-
-  if (groups.length === 0 || totalTasksAcrossGroups === 0) {
+  if (groups.length === 0) {
     return (
       <div
         id="tasks-board-panel"
@@ -306,12 +295,13 @@ export function TaskBoardView({
                       updateTaskMutation.isPending &&
                       updateTaskMutation.variables?.taskId === task.id;
 
-                    const handleCardClick = () => {
+                    const handleCardClick = (e?: React.MouseEvent) => {
+                      if (e?.defaultPrevented) return;
                       openTask(task.taskKey, { workspaceId });
                     };
 
                     const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-                      if (e.key === "Enter" || e.key === " ") {
+                      if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) {
                         e.preventDefault();
                         handleCardClick();
                       }
@@ -329,15 +319,15 @@ export function TaskBoardView({
                           isPending && "opacity-60 pointer-events-none"
                         )}
                       >
-                        {/* Top: Task Key + Priority */}
+                        {/* Top: Task Key + Priority + Actions Menu */}
                         <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 min-w-0">
                             <TaskArchetypeBadge archetype={task.itemType} size="sm" showLabel={false} />
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleCardClick();
+                                handleCardClick(e);
                               }}
                               className="font-mono text-xs font-bold text-[var(--brand-accent-text)] tabular-nums hover:underline focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] rounded"
                             >
@@ -345,12 +335,14 @@ export function TaskBoardView({
                             </button>
                           </div>
                           <div
-                            className="flex items-center gap-1.5"
+                            className="flex items-center gap-1.5 shrink-0"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <Badge priority={task.priority} size="sm">
-                              {formatPriority(task.priority)}
-                            </Badge>
+                            <InlinePriorityCell
+                              task={task}
+                              communityId={communityId}
+                              workspaceId={workspaceId}
+                            />
                             <TaskActionsMenu
                               task={task}
                               workspaceId={workspaceId}
@@ -359,10 +351,15 @@ export function TaskBoardView({
                           </div>
                         </div>
 
-                        {/* Title */}
-                        <h4 className="text-xs font-medium text-[var(--text-primary)] group-hover:text-[var(--brand-accent-text)] transition-colors line-clamp-2">
-                          {task.title}
-                        </h4>
+                        {/* Title (InlineTitleCell) */}
+                        <div className="min-w-0" onClick={(e) => e.stopPropagation()}>
+                          <InlineTitleCell
+                            task={task}
+                            communityId={communityId}
+                            workspaceId={workspaceId}
+                            className="w-full"
+                          />
+                        </div>
 
                         {/* Hierarchy Indicator */}
                         {task.parentTaskId && (
@@ -372,75 +369,87 @@ export function TaskBoardView({
                           </div>
                         )}
 
-                        {/* Bottom Row: Assignee & Due Date + Non-Drag Move Control */}
+                        {/* Bottom Row: Assignee & Due Date + Status */}
                         <div className="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between gap-2 text-[11px]">
-                          {/* Assignee & Due date */}
-                          <div className="flex items-center gap-2 text-[var(--text-secondary)] font-mono text-[10px] tabular-nums">
-                            {(() => {
-                              const firstAssignee = task.assigneeAssignments?.[0];
-                              if (!firstAssignee) return null;
-                              return (
-                                <div
-                                  className="flex items-center gap-1"
-                                  title={`Assigned to ${task.assigneeAssignments?.map((a) => a.user.displayName).join(", ")}`}
-                                  data-testid={`board-card-assignee-${task.taskKey}`}
-                                >
-                                  <Avatar
-                                    name={firstAssignee.user.displayName}
-                                    src={firstAssignee.user.avatarUrl ?? undefined}
-                                    size="xs"
-                                  />
-                                  <span className="text-[10px] text-[var(--text-secondary)] truncate max-w-[65px]">
-                                    {firstAssignee.user.displayName}
-                                  </span>
-                                </div>
-                              );
-                            })()}
-                            {task.dueDate ? (
-                              <span className="inline-flex items-center gap-1 tabular-nums">
-                                <Calendar className="h-2.5 w-2.5 text-[var(--text-muted)]" />
-                                <span>{task.dueDate}</span>
-                              </span>
-                            ) : (
-                              <span className="text-[var(--text-muted)]">—</span>
-                            )}
-                          </div>
-
-                          {/* Accessible Non-drag Status Move Dropdown */}
+                          {/* Left: Assignee & Due Date */}
                           <div
-                            className="flex items-center gap-1"
+                            className="flex items-center gap-2 min-w-0 flex-wrap"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <label
-                              htmlFor={`board-status-select-${task.id}`}
-                              className="sr-only"
-                            >
-                              Move {task.taskKey} status
-                            </label>
-                            <select
-                              id={`board-status-select-${task.id}`}
-                              aria-label={`Move ${task.taskKey} status`}
-                              value={task.statusCategory}
-                              onChange={(e) =>
-                                handleStatusChange(
-                                  task,
-                                  e.target.value as TaskStatusCategory
-                                )
-                              }
-                              className="text-[11px] bg-[var(--surface-card)] border border-[var(--border-subtle)] rounded px-1.5 py-0.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] focus-ring cursor-pointer"
-                            >
-                              {ALL_STATUS_OPTIONS.map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                  {opt.label}
-                                </option>
-                              ))}
-                            </select>
+                            <div data-testid={`board-card-assignee-${task.taskKey}`} className="shrink-0">
+                              <InlineAssigneeCell
+                                task={task}
+                                communityId={communityId}
+                                workspaceId={workspaceId}
+                              />
+                            </div>
+                            <div className="shrink-0">
+                              <InlineDueDateCell
+                                task={task}
+                                communityId={communityId}
+                                workspaceId={workspaceId}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Right: Status (InlineStatusCell primary status editor) */}
+                          <div
+                            className="shrink-0 flex items-center"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <InlineStatusCell
+                              task={task}
+                              communityId={communityId}
+                              workspaceId={workspaceId}
+                              onStatusChange={(newStatus) => handleStatusChange(task, newStatus)}
+                            />
                           </div>
                         </div>
                       </div>
                     );
                   })
                 )}
+
+                {/* Transient Pending Task Card in this Column (WP-B4) */}
+                {pendingTasksByColumn[group.key] && (
+                  <div
+                    data-testid="task-board-pending-card"
+                    role="status"
+                    aria-label={`Creating task: ${pendingTasksByColumn[group.key]!.title}`}
+                    className="bg-[var(--surface-canvas)] border border-dashed border-[var(--border-strong)] rounded-lg p-3 space-y-2 opacity-70 select-none shadow-2xs pointer-events-none"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--brand-accent-text)] shrink-0" aria-hidden="true" />
+                        <span
+                          data-testid="pending-task-badge"
+                          className="font-mono text-[10px] font-semibold text-[var(--text-muted)] tracking-wider uppercase px-1.5 py-0.5 rounded bg-[var(--surface-muted)]"
+                        >
+                          Pending
+                        </span>
+                      </div>
+                    </div>
+                    <div
+                      data-testid="pending-task-title"
+                      className="text-xs font-medium text-[var(--text-secondary)] italic truncate"
+                    >
+                      {pendingTasksByColumn[group.key]!.title}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Inline Card Creation for this Column (WP-B3) */}
+              <div className="pt-1 mt-auto">
+                <InlineCreationRow
+                  communityId={communityId}
+                  workspaceId={workspaceId}
+                  variant="board"
+                  initialStatusCategory={group.key as TaskStatusCategory}
+                  triggerLabel="+ Add card"
+                  onPendingChange={(pending) => handlePendingChange(group.key, pending)}
+                  className="w-full"
+                />
               </div>
             </section>
           );

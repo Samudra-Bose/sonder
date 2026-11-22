@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, useLocation, useNavigate, Routes, Route } from "react-router-dom";
@@ -10,6 +10,7 @@ import {
   resetTaskMockState,
   setMockTasksError,
   setForceExpireSnapshot,
+  getMockTasks,
 } from "../../../mocks/handlers/tasks.js";
 import {
   MOCK_COMMUNITY_1_ID,
@@ -24,6 +25,7 @@ import {
   useQuickTaskComposer,
 } from "../QuickTaskComposerContext.js";
 import { QuickTaskComposer } from "../QuickTaskComposer.js";
+import { getDefaultReferenceDate, addCalendarDays } from "../../my-work/date-utils.js";
 import { WorkspaceTasksView } from "./WorkspaceTasksView.js";
 
 const testAuthUser = {
@@ -501,6 +503,414 @@ describe("VS-06B.1: Cross-View Integration & Hardening", () => {
 
       const titleInput = screen.getByTestId("composer-title-input") as HTMLInputElement;
       expect(titleInput.value).toBe("");
+    });
+  });
+
+  describe("4. Stage 5.3D: Cross-View Consistency & Actual Server Reconciliation", () => {
+    it("creates a task in List View and reconciles into Board View without duplication", async () => {
+      const user = userEvent.setup();
+      renderTasksShell({
+        initialEntries: ["/workspaces/018f98a2-3f12-7890-w002-456789abcdef/list"],
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("task-list-view")).toBeInTheDocument();
+      });
+
+      // 1. Trigger inline creation at bottom of List View
+      const listTrigger = screen.getByTestId("inline-creation-trigger");
+      await user.click(listTrigger);
+
+      const input = await screen.findByTestId("inline-creation-input");
+      expect(input).toBeInTheDocument();
+
+      // 2. Submit new task title
+      await user.type(input, "Stage 5.3D Cross-View List Task{Enter}");
+
+      // 3. Confirm task row appears in List View with authoritative server data
+      await waitFor(() => {
+        expect(screen.getByText("Stage 5.3D Cross-View List Task")).toBeInTheDocument();
+      });
+
+      // Find the created task in mock state
+      const tasks = getMockTasks();
+      const createdTask = tasks.find((t) => t.title === "Stage 5.3D Cross-View List Task");
+      expect(createdTask).toBeDefined();
+      expect(createdTask?.statusCategory).toBe("TODO");
+      const createdKey = createdTask!.taskKey;
+
+      const listRow = screen.getByTestId(`task-list-row-${createdKey}`);
+      expect(listRow).toBeInTheDocument();
+
+      // 4. Switch to Board View
+      const boardTab = screen.getByTestId("tab-view-board");
+      await user.click(boardTab);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("task-board-view")).toBeInTheDocument();
+      });
+
+      // 5. Verify task appears in the TODO board column
+      const todoCol = screen.getByTestId("board-column-TODO");
+      const boardCard = within(todoCol).getByTestId(`task-board-card-${createdKey}`);
+      expect(boardCard).toBeInTheDocument();
+      expect(within(boardCard).getByText("Stage 5.3D Cross-View List Task")).toBeInTheDocument();
+
+      // 6. Verify task is NOT duplicated across columns
+      const allOccurrences = screen.getAllByTestId(`task-board-card-${createdKey}`);
+      expect(allOccurrences).toHaveLength(1);
+    });
+
+    it("creates a task in Board View column and reconciles into List View with correct status", async () => {
+      const user = userEvent.setup();
+      renderTasksShell({
+        initialEntries: ["/workspaces/018f98a2-3f12-7890-w002-456789abcdef/board"],
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("task-board-view")).toBeInTheDocument();
+      });
+
+      // 1. Trigger inline creation inside the IN_PROGRESS board column
+      const inProgressCol = screen.getByTestId("board-column-IN_PROGRESS");
+      const colTrigger = within(inProgressCol).getByTestId("inline-creation-trigger");
+      await user.click(colTrigger);
+
+      const input = within(inProgressCol).getByTestId("inline-creation-input");
+      await user.type(input, "Stage 5.3D Board Column Task{Enter}");
+
+      // 2. Confirm card appears in IN_PROGRESS column
+      await waitFor(() => {
+        expect(within(inProgressCol).getByText("Stage 5.3D Board Column Task")).toBeInTheDocument();
+      });
+
+      const tasks = getMockTasks();
+      const createdTask = tasks.find((t) => t.title === "Stage 5.3D Board Column Task");
+      expect(createdTask).toBeDefined();
+      expect(createdTask?.statusCategory).toBe("IN_PROGRESS");
+      const createdKey = createdTask!.taskKey;
+
+      // 3. Switch to List View
+      const listTab = screen.getByTestId("tab-view-list");
+      await user.click(listTab);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("task-list-view")).toBeInTheDocument();
+      });
+
+      // 4. Verify task row appears in List View with correct status category
+      const listRow = screen.getByTestId(`task-list-row-${createdKey}`);
+      expect(listRow).toBeInTheDocument();
+      expect(within(listRow).getByText("Stage 5.3D Board Column Task")).toBeInTheDocument();
+      expect(within(listRow).getByRole("button", { name: /status: in progress/i })).toBeInTheDocument();
+    });
+
+    it("edits task title in List View and reconciles across Board View and Task Peek Drawer", async () => {
+      const user = userEvent.setup();
+      renderTasksShell({
+        initialEntries: ["/workspaces/018f98a2-3f12-7890-w002-456789abcdef/list"],
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("task-list-view")).toBeInTheDocument();
+      });
+
+      // 1. Edit title of ENG-101 in List View
+      const row101 = screen.getByTestId("task-list-row-ENG-101");
+      const titleBtn = within(row101).getByRole("button", { name: /edit title/i });
+      await user.click(titleBtn);
+
+      const titleInput = within(row101).getByRole("textbox");
+      await user.clear(titleInput);
+      await user.type(titleInput, "Synchronized Token Refresh Race Condition{Enter}");
+
+      // 2. Wait for mutation reconciliation in List View
+      await waitFor(() => {
+        expect(within(row101).getByText("Synchronized Token Refresh Race Condition")).toBeInTheDocument();
+      });
+
+      // 3. Switch to Board View
+      const boardTab = screen.getByTestId("tab-view-board");
+      await user.click(boardTab);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("task-board-view")).toBeInTheDocument();
+      });
+
+      // 4. Verify Board card reflects the updated title
+      const card101 = screen.getByTestId("task-board-card-ENG-101");
+      expect(within(card101).getByText("Synchronized Token Refresh Race Condition")).toBeInTheDocument();
+
+      // 5. Open Task Peek Drawer by clicking task key button
+      const keyBtn = within(card101).getByRole("button", { name: "ENG-101" });
+      await user.click(keyBtn);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("task-peek-drawer-desktop")).toBeInTheDocument();
+      });
+
+      // 6. Verify Task Peek Drawer reflects updated title
+      const drawer = screen.getByTestId("task-peek-drawer-desktop");
+      expect(within(drawer).getByText("Synchronized Token Refresh Race Condition")).toBeInTheDocument();
+    });
+
+    it("transitions status in Board View and updates column placement, List View, and Task Peek Drawer", async () => {
+      const user = userEvent.setup();
+      renderTasksShell({
+        initialEntries: ["/workspaces/018f98a2-3f12-7890-w002-456789abcdef/board"],
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("task-board-view")).toBeInTheDocument();
+      });
+
+      // 1. ENG-105 starts in TODO column
+      const todoCol = screen.getByTestId("board-column-TODO");
+      const card105 = within(todoCol).getByTestId("task-board-card-ENG-105");
+      expect(card105).toBeInTheDocument();
+
+      // 2. Move ENG-105 to DONE using InlineStatusCell
+      const statusTrigger = within(card105).getByRole("button", { name: /status: to do/i });
+      await user.click(statusTrigger);
+
+      const doneMenuItem = await screen.findByRole("menuitem", { name: /done/i });
+      await user.click(doneMenuItem);
+
+      // 3. Verify card moves to DONE column
+      await waitFor(() => {
+        const doneCol = screen.getByTestId("board-column-DONE");
+        expect(within(doneCol).getByTestId("task-board-card-ENG-105")).toBeInTheDocument();
+      });
+
+      // 4. Switch to List View
+      const listTab = screen.getByTestId("tab-view-list");
+      await user.click(listTab);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("task-list-view")).toBeInTheDocument();
+      });
+
+      // 5. Verify List View row displays Done status
+      const row105 = screen.getByTestId("task-list-row-ENG-105");
+      expect(within(row105).getByRole("button", { name: /status: done/i })).toBeInTheDocument();
+
+      // 6. Open Task Peek Drawer
+      const key105 = within(row105).getByRole("button", { name: "ENG-105" });
+      await user.click(key105);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("task-peek-drawer-desktop")).toBeInTheDocument();
+      });
+
+      const drawer = screen.getByTestId("task-peek-drawer-desktop");
+      await waitFor(() => {
+        expect(within(drawer).getByText(/done/i)).toBeInTheDocument();
+      });
+    });
+
+    it("preserves Assignee Option 3 hybrid model and reconciles across List, Board, and Drawer", async () => {
+      const user = userEvent.setup();
+      renderTasksShell({
+        initialEntries: ["/workspaces/018f98a2-3f12-7890-w002-456789abcdef/board"],
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("task-board-view")).toBeInTheDocument();
+      });
+
+      // 1. ENG-105 starts assigned to Alex Morgan. Click assignee cell in Board card
+      const card105 = screen.getByTestId("task-board-card-ENG-105");
+      const assigneeCell = within(card105).getByRole("button", { name: /assignee: alex morgan/i });
+      await user.click(assigneeCell);
+
+      // 2. Assignee selector dialog opens
+      const dialog = await screen.findByRole("dialog", { name: /assign task/i });
+      expect(dialog).toBeInTheDocument();
+
+      // 3. Option 3: selecting another member (Jordan Lee) in single-mode replaces
+      const jordanOption = within(dialog).getByRole("button", { name: /jordan lee/i });
+      await user.click(jordanOption);
+
+      // 4. Dialog closes on single replace; card now shows Jordan Lee
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog", { name: /assign task/i })).not.toBeInTheDocument();
+        expect(within(card105).getByRole("button", { name: /assignee: jordan lee/i })).toBeInTheDocument();
+      });
+
+      // 5. Switch to List View -> verify row reflects Jordan Lee
+      const listTab = screen.getByTestId("tab-view-list");
+      await user.click(listTab);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("task-list-view")).toBeInTheDocument();
+      });
+
+      const row105 = screen.getByTestId("task-list-row-ENG-105");
+      expect(within(row105).getByRole("button", { name: /assignee: jordan lee/i })).toBeInTheDocument();
+
+      // 6. Open Task Peek Drawer -> verify drawer reflects Jordan Lee
+      await user.click(within(row105).getByRole("button", { name: "ENG-105" }));
+      await waitFor(() => {
+        expect(screen.getByTestId("task-peek-drawer-desktop")).toBeInTheDocument();
+      });
+      const drawer = screen.getByTestId("task-peek-drawer-desktop");
+      expect(within(drawer).getByText("Jordan Lee")).toBeInTheDocument();
+    });
+
+    it("updates priority in List View and due date in Board View with full cross-view reflection", async () => {
+      const user = userEvent.setup();
+      renderTasksShell({
+        initialEntries: ["/workspaces/018f98a2-3f12-7890-w002-456789abcdef/list"],
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("task-list-view")).toBeInTheDocument();
+      });
+
+      // 1. Update priority of ENG-105 from High to Urgent in List View
+      const row105 = screen.getByTestId("task-list-row-ENG-105");
+      const priorityBtn = within(row105).getByRole("button", { name: /priority: high/i });
+      await user.click(priorityBtn);
+
+      const urgentOption = await screen.findByRole("menuitem", { name: /urgent/i });
+      await user.click(urgentOption);
+
+      await waitFor(() => {
+        expect(within(row105).getByRole("button", { name: /priority: urgent/i })).toBeInTheDocument();
+      });
+
+      // 2. Switch to Board View -> verify card header shows Urgent
+      const boardTab = screen.getByTestId("tab-view-board");
+      await user.click(boardTab);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("task-board-view")).toBeInTheDocument();
+      });
+
+      const card105 = screen.getByTestId("task-board-card-ENG-105");
+      expect(within(card105).getByRole("button", { name: /priority: urgent/i })).toBeInTheDocument();
+
+      // 3. Update Due Date in Board View via preset "Tomorrow"
+      const dueDateBtn = within(card105).getByRole("button", { name: /due date/i });
+      await user.click(dueDateBtn);
+
+      const tomorrowBtn = await screen.findByTestId("inline-duedate-tomorrow");
+      await user.click(tomorrowBtn);
+
+      const expectedTomorrow = addCalendarDays(getDefaultReferenceDate(), 1);
+      await waitFor(() => {
+        const freshCard = screen.getByTestId("task-board-card-ENG-105");
+        expect(within(freshCard).getByText(expectedTomorrow)).toBeInTheDocument();
+      });
+
+      // 4. Switch back to List View -> verify row reflects tomorrow's date
+      const listTab = screen.getByTestId("tab-view-list");
+      await user.click(listTab);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("task-list-view")).toBeInTheDocument();
+      });
+
+      const updatedRow105 = screen.getByTestId("task-list-row-ENG-105");
+      expect(within(updatedRow105).getByText(expectedTomorrow)).toBeInTheDocument();
+    });
+
+    it("recovers from mutation failure by rolling back optimistic state without corrupting persisted data", async () => {
+      const user = userEvent.setup();
+      renderTasksShell({
+        initialEntries: ["/workspaces/018f98a2-3f12-7890-w002-456789abcdef/board"],
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("task-board-view")).toBeInTheDocument();
+      });
+
+      const card101 = screen.getByTestId("task-board-card-ENG-101");
+
+      // Inject server failure for PATCH
+      setMockTasksError({
+        status: 500,
+        problem: {
+          type: "https://errors.sonder.platform/server-error",
+          title: "Internal Server Error",
+          status: 500,
+          detail: "Database write deadlock",
+        },
+      });
+
+      // Try to change status from IN_PROGRESS to DONE
+      const statusTrigger = within(card101).getByRole("button", { name: /status: in progress/i });
+      await user.click(statusTrigger);
+
+      const doneOption = await screen.findByRole("menuitem", { name: /done/i });
+      await user.click(doneOption);
+
+      // Verify feedback banner appears and status rolls back
+      await waitFor(() => {
+        expect(screen.getByText(/database write deadlock|failed to update task status/i)).toBeInTheDocument();
+      });
+
+      // Reset error override
+      setMockTasksError(null);
+
+      // ENG-101 remains in IN_PROGRESS column
+      const inProgressCol = screen.getByTestId("board-column-IN_PROGRESS");
+      expect(within(inProgressCol).getByTestId("task-board-card-ENG-101")).toBeInTheDocument();
+    });
+
+    it("persists edits made inside Task Peek Drawer and reconciles with both List and Board views", async () => {
+      const user = userEvent.setup();
+      renderTasksShell({
+        initialEntries: ["/workspaces/018f98a2-3f12-7890-w002-456789abcdef/list?task=ENG-102"],
+      });
+
+      // Wait for drawer to open with ENG-102
+      await waitFor(() => {
+        expect(screen.getByTestId("task-peek-drawer-desktop")).toBeInTheDocument();
+      });
+
+      const drawer = screen.getByTestId("task-peek-drawer-desktop");
+
+      // Wait for drawer task details to finish loading
+      await waitFor(() => {
+        expect(within(drawer).getByText("Ship VS-02E My Work cross-workspace dashboard")).toBeInTheDocument();
+      });
+
+      // Edit title inside the drawer via explicit edit button
+      const editTitleBtn = within(drawer).getByTestId("edit-title-btn");
+      await user.click(editTitleBtn);
+
+      const titleInput = await within(drawer).findByTestId("title-input");
+      await user.clear(titleInput);
+      await user.type(titleInput, "Ship Omnibar & My Work Cross-Workspace Hub{Enter}");
+
+      // Verify title updated in drawer
+      await waitFor(() => {
+        expect(within(drawer).getByText("Ship Omnibar & My Work Cross-Workspace Hub")).toBeInTheDocument();
+      });
+
+      // Close drawer
+      const closeBtn = within(drawer).getByRole("button", { name: /close task details/i });
+      await user.click(closeBtn);
+
+      await waitFor(() => {
+        expect(screen.queryByTestId("task-peek-drawer-desktop")).not.toBeInTheDocument();
+      });
+
+      // Verify List View row displays new title
+      const row102 = screen.getByTestId("task-list-row-ENG-102");
+      expect(within(row102).getByText("Ship Omnibar & My Work Cross-Workspace Hub")).toBeInTheDocument();
+
+      // Switch to Board View
+      const boardTab = screen.getByTestId("tab-view-board");
+      await user.click(boardTab);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("task-board-view")).toBeInTheDocument();
+      });
+
+      const card102 = screen.getByTestId("task-board-card-ENG-102");
+      expect(within(card102).getByText("Ship Omnibar & My Work Cross-Workspace Hub")).toBeInTheDocument();
     });
   });
 });
