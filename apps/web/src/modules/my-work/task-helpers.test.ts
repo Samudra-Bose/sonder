@@ -5,6 +5,7 @@ import {
   processRawTasks,
   filterTasksByRelationship,
   groupTasksTemporally,
+  getDailyFocusTasks,
 } from "./task-helpers";
 
 const mockCurrentUserId = "user-alex-123";
@@ -319,6 +320,97 @@ describe("My Work Task Helpers (VS-02E)", () => {
 
       // Expected order: URGENT > HIGH (newer before older) > LOW
       expect(unscheduledIds).toEqual(["t-urgent", "t-high-new", "t-high-old", "t-low"]);
+    });
+  });
+
+  describe("getDailyFocusTasks (Phase 2)", () => {
+    const refDate = "2026-11-03";
+
+    it("returns at most maxTasks (default 5) actionable tasks", () => {
+      const rawTasks = Array.from({ length: 10 }, (_, i) =>
+        createMockTask({
+          id: `t-${i}`,
+          taskKey: `ENG-${100 + i}`,
+          dueDate: "2026-11-03",
+          statusCategory: "TODO",
+        })
+      );
+      const items = processRawTasks(rawTasks, sampleWorkspaces, mockCurrentUserId, refDate);
+      const focus = getDailyFocusTasks(items, refDate);
+
+      expect(focus).toHaveLength(5);
+    });
+
+    it("prioritizes overdue tasks first, sorted by earliest due date", () => {
+      const overdue1 = createMockTask({
+        id: "t-overdue-1",
+        taskKey: "ENG-101",
+        dueDate: "2026-11-01",
+        statusCategory: "TODO",
+        priority: "LOW",
+      });
+      const overdue2 = createMockTask({
+        id: "t-overdue-2",
+        taskKey: "ENG-102",
+        dueDate: "2026-11-02",
+        statusCategory: "TODO",
+        priority: "URGENT",
+      });
+      const dueToday = createMockTask({
+        id: "t-today",
+        taskKey: "ENG-103",
+        dueDate: "2026-11-03",
+        statusCategory: "TODO",
+        priority: "URGENT",
+      });
+
+      const items = processRawTasks(
+        [dueToday, overdue2, overdue1],
+        sampleWorkspaces,
+        mockCurrentUserId,
+        refDate
+      );
+      const focus = getDailyFocusTasks(items, refDate);
+
+      // Overdue 1 (Nov 1) < Overdue 2 (Nov 2) < Due Today (Nov 3)
+      expect(focus[0]?.id).toBe("t-overdue-1");
+      expect(focus[1]?.id).toBe("t-overdue-2");
+      expect(focus[2]?.id).toBe("t-today");
+    });
+
+    it("strictly excludes terminal tasks (DONE and CANCELED)", () => {
+      const doneTask = createMockTask({
+        id: "t-done",
+        taskKey: "ENG-101",
+        dueDate: "2026-11-01",
+        statusCategory: "DONE",
+        priority: "URGENT",
+      });
+      const canceledTask = createMockTask({
+        id: "t-canceled",
+        taskKey: "ENG-102",
+        dueDate: "2026-11-03",
+        statusCategory: "CANCELED",
+        priority: "URGENT",
+      });
+      const activeTask = createMockTask({
+        id: "t-active",
+        taskKey: "ENG-103",
+        dueDate: "2026-11-03",
+        statusCategory: "TODO",
+        priority: "MEDIUM",
+      });
+
+      // Pass raw directly or with mocked items
+      const fakeItems = [
+        { ...doneTask, relationships: ["ASSIGNED" as const], primaryRelationship: "ASSIGNED" as const, workspaceName: "ws", workspaceKeyPrefix: "ENG", workspaceKind: "SHARED" as const, temporalGroup: "overdue" as const },
+        { ...canceledTask, relationships: ["ASSIGNED" as const], primaryRelationship: "ASSIGNED" as const, workspaceName: "ws", workspaceKeyPrefix: "ENG", workspaceKind: "SHARED" as const, temporalGroup: "dueToday" as const },
+        { ...activeTask, relationships: ["ASSIGNED" as const], primaryRelationship: "ASSIGNED" as const, workspaceName: "ws", workspaceKeyPrefix: "ENG", workspaceKind: "SHARED" as const, temporalGroup: "dueToday" as const },
+      ];
+
+      const focus = getDailyFocusTasks(fakeItems, refDate);
+      expect(focus).toHaveLength(1);
+      expect(focus[0]?.id).toBe("t-active");
     });
   });
 });

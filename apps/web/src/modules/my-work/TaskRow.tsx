@@ -8,12 +8,12 @@ import {
   UserCheck,
   Sparkles,
 } from "lucide-react";
-import { Badge } from "@/components/ui/Badge";
-import { WorkspaceBadge } from "@/modules/workspace";
+import { WorkspaceBadge, useWorkspace } from "@/modules/workspace";
 import { useTaskPeekDrawer } from "@/modules/tasks";
+import { InlineStatusCell, InlinePriorityCell } from "@/modules/tasks/cells";
 import { cn } from "@/lib/utils";
 import { formatDueDisplay } from "./date-utils";
-import type { MyWorkTaskItem, TaskPriority } from "./types";
+import type { MyWorkTaskItem } from "./types";
 
 export interface TaskRowProps {
   task: MyWorkTaskItem;
@@ -21,19 +21,12 @@ export interface TaskRowProps {
   className?: string;
 }
 
-const PRIORITY_LABELS: Record<TaskPriority, string> = {
-  URGENT: "Urgent",
-  HIGH: "High",
-  MEDIUM: "Medium",
-  LOW: "Low",
-  NONE: "None",
-};
-
 export function TaskRow({
   task,
   referenceDate,
   className,
 }: TaskRowProps): React.JSX.Element {
+  const { currentCommunityId } = useWorkspace();
   const { openTask } = useTaskPeekDrawer();
   const isOverdue = task.temporalGroup === "overdue";
   const isDueToday = task.temporalGroup === "dueToday";
@@ -43,7 +36,11 @@ export function TaskRow({
 
   const handleRowClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    if (target.closest("button, a, input, select, textarea, [role='button']:not(article)")) {
+    if (
+      target.closest(
+        "button, a, input, select, textarea, [role='button']:not(article), [data-radix-popper-content-wrapper], [role='dialog'], [role='menu'], [role='menuitem']"
+      )
+    ) {
       return;
     }
     openTask(task.taskKey, { workspaceId: task.workspaceId });
@@ -52,7 +49,11 @@ export function TaskRow({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
       const target = e.target as HTMLElement;
-      if (target.closest("button, a, input, select, textarea")) {
+      if (
+        target.closest(
+          "button, a, input, select, textarea, [role='button']:not(article), [role='menuitem']"
+        )
+      ) {
         return;
       }
       e.preventDefault();
@@ -161,21 +162,21 @@ export function TaskRow({
           {task.workspaceName}
         </span>
 
-        {/* Priority Badge */}
-        {task.priority !== "NONE" && (
-          <Badge
-            priority={task.priority}
-            size="sm"
-            className="text-[10px] uppercase font-semibold"
-          >
-            {PRIORITY_LABELS[task.priority]}
-          </Badge>
-        )}
+        {/* Priority Cell (Inline editable) */}
+        <InlinePriorityCell
+          task={task}
+          communityId={currentCommunityId ?? ""}
+          workspaceId={task.workspaceId}
+          disabled={task.statusCategory === "DONE" || task.statusCategory === "CANCELED"}
+        />
 
-        {/* Status Badge */}
-        <Badge variant="outline" size="sm" className="text-[10px]">
-          {task.statusCategory.replace("_", " ")}
-        </Badge>
+        {/* Status Cell (Inline editable) */}
+        <InlineStatusCell
+          task={task}
+          communityId={currentCommunityId ?? ""}
+          workspaceId={task.workspaceId}
+          disabled={task.statusCategory === "DONE" || task.statusCategory === "CANCELED"}
+        />
 
         {/* Due Date Indicator */}
         <div

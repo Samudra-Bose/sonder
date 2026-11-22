@@ -320,4 +320,34 @@ describe("MyWorkView Component (VS-02E)", () => {
       expect(screen.getByRole("region", { name: /unscheduled/i })).toBeInTheDocument();
     });
   });
+
+  describe("Phase 2 Product Enhancements", () => {
+    it("renders active community scope banner to communicate multi-tenant boundaries", async () => {
+      renderMyWorkView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("my-work-community-scope-banner")).toBeInTheDocument();
+      });
+
+      const banner = screen.getByTestId("my-work-community-scope-banner");
+      expect(within(banner).getByText("Community:")).toBeInTheDocument();
+      expect(within(banner).getByText("Sonder Community")).toBeInTheDocument();
+    });
+
+    it("renders inline interactive status and priority cells in task rows", async () => {
+      renderMyWorkView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("my-work-task-ENG-101")).toBeInTheDocument();
+      });
+
+      const taskRow = screen.getByTestId("my-work-task-ENG-101");
+      // ENG-101 has id '018f98a2-3f12-7890-a123-456789abcdef'
+      const statusTrigger = within(taskRow).getByTestId(/^inline-status-trigger-/);
+      const priorityTrigger = within(taskRow).getByTestId(/^inline-priority-trigger-/);
+
+      expect(statusTrigger).toBeInTheDocument();
+      expect(priorityTrigger).toBeInTheDocument();
+    });
+  });
 });

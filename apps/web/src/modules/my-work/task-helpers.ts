@@ -190,3 +190,91 @@ export function groupTasksTemporally(
 
   return groups;
 }
+
+/**
+ * Prioritizes up to maxTasks (default 5) actionable tasks for Home Daily Focus.
+ * Transparent, deterministic prioritization rule:
+ * 1. Incomplete Overdue tasks (dueDate < referenceDate), sorted by earliest due date ASC, then priority.
+ * 2. Incomplete tasks Due Today (dueDate === referenceDate), sorted by priority DESC.
+ * 3. Remaining incomplete high-priority tasks (priority === "URGENT" || priority === "HIGH"), sorted by priority, then earliest due date.
+ * 4. Earliest upcoming deadlines (dueDate > referenceDate), sorted by earliest due date ASC.
+ * 5. Other remaining active tasks, sorted by priority, then creation date.
+ * Stable tie-breaker on taskKey ASC.
+ */
+export function getDailyFocusTasks(
+  tasks: MyWorkTaskItem[],
+  referenceDate: string,
+  maxTasks: number = 5
+): MyWorkTaskItem[] {
+  // Exclude completed or canceled tasks
+  const actionable = tasks.filter(
+    (t) => t.statusCategory !== "DONE" && t.statusCategory !== "CANCELED"
+  );
+
+  function getTier(t: MyWorkTaskItem): number {
+    if (t.dueDate && t.dueDate < referenceDate) {
+      return 1; // Overdue
+    }
+    if (t.dueDate === referenceDate) {
+      return 2; // Due Today
+    }
+    if (t.priority === "URGENT" || t.priority === "HIGH") {
+      return 3; // High Priority
+    }
+    if (t.dueDate && t.dueDate > referenceDate) {
+      return 4; // Upcoming deadline
+    }
+    return 5; // Other active
+  }
+
+  const sorted = [...actionable].sort((a, b) => {
+    const tierA = getTier(a);
+    const tierB = getTier(b);
+    if (tierA !== tierB) {
+      return tierA - tierB;
+    }
+
+    // Within Tier 1 (Overdue): earliest due date first, then priority
+    if (tierA === 1) {
+      const diffDue = (a.dueDate || "").localeCompare(b.dueDate || "");
+      if (diffDue !== 0) return diffDue;
+      const diffPri = (PRIORITY_RANK[a.priority] ?? 4) - (PRIORITY_RANK[b.priority] ?? 4);
+      if (diffPri !== 0) return diffPri;
+    }
+
+    // Within Tier 2 (Due Today): priority first
+    if (tierA === 2) {
+      const diffPri = (PRIORITY_RANK[a.priority] ?? 4) - (PRIORITY_RANK[b.priority] ?? 4);
+      if (diffPri !== 0) return diffPri;
+    }
+
+    // Within Tier 3 (High Priority): priority first, then earliest due date if any
+    if (tierA === 3) {
+      const diffPri = (PRIORITY_RANK[a.priority] ?? 4) - (PRIORITY_RANK[b.priority] ?? 4);
+      if (diffPri !== 0) return diffPri;
+      const dueA = a.dueDate || "9999-99-99";
+      const dueB = b.dueDate || "9999-99-99";
+      const diffDue = dueA.localeCompare(dueB);
+      if (diffDue !== 0) return diffDue;
+    }
+
+    // Within Tier 4 (Upcoming): earliest due date first, then priority
+    if (tierA === 4) {
+      const diffDue = (a.dueDate || "").localeCompare(b.dueDate || "");
+      if (diffDue !== 0) return diffDue;
+      const diffPri = (PRIORITY_RANK[a.priority] ?? 4) - (PRIORITY_RANK[b.priority] ?? 4);
+      if (diffPri !== 0) return diffPri;
+    }
+
+    // Within Tier 5 (Other): priority first
+    if (tierA === 5) {
+      const diffPri = (PRIORITY_RANK[a.priority] ?? 4) - (PRIORITY_RANK[b.priority] ?? 4);
+      if (diffPri !== 0) return diffPri;
+    }
+
+    // Stable tie-breaker: taskKey ascending
+    return a.taskKey.localeCompare(b.taskKey);
+  });
+
+  return sorted.slice(0, maxTasks);
+}

@@ -7,9 +7,11 @@ import {
   Layers,
   RotateCcw,
   Sparkles,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/modules/auth";
+import { useWorkspace } from "@/modules/workspace";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -28,6 +30,7 @@ export function MyWorkView({
   className,
 }: MyWorkViewProps = {}): React.JSX.Element {
   const { user } = useAuth();
+  const { currentCommunity } = useWorkspace();
   const {
     temporalGroups,
     filteredTasks,
@@ -70,12 +73,26 @@ export function MyWorkView({
           </div>
         </div>
 
-        {/* User personalized greeting sub-banner */}
-        <div className="flex items-center gap-2 pt-2 text-xs text-[var(--text-secondary)] border-t border-[var(--border-subtle)]">
-          <Sparkles className="h-3.5 w-3.5 text-[var(--brand-accent-text)] flex-shrink-0" />
-          <span>
-            Personal triage for <strong className="text-[var(--text-primary)] font-semibold">{displayName}</strong> across all active shared and personal workspaces.
-          </span>
+        {/* User personalized greeting sub-banner & community context */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 text-xs text-[var(--text-secondary)] border-t border-[var(--border-subtle)]">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-3.5 w-3.5 text-[var(--brand-accent-text)] flex-shrink-0" />
+            <span>
+              Personal triage for <strong className="text-[var(--text-primary)] font-semibold">{displayName}</strong> across all active shared and personal workspaces.
+            </span>
+          </div>
+          {currentCommunity && (
+            <div
+              data-testid="my-work-community-scope-banner"
+              className="flex items-center gap-1.5 text-[11px] text-[var(--text-muted)] bg-[var(--surface-muted)] px-2.5 py-1 rounded-md border border-[var(--border-subtle)] flex-shrink-0"
+            >
+              <Building2 className="h-3 w-3 text-[var(--brand-accent-text)]" />
+              <span>Community:</span>
+              <span className="font-semibold text-[var(--text-primary)]">
+                {currentCommunity.name}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
