@@ -68,16 +68,16 @@ export function AppSidebar({
         </NavLink>
       </div>
 
-      {/* Primary Navigation Section */}
+      {/* Navigation Body: Two-Zone Architecture (Personal Space & Workspace Explorer) */}
       <div className="flex-1 py-3 overflow-y-auto px-2 space-y-4">
-        {/* Main Section */}
+        {/* Zone 1: Personal Space */}
         <div className="space-y-1">
           {!isCollapsed && (
             <h2 className="px-2 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-              Navigation
+              Personal Space
             </h2>
           )}
-          <nav aria-label="Primary" className="space-y-0.5">
+          <nav aria-label="Personal Space" className="space-y-0.5">
             {PRIMARY_NAV_ITEMS.map((item: NavItem) => {
               const Icon = item.icon;
               const linkContent = (
@@ -117,11 +117,11 @@ export function AppSidebar({
           </nav>
         </div>
 
-        {/* Workspaces Section (VS-02C Workspace Switcher) */}
+        {/* Zone 2: Workspace Explorer */}
         <div className="space-y-1.5 pt-2 border-t border-[var(--border-subtle)]">
           {!isCollapsed && (
             <h2 className="px-2 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-              Workspaces
+              Workspace Explorer
             </h2>
           )}
           <WorkspaceSwitcher isCollapsed={isCollapsed} />

@@ -1,5 +1,5 @@
 import React from "react";
-import { CheckCircle2, Inbox } from "lucide-react";
+import { Home, CheckCircle2, Inbox } from "lucide-react";
 
 export interface NavItem {
   id: string;
@@ -11,7 +11,14 @@ export interface NavItem {
   isExternal?: boolean;
 }
 
-export const PRIMARY_NAV_ITEMS: NavItem[] = [
+export const PERSONAL_SPACE_ITEMS: NavItem[] = [
+  {
+    id: "home",
+    label: "Home",
+    href: "/",
+    icon: Home,
+    description: "Personal overview and cockpit",
+  },
   {
     id: "my-work",
     label: "My Work",
@@ -27,3 +34,5 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
     description: "Notifications, mentions, and updates",
   },
 ];
+
+export const PRIMARY_NAV_ITEMS: NavItem[] = PERSONAL_SPACE_ITEMS;

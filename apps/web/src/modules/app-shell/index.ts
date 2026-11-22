@@ -6,4 +6,5 @@ export * from "./MainContent";
 export * from "./DashboardView";
 export * from "./MyWorkPlaceholderView";
 export * from "./InboxPlaceholderView";
+export * from "./UserPreferencesModal";
 export * from "./navigation";

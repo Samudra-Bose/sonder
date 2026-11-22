@@ -498,4 +498,77 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       expect(storageMock[THEME_STORAGE_KEY]).toBe("light");
     });
   });
+
+  describe("Phase 1: Design System & Shell Architecture Transformation", () => {
+    it("renders Two-Zone Navigation with distinct Personal Space and Workspace Explorer regions", async () => {
+      renderApp(["/"]);
+
+      await waitFor(() => {
+        expect(screen.getByRole("navigation", { name: "Main navigation" })).toBeInTheDocument();
+      });
+
+      const sidebar = screen.getByRole("navigation", { name: "Main navigation" });
+
+      // Zone 1: Personal Space
+      expect(within(sidebar).getByText("Personal Space")).toBeInTheDocument();
+      expect(within(sidebar).getByRole("link", { name: /^home$/i })).toBeInTheDocument();
+      expect(within(sidebar).getByRole("link", { name: /^my work$/i })).toBeInTheDocument();
+      expect(within(sidebar).getByRole("link", { name: /^inbox$/i })).toBeInTheDocument();
+
+      // Zone 2: Workspace Explorer
+      expect(within(sidebar).getByText("Workspace Explorer")).toBeInTheDocument();
+      expect(within(sidebar).getByRole("button", { name: /select a workspace/i })).toBeInTheDocument();
+    });
+
+    it("dynamically updates desktop breadcrumb context according to active route", async () => {
+      renderApp(["/my-work"]);
+
+      await waitFor(() => {
+        expect(screen.getByRole("banner")).toBeInTheDocument();
+      });
+
+      const header = screen.getByRole("banner");
+      const breadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+      expect(within(breadcrumbs).getByText("My Work")).toBeInTheDocument();
+    });
+
+    it("opens User Preferences modal from user dropdown menu and allows theme selection", async () => {
+      const user = userEvent.setup();
+      renderApp(["/"]);
+
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: "Open user menu" })).toBeInTheDocument();
+      });
+
+      // Open user dropdown menu
+      const avatarTrigger = screen.getByRole("button", { name: "Open user menu" });
+      await user.click(avatarTrigger);
+
+      // Verify Preferences item exists and click it
+      const preferencesItem = await screen.findByRole("menuitem", { name: /preferences/i });
+      expect(preferencesItem).toBeInTheDocument();
+      await user.click(preferencesItem);
+
+      // Verify Preferences dialog appears with accessibility landmarks
+      const preferencesDialog = await screen.findByRole("dialog", { name: /user preferences/i });
+      expect(preferencesDialog).toBeInTheDocument();
+
+      // Check View Density standard (44px) information
+      expect(within(preferencesDialog).getByText(/standard \(44px\) active/i)).toBeInTheDocument();
+      expect(within(preferencesDialog).getByText(/conforming strictly to wcag 2\.2 aa/i)).toBeInTheDocument();
+
+      // Test theme buttons inside dialog
+      const darkBtn = within(preferencesDialog).getByRole("button", { name: /dark/i });
+      await user.click(darkBtn);
+      expect(document.documentElement.classList.contains("dark")).toBe(true);
+
+      // Close dialog via close button
+      const closeBtn = within(preferencesDialog).getByRole("button", { name: /close dialog/i });
+      await user.click(closeBtn);
+
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog", { name: /user preferences/i })).not.toBeInTheDocument();
+      });
+    });
+  });
 });

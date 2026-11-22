@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   PanelLeft,
   Menu,
@@ -7,6 +8,7 @@ import {
   Laptop,
   LogOut,
   Plus,
+  Sliders,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -19,11 +21,13 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuGroup,
 } from "@/components/ui/DropdownMenu";
 import { useTheme } from "@/lib/theme";
 import { useWorkspace } from "@/modules/workspace";
 import { DesktopOmnibarTrigger, MobileOmnibarTrigger } from "@/modules/omnibar";
 import { NotificationBell } from "@/modules/notifications";
+import { UserPreferencesModal } from "./UserPreferencesModal";
 import type { ApiSchema } from "@sonder/contracts";
 
 export type AuthUser = ApiSchema<"MeContextDto">["user"];
@@ -49,9 +53,24 @@ export function AppHeader({
   menuTriggerRef,
   onOpenQuickComposer,
 }: AppHeaderProps): React.JSX.Element {
+  const location = useLocation();
+  const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
   const { theme, resolvedTheme, setTheme, toggleTheme } = useTheme();
   const { currentCommunity, activeWorkspace, workspaces } = useWorkspace();
   const hasAvailableWorkspace = Boolean(currentCommunity && (activeWorkspace || (workspaces && workspaces.length > 0)));
+
+  const getTerminalBreadcrumb = (pathname: string): string => {
+    if (pathname.includes("/list")) return "List";
+    if (pathname.includes("/board")) return "Board";
+    if (pathname.includes("/calendar")) return "Calendar";
+    if (pathname.includes("/timeline")) return "Timeline";
+    if (pathname.includes("/trash")) return "Trash";
+    if (pathname.includes("/settings")) return "Settings";
+    if (pathname.startsWith("/my-work")) return "My Work";
+    if (pathname.startsWith("/inbox")) return "Inbox";
+    return "Overview";
+  };
+  const terminalBreadcrumb = getTerminalBreadcrumb(location.pathname);
 
   return (
     <header
@@ -89,7 +108,7 @@ export function AppHeader({
         {/* Mobile View Title */}
         <div className="flex items-center space-x-2 md:hidden">
           <span className="text-xs font-semibold text-[var(--text-primary)] truncate max-w-[180px]">
-            {activeWorkspace ? activeWorkspace.name : "Overview"}
+            {activeWorkspace ? activeWorkspace.name : terminalBreadcrumb}
           </span>
         </div>
 
@@ -115,7 +134,7 @@ export function AppHeader({
             </>
           )}
           <span className="font-semibold text-[var(--text-primary)]">
-            Overview
+            {terminalBreadcrumb}
           </span>
         </nav>
       </div>
@@ -236,34 +255,44 @@ export function AppHeader({
                 />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" sideOffset={6} className="w-56">
-                <DropdownMenuLabel>
-                  <p className="font-semibold text-xs text-[var(--text-primary)] truncate">
-                    {user.displayName}
-                  </p>
-                  <p className="text-[11px] text-[var(--text-muted)] truncate">
-                    {user.email}
-                  </p>
-                </DropdownMenuLabel>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>
+                    <p className="font-semibold text-xs text-[var(--text-primary)] truncate">
+                      {user.displayName}
+                    </p>
+                    <p className="text-[11px] text-[var(--text-muted)] truncate">
+                      {user.email}
+                    </p>
+                  </DropdownMenuLabel>
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
 
                 {/* Theme Selector */}
-                <DropdownMenuLabel className="text-[10px] text-[var(--text-muted)]">
-                  Appearance Theme
-                </DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => setTheme("light")}>
-                  <Sun className="h-3.5 w-3.5 text-amber-500 mr-1.5" />
-                  <span>Light Mode</span>
-                  {theme === "light" && <span className="ml-auto text-[10px] text-[var(--brand-accent-text)]">Active</span>}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("dark")}>
-                  <Moon className="h-3.5 w-3.5 text-sky-400 mr-1.5" />
-                  <span>Dark Mode</span>
-                  {theme === "dark" && <span className="ml-auto text-[10px] text-[var(--brand-accent-text)]">Active</span>}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("system")}>
-                  <Laptop className="h-3.5 w-3.5 text-[var(--text-muted)] mr-1.5" />
-                  <span>System Preference</span>
-                  {theme === "system" && <span className="ml-auto text-[10px] text-[var(--brand-accent-text)]">Active</span>}
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="text-[10px] text-[var(--text-muted)]">
+                    Appearance Theme
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => setTheme("light")}>
+                    <Sun className="h-3.5 w-3.5 text-amber-500 mr-1.5" />
+                    <span>Light Mode</span>
+                    {theme === "light" && <span className="ml-auto text-[10px] text-[var(--brand-accent-text)]">Active</span>}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setTheme("dark")}>
+                    <Moon className="h-3.5 w-3.5 text-sky-400 mr-1.5" />
+                    <span>Dark Mode</span>
+                    {theme === "dark" && <span className="ml-auto text-[10px] text-[var(--brand-accent-text)]">Active</span>}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setTheme("system")}>
+                    <Laptop className="h-3.5 w-3.5 text-[var(--text-muted)] mr-1.5" />
+                    <span>System Preference</span>
+                    {theme === "system" && <span className="ml-auto text-[10px] text-[var(--brand-accent-text)]">Active</span>}
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setIsPreferencesOpen(true)}>
+                  <Sliders className="h-3.5 w-3.5 mr-1.5 text-[var(--brand-accent-text)]" />
+                  <span>Preferences</span>
                 </DropdownMenuItem>
 
                 <DropdownMenuSeparator />
@@ -276,6 +305,13 @@ export function AppHeader({
           </div>
         )}
       </div>
+
+      {/* User Preferences Modal */}
+      <UserPreferencesModal
+        isOpen={isPreferencesOpen}
+        onClose={() => setIsPreferencesOpen(false)}
+        user={user}
+      />
     </header>
   );
 }

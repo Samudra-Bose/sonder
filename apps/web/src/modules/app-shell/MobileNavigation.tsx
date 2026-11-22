@@ -151,7 +151,7 @@ export function MobileNavigation({
 
             <div>
               <h3 className="px-2 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                Navigation
+                Personal Space
               </h3>
               <nav aria-label="Mobile Navigation Links" className="space-y-1">
                 {PRIMARY_NAV_ITEMS.map((item: NavItem) => {
@@ -179,11 +179,11 @@ export function MobileNavigation({
               </nav>
             </div>
 
-            {/* Workspaces Section (VS-02C Workspace Switcher) */}
+            {/* Workspace Explorer Section (VS-02C Workspace Switcher) */}
             <div className="pt-2 border-t border-[var(--border-subtle)]">
               <div className="px-2 pb-1.5 flex items-center justify-between">
                 <h3 className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                  Workspaces
+                  Workspace Explorer
                 </h3>
               </div>
               <MobileWorkspaceSelector onWorkspaceSelected={onClose} />

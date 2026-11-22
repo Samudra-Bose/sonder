@@ -274,4 +274,51 @@ describe("Design System Tokens & Radius Scale Specification", () => {
       expect(darkBorderRatio).toBeLessThan(3.0);
     }
   });
+
+  describe("Phase 1 Design Foundation Tokens & Surface Elevation Scale", () => {
+    it("verifies the calibrated elevation hierarchy (Levels 0 through 4) in both light and dark themes", () => {
+      const rootBlock = cssContent.match(/:root\s*\{([^}]+)\}/)?.[1] || "";
+      const darkBlock = cssContent.match(/\.dark\s*\{([^}]+)\}/)?.[1] || "";
+
+      // Light elevation hierarchy
+      expect(rootBlock).toMatch(/--elevation-0:\s*#f8fafc;/);
+      expect(rootBlock).toMatch(/--elevation-1:\s*#ffffff;/);
+      expect(rootBlock).toMatch(/--elevation-2:\s*#ffffff;/);
+      expect(rootBlock).toMatch(/--elevation-3:\s*#ffffff;/);
+      expect(rootBlock).toMatch(/--elevation-4:\s*#ffffff;/);
+
+      // Dark elevation hierarchy
+      expect(darkBlock).toMatch(/--elevation-0:\s*#090d16;/);
+      expect(darkBlock).toMatch(/--elevation-1:\s*#0f172a;/);
+      expect(darkBlock).toMatch(/--elevation-2:\s*#151f32;/);
+      expect(darkBlock).toMatch(/--elevation-3:\s*#1e293b;/);
+      expect(darkBlock).toMatch(/--elevation-4:\s*#243247;/);
+    });
+
+    it("verifies specular highlight border token and utility class", () => {
+      const rootBlock = cssContent.match(/:root\s*\{([^}]+)\}/)?.[1] || "";
+      const darkBlock = cssContent.match(/\.dark\s*\{([^}]+)\}/)?.[1] || "";
+
+      expect(rootBlock).toMatch(/--border-specular:\s*rgba\(0,\s*0,\s*0,\s*0\.04\);/);
+      expect(darkBlock).toMatch(/--border-specular:\s*rgba\(255,\s*255,\s*255,\s*0\.08\);/);
+
+      const specularClass = cssContent.match(/\.specular-border\s*\{([^}]+)\}/)?.[1] || "";
+      expect(specularClass).toContain("var(--border-specular)");
+      expect(specularClass).toContain("var(--border-subtle)");
+    });
+
+    it("verifies standardized icon size utility tokens (xs, sm, md, lg)", () => {
+      expect(cssContent).toMatch(/\.icon-xs\s*\{[^}]*width:\s*0\.75rem;/);
+      expect(cssContent).toMatch(/\.icon-sm\s*\{[^}]*width:\s*0\.875rem;/);
+      expect(cssContent).toMatch(/\.icon-md\s*\{[^}]*width:\s*1rem;/);
+      expect(cssContent).toMatch(/\.icon-lg\s*\{[^}]*width:\s*1\.25rem;/);
+    });
+
+    it("verifies elevation utility classes match defined shadows and tokens", () => {
+      expect(cssContent).toMatch(/\.elevation-1\s*\{[^}]*background-color:\s*var\(--elevation-1\);/);
+      expect(cssContent).toMatch(/\.elevation-2\s*\{[^}]*background-color:\s*var\(--elevation-2\);/);
+      expect(cssContent).toMatch(/\.elevation-3\s*\{[^}]*background-color:\s*var\(--elevation-3\);/);
+      expect(cssContent).toMatch(/\.elevation-4\s*\{[^}]*background-color:\s*var\(--elevation-4\);/);
+    });
+  });
 });
