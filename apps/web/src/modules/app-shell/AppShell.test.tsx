@@ -571,4 +571,279 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       });
     });
   });
+
+  describe("DEF-02 Breadcrumb Context Remediation & Route Hierarchy", () => {
+    it("renders 'Overview' breadcrumb without community/workspace crumb on home route (/) when no workspace is selected", async () => {
+      renderApp(["/"]);
+
+      await waitFor(() => {
+        expect(screen.getByRole("banner")).toBeInTheDocument();
+      });
+
+      const header = screen.getByRole("banner");
+      const breadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+      expect(within(breadcrumbs).getByText("Overview")).toBeInTheDocument();
+      expect(within(breadcrumbs).queryByText("Sonder Community")).not.toBeInTheDocument();
+      expect(within(breadcrumbs).queryByText("Engineering Platform")).not.toBeInTheDocument();
+      expect(within(breadcrumbs).queryByText("/")).not.toBeInTheDocument();
+    });
+
+    it("suppresses community and workspace crumbs on home route (/) even when a workspace was previously selected", async () => {
+      storageMock["sonder-active-workspace-id"] = "018f98a2-3f12-7890-w002-456789abcdef";
+      renderApp(["/"]);
+
+      await waitFor(() => {
+        expect(screen.getByRole("banner")).toBeInTheDocument();
+      });
+
+      const header = screen.getByRole("banner");
+      const breadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+      expect(within(breadcrumbs).getByText("Overview")).toBeInTheDocument();
+      expect(within(breadcrumbs).queryByText("Sonder Community")).not.toBeInTheDocument();
+      expect(within(breadcrumbs).queryByText("Engineering Platform")).not.toBeInTheDocument();
+      expect(within(breadcrumbs).queryByText("/")).not.toBeInTheDocument();
+    });
+
+    it("renders only 'My Work' breadcrumb on /my-work when a workspace was previously selected", async () => {
+      storageMock["sonder-active-workspace-id"] = "018f98a2-3f12-7890-w002-456789abcdef";
+      renderApp(["/my-work"]);
+
+      await waitFor(() => {
+        expect(screen.getByRole("banner")).toBeInTheDocument();
+      });
+
+      const header = screen.getByRole("banner");
+      const breadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+      expect(within(breadcrumbs).getByText("My Work")).toBeInTheDocument();
+      expect(within(breadcrumbs).queryByText("Sonder Community")).not.toBeInTheDocument();
+      expect(within(breadcrumbs).queryByText("Engineering Platform")).not.toBeInTheDocument();
+      expect(within(breadcrumbs).queryByText("/")).not.toBeInTheDocument();
+    });
+
+    it("renders only 'Inbox' breadcrumb on /inbox when a workspace was previously selected", async () => {
+      storageMock["sonder-active-workspace-id"] = "018f98a2-3f12-7890-w002-456789abcdef";
+      renderApp(["/inbox"]);
+
+      await waitFor(() => {
+        expect(screen.getByRole("banner")).toBeInTheDocument();
+      });
+
+      const header = screen.getByRole("banner");
+      const breadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+      expect(within(breadcrumbs).getByText("Inbox")).toBeInTheDocument();
+      expect(within(breadcrumbs).queryByText("Sonder Community")).not.toBeInTheDocument();
+      expect(within(breadcrumbs).queryByText("Engineering Platform")).not.toBeInTheDocument();
+      expect(within(breadcrumbs).queryByText("/")).not.toBeInTheDocument();
+    });
+
+    it("has no community or workspace crumb upon direct load across all personal routes", async () => {
+      storageMock["sonder-active-workspace-id"] = "018f98a2-3f12-7890-w002-456789abcdef";
+
+      const personalRoutes = [
+        { path: "/", expectedCrumb: "Overview" },
+        { path: "/my-work", expectedCrumb: "My Work" },
+        { path: "/inbox", expectedCrumb: "Inbox" },
+      ];
+
+      for (const { path, expectedCrumb } of personalRoutes) {
+        const { unmount } = renderApp([path]);
+
+        await waitFor(() => {
+          expect(screen.getByRole("banner")).toBeInTheDocument();
+        });
+
+        const header = screen.getByRole("banner");
+        const breadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+        expect(within(breadcrumbs).getByText(expectedCrumb)).toBeInTheDocument();
+        expect(within(breadcrumbs).queryByText("Sonder Community")).not.toBeInTheDocument();
+        expect(within(breadcrumbs).queryByText("Engineering Platform")).not.toBeInTheDocument();
+
+        unmount();
+      }
+    });
+
+    it("suppresses workspace crumb upon navigating from workspace to personal space without destroying active workspace state", async () => {
+      const user = userEvent.setup();
+      storageMock["sonder-active-workspace-id"] = "018f98a2-3f12-7890-w002-456789abcdef";
+
+      renderApp(["/list"]);
+
+      await waitFor(() => {
+        expect(screen.getByRole("banner")).toBeInTheDocument();
+      });
+
+      const header = screen.getByRole("banner");
+      const breadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+
+      // On workspace route, full hierarchy is visible
+      await waitFor(() => {
+        expect(within(breadcrumbs).getByText("Sonder Community")).toBeInTheDocument();
+        expect(within(breadcrumbs).getByText("Engineering Platform")).toBeInTheDocument();
+        expect(within(breadcrumbs).getByText("List")).toBeInTheDocument();
+      });
+
+      // Navigate to Personal Space: My Work
+      const sidebarNav = screen.getByRole("navigation", { name: "Main navigation" });
+      const myWorkLink = within(sidebarNav).getByRole("link", { name: /^my work$/i });
+      await user.click(myWorkLink);
+
+      await waitFor(() => {
+        expect(screen.getByRole("heading", { name: "My Work" })).toBeInTheDocument();
+      });
+
+      // Breadcrumbs now suppress workspace and community
+      expect(within(breadcrumbs).getByText("My Work")).toBeInTheDocument();
+      expect(within(breadcrumbs).queryByText("Sonder Community")).not.toBeInTheDocument();
+      expect(within(breadcrumbs).queryByText("Engineering Platform")).not.toBeInTheDocument();
+
+      // Active workspace state in storage remains intact
+      expect(storageMock["sonder-active-workspace-id"]).toBe("018f98a2-3f12-7890-w002-456789abcdef");
+    });
+
+    it("restores workspace breadcrumb when navigating back from personal space to workspace view", async () => {
+      const user = userEvent.setup();
+      storageMock["sonder-active-workspace-id"] = "018f98a2-3f12-7890-w002-456789abcdef";
+
+      renderApp(["/my-work"]);
+
+      await waitFor(() => {
+        expect(screen.getByRole("heading", { name: "My Work" })).toBeInTheDocument();
+      });
+
+      const header = screen.getByRole("banner");
+      const breadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+      expect(within(breadcrumbs).getByText("My Work")).toBeInTheDocument();
+      expect(within(breadcrumbs).queryByText("Engineering Platform")).not.toBeInTheDocument();
+
+      // Navigate to workspace Board view from sidebar
+      const sidebarNav = screen.getByRole("navigation", { name: "Main navigation" });
+      const boardLink = within(sidebarNav).getByRole("link", { name: /^board$/i });
+      await user.click(boardLink);
+
+      // Breadcrumb context is restored
+      await waitFor(() => {
+        expect(within(breadcrumbs).getByText("Sonder Community")).toBeInTheDocument();
+        expect(within(breadcrumbs).getByText("Engineering Platform")).toBeInTheDocument();
+        expect(within(breadcrumbs).getByText("Board")).toBeInTheDocument();
+      });
+    });
+
+    it("retains full Community / Workspace / View breadcrumbs across all workspace routes", async () => {
+      storageMock["sonder-active-workspace-id"] = "018f98a2-3f12-7890-w002-456789abcdef";
+
+      const workspaceRoutes = [
+        { path: "/list", expectedView: "List" },
+        { path: "/board", expectedView: "Board" },
+        { path: "/calendar", expectedView: "Calendar" },
+        { path: "/timeline", expectedView: "Timeline" },
+        { path: "/trash", expectedView: "Trash" },
+        { path: "/settings", expectedView: "Settings" },
+      ];
+
+      for (const { path, expectedView } of workspaceRoutes) {
+        const { unmount } = renderApp([path]);
+
+        await waitFor(() => {
+          expect(screen.getByRole("banner")).toBeInTheDocument();
+        });
+
+        const header = screen.getByRole("banner");
+        const breadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+
+        await waitFor(() => {
+          expect(within(breadcrumbs).getByText("Sonder Community")).toBeInTheDocument();
+          expect(within(breadcrumbs).getByText("Engineering Platform")).toBeInTheDocument();
+          expect(within(breadcrumbs).getByText(expectedView)).toBeInTheDocument();
+        });
+
+        unmount();
+      }
+    });
+
+    it("retains correct breadcrumb context on nested parameterized workspace routes", async () => {
+      const nestedRoutes = [
+        {
+          path: "/workspaces/018f98a2-3f12-7890-w002-456789abcdef/list",
+          expectedCommunity: "Sonder Community",
+          expectedWorkspace: "Engineering Platform",
+          expectedView: "List",
+        },
+        {
+          path: "/c/018f98a2-3f12-7890-b123-456789abcdef/w/018f98a2-3f12-7890-w002-456789abcdef/board",
+          expectedCommunity: "Sonder Community",
+          expectedWorkspace: "Engineering Platform",
+          expectedView: "Board",
+        },
+        {
+          path: "/c/018f98a2-3f12-7890-b123-456789abcdef/w/018f98a2-3f12-7890-w002-456789abcdef/trash",
+          expectedCommunity: "Sonder Community",
+          expectedWorkspace: "Engineering Platform",
+          expectedView: "Trash",
+        },
+      ];
+
+      for (const { path, expectedCommunity, expectedWorkspace, expectedView } of nestedRoutes) {
+        const { unmount } = renderApp([path]);
+
+        await waitFor(() => {
+          expect(screen.getByRole("banner")).toBeInTheDocument();
+        });
+
+        const header = screen.getByRole("banner");
+        const breadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+
+        await waitFor(() => {
+          expect(within(breadcrumbs).getByText(expectedCommunity)).toBeInTheDocument();
+          expect(within(breadcrumbs).getByText(expectedWorkspace)).toBeInTheDocument();
+          expect(within(breadcrumbs).getByText(expectedView)).toBeInTheDocument();
+        });
+
+        unmount();
+      }
+    });
+
+    it("renders exactly one instance of each crumb and correct separator counts without duplicate entries", async () => {
+      storageMock["sonder-active-workspace-id"] = "018f98a2-3f12-7890-w002-456789abcdef";
+
+      // Test 1: Workspace route (/board)
+      const { unmount: unmountWorkspace } = renderApp(["/board"]);
+
+      await waitFor(() => {
+        expect(screen.getByRole("banner")).toBeInTheDocument();
+      });
+
+      const header = screen.getByRole("banner");
+      const wsBreadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+
+      await waitFor(() => {
+        expect(within(wsBreadcrumbs).getByText("Board")).toBeInTheDocument();
+      });
+
+      // Verify unique occurrences
+      expect(within(wsBreadcrumbs).getAllByText("Sonder Community")).toHaveLength(1);
+      expect(within(wsBreadcrumbs).getAllByText("Engineering Platform")).toHaveLength(1);
+      expect(within(wsBreadcrumbs).getAllByText("Board")).toHaveLength(1);
+
+      // Exactly two separators for three hierarchy levels
+      const separators = within(wsBreadcrumbs).getAllByText("/");
+      expect(separators).toHaveLength(2);
+
+      unmountWorkspace();
+
+      // Test 2: Personal route (/overview or /)
+      const { unmount: unmountPersonal } = renderApp(["/"]);
+
+      await waitFor(() => {
+        expect(screen.getByRole("banner")).toBeInTheDocument();
+      });
+
+      const pHeader = screen.getByRole("banner");
+      const pBreadcrumbs = within(pHeader).getByRole("navigation", { name: "Breadcrumbs" });
+
+      expect(within(pBreadcrumbs).getAllByText("Overview")).toHaveLength(1);
+      expect(within(pBreadcrumbs).queryAllByText("/")).toHaveLength(0);
+
+      unmountPersonal();
+    });
+  });
 });
