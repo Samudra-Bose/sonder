@@ -142,6 +142,13 @@ export function AppHeader({
             {terminalBreadcrumb}
           </span>
         </nav>
+
+        {/* Active Community Context for Personal Space */}
+        {isPersonalRoute && currentCommunity && (
+          <span className="sr-only" data-testid="header-active-community">
+            {currentCommunity.name}
+          </span>
+        )}
       </div>
 
       {/* Center: Live Omnibar Entry Point */}

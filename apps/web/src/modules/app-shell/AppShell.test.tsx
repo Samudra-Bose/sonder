@@ -576,12 +576,7 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
     it("renders 'Overview' breadcrumb without community/workspace crumb on home route (/) when no workspace is selected", async () => {
       renderApp(["/"]);
 
-      await waitFor(() => {
-        expect(screen.getByRole("banner")).toBeInTheDocument();
-      });
-
-      const header = screen.getByRole("banner");
-      const breadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+      const breadcrumbs = await screen.findByRole("navigation", { name: "Breadcrumbs" });
       expect(within(breadcrumbs).getByText("Overview")).toBeInTheDocument();
       expect(within(breadcrumbs).queryByText("Sonder Community")).not.toBeInTheDocument();
       expect(within(breadcrumbs).queryByText("Engineering Platform")).not.toBeInTheDocument();
@@ -592,12 +587,7 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       storageMock["sonder-active-workspace-id"] = "018f98a2-3f12-7890-w002-456789abcdef";
       renderApp(["/"]);
 
-      await waitFor(() => {
-        expect(screen.getByRole("banner")).toBeInTheDocument();
-      });
-
-      const header = screen.getByRole("banner");
-      const breadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+      const breadcrumbs = await screen.findByRole("navigation", { name: "Breadcrumbs" });
       expect(within(breadcrumbs).getByText("Overview")).toBeInTheDocument();
       expect(within(breadcrumbs).queryByText("Sonder Community")).not.toBeInTheDocument();
       expect(within(breadcrumbs).queryByText("Engineering Platform")).not.toBeInTheDocument();
@@ -608,12 +598,7 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       storageMock["sonder-active-workspace-id"] = "018f98a2-3f12-7890-w002-456789abcdef";
       renderApp(["/my-work"]);
 
-      await waitFor(() => {
-        expect(screen.getByRole("banner")).toBeInTheDocument();
-      });
-
-      const header = screen.getByRole("banner");
-      const breadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+      const breadcrumbs = await screen.findByRole("navigation", { name: "Breadcrumbs" });
       expect(within(breadcrumbs).getByText("My Work")).toBeInTheDocument();
       expect(within(breadcrumbs).queryByText("Sonder Community")).not.toBeInTheDocument();
       expect(within(breadcrumbs).queryByText("Engineering Platform")).not.toBeInTheDocument();
@@ -624,12 +609,7 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       storageMock["sonder-active-workspace-id"] = "018f98a2-3f12-7890-w002-456789abcdef";
       renderApp(["/inbox"]);
 
-      await waitFor(() => {
-        expect(screen.getByRole("banner")).toBeInTheDocument();
-      });
-
-      const header = screen.getByRole("banner");
-      const breadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+      const breadcrumbs = await screen.findByRole("navigation", { name: "Breadcrumbs" });
       expect(within(breadcrumbs).getByText("Inbox")).toBeInTheDocument();
       expect(within(breadcrumbs).queryByText("Sonder Community")).not.toBeInTheDocument();
       expect(within(breadcrumbs).queryByText("Engineering Platform")).not.toBeInTheDocument();
@@ -648,12 +628,7 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       for (const { path, expectedCrumb } of personalRoutes) {
         const { unmount } = renderApp([path]);
 
-        await waitFor(() => {
-          expect(screen.getByRole("banner")).toBeInTheDocument();
-        });
-
-        const header = screen.getByRole("banner");
-        const breadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+        const breadcrumbs = await screen.findByRole("navigation", { name: "Breadcrumbs" });
         expect(within(breadcrumbs).getByText(expectedCrumb)).toBeInTheDocument();
         expect(within(breadcrumbs).queryByText("Sonder Community")).not.toBeInTheDocument();
         expect(within(breadcrumbs).queryByText("Engineering Platform")).not.toBeInTheDocument();
@@ -668,12 +643,7 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
 
       renderApp(["/list"]);
 
-      await waitFor(() => {
-        expect(screen.getByRole("banner")).toBeInTheDocument();
-      });
-
-      const header = screen.getByRole("banner");
-      const breadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+      const breadcrumbs = await screen.findByRole("navigation", { name: "Breadcrumbs" });
 
       // On workspace route, full hierarchy is visible
       await waitFor(() => {
@@ -710,14 +680,12 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
         expect(screen.getByRole("heading", { name: "My Work" })).toBeInTheDocument();
       });
 
-      const header = screen.getByRole("banner");
-      const breadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+      const breadcrumbs = await screen.findByRole("navigation", { name: "Breadcrumbs" });
       expect(within(breadcrumbs).getByText("My Work")).toBeInTheDocument();
       expect(within(breadcrumbs).queryByText("Engineering Platform")).not.toBeInTheDocument();
 
-      // Navigate to workspace Board view from sidebar
-      const sidebarNav = screen.getByRole("navigation", { name: "Main navigation" });
-      const boardLink = within(sidebarNav).getByRole("link", { name: /^board$/i });
+      // Navigate to workspace Board view from sidebar (waits for activeWorkspace to resolve)
+      const boardLink = await screen.findByRole("link", { name: /^board$/i });
       await user.click(boardLink);
 
       // Breadcrumb context is restored
@@ -743,12 +711,7 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       for (const { path, expectedView } of workspaceRoutes) {
         const { unmount } = renderApp([path]);
 
-        await waitFor(() => {
-          expect(screen.getByRole("banner")).toBeInTheDocument();
-        });
-
-        const header = screen.getByRole("banner");
-        const breadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+        const breadcrumbs = await screen.findByRole("navigation", { name: "Breadcrumbs" });
 
         await waitFor(() => {
           expect(within(breadcrumbs).getByText("Sonder Community")).toBeInTheDocument();
@@ -785,12 +748,7 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       for (const { path, expectedCommunity, expectedWorkspace, expectedView } of nestedRoutes) {
         const { unmount } = renderApp([path]);
 
-        await waitFor(() => {
-          expect(screen.getByRole("banner")).toBeInTheDocument();
-        });
-
-        const header = screen.getByRole("banner");
-        const breadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+        const breadcrumbs = await screen.findByRole("navigation", { name: "Breadcrumbs" });
 
         await waitFor(() => {
           expect(within(breadcrumbs).getByText(expectedCommunity)).toBeInTheDocument();
@@ -808,12 +766,7 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       // Test 1: Workspace route (/board)
       const { unmount: unmountWorkspace } = renderApp(["/board"]);
 
-      await waitFor(() => {
-        expect(screen.getByRole("banner")).toBeInTheDocument();
-      });
-
-      const header = screen.getByRole("banner");
-      const wsBreadcrumbs = within(header).getByRole("navigation", { name: "Breadcrumbs" });
+      const wsBreadcrumbs = await screen.findByRole("navigation", { name: "Breadcrumbs" });
 
       await waitFor(() => {
         expect(within(wsBreadcrumbs).getByText("Board")).toBeInTheDocument();
@@ -833,12 +786,7 @@ describe("VS-02B: Application Shell & Responsive Navigation", () => {
       // Test 2: Personal route (/overview or /)
       const { unmount: unmountPersonal } = renderApp(["/"]);
 
-      await waitFor(() => {
-        expect(screen.getByRole("banner")).toBeInTheDocument();
-      });
-
-      const pHeader = screen.getByRole("banner");
-      const pBreadcrumbs = within(pHeader).getByRole("navigation", { name: "Breadcrumbs" });
+      const pBreadcrumbs = await screen.findByRole("navigation", { name: "Breadcrumbs" });
 
       expect(within(pBreadcrumbs).getAllByText("Overview")).toHaveLength(1);
       expect(within(pBreadcrumbs).queryAllByText("/")).toHaveLength(0);
