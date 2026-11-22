@@ -67,8 +67,6 @@ export function DashboardView({
     refetch,
   } = useMyWork({ referenceDate: propReferenceDate });
 
-  const displayName = user?.displayName || "Alex Morgan";
-
   // High priority incomplete count (URGENT or HIGH)
   const highPriorityCount = useMemo(() => {
     return allProcessedTasks.filter(
@@ -555,10 +553,10 @@ export function DashboardView({
               )}
             </div>
             <CardDescription>
-              Quickly navigate to workspaces in {currentCommunity?.name ?? "active community"}.
+              Quickly navigate to workspaces in this community.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-3">
             {workspaces.length === 0 ? (
               <p className="text-xs text-[var(--text-muted)] py-4 text-center">
                 No workspaces available in this community.
@@ -618,6 +616,11 @@ export function DashboardView({
                 })}
               </div>
             )}
+
+            <div className="text-[11px] text-[var(--text-muted)] pt-2 border-t border-[var(--border-subtle)] space-y-1">
+              <p>&bull; Community-unique task identifier prefixes for clear task keys.</p>
+              <p>&bull; Role-based workspace permissions: Owner, Coordinator, Member, and Viewer.</p>
+            </div>
           </CardContent>
         </Card>
       </div>
