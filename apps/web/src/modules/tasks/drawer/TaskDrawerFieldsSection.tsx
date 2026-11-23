@@ -24,7 +24,7 @@ export function TaskDrawerFieldsSection({
       data-drawer-section="fields"
       tabIndex={-1}
       aria-label="Fields & Relationships"
-      className="scroll-mt-14 pt-6 border-t border-[var(--border-subtle)] space-y-6 outline-none"
+      className="scroll-mt-16 pt-6 border-t border-[var(--border-subtle)] space-y-6 outline-none"
     >
       <h2 className="sr-only">Fields & Relationships</h2>
       {/* Dependencies & Relationships Section */}

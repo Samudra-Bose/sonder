@@ -45,7 +45,7 @@ export function TaskDrawerOverviewSection({
       data-drawer-section="overview"
       tabIndex={-1}
       aria-label="Overview"
-      className="scroll-mt-14 space-y-6 outline-none"
+      className="scroll-mt-16 space-y-6 outline-none"
     >
       <h2 className="sr-only">Overview</h2>
       {/* Informative Banners */}

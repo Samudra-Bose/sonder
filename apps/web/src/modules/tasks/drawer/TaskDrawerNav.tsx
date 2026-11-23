@@ -59,7 +59,7 @@ export function TaskDrawerNav({
     <nav
       aria-label="Task section navigation"
       className={cn(
-        "sticky top-0 z-10 px-4 py-2 bg-[var(--surface-card)]/95 backdrop-blur-xs border-b border-[var(--border-subtle)]",
+        "sticky top-0 z-10 px-4 py-1.5 bg-[var(--surface-card)]/95 backdrop-blur-xs border-b border-[var(--border-subtle)]",
         "flex items-center gap-1.5 select-none shrink-0 overflow-x-auto no-scrollbar",
         className
       )}
@@ -79,7 +79,7 @@ export function TaskDrawerNav({
             className={cn(
               "px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-150 relative",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-focus)]",
-              "min-h-[36px] sm:min-h-[28px] inline-flex items-center gap-1.5 cursor-pointer no-underline",
+              "min-h-[44px] min-w-[44px] inline-flex items-center justify-center gap-1.5 cursor-pointer no-underline touch-manipulation",
               isActive
                 ? "bg-[var(--surface-muted)] text-[var(--text-primary)] font-semibold shadow-xs border border-[var(--border-subtle)]"
                 : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-muted)]/50"

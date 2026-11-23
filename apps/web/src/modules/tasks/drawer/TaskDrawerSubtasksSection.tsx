@@ -28,7 +28,7 @@ export function TaskDrawerSubtasksSection({
       data-drawer-section="subtasks"
       tabIndex={-1}
       aria-label="Subtasks"
-      className="scroll-mt-14 pt-6 border-t border-[var(--border-subtle)] space-y-4 outline-none"
+      className="scroll-mt-16 pt-6 border-t border-[var(--border-subtle)] space-y-4 outline-none"
     >
       <h2 className="sr-only">Subtasks</h2>
       {/* Subtasks Section */}

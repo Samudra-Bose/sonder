@@ -729,9 +729,33 @@ describe("VS-03 Stage 2: Task Peek Drawer & Deep Linking", () => {
         expect(fieldsLink).toHaveAttribute("href", "#fields");
         expect(commentsLink).toHaveAttribute("href", "#comments");
 
+        // Minimum 44x44px interactive hit area (WCAG 2.5.5 / touch target requirements)
+        expect(overviewLink).toHaveClass("min-h-[44px]", "min-w-[44px]");
+        expect(subtasksLink).toHaveClass("min-h-[44px]", "min-w-[44px]");
+        expect(fieldsLink).toHaveClass("min-h-[44px]", "min-w-[44px]");
+        expect(commentsLink).toHaveClass("min-h-[44px]", "min-w-[44px]");
+
         // Active section uses aria-current="location"
         expect(overviewLink).toHaveAttribute("aria-current", "location");
         expect(subtasksLink).not.toHaveAttribute("aria-current");
+      });
+
+      it("guarantees minimum 44x44px interactive hit areas on all four section links", async () => {
+        renderTaskDrawerTest({ initialEntries: ["/?task=ENG-101"] });
+
+        await waitFor(() => {
+          expect(screen.getByText("Fix critical auth token refresh race condition")).toBeInTheDocument();
+        });
+
+        const drawerNav = screen.getByRole("navigation", { name: "Task section navigation" });
+        const links = within(drawerNav).getAllByRole("link");
+
+        expect(links).toHaveLength(4);
+        links.forEach((link) => {
+          expect(link).toHaveClass("min-h-[44px]");
+          expect(link).toHaveClass("min-w-[44px]");
+          expect(link).toHaveClass("touch-manipulation");
+        });
       });
 
       it("mounts all four sections continuously with stable IDs and no tabpanel roles", async () => {
