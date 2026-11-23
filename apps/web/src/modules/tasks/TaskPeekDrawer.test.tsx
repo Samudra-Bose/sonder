@@ -809,10 +809,12 @@ describe("VS-03 Stage 2: Task Peek Drawer & Deep Linking", () => {
         expect(within(header as HTMLElement).getByTestId("task-watch-button")).toBeInTheDocument();
       });
 
-      it("switches active anchor and invokes scrollIntoView on anchor click", async () => {
+      it("switches active anchor and scrolls drawer container without invoking scrollIntoView", async () => {
         const user = userEvent.setup();
         const scrollIntoViewMock = vi.fn();
+        const scrollToMock = vi.fn();
         window.HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
+        window.HTMLElement.prototype.scrollTo = scrollToMock;
 
         renderTaskDrawerTest({ initialEntries: ["/?task=ENG-101"] });
 
@@ -824,7 +826,75 @@ describe("VS-03 Stage 2: Task Peek Drawer & Deep Linking", () => {
         await user.click(commentsLink);
 
         expect(commentsLink).toHaveAttribute("aria-current", "location");
-        expect(scrollIntoViewMock).toHaveBeenCalled();
+        // Must NEVER call scrollIntoView to prevent outer page displacement
+        expect(scrollIntoViewMock).not.toHaveBeenCalled();
+        // Must scroll the drawer container directly
+        expect(scrollToMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            behavior: "smooth",
+          })
+        );
+      });
+
+      it("preserves keyboard activation and transfers focus using preventScroll: true", async () => {
+        const user = userEvent.setup();
+        const focusSpy = vi.spyOn(window.HTMLElement.prototype, "focus");
+
+        renderTaskDrawerTest({ initialEntries: ["/?task=ENG-101"] });
+
+        await waitFor(() => {
+          expect(screen.getByText("Fix critical auth token refresh race condition")).toBeInTheDocument();
+        });
+
+        const subtasksLink = screen.getByTestId("drawer-nav-subtasks");
+        subtasksLink.focus();
+        await user.keyboard("{Enter}");
+
+        expect(subtasksLink).toHaveAttribute("aria-current", "location");
+        // Focus transferred with preventScroll: true
+        expect(focusSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            preventScroll: true,
+          })
+        );
+        focusSpy.mockRestore();
+      });
+
+      it("respects prefers-reduced-motion by passing behavior: auto to container scrollTo", async () => {
+        const user = userEvent.setup();
+        const scrollToMock = vi.fn();
+        window.HTMLElement.prototype.scrollTo = scrollToMock;
+
+        // Mock window.matchMedia to simulate reduced motion preference
+        const originalMatchMedia = window.matchMedia;
+        window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+          matches: query.includes("prefers-reduced-motion: reduce"),
+          media: query,
+          onchange: null,
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
+        }));
+
+        renderTaskDrawerTest({ initialEntries: ["/?task=ENG-101"] });
+
+        await waitFor(() => {
+          expect(screen.getByText("Fix critical auth token refresh race condition")).toBeInTheDocument();
+        });
+
+        const fieldsLink = screen.getByTestId("drawer-nav-fields");
+        await user.click(fieldsLink);
+
+        expect(fieldsLink).toHaveAttribute("aria-current", "location");
+        expect(scrollToMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            behavior: "auto",
+          })
+        );
+
+        window.matchMedia = originalMatchMedia;
       });
     });
   });

@@ -317,14 +317,41 @@ export function TaskPeekDrawer({
         typeof window.matchMedia === "function" &&
         window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-      if (typeof target.scrollIntoView === "function") {
-        target.scrollIntoView({
-          behavior: isReducedMotion ? "auto" : "smooth",
-          block: "start",
-        });
+      // Compute target position relative to the drawer scroll container, respecting scroll margins
+      const targetRect = target.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      let relativeTop = targetRect.top - containerRect.top;
+
+      // Fallback for headless/JSDOM test environments where layout coordinates are 0
+      if (relativeTop === 0 && target.offsetTop !== 0) {
+        relativeTop = target.offsetTop - container.offsetTop;
       }
 
-      // Maintain keyboard focus on target section
+      let scrollMarginTop = 0;
+      let scrollPaddingTop = 0;
+      if (typeof window !== "undefined" && typeof window.getComputedStyle === "function") {
+        const targetStyle = window.getComputedStyle(target);
+        scrollMarginTop = parseFloat(targetStyle.scrollMarginTop) || 0;
+        const containerStyle = window.getComputedStyle(container);
+        scrollPaddingTop = parseFloat(containerStyle.scrollPaddingTop) || 0;
+      }
+
+      const calculatedTop =
+        container.scrollTop + relativeTop - scrollMarginTop - scrollPaddingTop;
+      const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
+      const clampedTop = Math.max(0, Math.min(maxScroll, calculatedTop));
+
+      // Scroll only the drawer container without touching window or ancestor scroll positions
+      if (typeof container.scrollTo === "function") {
+        container.scrollTo({
+          top: clampedTop,
+          behavior: isReducedMotion ? "auto" : "smooth",
+        });
+      } else {
+        container.scrollTop = clampedTop;
+      }
+
+      // Maintain keyboard focus on target section without displacing outer page
       if (typeof target.focus === "function") {
         target.focus({ preventScroll: true });
       }
