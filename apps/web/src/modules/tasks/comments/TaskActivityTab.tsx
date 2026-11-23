@@ -21,6 +21,7 @@ export interface TaskActivityTabProps {
   isArchived?: boolean;
   onNavigateToTask?: (taskKey: string) => void;
   className?: string;
+  showWatchButton?: boolean;
 }
 
 /**
@@ -38,6 +39,7 @@ export function TaskActivityTab({
   isArchived = false,
   onNavigateToTask,
   className,
+  showWatchButton = true,
 }: TaskActivityTabProps): React.JSX.Element {
   const { user } = useAuth();
   const currentUserId = user?.id ?? "";
@@ -96,30 +98,32 @@ export function TaskActivityTab({
       data-testid="task-activity-tab"
       className={cn("space-y-5 p-4 sm:p-5 flex-1 overflow-y-auto", className)}
     >
-      {/* 1. Watcher Status Bar */}
-      <div className="flex items-center justify-between p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-muted)]/30">
-        <div className="flex items-center space-x-2 text-xs">
-          {isWatching ? (
-            <Eye className="h-4 w-4 text-[var(--brand-accent-text)] shrink-0" />
-          ) : (
-            <EyeOff className="h-4 w-4 text-[var(--text-muted)] shrink-0" />
-          )}
-          <span className="text-[var(--text-secondary)]">
-            {isWatching
-              ? "You are watching this task for comments and updates."
-              : "You are not watching this task."}
-          </span>
-        </div>
+      {/* 1. Watcher Status Bar (rendered in standalone mode; persistent header owns watch in drawer) */}
+      {showWatchButton && (
+        <div className="flex items-center justify-between p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-muted)]/30">
+          <div className="flex items-center space-x-2 text-xs">
+            {isWatching ? (
+              <Eye className="h-4 w-4 text-[var(--brand-accent-text)] shrink-0" />
+            ) : (
+              <EyeOff className="h-4 w-4 text-[var(--text-muted)] shrink-0" />
+            )}
+            <span className="text-[var(--text-secondary)]">
+              {isWatching
+                ? "You are watching this task for comments and updates."
+                : "You are not watching this task."}
+            </span>
+          </div>
 
-        <TaskWatchButton
-          communityId={communityId}
-          workspaceId={workspaceId}
-          taskId={task.id}
-          isWatching={isWatching}
-          canWatch={canWatch}
-          size="sm"
-        />
-      </div>
+          <TaskWatchButton
+            communityId={communityId}
+            workspaceId={workspaceId}
+            taskId={task.id}
+            isWatching={isWatching}
+            canWatch={canWatch}
+            size="sm"
+          />
+        </div>
+      )}
 
       {/* 2. Comment Composer */}
       <div className="space-y-2">

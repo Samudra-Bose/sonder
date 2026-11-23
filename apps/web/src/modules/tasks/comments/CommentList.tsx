@@ -45,7 +45,6 @@ export function CommentList({
   if (isLoading) {
     return (
       <div
-        role="status"
         aria-busy="true"
         aria-label="Loading comments"
         data-testid="comments-loading-skeleton"

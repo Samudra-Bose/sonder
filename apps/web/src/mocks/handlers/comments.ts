@@ -69,11 +69,12 @@ export const commentHandlers = [
       const allComments = getMockComments();
       const taskComments = allComments.filter((c) => c.taskId === taskId);
       const allActivity = getMockActivity();
+      const taskActivity = taskId === "018f98a2-task-001-overdue-assigned" ? allActivity : [];
 
       return HttpResponse.json(
         {
           comments: taskComments,
-          activity: allActivity,
+          activity: taskActivity,
         },
         {
           status: 200,

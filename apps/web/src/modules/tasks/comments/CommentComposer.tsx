@@ -236,7 +236,6 @@ export function CommentComposer({
   if (!canComment) {
     return (
       <div
-        role="status"
         className="p-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-muted)]/30 text-xs text-[var(--text-muted)] flex items-center gap-2 select-none"
       >
         <AlertCircle className="h-4 w-4 shrink-0" />

@@ -13,6 +13,7 @@ export interface TaskWatchButtonProps {
   canWatch?: boolean;
   className?: string;
   size?: "sm" | "md";
+  testId?: string;
 }
 
 /**
@@ -28,6 +29,7 @@ export function TaskWatchButton({
   canWatch = true,
   className,
   size = "sm",
+  testId = "task-watch-button",
 }: TaskWatchButtonProps): React.JSX.Element {
   const [localWatching, setLocalWatching] = useState(isWatching);
   const setWatchMutation = useSetTaskWatch();
@@ -74,7 +76,7 @@ export function TaskWatchButton({
         onClick={handleToggleWatch}
         aria-pressed={localWatching}
         aria-label={label}
-        data-testid="task-watch-button"
+        data-testid={testId}
         className={cn(
           "gap-1.5 transition-colors select-none",
           localWatching && "bg-[var(--brand-accent-subtle)] border-[var(--brand-accent-border)] text-[var(--brand-accent-text)] hover:bg-[var(--brand-accent-subtle)]/80",

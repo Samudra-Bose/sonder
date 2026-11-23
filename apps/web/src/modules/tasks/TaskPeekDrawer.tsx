@@ -1,31 +1,13 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
-import {
-  X,
-  Copy,
-  Check,
-  AlertCircle,
-  FileQuestion,
-  Sparkles,
-  Hash,
-  Lock,
-  ArrowRightLeft,
-  Archive,
-  CopyPlus,
-  Loader2,
-} from "lucide-react";
+import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import { FileQuestion } from "lucide-react";
 import {
   Dialog,
   DialogBackdrop,
   DialogContent as BaseDialogContent,
 } from "@/components/ui/Dialog.js";
-import { IconButton } from "@/components/ui/IconButton.js";
 import { Button } from "@/components/ui/Button.js";
 import { Skeleton } from "@/components/ui/Skeleton.js";
-import { Tooltip } from "@/components/ui/Tooltip.js";
-import { Separator } from "@/components/ui/Separator.js";
 import { Feedback } from "@/components/ui/Feedback.js";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs.js";
-import { WorkspaceBadge } from "@/modules/workspace/WorkspaceBadge.js";
 import { useWorkspace } from "@/modules/workspace/index.js";
 import { useAuth } from "@/modules/auth/index.js";
 import { useKeyboardShortcut, isInputElement } from "@/lib/keyboard.js";
@@ -38,15 +20,17 @@ import { useTask } from "./useTask.js";
 import { useWorkspaceTasks } from "./useWorkspaceTasks.js";
 import { useTaskUndo } from "./TaskUndoContext.js";
 import { useTaskClone, canCloneTask } from "./TaskCloneContext.js";
-import { SubtaskList } from "./SubtaskList.js";
-import { TaskDependencies } from "./TaskDependencies.js";
-import { TaskCustomFieldsSection } from "./TaskCustomFieldsSection.js";
-import { TaskExternalLinksSection } from "./TaskExternalLinksSection.js";
-import { ReparentTaskModal } from "./ReparentTaskModal.js";
-import { TaskActivityTab } from "./comments/TaskActivityTab.js";
-import { TaskWatchButton } from "./comments/TaskWatchButton.js";
 import { useTaskWatchState } from "./comments/useTaskComments.js";
 import type { TaskDto } from "./types.js";
+import {
+  TaskDrawerHeader,
+  TaskDrawerNav,
+  TaskDrawerOverviewSection,
+  TaskDrawerSubtasksSection,
+  TaskDrawerFieldsSection,
+  TaskDrawerCommentsSection,
+  type TaskDrawerSectionId,
+} from "./drawer/index.js";
 
 export interface TaskExternalLink {
   id?: string;
@@ -111,17 +95,6 @@ export function extractTaskExternalLinks(task?: Partial<TaskDto> | null): TaskEx
 
   return links;
 }
-import {
-  InlineTitleEditor,
-  InlineDescriptionEditor,
-  InlineStatusEditor,
-  InlinePriorityEditor,
-  InlineArchetypeEditor,
-  InlineDateEditor,
-  InlineEstimateEditor,
-  InlineAssigneeEditor,
-  InlineLabelsEditor,
-} from "./InlineFieldEditors.js";
 
 export interface TaskPeekDrawerProps {
   /** Optional override to force desktop or mobile presentation in tests */
@@ -135,12 +108,12 @@ export interface TaskPeekDrawerProps {
  */
 function useIsDesktop(): boolean {
   const [isDesktop, setIsDesktop] = useState(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return true;
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return true;
     return window.matchMedia("(min-width: 768px)").matches;
   });
 
   useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return;
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
     const media = window.matchMedia("(min-width: 768px)");
     const listener = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
     media.addEventListener("change", listener);
@@ -151,11 +124,13 @@ function useIsDesktop(): boolean {
 }
 
 /**
- * Task Peek Drawer Component.
- * Responsive, deep-linked, accessible read-only task detail presentation.
- * - Desktop: Non-modal right-docked detail panel beside main content canvas.
- * - Mobile: Modal bottom sheet / full-height drawer with focus trapping.
- * Synchronizes with URL query parameter '?task=KEY-123'.
+ * Task Peek Drawer Component (DEC-02 Architecture).
+ * Continuous, scrollable task-management surface with sticky section navigation.
+ * - Persistent header: Task key, title, actions, close button.
+ * - Sticky navigation: Overview, Subtasks, Fields, Comments with scroll-spy.
+ * - Continuous surface: All sections remain mounted in DOM without tab-based unmounting.
+ * - Desktop: Non-modal right-docked detail panel beside main canvas.
+ * - Mobile: Modal bottom sheet / full-height drawer.
  */
 export function TaskPeekDrawer({
   forceMode,
@@ -166,22 +141,18 @@ export function TaskPeekDrawer({
   const systemIsDesktop = useIsDesktop();
   const isDesktop = forceMode ? forceMode === "desktop" : systemIsDesktop;
 
-  const [hasCopied, setHasCopied] = useState(false);
   const [isReparentOpen, setIsReparentOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<string>("details");
+  const [activeSection, setActiveSection] = useState<TaskDrawerSectionId>("overview");
   const { user } = useAuth();
   const currentUserId = user?.id ?? "";
-
-  // Reset to details tab when opening or switching tasks
-  useEffect(() => {
-    setActiveTab("details");
-  }, [taskKey]);
 
   const triggerRef = useRef<HTMLElement | null>(null);
   const titleRef = useRef<HTMLHeadingElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const isManualScrollingRef = useRef(false);
 
-  // Reference date for relative due date calculation
+  // Reference date string for relative due date calculation
   const referenceDate = useMemo(() => getDefaultReferenceDate(), []);
 
   // Save the currently active element when opening to restore focus on dismissal
@@ -214,6 +185,11 @@ export function TaskPeekDrawer({
       return () => clearTimeout(timer);
     }
   }, [isOpen, taskKey]);
+
+  // Reset active section to overview when taskKey changes
+  useEffect(() => {
+    setActiveSection("overview");
+  }, [taskKey]);
 
   // Keyboard shortcut: Escape to close drawer
   useKeyboardShortcut(
@@ -260,13 +236,11 @@ export function TaskPeekDrawer({
 
   const { archiveTask } = useTaskUndo();
   const { cloneTask, isCloning, cloningTaskId } = useTaskClone();
-  // Fail-closed permission check strictly conforming to Section 2.1
   const canArchive = Boolean(task?.effectivePermissions?.canArchive && !isArchived);
 
   const handleArchiveTask = async () => {
     if (!task || !canArchive) return;
 
-    // Focus management (Non-Stealing Invariant): transfer focus to nearest surviving element
     const nextTarget =
       document.querySelector<HTMLElement>(
         `[data-testid^="task-list-row-"]:not([data-testid="task-list-row-${task.taskKey}"])`
@@ -295,7 +269,7 @@ export function TaskPeekDrawer({
     return workspaces.find((w) => w.id === wsId);
   }, [workspaces, task?.workspaceId, effectiveWorkspaceId]);
 
-  // Derive canonical watch state without undeclared TaskDto properties or type casts
+  // Derive canonical watch state
   const isWatching = useTaskWatchState(
     currentCommunityId,
     task?.workspaceId ?? effectiveWorkspaceId,
@@ -327,169 +301,104 @@ export function TaskPeekDrawer({
     }
   };
 
-  const [hasCopiedKey, setHasCopiedKey] = useState(false);
+  // Smooth scroll to section respecting prefers-reduced-motion
+  const scrollToSection = useCallback((sectionId: TaskDrawerSectionId) => {
+    setActiveSection(sectionId);
+    const container = scrollContainerRef.current;
+    if (!container) return;
 
-  const handleCopyKey = async () => {
-    if (!taskKey) return;
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(taskKey);
-      } else {
-        const textArea = document.createElement("textarea");
-        textArea.value = taskKey;
-        textArea.style.position = "fixed";
-        textArea.style.opacity = "0";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textArea);
+    const target = container.querySelector<HTMLElement>(`#task-drawer-${sectionId}`);
+    if (target) {
+      isManualScrollingRef.current = true;
+      const isReducedMotion =
+        typeof window !== "undefined" &&
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (typeof target.scrollIntoView === "function") {
+        target.scrollIntoView({
+          behavior: isReducedMotion ? "auto" : "smooth",
+          block: "start",
+        });
       }
-      setHasCopiedKey(true);
-      setTimeout(() => setHasCopiedKey(false), 2000);
-    } catch {
-      // Best-effort clipboard copy fallback
-    }
-  };
 
-  const handleCopyLink = async () => {
-    if (!taskKey) return;
-    try {
-      const url = new URL(window.location.href);
-      url.searchParams.set("task", taskKey);
-      await navigator.clipboard.writeText(url.toString());
-      setHasCopied(true);
-      setTimeout(() => setHasCopied(false), 2000);
-    } catch {
-      // Best-effort clipboard copy fallback
+      // Maintain keyboard focus on target section
+      if (typeof target.focus === "function") {
+        target.focus();
+      }
+
+      setTimeout(
+        () => {
+          isManualScrollingRef.current = false;
+        },
+        isReducedMotion ? 50 : 500
+      );
     }
-  };
+  }, []);
+
+  // IntersectionObserver scroll-spy using actual drawer scroll container as root
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container || typeof IntersectionObserver === "undefined") return;
+
+    const sections = container.querySelectorAll<HTMLElement>("section[data-drawer-section]");
+    if (sections.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (isManualScrollingRef.current) return;
+        const visibleEntries = entries.filter((entry) => entry.isIntersecting);
+        if (visibleEntries.length > 0) {
+          visibleEntries.sort(
+            (a, b) => a.boundingClientRect.top - b.boundingClientRect.top
+          );
+          const activeEntry = visibleEntries[0];
+          const sectionId = activeEntry?.target.id.replace(
+            "task-drawer-",
+            ""
+          ) as TaskDrawerSectionId;
+          if (sectionId) {
+            setActiveSection(sectionId);
+          }
+        }
+      },
+      {
+        root: container,
+        rootMargin: "-5% 0px -65% 0px",
+        threshold: [0, 0.25, 0.5],
+      }
+    );
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, [task?.id]);
 
   if (!isOpen) {
     return null;
   }
 
-  // Common Header Content
-  const renderHeader = () => (
-    <div className="flex items-center justify-between p-4 border-b border-[var(--border-subtle)] bg-[var(--surface-card)] flex-shrink-0">
-      <div className="flex items-center space-x-2 min-w-0">
-        {!isNotFound && !error && targetWorkspace && (
-          <div className="flex items-center space-x-1.5 flex-shrink-0">
-            <WorkspaceBadge
-              prefix={targetWorkspace.keyPrefix}
-              size="sm"
-              className={cn(targetWorkspace.kind === "PERSONAL" && "border-dashed")}
-            />
-            {targetWorkspace.kind === "PERSONAL" && (
-              <Lock className="h-3 w-3 text-[var(--text-muted)]" aria-label="Personal Workspace" />
-            )}
-            <span className="text-xs font-medium text-[var(--text-muted)] truncate max-w-[140px]">
-              {targetWorkspace.name}
-            </span>
-          </div>
-        )}
-
-        {/* Copy Task Key Action */}
-        <Tooltip content={hasCopiedKey ? "Key copied!" : "Copy task key"}>
-          <button
-            type="button"
-            onClick={handleCopyKey}
-            aria-label={`Copy task key ${taskKey}`}
-            data-testid="copy-task-key-button"
-            className="font-mono text-xs font-bold text-[var(--brand-accent-text)] px-1.5 py-0.5 rounded bg-[var(--brand-accent-subtle)] border border-[var(--brand-accent-border)] flex-shrink-0 hover:bg-[var(--brand-accent-subtle)]/80 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] transition-colors"
-          >
-            {hasCopiedKey ? (
-              <span className="inline-flex items-center gap-1">
-                <Check className="h-3 w-3 text-emerald-500" />
-                <span>{taskKey}</span>
-              </span>
-            ) : (
-              taskKey
-            )}
-          </button>
-        </Tooltip>
-
-        {/* Copy Link Action */}
-        <Tooltip content={hasCopied ? "Link copied!" : "Copy task link"}>
-          <IconButton
-            size="sm"
-            variant="ghost"
-            aria-label="Copy task link"
-            icon={
-              hasCopied ? (
-                <Check className="h-3.5 w-3.5 text-emerald-500" />
-              ) : (
-                <Copy className="h-3.5 w-3.5" />
-              )
-            }
-            onClick={handleCopyLink}
-            className="h-7 w-7 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-          />
-        </Tooltip>
-      </div>
-
-      <div className="flex items-center space-x-1.5 shrink-0">
-        {task && !isNotFound && !error && currentCommunityId && (
-          <TaskWatchButton
-            communityId={currentCommunityId}
-            workspaceId={task.workspaceId}
-            taskId={task.id}
-            isWatching={isWatching}
-            canWatch={Boolean(task.effectivePermissions?.canWatch && !isArchived)}
-            size="sm"
-            className="h-7 text-xs px-2"
-          />
-        )}
-
-        {task && !isNotFound && !error && canClone && (
-          <Tooltip content="Clone task">
-            <IconButton
-              size="sm"
-              variant="ghost"
-              aria-label="Clone task"
-              data-testid="clone-task-button"
-              disabled={isCurrentTaskCloning}
-              icon={
-                isCurrentTaskCloning ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <CopyPlus className="h-3.5 w-3.5" />
-                )
-              }
-              onClick={handleCloneTask}
-              className="h-7 w-7 text-[var(--text-muted)] hover:text-[var(--text-primary)] focus-ring rounded"
-            />
-          </Tooltip>
-        )}
-
-        {task && !isNotFound && !error && canArchive && (
-          <Tooltip content="Archive task">
-            <IconButton
-              size="sm"
-              variant="ghost"
-              aria-label="Archive task"
-              data-testid="archive-task-button"
-              icon={<Archive className="h-3.5 w-3.5" />}
-              onClick={handleArchiveTask}
-              className="h-7 w-7 text-[var(--text-muted)] hover:text-[var(--feedback-danger-text)] focus-ring rounded"
-            />
-          </Tooltip>
-        )}
-
-        <IconButton
-          ref={closeButtonRef}
-          size="sm"
-          variant="ghost"
-          aria-label="Close task details"
-          icon={<X className="h-4 w-4" />}
-          onClick={() => closeTask()}
-          className="min-h-[44px] min-w-[44px] sm:min-h-[32px] sm:min-w-[32px] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-        />
-      </div>
-    </div>
+  // Header Component
+  const headerNode = (
+    <TaskDrawerHeader
+      taskKey={taskKey}
+      task={task}
+      targetWorkspace={targetWorkspace}
+      isNotFound={isNotFound}
+      error={error}
+      isArchived={isArchived}
+      canArchive={canArchive}
+      canClone={canClone}
+      isCurrentTaskCloning={isCurrentTaskCloning}
+      isWatching={isWatching}
+      currentCommunityId={currentCommunityId}
+      closeButtonRef={closeButtonRef}
+      onClose={() => closeTask()}
+      onArchive={handleArchiveTask}
+      onClone={handleCloneTask}
+    />
   );
 
-  // Common Body Content
+  // Body Content (Loading / Error / Continuous Surface)
   const renderBody = () => {
     if (isLoading) {
       return (
@@ -536,9 +445,16 @@ export function TaskPeekDrawer({
             </div>
             <h3 className="text-base font-bold text-[var(--text-primary)]">Task Not Found</h3>
             <p className="text-xs text-[var(--text-muted)] max-w-sm">
-              The requested task <strong className="font-mono text-[var(--text-primary)]">{taskKey}</strong> could not be found or is not accessible.
+              The requested task{" "}
+              <strong className="font-mono text-[var(--text-primary)]">{taskKey}</strong> could not
+              be found or is not accessible.
             </p>
-            <Button variant="outline" size="sm" onClick={() => closeTask()} className="mt-2 min-h-[44px] sm:min-h-[32px]">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => closeTask()}
+              className="mt-2 min-h-[44px] sm:min-h-[32px]"
+            >
               Close Details
             </Button>
           </div>
@@ -551,7 +467,9 @@ export function TaskPeekDrawer({
             <div className="space-y-2">
               <p className="font-semibold text-sm">Failed to load task details</p>
               <p className="text-xs">
-                {error instanceof ApiProblemError ? error.detail || error.message : (error as Error).message}
+                {error instanceof ApiProblemError
+                  ? error.detail || error.message
+                  : (error as Error).message}
               </p>
               <Button
                 variant="outline"
@@ -575,257 +493,67 @@ export function TaskPeekDrawer({
     }
 
     const wasRedirected = resolveQuery.data?.resolvedFromAlias === true;
+    const subtaskCount = allWorkspaceTasks.filter((t) => t.parentTaskId === task.id).length;
 
     return (
-      <Tabs
-        value={activeTab}
-        onValueChange={(val) => setActiveTab(val as string)}
-        className="flex-1 flex flex-col min-h-0 overflow-hidden"
-      >
-        <div className="px-5 pt-3 pb-2 border-b border-[var(--border-subtle)] bg-[var(--surface-card)] shrink-0 select-none">
-          <TabsList className="w-full grid grid-cols-2">
-            <TabsTrigger value="details" data-testid="drawer-tab-details">
-              Details
-            </TabsTrigger>
-            <TabsTrigger value="activity" data-testid="drawer-tab-activity">
-              Activity & Comments
-            </TabsTrigger>
-          </TabsList>
-        </div>
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
+        {/* Sticky Section Navigation Bar (DEC-02) */}
+        <TaskDrawerNav
+          activeSection={activeSection}
+          onSelectSection={scrollToSection}
+          subtaskCount={subtaskCount}
+        />
 
-        <TabsContent
-          value="details"
-          className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6 mt-0"
+        {/* Continuous Scrollable Surface (DEC-02) */}
+        <div
+          ref={scrollContainerRef}
+          data-testid="task-drawer-scroll-container"
+          className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-6"
         >
-          {/* Informative Banners */}
-          {wasRedirected && (
-            <div
-              role="status"
-              className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs flex items-center gap-2"
-            >
-              <Sparkles className="h-4 w-4 shrink-0" />
-              <span>
-                Redirected from historical key <strong className="font-mono font-semibold">{resolveQuery.data?.requestedKey}</strong>
-              </span>
-            </div>
-          )}
-
-        {isArchived && (
-          <div
-            role="status"
-            className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs flex items-center gap-2"
-          >
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            <span>This task is archived. Active triage and editing are disabled.</span>
-          </div>
-        )}
-
-        {/* Task Title & Primary Identity */}
-        <div className="space-y-2">
-          <InlineTitleEditor
+          {/* Section 1: Overview */}
+          <TaskDrawerOverviewSection
             task={task}
-            communityId={currentCommunityId}
-            workspaceId={task.workspaceId}
+            currentCommunityId={currentCommunityId}
+            targetWorkspace={targetWorkspace}
             isArchived={isArchived}
+            wasRedirected={wasRedirected}
+            requestedKey={resolveQuery.data?.requestedKey}
+            referenceDate={referenceDate}
             titleRef={titleRef}
+            onOpenReparentModal={() => setIsReparentOpen(true)}
           />
 
-          {/* Status & Priority Badge Strip */}
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <InlineStatusEditor
-              task={task}
-              communityId={currentCommunityId}
-              workspaceId={task.workspaceId}
-              isArchived={isArchived}
-            />
-
-            <InlinePriorityEditor
-              task={task}
-              communityId={currentCommunityId}
-              workspaceId={task.workspaceId}
-              isArchived={isArchived}
-            />
-
-            <InlineArchetypeEditor
-              task={task}
-              communityId={currentCommunityId}
-              workspaceId={task.workspaceId}
-              isArchived={isArchived}
-            />
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* Structured Task Properties Grid */}
-        <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-muted)]/30 p-4 space-y-3.5">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
-            Task Attributes
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
-            {/* Assignees */}
-            <InlineAssigneeEditor
-              task={task}
-              communityId={currentCommunityId}
-              workspaceId={task.workspaceId}
-              isArchived={isArchived}
-            />
-
-            {/* Due Date */}
-            <InlineDateEditor
-              task={task}
-              field="dueDate"
-              label="Due Date"
-              communityId={currentCommunityId}
-              workspaceId={task.workspaceId}
-              referenceDate={referenceDate}
-              isArchived={isArchived}
-            />
-
-            {/* Start Date */}
-            <InlineDateEditor
-              task={task}
-              field="startDate"
-              label="Start Date"
-              communityId={currentCommunityId}
-              workspaceId={task.workspaceId}
-              referenceDate={referenceDate}
-              isArchived={isArchived}
-            />
-
-            {/* Estimate Points */}
-            <InlineEstimateEditor
-              task={task}
-              communityId={currentCommunityId}
-              workspaceId={task.workspaceId}
-              isArchived={isArchived}
-            />
-
-            {/* Hierarchy & Parent Indicator */}
-            <div className="col-span-1 sm:col-span-2 space-y-1 pt-1 border-t border-[var(--border-subtle)]">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-medium text-[var(--text-muted)] flex items-center gap-1">
-                  <Hash className="h-3 w-3" /> Hierarchy
-                </span>
-                {Boolean(task.effectivePermissions?.canMove && !isArchived) && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsReparentOpen(true)}
-                    data-testid="reparent-current-task-btn"
-                    className="h-5 px-1.5 text-[10px] gap-1 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                  >
-                    <ArrowRightLeft className="h-2.5 w-2.5" />
-                    <span>Reparent</span>
-                  </Button>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-[var(--text-secondary)]">
-                  {task.parentTaskId ? "Subtask" : "Root Task"}
-                </span>
-                {task.parentTaskId && (
-                  <span
-                    className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--surface-muted)] text-[var(--text-muted)] truncate max-w-[200px]"
-                    title={task.parentTaskId}
-                    data-testid="parent-task-indicator"
-                  >
-                    Parent: {task.parentTaskId}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Labels Section */}
-        <InlineLabelsEditor
-          task={task}
-          communityId={currentCommunityId}
-          workspaceId={task.workspaceId}
-          isArchived={isArchived}
-        />
-
-        {/* Description Section */}
-        <InlineDescriptionEditor
-          task={task}
-          communityId={currentCommunityId}
-          workspaceId={task.workspaceId}
-          isArchived={isArchived}
-        />
-
-        {/* External Links Section (FEAT-K01) */}
-        <TaskExternalLinksSection
-          task={task}
-          communityId={currentCommunityId}
-          workspaceId={task.workspaceId}
-          isArchived={isArchived}
-        />
-
-        {/* Subtasks Section */}
-        <SubtaskList
-          task={task}
-          communityId={currentCommunityId}
-          workspaceId={task.workspaceId}
-          isArchived={isArchived}
-        />
-
-        {/* Dependencies & Relationships Section */}
-        <TaskDependencies
-          task={task}
-          allTasks={allWorkspaceTasks}
-          communityId={currentCommunityId}
-          workspaceId={task.workspaceId}
-          isArchived={isArchived}
-          onNavigateToTask={(key) => openTask(key, { workspaceId: task.workspaceId })}
-        />
-
-        {/* Custom Fields Section (FEAT-D04a) */}
-        <TaskCustomFieldsSection
-          task={task}
-          communityId={currentCommunityId}
-          workspaceId={task.workspaceId}
-          isArchived={isArchived}
-        />
-
-        {/* Audit & Provenance Footer */}
-        <div className="pt-4 border-t border-[var(--border-subtle)] text-[11px] text-[var(--text-muted)] flex flex-wrap justify-between gap-2">
-          <span>Created: {new Date(task.createdAt).toLocaleDateString()}</span>
-          <span>Updated: {new Date(task.updatedAt).toLocaleDateString()}</span>
-          <span className="font-mono">Version {task.version}</span>
-        </div>
-
-        {/* Reparent Task Modal for Current Task */}
-        {isReparentOpen && (
-          <ReparentTaskModal
+          {/* Section 2: Subtasks */}
+          <TaskDrawerSubtasksSection
             task={task}
-            allTasks={allWorkspaceTasks}
+            currentCommunityId={currentCommunityId}
+            allWorkspaceTasks={allWorkspaceTasks}
             maxSubtaskDepth={maxSubtaskDepth}
-            communityId={currentCommunityId}
-            workspaceId={task.workspaceId}
-            isOpen={isReparentOpen}
-            onClose={() => setIsReparentOpen(false)}
+            isArchived={isArchived}
+            isReparentOpen={isReparentOpen}
+            onCloseReparentModal={() => setIsReparentOpen(false)}
           />
-        )}
-      </TabsContent>
 
-      <TabsContent
-        value="activity"
-        className="flex-1 overflow-y-auto mt-0 p-0 flex flex-col"
-      >
-        <TaskActivityTab
-          task={task}
-          communityId={currentCommunityId ?? ""}
-          workspaceId={task.workspaceId}
-          isArchived={isArchived}
-          onNavigateToTask={(key) => openTask(key, { workspaceId: task.workspaceId })}
-        />
-      </TabsContent>
-    </Tabs>
-  );
-};
+          {/* Section 3: Fields & Dependencies */}
+          <TaskDrawerFieldsSection
+            task={task}
+            currentCommunityId={currentCommunityId}
+            allWorkspaceTasks={allWorkspaceTasks}
+            isArchived={isArchived}
+            onNavigateToTask={(key) => openTask(key, { workspaceId: task.workspaceId })}
+          />
+
+          {/* Section 4: Comments & Activity */}
+          <TaskDrawerCommentsSection
+            task={task}
+            currentCommunityId={currentCommunityId}
+            isArchived={isArchived}
+            onNavigateToTask={(key) => openTask(key, { workspaceId: task.workspaceId })}
+          />
+        </div>
+      </div>
+    );
+  };
 
   // --- 1. Desktop Mode (Non-modal right-docked panel beside canvas) ---
   if (isDesktop) {
@@ -835,13 +563,13 @@ export function TaskPeekDrawer({
         aria-label={`Task details: ${taskKey}`}
         data-testid="task-peek-drawer-desktop"
         className={cn(
-          "w-[480px] lg:w-[540px] flex-shrink-0 h-full flex flex-col",
+          "w-[480px] lg:w-[540px] shrink-0 h-full flex flex-col",
           "bg-[var(--surface-card)] border-l border-[var(--border-subtle)] shadow-xl z-20",
           "motion-reduce:transition-none transition-all duration-200",
           className
         )}
       >
-        {renderHeader()}
+        {headerNode}
         {renderBody()}
       </aside>
     );
@@ -865,7 +593,7 @@ export function TaskPeekDrawer({
       >
         {/* Swipe drag handle */}
         <div className="w-12 h-1.5 rounded-full bg-[var(--border-strong)] mx-auto my-2 shrink-0 select-none" />
-        {renderHeader()}
+        {headerNode}
         {renderBody()}
       </BaseDialogContent>
     </Dialog>
