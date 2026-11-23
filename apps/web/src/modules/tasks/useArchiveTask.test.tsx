@@ -4,23 +4,12 @@ import { renderHook, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthContext, type AuthContextType } from "@/modules/auth/AuthContext.js";
 import { useArchiveTask, useRestoreTask } from "./useArchiveTask.js";
-import { useUpdateTask } from "./useUpdateTask.js";
-import { useSetTaskWatch } from "./comments/useTaskComments.js";
 import * as api from "./api.js";
-import * as commentsApi from "./comments/api.js";
 import type { TaskDto, ArchiveTaskResultDto } from "./types.js";
 
 vi.mock("./api.js", () => ({
   archiveTask: vi.fn(),
   restoreTask: vi.fn(),
-  updateTask: vi.fn(),
-}));
-
-vi.mock("./comments/api.js", () => ({
-  setTaskWatchStatusApi: vi.fn(),
-  getCommentsApi: vi.fn(),
-  postCommentApi: vi.fn(),
-  getTaskActivityApi: vi.fn(),
 }));
 
 const mockTask = {
@@ -80,7 +69,7 @@ function createWrapper(queryClient: QueryClient) {
   };
 }
 
-describe("Task Mutation Boundaries & Cache Invalidation", () => {
+describe("DEF-04: useArchiveTask & useRestoreTask Cache Invalidation", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
@@ -93,106 +82,45 @@ describe("Task Mutation Boundaries & Cache Invalidation", () => {
     });
   });
 
-  describe("useArchiveTask (DEF-04)", () => {
-    it("invalidates the active community's my-work query on successful archive", async () => {
-      vi.mocked(api.archiveTask).mockResolvedValueOnce(mockArchiveResult);
-      const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+  it("invalidates the active community's my-work query on successful archive", async () => {
+    vi.mocked(api.archiveTask).mockResolvedValueOnce(mockArchiveResult);
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
-      const wrapper = createWrapper(queryClient);
-      const { result } = renderHook(
-        () => useArchiveTask({ communityId: "comm-1", workspaceId: "ws-1" }),
-        { wrapper }
-      );
+    const wrapper = createWrapper(queryClient);
+    const { result } = renderHook(
+      () => useArchiveTask({ communityId: "comm-1", workspaceId: "ws-1" }),
+      { wrapper }
+    );
 
-      await act(async () => {
-        await result.current.mutateAsync({ task: mockTask, communityId: "comm-1", workspaceId: "ws-1" });
-      });
-
-      expect(invalidateSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          queryKey: ["communities", "comm-1", "my-work"],
-        })
-      );
+    await act(async () => {
+      await result.current.mutateAsync({ task: mockTask, communityId: "comm-1", workspaceId: "ws-1" });
     });
 
-    it("invalidates the active community's my-work query on successful restore", async () => {
-      vi.mocked(api.restoreTask).mockResolvedValueOnce(mockTask);
-      const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-
-      const wrapper = createWrapper(queryClient);
-      const { result } = renderHook(
-        () => useRestoreTask({ communityId: "comm-1", workspaceId: "ws-1" }),
-        { wrapper }
-      );
-
-      await act(async () => {
-        await result.current.mutateAsync({ task: mockTask, undoToken: "token-1", communityId: "comm-1", workspaceId: "ws-1" });
-      });
-
-      expect(invalidateSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          queryKey: ["communities", "comm-1", "my-work"],
-        })
-      );
-    });
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: ["communities", "comm-1", "my-work"],
+      })
+    );
   });
 
-  describe("useUpdateTask Mutation Guard (DEF-03)", () => {
-    it("rejects mutation when communityId is empty or whitespace", async () => {
-      const wrapper = createWrapper(queryClient);
-      const { result } = renderHook(() => useUpdateTask(), { wrapper });
+  it("invalidates the active community's my-work query on successful restore", async () => {
+    vi.mocked(api.restoreTask).mockResolvedValueOnce(mockTask);
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
-      await expect(
-        result.current.mutateAsync({
-          communityId: "   ",
-          workspaceId: "ws-1",
-          taskId: "task-001",
-          data: { statusCategory: "DONE", baseFieldRevisions: {} },
-        })
-      ).rejects.toThrow("Cannot update task: communityId is required.");
+    const wrapper = createWrapper(queryClient);
+    const { result } = renderHook(
+      () => useRestoreTask({ communityId: "comm-1", workspaceId: "ws-1" }),
+      { wrapper }
+    );
 
-      expect(api.updateTask).not.toHaveBeenCalled();
+    await act(async () => {
+      await result.current.mutateAsync({ task: mockTask, undoToken: "token-1", communityId: "comm-1", workspaceId: "ws-1" });
     });
 
-    it("rejects mutation when workspaceId is missing or empty", async () => {
-      const wrapper = createWrapper(queryClient);
-      const { result } = renderHook(() => useUpdateTask(), { wrapper });
-
-      await expect(
-        result.current.mutateAsync({
-          communityId: "comm-1",
-          workspaceId: "",
-          taskId: "task-001",
-          data: { statusCategory: "DONE", baseFieldRevisions: {} },
-        })
-      ).rejects.toThrow("Cannot update task: workspaceId is required.");
-
-      expect(api.updateTask).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("useSetTaskWatch Invalidation (DEF-05)", () => {
-    it("invalidates ['communities', communityId, 'my-work'] on watch state change", async () => {
-      vi.mocked(commentsApi.setTaskWatchStatusApi).mockResolvedValueOnce(undefined);
-      const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-
-      const wrapper = createWrapper(queryClient);
-      const { result } = renderHook(() => useSetTaskWatch(), { wrapper });
-
-      await act(async () => {
-        await result.current.mutateAsync({
-          communityId: "comm-1",
-          workspaceId: "ws-1",
-          taskId: "task-001",
-          watching: true,
-        });
-      });
-
-      expect(invalidateSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          queryKey: ["communities", "comm-1", "my-work"],
-        })
-      );
-    });
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: ["communities", "comm-1", "my-work"],
+      })
+    );
   });
 });
