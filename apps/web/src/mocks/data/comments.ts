@@ -118,6 +118,9 @@ export const initialMockActivity: ActivityEntryDto[] = [
 // Mutable in-memory stores for tests
 let currentMockComments: CommentDto[] = JSON.parse(JSON.stringify(initialMockComments));
 let currentMockActivity: ActivityEntryDto[] = JSON.parse(JSON.stringify(initialMockActivity));
+let currentMockTaskActivity: Record<string, ActivityEntryDto[]> = {
+  "018f98a2-task-001-overdue-assigned": JSON.parse(JSON.stringify(initialMockActivity)),
+};
 let currentMockTaskWatchers: Record<string, Set<string>> = {
   "018f98a2-task-001-overdue-assigned": new Set([MOCK_USER_ID, OTHER_USER_ID]),
 };
@@ -128,6 +131,21 @@ export function getMockComments(): CommentDto[] {
 
 export function getMockActivity(): ActivityEntryDto[] {
   return currentMockActivity;
+}
+
+export function getMockActivityForTask(taskId: string): ActivityEntryDto[] {
+  return currentMockTaskActivity[taskId] ?? [];
+}
+
+export function setMockActivityForTask(taskId: string, activities: ActivityEntryDto[]): void {
+  currentMockTaskActivity[taskId] = activities;
+}
+
+export function resetMockActivity(): void {
+  currentMockActivity = JSON.parse(JSON.stringify(initialMockActivity));
+  currentMockTaskActivity = {
+    "018f98a2-task-001-overdue-assigned": JSON.parse(JSON.stringify(initialMockActivity)),
+  };
 }
 
 export function isUserWatchingTask(taskId: string, userId: string): boolean {
