@@ -129,8 +129,8 @@ async function openDrawerAndActivityTab(
 ) {
   await waitForTaskLoaded(drawerTestId);
 
-  const activityTab = screen.getByRole("tab", { name: /activity & comments/i });
-  await user.click(activityTab);
+  const activityNav = screen.getByRole("link", { name: /comments/i });
+  await user.click(activityNav);
 
   await waitFor(() => {
     expect(screen.getByTestId("task-activity-tab")).toBeInTheDocument();
@@ -434,7 +434,7 @@ describe("VS-08A: Collaboration Spine — Comments, @Mentions & Task Watchers", 
 
       await waitForTaskLoaded();
 
-      await user.click(screen.getByRole("tab", { name: /activity & comments/i }));
+      await user.click(screen.getByRole("link", { name: /comments/i }));
 
       // Error message with Retry button
       await waitFor(() => {
@@ -460,7 +460,7 @@ describe("VS-08A: Collaboration Spine — Comments, @Mentions & Task Watchers", 
 
       await waitForTaskLoaded("task-peek-drawer-mobile");
 
-      expect(screen.getByRole("tab", { name: /activity & comments/i })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /comments/i })).toBeInTheDocument();
     });
   });
 });

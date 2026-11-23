@@ -3,7 +3,6 @@ import type { ApiSchema } from "@sonder/contracts";
 import { generateUuidV7 } from "../../lib/uuid.js";
 import {
   getMockComments,
-  getMockActivity,
   getMockActivityForTask,
   initialMockMentionCandidates,
   setMockTaskWatching,

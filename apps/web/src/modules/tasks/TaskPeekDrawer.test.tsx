@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, useLocation } from "react-router-dom";
@@ -699,6 +699,108 @@ describe("VS-03 Stage 2: Task Peek Drawer & Deep Linking", () => {
 
         expect(screen.getByText(/External Links \(0\)/i)).toBeInTheDocument();
         expect(screen.getByTestId("add-external-link-btn")).toBeInTheDocument();
+      });
+    });
+
+    // --------------------------------------------------------------------------
+    // DEC-02: Sticky Section Navigation & Continuous Content Surface
+    // --------------------------------------------------------------------------
+    describe("DEC-02: Sticky Section Anchor Navigation Architecture & Watcher Controls", () => {
+      it("renders semantic <nav> with native anchor links for all four sections", async () => {
+        renderTaskDrawerTest({ initialEntries: ["/?task=ENG-101"] });
+
+        await waitFor(() => {
+          expect(screen.getByText("Fix critical auth token refresh race condition")).toBeInTheDocument();
+        });
+
+        const drawerNav = screen.getByRole("navigation", { name: "Task section navigation" });
+        expect(drawerNav).toBeInTheDocument();
+
+        const links = within(drawerNav).getAllByRole("link");
+        expect(links).toHaveLength(4);
+
+        const overviewLink = screen.getByTestId("drawer-nav-overview");
+        const subtasksLink = screen.getByTestId("drawer-nav-subtasks");
+        const fieldsLink = screen.getByTestId("drawer-nav-fields");
+        const commentsLink = screen.getByTestId("drawer-nav-comments");
+
+        expect(overviewLink).toHaveAttribute("href", "#overview");
+        expect(subtasksLink).toHaveAttribute("href", "#subtasks");
+        expect(fieldsLink).toHaveAttribute("href", "#fields");
+        expect(commentsLink).toHaveAttribute("href", "#comments");
+
+        // Active section uses aria-current="location"
+        expect(overviewLink).toHaveAttribute("aria-current", "location");
+        expect(subtasksLink).not.toHaveAttribute("aria-current");
+      });
+
+      it("mounts all four sections continuously with stable IDs and no tabpanel roles", async () => {
+        renderTaskDrawerTest({ initialEntries: ["/?task=ENG-101"] });
+
+        await waitFor(() => {
+          expect(screen.getByText("Fix critical auth token refresh race condition")).toBeInTheDocument();
+        });
+
+        const drawer = screen.getByTestId("task-peek-drawer-desktop");
+
+        // Zero tab, tablist, or tabpanel roles
+        expect(within(drawer).queryByRole("tab")).not.toBeInTheDocument();
+        expect(within(drawer).queryByRole("tablist")).not.toBeInTheDocument();
+        expect(within(drawer).queryByRole("tabpanel")).not.toBeInTheDocument();
+
+        // All 4 sections exist in DOM simultaneously with stable IDs
+        const overviewSection = drawer.querySelector("#overview");
+        const subtasksSection = drawer.querySelector("#subtasks");
+        const fieldsSection = drawer.querySelector("#fields");
+        const commentsSection = drawer.querySelector("#comments");
+
+        expect(overviewSection).toBeInTheDocument();
+        expect(subtasksSection).toBeInTheDocument();
+        expect(fieldsSection).toBeInTheDocument();
+        expect(commentsSection).toBeInTheDocument();
+
+        // Meaningful headings present in each section
+        expect(overviewSection?.querySelector("h2")).toHaveTextContent("Overview");
+        expect(subtasksSection?.querySelector("h2")).toHaveTextContent("Subtasks");
+        expect(fieldsSection?.querySelector("h2")).toHaveTextContent("Fields & Relationships");
+        expect(commentsSection?.querySelector("h2")).toHaveTextContent("Activity & Comments");
+      });
+
+      it("renders exactly one watcher control in the complete drawer (in persistent header)", async () => {
+        renderTaskDrawerTest({ initialEntries: ["/?task=ENG-101"] });
+
+        await waitFor(() => {
+          expect(screen.getByText("Fix critical auth token refresh race condition")).toBeInTheDocument();
+        });
+
+        const drawer = screen.getByTestId("task-peek-drawer-desktop");
+        const watchButtons = within(drawer).getAllByTestId("task-watch-button");
+
+        // Exactly one watcher button in the entire drawer
+        expect(watchButtons).toHaveLength(1);
+
+        // Positioned inside the persistent header
+        const header = drawer.querySelector("div.flex.items-center.justify-between.p-4");
+        expect(header).toBeInTheDocument();
+        expect(within(header as HTMLElement).getByTestId("task-watch-button")).toBeInTheDocument();
+      });
+
+      it("switches active anchor and invokes scrollIntoView on anchor click", async () => {
+        const user = userEvent.setup();
+        const scrollIntoViewMock = vi.fn();
+        window.HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
+
+        renderTaskDrawerTest({ initialEntries: ["/?task=ENG-101"] });
+
+        await waitFor(() => {
+          expect(screen.getByText("Fix critical auth token refresh race condition")).toBeInTheDocument();
+        });
+
+        const commentsLink = screen.getByTestId("drawer-nav-comments");
+        await user.click(commentsLink);
+
+        expect(commentsLink).toHaveAttribute("aria-current", "location");
+        expect(scrollIntoViewMock).toHaveBeenCalled();
       });
     });
   });
