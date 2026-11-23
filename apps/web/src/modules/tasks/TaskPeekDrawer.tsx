@@ -307,7 +307,9 @@ export function TaskPeekDrawer({
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    const target = container.querySelector<HTMLElement>(`#task-drawer-${sectionId}`);
+    const target =
+      container.querySelector<HTMLElement>(`#${sectionId}`) ||
+      container.querySelector<HTMLElement>(`#task-drawer-${sectionId}`);
     if (target) {
       isManualScrollingRef.current = true;
       const isReducedMotion =
@@ -353,9 +355,9 @@ export function TaskPeekDrawer({
             (a, b) => a.boundingClientRect.top - b.boundingClientRect.top
           );
           const activeEntry = visibleEntries[0];
-          const sectionId = activeEntry?.target.id.replace(
-            "task-drawer-",
-            ""
+          const sectionId = (
+            activeEntry?.target.getAttribute("data-drawer-section") ||
+            activeEntry?.target.id.replace("task-drawer-", "")
           ) as TaskDrawerSectionId;
           if (sectionId) {
             setActiveSection(sectionId);
