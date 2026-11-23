@@ -4,6 +4,7 @@ import { generateUuidV7 } from "../../lib/uuid.js";
 import {
   getMockComments,
   getMockActivity,
+  getMockActivityForTask,
   initialMockMentionCandidates,
   setMockTaskWatching,
   type CommentDto,
@@ -68,8 +69,7 @@ export const commentHandlers = [
 
       const allComments = getMockComments();
       const taskComments = allComments.filter((c) => c.taskId === taskId);
-      const allActivity = getMockActivity();
-      const taskActivity = taskId === "018f98a2-task-001-overdue-assigned" ? allActivity : [];
+      const taskActivity = getMockActivityForTask(taskId);
 
       return HttpResponse.json(
         {
