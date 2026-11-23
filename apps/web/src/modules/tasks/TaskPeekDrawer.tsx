@@ -326,7 +326,7 @@ export function TaskPeekDrawer({
 
       // Maintain keyboard focus on target section
       if (typeof target.focus === "function") {
-        target.focus();
+        target.focus({ preventScroll: true });
       }
 
       setTimeout(
@@ -565,7 +565,7 @@ export function TaskPeekDrawer({
         aria-label={`Task details: ${taskKey}`}
         data-testid="task-peek-drawer-desktop"
         className={cn(
-          "w-[480px] lg:w-[540px] shrink-0 h-full flex flex-col",
+          "w-[480px] lg:w-[540px] shrink-0 h-full max-h-[calc(100vh-3rem)] flex flex-col sticky top-12",
           "bg-[var(--surface-card)] border-l border-[var(--border-subtle)] shadow-xl z-20",
           "motion-reduce:transition-none transition-all duration-200",
           className
