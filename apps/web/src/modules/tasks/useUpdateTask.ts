@@ -37,6 +37,15 @@ export function useUpdateTask(): UseMutationResult<
       taskId,
       data,
     }: UpdateTaskMutationVariables) => {
+      if (!communityId || !communityId.trim()) {
+        throw new Error("Cannot update task: communityId is required.");
+      }
+      if (!workspaceId || !workspaceId.trim()) {
+        throw new Error("Cannot update task: workspaceId is required.");
+      }
+      if (!taskId || !taskId.trim()) {
+        throw new Error("Cannot update task: taskId is required.");
+      }
       if (!csrfToken) {
         throw new Error("Cannot update task: CSRF token is not initialized.");
       }

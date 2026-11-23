@@ -186,6 +186,29 @@ describe("DashboardView — Home Daily Focus Cockpit (Phase 2)", () => {
       expect(within(upcomingSection).getByText("Upcoming Obligations")).toBeInTheDocument();
     });
 
+    it("deduplicates upcoming obligations so tasks in Daily Focus do not repeat in Section D", async () => {
+      renderDashboardView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("daily-focus-task-ENG-101")).toBeInTheDocument();
+        expect(screen.getByTestId("home-upcoming-section")).toBeInTheDocument();
+      });
+
+      const dailyFocusSection = screen.getByTestId("home-daily-focus");
+      const upcomingSection = screen.getByTestId("home-upcoming-section");
+
+      // Extract all task keys from Daily Focus section
+      const dailyFocusTaskKeys = within(dailyFocusSection)
+        .getAllByRole("button")
+        .map((el) => el.getAttribute("data-testid")?.replace("daily-focus-task-", ""))
+        .filter(Boolean);
+
+      // Verify that none of the upcoming obligations display any of the dailyFocusTaskKeys
+      for (const key of dailyFocusTaskKeys) {
+        expect(within(upcomingSection).queryByText(key!)).not.toBeInTheDocument();
+      }
+    });
+
     it("renders workspace continuity with List and Board navigation links", async () => {
       renderDashboardView();
 

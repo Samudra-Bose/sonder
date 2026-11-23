@@ -307,7 +307,9 @@ export function useSetTaskWatch(): UseMutationResult<
       queryClient.invalidateQueries({
         queryKey: ["task", communityId, workspaceId, taskId],
       });
-      queryClient.invalidateQueries({ queryKey: ["my-work"] });
+      queryClient.invalidateQueries({
+        queryKey: ["communities", communityId, "my-work"],
+      });
       queryClient.invalidateQueries({
         queryKey: taskActivityQueryKey(communityId, workspaceId, taskId),
       });

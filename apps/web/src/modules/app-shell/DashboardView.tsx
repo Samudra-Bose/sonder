@@ -82,10 +82,13 @@ export function DashboardView({
     return getDailyFocusTasks(allProcessedTasks, referenceDate, 5);
   }, [allProcessedTasks, referenceDate]);
 
-  // Upcoming obligations (up to 4 items)
+  // Upcoming obligations (up to 4 items not already shown in Daily Focus)
   const upcomingTasks = useMemo(() => {
-    return temporalGroups.upcoming.slice(0, 4);
-  }, [temporalGroups.upcoming]);
+    const dailyFocusIds = new Set(dailyFocusTasks.map((t) => t.id));
+    return temporalGroups.upcoming
+      .filter((t) => !dailyFocusIds.has(t.id))
+      .slice(0, 4);
+  }, [temporalGroups.upcoming, dailyFocusTasks]);
 
   const handleOpenTask = (taskKey: string, workspaceId: string) => {
     openTask(taskKey, { workspaceId });
@@ -399,9 +402,9 @@ export function DashboardView({
                     }
                   }}
                   className={cn(
-                    "flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg border",
+                    "flex flex-col lg:flex-row lg:items-center justify-between p-3 rounded-lg border",
                     "bg-[var(--surface-muted)]/50 border-[var(--border-subtle)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-muted)]",
-                    "transition-colors shadow-2xs gap-2 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-focus)]"
+                    "transition-colors shadow-2xs gap-2.5 sm:gap-3 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-focus)]"
                   )}
                 >
                   {/* Left: Workspace badge, key, title */}
@@ -426,13 +429,13 @@ export function DashboardView({
                       {task.taskKey}
                     </span>
 
-                    <span className="text-sm font-medium text-[var(--text-primary)] truncate text-left">
+                    <span className="text-sm font-medium text-[var(--text-primary)] truncate text-left min-w-0 flex-1">
                       {task.title}
                     </span>
                   </div>
 
                   {/* Right: Priority, Status, Due date */}
-                  <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 justify-between sm:justify-end">
+                  <div className="flex items-center gap-2 sm:gap-3 flex-wrap lg:flex-nowrap flex-shrink-0 justify-between lg:justify-end">
                     <Badge
                       priority={task.priority}
                       size="sm"

@@ -307,6 +307,12 @@ export function useArchiveTask({
       onError?.(err, variables, context);
     },
     onSuccess: (result, _variables, context) => {
+      const effCommId = context?.effectiveCommunityId || communityId;
+      if (effCommId) {
+        queryClient.invalidateQueries({
+          queryKey: ["communities", effCommId, "my-work"],
+        });
+      }
       onSuccess?.(result, context);
     },
   });
@@ -536,6 +542,9 @@ export function useRestoreTask({
         "query",
       ] as const;
       queryClient.invalidateQueries({ queryKey: queryPrefix });
+      queryClient.invalidateQueries({
+        queryKey: ["communities", effCommId, "my-work"],
+      });
 
       onSuccess?.(serverTask, context);
     },

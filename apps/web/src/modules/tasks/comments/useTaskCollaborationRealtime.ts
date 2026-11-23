@@ -130,7 +130,9 @@ export function useTaskCollaborationRealtime({
           queryClient.invalidateQueries({
             queryKey: ["task", communityId, workspaceId, taskId],
           });
-          queryClient.invalidateQueries({ queryKey: ["my-work"] });
+          queryClient.invalidateQueries({
+            queryKey: ["communities", communityId, "my-work"],
+          });
           break;
         }
 

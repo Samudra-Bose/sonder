@@ -368,6 +368,22 @@ describe("Stage 5.2: Standalone Inline Cell Primitives", () => {
       fireEvent.keyDown(menu, { key: "Escape", code: "Escape" });
       expect(screen.queryByRole("menu", { name: /select status/i })).not.toBeInTheDocument();
     });
+
+    it("renders disabled and prevents status popover when communityId is missing or empty", () => {
+      renderWithProviders(
+        <InlineStatusCell
+          task={defaultTask}
+          communityId=""
+          workspaceId="ws-1"
+        />
+      );
+
+      // Should render inert badge container with opacity/cursor-not-allowed
+      const cell = screen.getByTestId("inline-status-cell-task-001");
+      expect(cell).toBeInTheDocument();
+      expect(cell).toHaveClass("cursor-not-allowed");
+      expect(screen.queryByTestId("inline-status-trigger-task-001")).not.toBeInTheDocument();
+    });
   });
 
   // ==========================================================================
@@ -471,6 +487,22 @@ describe("Stage 5.2: Standalone Inline Cell Primitives", () => {
       await waitFor(() => {
         expect(trigger).not.toHaveAttribute("title");
       });
+    });
+
+    it("renders disabled and prevents priority popover when communityId is missing or empty", () => {
+      renderWithProviders(
+        <InlinePriorityCell
+          task={defaultTask}
+          communityId=""
+          workspaceId="ws-1"
+        />
+      );
+
+      // Should render inert badge container with opacity/cursor-not-allowed
+      const cell = screen.getByTestId("inline-priority-cell-task-001");
+      expect(cell).toBeInTheDocument();
+      expect(cell).toHaveClass("cursor-not-allowed");
+      expect(screen.queryByTestId("inline-priority-trigger-task-001")).not.toBeInTheDocument();
     });
   });
 
@@ -612,6 +644,22 @@ describe("Stage 5.2: Standalone Inline Cell Primitives", () => {
       await waitFor(() => {
         expect(trigger).not.toHaveAttribute("title");
       });
+    });
+
+    it("renders disabled and prevents priority popover when communityId is missing or empty", () => {
+      renderWithProviders(
+        <InlinePriorityCell
+          task={defaultTask}
+          communityId=""
+          workspaceId="ws-1"
+        />
+      );
+
+      // Should render inert badge container with opacity/cursor-not-allowed
+      const cell = screen.getByTestId("inline-priority-cell-task-001");
+      expect(cell).toBeInTheDocument();
+      expect(cell).toHaveClass("cursor-not-allowed");
+      expect(screen.queryByTestId("inline-priority-trigger-task-001")).not.toBeInTheDocument();
     });
   });
 

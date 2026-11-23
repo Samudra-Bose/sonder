@@ -63,14 +63,14 @@ export function InlineStatusCell({
   const menuRef = useRef<HTMLDivElement>(null);
   const updateMutation = useUpdateTask();
 
-  const canEdit = !disabled && !isArchived && (task.effectivePermissions?.canUpdateStatus ?? true);
+  const canEdit = !disabled && Boolean(communityId && communityId.trim()) && !isArchived && (task.effectivePermissions?.canUpdateStatus ?? true);
 
   if (!canEdit) {
     return (
       <span
         className={cn(
           "inline-flex items-center",
-          disabled && "opacity-60 cursor-not-allowed",
+          (disabled || !communityId || !communityId.trim()) && "opacity-60 cursor-not-allowed",
           className
         )}
         data-testid={`inline-status-cell-${task.id}`}
@@ -87,6 +87,11 @@ export function InlineStatusCell({
     e.stopPropagation();
     setIsOpen(false);
     setError(null);
+
+    if (!communityId || !communityId.trim()) {
+      setError("Community context required");
+      return;
+    }
 
     if (status === task.statusCategory) return;
 

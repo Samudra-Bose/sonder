@@ -70,9 +70,9 @@ export function TaskRow({
       onClick={handleRowClick}
       onKeyDown={handleKeyDown}
       className={cn(
-        "group flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:px-4 sm:py-2.5 rounded-lg",
+        "group flex flex-col lg:flex-row lg:items-center justify-between p-3 sm:px-4 sm:py-2.5 rounded-lg",
         "bg-[var(--surface-card)] border border-[var(--border-subtle)] hover:border-[var(--border-strong)]",
-        "transition-colors shadow-2xs gap-2.5 sm:gap-4 select-none",
+        "transition-colors shadow-2xs gap-2.5 sm:gap-3 lg:gap-4 select-none",
         "min-h-[44px] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-focus)]",
         className
       )}
@@ -106,14 +106,14 @@ export function TaskRow({
           <p className="text-sm font-medium text-[var(--text-primary)] truncate">
             {task.title}
           </p>
-          <p className="text-[11px] text-[var(--text-muted)] truncate sm:hidden">
+          <p className="text-[11px] text-[var(--text-muted)] truncate lg:hidden">
             {task.workspaceName}
           </p>
         </div>
       </div>
 
       {/* Right section: Relationship chips, Workspace label (desktop), Status, Due date */}
-      <div className="flex items-center flex-wrap sm:flex-nowrap gap-2 sm:gap-3 justify-between sm:justify-end flex-shrink-0">
+      <div className="flex items-center flex-wrap gap-2 sm:gap-2.5 justify-between lg:justify-end flex-shrink-0">
         {/* Composite Relationship Chips */}
         <div className="flex items-center gap-1">
           {task.relationships.map((rel) => {
@@ -158,7 +158,7 @@ export function TaskRow({
         </div>
 
         {/* Desktop Workspace Name */}
-        <span className="hidden md:inline-block text-xs text-[var(--text-muted)] truncate max-w-[120px]">
+        <span className="hidden xl:inline-block text-xs text-[var(--text-muted)] truncate max-w-[120px]">
           {task.workspaceName}
         </span>
 
@@ -167,7 +167,7 @@ export function TaskRow({
           task={task}
           communityId={currentCommunityId ?? ""}
           workspaceId={task.workspaceId}
-          disabled={task.statusCategory === "DONE" || task.statusCategory === "CANCELED"}
+          disabled={!currentCommunityId || task.statusCategory === "DONE" || task.statusCategory === "CANCELED"}
         />
 
         {/* Status Cell (Inline editable) */}
@@ -175,7 +175,7 @@ export function TaskRow({
           task={task}
           communityId={currentCommunityId ?? ""}
           workspaceId={task.workspaceId}
-          disabled={task.statusCategory === "DONE" || task.statusCategory === "CANCELED"}
+          disabled={!currentCommunityId || task.statusCategory === "DONE" || task.statusCategory === "CANCELED"}
         />
 
         {/* Due Date Indicator */}

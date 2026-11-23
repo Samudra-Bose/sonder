@@ -78,7 +78,7 @@ export function MyWorkView({
           <div className="flex items-center gap-2">
             <Sparkles className="h-3.5 w-3.5 text-[var(--brand-accent-text)] flex-shrink-0" />
             <span>
-              Personal triage for <strong className="text-[var(--text-primary)] font-semibold">{displayName}</strong> across all active shared and personal workspaces.
+              Personal triage for <strong className="text-[var(--text-primary)] font-semibold">{displayName}</strong> across all shared and personal workspaces in this community.
             </span>
           </div>
           {currentCommunity && (
