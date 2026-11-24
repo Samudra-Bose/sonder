@@ -69,8 +69,8 @@ export function TaskListView({
   const densityContext = useTaskViewDensity();
   const effectiveDensity = propDensity ?? densityContext.density;
   const isCompact = effectiveDensity === "compact";
-  const headerCellPadding = isCompact ? "py-1.5 px-3" : "py-2.5 px-3";
-  const bodyCellPadding = isCompact ? "py-1 px-3" : "py-2.5 px-3";
+  const headerCellPadding = isCompact ? "py-1.5 px-3" : "py-2 px-3";
+  const bodyCellPadding = isCompact ? "py-1 px-3" : "py-1.5 px-3";
 
   const [internalBacklogOpen, setInternalBacklogOpen] = useState(false);
   const [pendingTask, setPendingTask] = useState<PendingTaskItem | null>(null);
@@ -511,7 +511,7 @@ export function TaskListView({
                       }}
                       className={cn(
                         "hover:underline focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] rounded inline-flex items-center",
-                        isCompact ? "min-h-[24px] min-w-[24px] py-0.5 px-1" : "min-h-[32px] py-1 px-1"
+                        isCompact ? "min-h-[24px] min-w-[24px] py-0.5 px-1" : "min-h-[28px] py-0.5 px-1"
                       )}
                     >
                       {task.taskKey}
