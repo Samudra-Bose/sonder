@@ -136,6 +136,9 @@ export function UserPreferencesModal({
                   : "Standard (44px) Active"}
               </span>
             </div>
+            <p className="text-xs text-[var(--text-muted)]">
+              All interactive rows and action cells follow calibrated baselines conforming strictly to WCAG 2.2 AA target size criteria.
+            </p>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"

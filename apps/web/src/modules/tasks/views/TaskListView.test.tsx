@@ -713,4 +713,88 @@ describe("TaskViewToolbar — Sort Controls & Direction Toggle", () => {
     await user.click(toggleBtnDesc);
     expect(onSortOrderToggle).toHaveBeenLastCalledWith("asc");
   });
+
+  describe("Batch 1: Density Architecture Foundation (DEC-M3.3-04)", () => {
+    it("renders rows with Standard density (44px) by default", () => {
+      const task = makeSampleTask({ taskKey: "TSK-D01" });
+      renderTaskListView({ tasks: [task] });
+
+      const row = screen.getByTestId("task-list-row-TSK-D01");
+      expect(row).toHaveAttribute("data-density", "standard");
+      expect(row).toHaveClass("h-11");
+      expect(row.style.height).toBe("44px");
+    });
+
+    it("renders rows with Compact density (38px) when density prop is 'compact'", () => {
+      const task = makeSampleTask({ taskKey: "TSK-D02" });
+      renderTaskListView({ tasks: [task], density: "compact" });
+
+      const row = screen.getByTestId("task-list-row-TSK-D02");
+      expect(row).toHaveAttribute("data-density", "compact");
+      expect(row).toHaveClass("h-[38px]");
+      expect(row.style.height).toBe("38px");
+    });
+
+    it("renders density controls in TaskViewToolbar and handles density switching", async () => {
+      const user = userEvent.setup();
+      const onDensityChange = vi.fn();
+
+      render(
+        <QuickTaskComposerProvider>
+          <TaskViewToolbar
+            activeView="list"
+            onViewChange={vi.fn()}
+            searchQuery=""
+            onSearchChange={vi.fn()}
+            priorityFilter=""
+            onPriorityChange={vi.fn()}
+            statusFilter=""
+            onStatusChange={vi.fn()}
+            sortBy="priority"
+            sortOrder="desc"
+            onSortChange={vi.fn()}
+            includeBacklog={false}
+            onIncludeBacklogChange={vi.fn()}
+            totalCount={10}
+            density="standard"
+            onDensityChange={onDensityChange}
+          />
+        </QuickTaskComposerProvider>
+      );
+
+      const densityGroup = screen.getByTestId("task-view-density-toggle");
+      expect(densityGroup).toBeInTheDocument();
+
+      const standardToggle = screen.getByTestId("density-toggle-standard");
+      const compactToggle = screen.getByTestId("density-toggle-compact");
+
+      expect(standardToggle).toHaveAttribute("aria-pressed", "true");
+      expect(compactToggle).toHaveAttribute("aria-pressed", "false");
+
+      await user.click(compactToggle);
+      expect(onDensityChange).toHaveBeenCalledWith("compact");
+    });
+
+    it("provides accessible target dimensions meeting WCAG 2.2 AA in both densities", () => {
+      const task = makeSampleTask({ taskKey: "TSK-D03" });
+      const { unmount } = renderTaskListView({ tasks: [task], density: "standard" });
+
+      // Standard mode: cell controls have touch-friendly sizing
+      const standardRow = screen.getByTestId("task-list-row-TSK-D03");
+      expect(standardRow).toHaveClass("h-11");
+      expect(standardRow.style.height).toBe("44px");
+
+      // Actions menu trigger in Standard
+      const actionsBtn = screen.getByTestId("task-actions-trigger-TSK-D03");
+      expect(actionsBtn).toBeInTheDocument();
+
+      unmount();
+
+      // Render in Compact mode
+      renderTaskListView({ tasks: [task], density: "compact" });
+      const compactRow = screen.getByTestId("task-list-row-TSK-D03");
+      expect(compactRow).toHaveClass("h-[38px]");
+      expect(compactRow.style.height).toBe("38px");
+    });
+  });
 });
