@@ -39,6 +39,10 @@ import {
   TaskCloneProvider,
 } from "../TaskCloneContext.js";
 import { TaskCloneToast } from "../TaskCloneToast.js";
+import {
+  TaskViewDensityContext,
+  TaskViewDensityProvider,
+} from "../density/index.js";
 import type {
   TaskViewQueryRequest,
   QueryFilterCondition,
@@ -655,10 +659,16 @@ function WorkspaceTasksViewInner({
 export function WorkspaceTasksView(props: WorkspaceTasksViewProps): React.JSX.Element {
   const undoContext = useContext(TaskUndoContext);
   const cloneContext = useContext(TaskCloneContext);
+  const densityContext = useContext(TaskViewDensityContext);
   const isUndoWrapped = undoContext !== defaultTaskUndoContextValue;
   const isCloneWrapped = cloneContext !== defaultTaskCloneContextValue;
+  const isDensityWrapped = Boolean(densityContext);
 
   let content = <WorkspaceTasksViewInner {...props} />;
+
+  if (!isDensityWrapped) {
+    content = <TaskViewDensityProvider>{content}</TaskViewDensityProvider>;
+  }
 
   if (!isCloneWrapped) {
     content = (

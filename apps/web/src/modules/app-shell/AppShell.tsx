@@ -14,6 +14,7 @@ import {
   TaskUndoToast,
   TaskCloneProvider,
   TaskCloneToast,
+  TaskViewDensityProvider,
 } from "@/modules/tasks";
 import { AppHeader } from "./AppHeader";
 import { AppSidebar } from "./AppSidebar";
@@ -199,7 +200,9 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
         <QuickTaskComposerProvider>
           <TaskUndoProvider>
             <TaskCloneProvider>
-              <AppShellContent>{children}</AppShellContent>
+              <TaskViewDensityProvider>
+                <AppShellContent>{children}</AppShellContent>
+              </TaskViewDensityProvider>
             </TaskCloneProvider>
           </TaskUndoProvider>
         </QuickTaskComposerProvider>
