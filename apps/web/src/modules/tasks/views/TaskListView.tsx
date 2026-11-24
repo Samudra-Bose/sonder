@@ -308,7 +308,7 @@ export function TaskListView({
               <th scope="col" className={cn(headerCellPadding, "w-10 text-center")}>
                 <label className={cn(
                   "inline-flex items-center justify-center cursor-pointer rounded select-none",
-                  isCompact ? "min-h-[24px] min-w-[24px]" : "min-h-[32px] min-w-[32px]"
+                  isCompact ? "min-h-[24px] min-w-[24px]" : "h-7 w-7"
                 )}>
                   <input
                     type="checkbox"
@@ -498,7 +498,7 @@ export function TaskListView({
                   >
                     <label className={cn(
                       "inline-flex items-center justify-center cursor-pointer rounded select-none",
-                      isCompact ? "min-h-[24px] min-w-[24px]" : "min-h-[32px] min-w-[32px]"
+                      isCompact ? "min-h-[24px] min-w-[24px]" : "h-7 w-7"
                     )}>
                       <input
                         type="checkbox"
