@@ -306,15 +306,20 @@ export function TaskListView({
             <tr className={cn(isCompact ? "h-9" : "h-10", "border-b border-[var(--border-subtle)] bg-[var(--surface-muted)] text-[var(--text-muted)] font-semibold select-none")}>
               {/* Multi-Select Header Checkbox */}
               <th scope="col" className={cn(headerCellPadding, "w-10 text-center")}>
-                <input
-                  type="checkbox"
-                  aria-label="Select all tasks"
-                  data-testid="bulk-select-all"
-                  ref={headerCheckboxRef}
-                  checked={isAllSelected}
-                  onChange={handleToggleSelectAll}
-                  className="h-4 w-4 rounded border-[var(--border-subtle)] text-[var(--brand-accent-btn-bg)] focus:ring-[var(--border-focus)] cursor-pointer"
-                />
+                <label className={cn(
+                  "inline-flex items-center justify-center cursor-pointer rounded select-none",
+                  isCompact ? "min-h-[24px] min-w-[24px]" : "min-h-[32px] min-w-[32px]"
+                )}>
+                  <input
+                    type="checkbox"
+                    aria-label="Select all tasks"
+                    data-testid="bulk-select-all"
+                    ref={headerCheckboxRef}
+                    checked={isAllSelected}
+                    onChange={handleToggleSelectAll}
+                    className="h-4 w-4 rounded border-[var(--border-subtle)] text-[var(--brand-accent-btn-bg)] focus:ring-[var(--border-focus)] cursor-pointer"
+                  />
+                </label>
               </th>
 
               {/* Sortable: Key */}
@@ -491,14 +496,19 @@ export function TaskListView({
                     onClick={(e) => e.stopPropagation()}
                     onKeyDown={(e) => e.stopPropagation()}
                   >
-                    <input
-                      type="checkbox"
-                      aria-label={`Select task ${task.taskKey}`}
-                      data-testid={`bulk-select-task-${task.taskKey}`}
-                      checked={selectedTaskIds.has(task.id)}
-                      onChange={() => handleToggleSelectTask(task.id)}
-                      className="h-4 w-4 rounded border-[var(--border-subtle)] text-[var(--brand-accent-btn-bg)] focus:ring-[var(--border-focus)] cursor-pointer"
-                    />
+                    <label className={cn(
+                      "inline-flex items-center justify-center cursor-pointer rounded select-none",
+                      isCompact ? "min-h-[24px] min-w-[24px]" : "min-h-[32px] min-w-[32px]"
+                    )}>
+                      <input
+                        type="checkbox"
+                        aria-label={`Select task ${task.taskKey}`}
+                        data-testid={`bulk-select-task-${task.taskKey}`}
+                        checked={selectedTaskIds.has(task.id)}
+                        onChange={() => handleToggleSelectTask(task.id)}
+                        className="h-4 w-4 rounded border-[var(--border-subtle)] text-[var(--brand-accent-btn-bg)] focus:ring-[var(--border-focus)] cursor-pointer"
+                      />
+                    </label>
                   </td>
 
                   {/* Task Key */}
