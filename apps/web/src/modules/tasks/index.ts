@@ -33,3 +33,4 @@ export * from "./taskExportCsv.js";
 export * from "./useTaskExportCsv.js";
 export * from "./TaskCustomFieldsSection.js";
 export * from "./InlineCreationRow.js";
+export * from "./density/index.js";
