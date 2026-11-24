@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/Dialog";
 import { useTheme } from "@/lib/theme";
 import { useWorkspace } from "@/modules/workspace";
+import { useTaskViewDensity } from "@/modules/tasks";
 import { cn } from "@/lib/utils";
 import type { AuthUser } from "./AppHeader";
 
@@ -25,6 +26,7 @@ export function UserPreferencesModal({
 }: UserPreferencesModalProps): React.JSX.Element {
   const { theme, setTheme } = useTheme();
   const { currentCommunity, activeWorkspace } = useWorkspace();
+  const { density, storedPreference, isCompactEligible, setDensity } = useTaskViewDensity();
 
   const themeOptions = [
     {
@@ -114,7 +116,7 @@ export function UserPreferencesModal({
             </div>
           </section>
 
-          {/* View Density Section (Phase 1 Standard) */}
+          {/* View Density Section */}
           <section aria-labelledby="density-heading" className="space-y-2 pt-2 border-t border-[var(--border-subtle)]">
             <div className="flex items-center justify-between">
               <h3
@@ -123,13 +125,80 @@ export function UserPreferencesModal({
               >
                 View Density
               </h3>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--surface-muted)] text-[var(--brand-accent-text)] border border-[var(--border-subtle)] font-medium">
-                Standard (44px) Active
+              <span
+                data-testid="pref-density-status"
+                className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--surface-muted)] text-[var(--brand-accent-text)] border border-[var(--border-subtle)] font-medium"
+              >
+                {!isCompactEligible && storedPreference === "compact"
+                  ? "Standard (Touch device forced)"
+                  : density === "compact"
+                  ? "Compact (38px) Active"
+                  : "Standard (44px) Active"}
               </span>
             </div>
-            <p className="text-xs text-[var(--text-muted)]">
-              All interactive rows and action cells follow the calibrated 44px touch/click baseline, conforming strictly to WCAG 2.2 AA target size criteria.
-            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                data-testid="pref-density-standard"
+                onClick={() => setDensity("standard")}
+                aria-pressed={storedPreference === "standard"}
+                className={cn(
+                  "flex flex-col items-start p-3 rounded-lg border text-left transition-all cursor-pointer focus-ring",
+                  storedPreference === "standard"
+                    ? "border-[var(--brand-accent)] bg-[var(--surface-muted)] text-[var(--text-primary)] ring-1 ring-[var(--brand-accent)] font-semibold shadow-xs"
+                    : "border-[var(--border-subtle)] bg-[var(--surface-card)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]/70 hover:text-[var(--text-primary)]"
+                )}
+              >
+                <div className="flex items-center justify-between w-full mb-1">
+                  <span className="text-xs font-semibold">Standard</span>
+                  {storedPreference === "standard" && (
+                    <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[var(--brand-accent-btn-bg)] text-[var(--brand-accent-btn-text)]">
+                      <Check className="h-2.5 w-2.5" />
+                    </span>
+                  )}
+                </div>
+                <span className="text-[11px] text-[var(--text-muted)] font-normal">
+                  44px visual rows; &ge;44px touch targets.
+                </span>
+              </button>
+
+              <button
+                type="button"
+                data-testid="pref-density-compact"
+                disabled={!isCompactEligible}
+                onClick={() => isCompactEligible && setDensity("compact")}
+                aria-pressed={storedPreference === "compact"}
+                className={cn(
+                  "flex flex-col items-start p-3 rounded-lg border text-left transition-all focus-ring",
+                  !isCompactEligible
+                    ? "opacity-50 cursor-not-allowed border-[var(--border-subtle)] bg-[var(--surface-card)] text-[var(--text-muted)]"
+                    : "cursor-pointer",
+                  storedPreference === "compact"
+                    ? "border-[var(--brand-accent)] bg-[var(--surface-muted)] text-[var(--text-primary)] ring-1 ring-[var(--brand-accent)] font-semibold shadow-xs"
+                    : "border-[var(--border-subtle)] bg-[var(--surface-card)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]/70 hover:text-[var(--text-primary)]"
+                )}
+              >
+                <div className="flex items-center justify-between w-full mb-1">
+                  <span className="text-xs font-semibold">Compact</span>
+                  {storedPreference === "compact" && (
+                    <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[var(--brand-accent-btn-bg)] text-[var(--brand-accent-btn-text)]">
+                      <Check className="h-2.5 w-2.5" />
+                    </span>
+                  )}
+                </div>
+                <span className="text-[11px] text-[var(--text-muted)] font-normal">
+                  38px rows; mouse/trackpad pointer only.
+                </span>
+              </button>
+            </div>
+            {!isCompactEligible && (
+              <p
+                data-testid="pref-density-touch-notice"
+                className="text-[11px] text-[var(--text-muted)] italic"
+              >
+                Compact mode is unavailable on touch or hybrid devices to ensure comfortable tap targets (WCAG 2.2 AA).
+              </p>
+            )}
           </section>
 
           {/* Account Profile Details */}
