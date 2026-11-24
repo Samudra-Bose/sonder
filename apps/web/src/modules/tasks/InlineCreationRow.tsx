@@ -25,6 +25,7 @@ export interface InlineCreationRowProps {
   triggerLabel?: string;
   variant?: "list" | "board" | "plain";
   colSpan?: number;
+  density?: "standard" | "compact";
   autoFocus?: boolean;
   disabled?: boolean;
 }
@@ -42,6 +43,7 @@ export function InlineCreationRow({
   triggerLabel = "New task...",
   variant = "list",
   colSpan = 9,
+  density = "standard",
   autoFocus = false,
   disabled = false,
 }: InlineCreationRowProps): React.JSX.Element {
@@ -210,11 +212,17 @@ export function InlineCreationRow({
 
   // 1. List View Variant (Table Row)
   if (variant === "list") {
+    const isCompact = density === "compact";
+    const cellPadding = isCompact ? "py-1 px-3" : "py-2.5 px-3";
+
     if (!isCreating) {
       return (
         <tr
           data-testid="inline-creation-trigger"
+          data-density={density}
+          style={{ height: isCompact ? "38px" : "44px" }}
           className={cn(
+            isCompact ? "h-[38px]" : "h-11",
             "group/create hover:bg-[var(--surface-muted)] transition-colors cursor-pointer select-none",
             disabled && "opacity-50 cursor-not-allowed",
             className
@@ -231,7 +239,7 @@ export function InlineCreationRow({
           role="button"
           aria-label="Add new task"
         >
-          <td colSpan={colSpan} className="py-2.5 px-3">
+          <td colSpan={colSpan} className={cellPadding}>
             <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-muted)] group-hover/create:text-[var(--brand-accent-text)] transition-colors">
               <Plus className="h-3.5 w-3.5" />
               <span>{triggerLabel}</span>
@@ -244,7 +252,13 @@ export function InlineCreationRow({
     return (
       <tr
         data-testid="inline-creation-active-row"
-        className={cn("bg-[var(--surface-muted)]/50", className)}
+        data-density={density}
+        style={{ height: isCompact ? "38px" : "44px" }}
+        className={cn(
+          isCompact ? "h-[38px]" : "h-11",
+          "bg-[var(--surface-muted)]/50",
+          className
+        )}
         onClick={(e) => e.stopPropagation()}
         onPointerDown={(e) => e.stopPropagation()}
       >

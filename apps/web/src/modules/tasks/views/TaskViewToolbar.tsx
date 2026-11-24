@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/Button";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { cn } from "@/lib/utils";
 import { useQuickTaskComposer } from "../QuickTaskComposerContext";
+import { useTaskViewDensity, type TaskViewDensity } from "../density/index.js";
 
 export interface TaskViewToolbarProps {
   activeView: "list" | "board" | "calendar" | "timeline";
@@ -39,6 +40,8 @@ export interface TaskViewToolbarProps {
   onExportCsv?: () => void;
   isExporting?: boolean;
   canExport?: boolean;
+  density?: TaskViewDensity;
+  onDensityChange?: (density: TaskViewDensity) => void;
   className?: string;
 }
 
@@ -63,9 +66,15 @@ export function TaskViewToolbar({
   onExportCsv,
   isExporting = false,
   canExport = true,
+  density: propDensity,
+  onDensityChange: propOnDensityChange,
   className,
 }: TaskViewToolbarProps): React.JSX.Element {
   const { open: openQuickComposer } = useQuickTaskComposer();
+  const densityContext = useTaskViewDensity();
+  const effectiveDensity = propDensity ?? densityContext.density;
+  const isCompactEligible = densityContext.isCompactEligible;
+  const setDensity = propOnDensityChange ?? densityContext.setDensity;
 
   return (
     <div
@@ -320,10 +329,58 @@ export function TaskViewToolbar({
           </label>
         </div>
 
-        {/* Task count metric */}
-        <div className="flex items-center gap-1 text-[var(--text-muted)] font-mono text-[11px] self-end sm:self-auto">
-          <Layers className="h-3.5 w-3.5" />
-          <span>{totalCount} {totalCount === 1 ? "task" : "tasks"}</span>
+        {/* Density controls + Task count metric */}
+        <div className="flex items-center gap-3 self-end sm:self-auto">
+          <div
+            role="group"
+            aria-label="Table density"
+            data-testid="task-view-density-toggle"
+            className="inline-flex items-center rounded-lg bg-[var(--surface-muted)] border border-[var(--border-subtle)] p-0.5 gap-0.5 select-none"
+          >
+            <button
+              type="button"
+              data-testid="density-toggle-standard"
+              aria-label="Standard density"
+              aria-pressed={effectiveDensity === "standard"}
+              title="Standard density (44px row height)"
+              onClick={() => setDensity("standard")}
+              className={cn(
+                "inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium transition-all cursor-pointer focus-ring",
+                effectiveDensity === "standard"
+                  ? "bg-[var(--surface-card)] text-[var(--text-primary)] shadow-2xs font-semibold"
+                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              )}
+            >
+              <span>Standard</span>
+            </button>
+            <button
+              type="button"
+              data-testid="density-toggle-compact"
+              aria-label="Compact density"
+              aria-pressed={effectiveDensity === "compact"}
+              title={
+                !isCompactEligible
+                  ? "Compact density requires a mouse or fine pointer device"
+                  : "Compact density (38px row height)"
+              }
+              disabled={!isCompactEligible}
+              onClick={() => isCompactEligible && setDensity("compact")}
+              className={cn(
+                "inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium transition-all focus-ring",
+                effectiveDensity === "compact"
+                  ? "bg-[var(--surface-card)] text-[var(--text-primary)] shadow-2xs font-semibold"
+                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
+                !isCompactEligible && "opacity-40 cursor-not-allowed"
+              )}
+            >
+              <span>Compact</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1 text-[var(--text-muted)] font-mono text-[11px]">
+            <Layers className="h-3.5 w-3.5" />
+            <span>{totalCount} {totalCount === 1 ? "task" : "tasks"}</span>
+          </div>
         </div>
       </div>
     </div>

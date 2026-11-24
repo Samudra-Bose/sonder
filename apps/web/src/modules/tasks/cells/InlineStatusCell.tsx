@@ -20,6 +20,7 @@ export interface InlineStatusCellProps {
   workspaceId: string;
   isArchived?: boolean;
   disabled?: boolean;
+  density?: "standard" | "compact";
   className?: string;
   onStatusChange?: (newStatus: TaskStatusCategory) => Promise<void> | void;
 }
@@ -55,6 +56,7 @@ export function InlineStatusCell({
   workspaceId,
   isArchived = false,
   disabled = false,
+  density,
   className,
   onStatusChange,
 }: InlineStatusCellProps): React.JSX.Element {
@@ -75,7 +77,7 @@ export function InlineStatusCell({
         )}
         data-testid={`inline-status-cell-${task.id}`}
       >
-        <Badge status={task.statusCategory}>{formatStatus(task.statusCategory)}</Badge>
+        <Badge status={task.statusCategory} size={density === "compact" ? "sm" : "md"}>{formatStatus(task.statusCategory)}</Badge>
       </span>
     );
   }
@@ -170,7 +172,7 @@ export function InlineStatusCell({
           aria-label={`Status: ${formatStatus(task.statusCategory)}. Click to change.`}
           title={error ?? undefined}
         >
-          <Badge status={task.statusCategory}>{formatStatus(task.statusCategory)}</Badge>
+          <Badge status={task.statusCategory} size={density === "compact" ? "sm" : "md"}>{formatStatus(task.statusCategory)}</Badge>
           {error && (
             <AlertCircle className="h-3 w-3 text-[var(--status-danger-text)] shrink-0 ml-0.5" />
           )}

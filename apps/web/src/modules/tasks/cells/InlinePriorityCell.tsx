@@ -20,6 +20,7 @@ export interface InlinePriorityCellProps {
   workspaceId: string;
   isArchived?: boolean;
   disabled?: boolean;
+  density?: "standard" | "compact";
   className?: string;
   onPriorityChange?: (newPriority: TaskPriority) => Promise<void> | void;
 }
@@ -55,6 +56,7 @@ export function InlinePriorityCell({
   workspaceId,
   isArchived = false,
   disabled = false,
+  density,
   className,
   onPriorityChange,
 }: InlinePriorityCellProps): React.JSX.Element {
@@ -75,7 +77,7 @@ export function InlinePriorityCell({
         )}
         data-testid={`inline-priority-cell-${task.id}`}
       >
-        <Badge priority={task.priority}>{formatPriority(task.priority)}</Badge>
+        <Badge priority={task.priority} size={density === "compact" ? "sm" : "md"}>{formatPriority(task.priority)}</Badge>
       </span>
     );
   }
@@ -170,7 +172,7 @@ export function InlinePriorityCell({
           aria-label={`Priority: ${formatPriority(task.priority)}. Click to change.`}
           title={error ?? undefined}
         >
-          <Badge priority={task.priority}>{formatPriority(task.priority)}</Badge>
+          <Badge priority={task.priority} size={density === "compact" ? "sm" : "md"}>{formatPriority(task.priority)}</Badge>
           {error && (
             <AlertCircle className="h-3 w-3 text-[var(--status-danger-text)] shrink-0 ml-0.5" />
           )}
