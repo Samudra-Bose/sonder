@@ -22,6 +22,7 @@ export interface InlineAssigneeCellProps {
   workspaceId: string;
   isArchived?: boolean;
   disabled?: boolean;
+  density?: "standard" | "compact";
   className?: string;
   mode?: "replace" | "toggle";
   onAssigneeChange?: (newAssigneeIds: string[]) => Promise<void> | void;
@@ -33,6 +34,7 @@ export function InlineAssigneeCell({
   workspaceId,
   isArchived = false,
   disabled = false,
+  density,
   className,
   mode = "replace",
   onAssigneeChange,
@@ -188,8 +190,9 @@ export function InlineAssigneeCell({
             }
           }}
           className={cn(
-            "inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded text-xs transition-colors cursor-pointer select-none",
+            "inline-flex items-center gap-1.5 px-1.5 rounded text-xs transition-colors cursor-pointer select-none",
             "focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] hover:bg-[var(--surface-muted)]",
+            density === "compact" ? "min-h-[24px] min-w-[24px] py-0.5" : "min-h-[44px] min-w-[44px]",
             updateMutation.isPending && "opacity-70 animate-pulse",
             error && "ring-1 ring-[var(--status-danger-border)]",
             className

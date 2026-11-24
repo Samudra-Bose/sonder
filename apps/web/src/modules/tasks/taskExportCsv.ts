@@ -220,7 +220,9 @@ export function triggerCsvDownload(csvContent: string, filename: string): void {
     document.body.removeChild(link);
 
     setTimeout(() => {
-      window.URL.revokeObjectURL(url);
+      if (typeof window.URL?.revokeObjectURL === "function") {
+        window.URL.revokeObjectURL(url);
+      }
     }, 1000);
   }
 }

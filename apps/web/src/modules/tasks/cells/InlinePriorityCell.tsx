@@ -164,7 +164,8 @@ export function InlinePriorityCell({
             }
           }}
           className={cn(
-            "inline-flex items-center min-h-[24px] min-w-[24px] rounded focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] transition-opacity hover:opacity-80 cursor-pointer select-none",
+            "inline-flex items-center rounded focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] transition-opacity hover:opacity-80 cursor-pointer select-none",
+            density === "compact" ? "min-h-[24px] min-w-[24px]" : "min-h-[44px] min-w-[44px]",
             updateMutation.isPending && "opacity-70 animate-pulse",
             error && "ring-1 ring-[var(--status-danger-border)]",
             className

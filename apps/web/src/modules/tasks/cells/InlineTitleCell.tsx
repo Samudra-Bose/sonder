@@ -18,6 +18,7 @@ export interface InlineTitleCellProps {
   workspaceId: string;
   isArchived?: boolean;
   disabled?: boolean;
+  density?: "standard" | "compact";
   className?: string;
   onTitleChange?: (newTitle: string) => Promise<void> | void;
 }
@@ -28,6 +29,7 @@ export function InlineTitleCell({
   workspaceId,
   isArchived = false,
   disabled = false,
+  density,
   className,
   onTitleChange,
 }: InlineTitleCellProps): React.JSX.Element {
@@ -162,6 +164,7 @@ export function InlineTitleCell({
       className={cn(
         "inline-flex items-center gap-1 group/title text-left select-none rounded p-0.5 -m-0.5 cursor-pointer",
         "focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)]",
+        density === "compact" ? "min-h-[24px]" : "min-h-[44px]",
         updateMutation.isPending && "opacity-70 animate-pulse",
         error && "ring-1 ring-[var(--status-danger-border)]",
         className

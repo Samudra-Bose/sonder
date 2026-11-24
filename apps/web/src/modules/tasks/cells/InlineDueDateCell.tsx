@@ -20,6 +20,7 @@ export interface InlineDueDateCellProps {
   workspaceId: string;
   isArchived?: boolean;
   disabled?: boolean;
+  density?: "standard" | "compact";
   className?: string;
   onDueDateChange?: (newDueDate: string | null) => Promise<void> | void;
 }
@@ -30,6 +31,7 @@ export function InlineDueDateCell({
   workspaceId,
   isArchived = false,
   disabled = false,
+  density,
   className,
   onDueDateChange,
 }: InlineDueDateCellProps): React.JSX.Element {
@@ -121,8 +123,9 @@ export function InlineDueDateCell({
             }
           }}
           className={cn(
-            "inline-flex items-center gap-1.5 min-h-[24px] min-w-[24px] px-1.5 py-0.5 rounded text-[11px] font-mono tabular-nums transition-colors cursor-pointer select-none",
+            "inline-flex items-center gap-1.5 px-1.5 rounded text-[11px] font-mono tabular-nums transition-colors cursor-pointer select-none",
             "focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)]",
+            density === "compact" ? "min-h-[24px] min-w-[24px] py-0.5" : "min-h-[44px] min-w-[44px]",
             task.dueDate
               ? "text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]"
               : "text-[var(--text-muted)] italic hover:text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]",

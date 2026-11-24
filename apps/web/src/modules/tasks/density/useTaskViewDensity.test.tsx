@@ -80,10 +80,10 @@ describe("useTaskViewDensity & Pointer Capability Detection", () => {
       expect(checkCompactEligibility()).toBe(false);
     });
 
-    it("defaults to true in non-DOM/test environments where matchMedia is not present", () => {
+    it("defaults to false in non-DOM/test environments where matchMedia is not present", () => {
       // @ts-expect-error - simulating missing matchMedia
       delete window.matchMedia;
-      expect(checkCompactEligibility()).toBe(true);
+      expect(checkCompactEligibility()).toBe(false);
     });
   });
 

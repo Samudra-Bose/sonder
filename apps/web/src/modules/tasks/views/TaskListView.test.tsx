@@ -736,43 +736,59 @@ describe("TaskViewToolbar — Sort Controls & Direction Toggle", () => {
     });
 
     it("renders density controls in TaskViewToolbar and handles density switching", async () => {
-      const user = userEvent.setup();
-      const onDensityChange = vi.fn();
+      const origMatchMedia = window.matchMedia;
+      window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+        matches: query === "(pointer: fine)",
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }));
 
-      render(
-        <QuickTaskComposerProvider>
-          <TaskViewToolbar
-            activeView="list"
-            onViewChange={vi.fn()}
-            searchQuery=""
-            onSearchChange={vi.fn()}
-            priorityFilter=""
-            onPriorityChange={vi.fn()}
-            statusFilter=""
-            onStatusChange={vi.fn()}
-            sortBy="priority"
-            sortOrder="desc"
-            onSortChange={vi.fn()}
-            includeBacklog={false}
-            onIncludeBacklogChange={vi.fn()}
-            totalCount={10}
-            density="standard"
-            onDensityChange={onDensityChange}
-          />
-        </QuickTaskComposerProvider>
-      );
+      try {
+        const user = userEvent.setup();
+        const onDensityChange = vi.fn();
 
-      const densityGroup = screen.getByTestId("task-view-density-toggle");
-      expect(densityGroup).toBeInTheDocument();
+        render(
+          <QuickTaskComposerProvider>
+            <TaskViewToolbar
+              activeView="list"
+              onViewChange={vi.fn()}
+              searchQuery=""
+              onSearchChange={vi.fn()}
+              priorityFilter=""
+              onPriorityChange={vi.fn()}
+              statusFilter=""
+              onStatusChange={vi.fn()}
+              sortBy="priority"
+              sortOrder="desc"
+              onSortChange={vi.fn()}
+              includeBacklog={false}
+              onIncludeBacklogChange={vi.fn()}
+              totalCount={10}
+              density="standard"
+              onDensityChange={onDensityChange}
+            />
+          </QuickTaskComposerProvider>
+        );
 
-      const standardToggle = screen.getByTestId("density-toggle-standard");
-      const compactToggle = screen.getByTestId("density-toggle-compact");
+        const densityGroup = screen.getByTestId("task-view-density-toggle");
+        expect(densityGroup).toBeInTheDocument();
 
-      expect(standardToggle).toHaveAttribute("aria-pressed", "true");
-      expect(compactToggle).toHaveAttribute("aria-pressed", "false");
+        const standardToggle = screen.getByTestId("density-toggle-standard");
+        const compactToggle = screen.getByTestId("density-toggle-compact");
 
-      await user.click(compactToggle);
-      expect(onDensityChange).toHaveBeenCalledWith("compact");
+        expect(standardToggle).toHaveAttribute("aria-pressed", "true");
+        expect(compactToggle).toHaveAttribute("aria-pressed", "false");
+
+        await user.click(compactToggle);
+        expect(onDensityChange).toHaveBeenCalledWith("compact");
+      } finally {
+        window.matchMedia = origMatchMedia;
+      }
     });
 
     it("provides accessible target dimensions meeting WCAG 2.2 AA in both densities", () => {

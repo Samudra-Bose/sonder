@@ -17,6 +17,7 @@ export interface TaskActionsMenuProps {
   task: TaskDto;
   workspaceId: string;
   communityId?: string;
+  density?: "standard" | "compact";
   className?: string;
 }
 
@@ -24,6 +25,7 @@ export function TaskActionsMenu({
   task,
   workspaceId,
   communityId,
+  density,
   className,
 }: TaskActionsMenuProps): React.JSX.Element {
   const { archiveTask } = useTaskUndo();
@@ -179,7 +181,8 @@ export function TaskActionsMenu({
           }
           data-testid={`task-actions-trigger-${task.taskKey}`}
           className={cn(
-            "h-7 w-7 inline-flex items-center justify-center rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-muted)] focus-ring transition-colors cursor-pointer",
+            "inline-flex items-center justify-center rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-muted)] focus-ring transition-colors cursor-pointer",
+            density === "compact" ? "h-7 w-7 min-h-[24px] min-w-[24px]" : "h-11 w-11 min-h-[44px] min-w-[44px]",
             copyFeedback && "text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20"
           )}
           onClick={(e) => {

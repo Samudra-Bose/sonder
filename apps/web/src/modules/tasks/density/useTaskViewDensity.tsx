@@ -30,15 +30,15 @@ export interface TaskViewDensityContextValue {
  */
 export function checkCompactEligibility(): boolean {
   if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
-    // In SSR or non-DOM/test environments where matchMedia is undefined, default to true
-    return true;
+    // In SSR or non-DOM/test environments where matchMedia is undefined, default to false (fail-closed pointer safety)
+    return false;
   }
   try {
     const hasFine = window.matchMedia("(pointer: fine)").matches;
     const hasCoarse = window.matchMedia("(any-pointer: coarse)").matches;
     return hasFine && !hasCoarse;
   } catch {
-    return true;
+    return false;
   }
 }
 

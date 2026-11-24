@@ -69,8 +69,8 @@ export function TaskListView({
   const densityContext = useTaskViewDensity();
   const effectiveDensity = propDensity ?? densityContext.density;
   const isCompact = effectiveDensity === "compact";
-  const headerCellPadding = isCompact ? "py-1.5 px-3" : "py-2 px-3";
-  const bodyCellPadding = isCompact ? "py-1 px-3" : "py-1.5 px-3";
+  const headerCellPadding = isCompact ? "py-1.5 px-3" : "py-0 px-3";
+  const bodyCellPadding = isCompact ? "py-1 px-3" : "py-0 px-3";
 
   const [internalBacklogOpen, setInternalBacklogOpen] = useState(false);
   const [pendingTask, setPendingTask] = useState<PendingTaskItem | null>(null);
@@ -301,14 +301,14 @@ export function TaskListView({
       )}
     >
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse text-xs" aria-label="Tasks table">
+        <table className="w-full text-left border-separate border-spacing-0 text-xs" aria-label="Tasks table">
           <thead>
-            <tr className={cn(isCompact ? "h-9" : "h-10", "border-b border-[var(--border-subtle)] bg-[var(--surface-muted)] text-[var(--text-muted)] font-semibold select-none")}>
+            <tr className={cn(isCompact ? "h-9" : "h-10", "border-b border-[var(--border-subtle)] bg-[var(--surface-muted)] text-[var(--text-muted)] font-semibold select-none shadow-[inset_0_-1px_0_var(--border-subtle)]")}>
               {/* Multi-Select Header Checkbox */}
               <th scope="col" className={cn(headerCellPadding, "w-10 text-center")}>
                 <label className={cn(
                   "inline-flex items-center justify-center cursor-pointer rounded select-none",
-                  isCompact ? "min-h-[24px] min-w-[24px]" : "h-7 w-7"
+                  isCompact ? "min-h-[24px] min-w-[24px]" : "min-h-[44px] min-w-[44px] h-11 w-11"
                 )}>
                   <input
                     type="checkbox"
@@ -486,7 +486,7 @@ export function TaskListView({
                   style={{ height: isCompact ? "38px" : "44px" }}
                   className={cn(
                     isCompact ? "h-[38px]" : "h-11",
-                    "hover:bg-[var(--surface-muted)] transition-colors cursor-pointer focus:bg-[var(--surface-muted)] focus:outline-none focus:ring-1 focus:ring-inset focus:ring-[var(--border-focus)] group",
+                    "hover:bg-[var(--surface-muted)] transition-colors cursor-pointer focus:bg-[var(--surface-muted)] focus:outline-none focus:ring-1 focus:ring-inset focus:ring-[var(--border-focus)] group shadow-[inset_0_-1px_0_var(--border-subtle)]",
                     selectedTaskIds.has(task.id) && "bg-[var(--surface-muted)]"
                   )}
                 >
@@ -498,7 +498,7 @@ export function TaskListView({
                   >
                     <label className={cn(
                       "inline-flex items-center justify-center cursor-pointer rounded select-none",
-                      isCompact ? "min-h-[24px] min-w-[24px]" : "h-7 w-7"
+                      isCompact ? "min-h-[24px] min-w-[24px]" : "min-h-[44px] min-w-[44px] h-11 w-11"
                     )}>
                       <input
                         type="checkbox"
@@ -521,7 +521,7 @@ export function TaskListView({
                       }}
                       className={cn(
                         "hover:underline focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] rounded inline-flex items-center",
-                        isCompact ? "min-h-[24px] min-w-[24px] py-0.5 px-1" : "min-h-[28px] py-0.5 px-1"
+                        isCompact ? "min-h-[24px] min-w-[24px] py-0.5 px-1" : "min-h-[44px] min-w-[44px] px-1"
                       )}
                     >
                       {task.taskKey}
@@ -544,6 +544,7 @@ export function TaskListView({
                         task={task}
                         communityId={communityId}
                         workspaceId={workspaceId}
+                        density={effectiveDensity}
                         className="flex-1 min-w-0"
                       />
                     </div>
@@ -565,6 +566,7 @@ export function TaskListView({
                       task={task}
                       communityId={communityId}
                       workspaceId={workspaceId}
+                      density={effectiveDensity}
                     />
                   </td>
 
@@ -584,6 +586,7 @@ export function TaskListView({
                       task={task}
                       communityId={communityId}
                       workspaceId={workspaceId}
+                      density={effectiveDensity}
                     />
                   </td>
 
@@ -607,6 +610,7 @@ export function TaskListView({
                       task={task}
                       workspaceId={workspaceId}
                       communityId={communityId}
+                      density={effectiveDensity}
                     />
                   </td>
                 </tr>
