@@ -25,6 +25,7 @@ import { InlineAssigneeCell } from "../cells/InlineAssigneeCell.js";
 import { InlineDueDateCell } from "../cells/InlineDueDateCell.js";
 import { InlineCreationRow, type PendingTaskItem } from "../InlineCreationRow.js";
 import { PendingTaskRow } from "./PendingTaskRow.js";
+import { useTaskViewDensity, type TaskViewDensity } from "../density/index.js";
 import type { TaskDto, TaskStatusCategory, TaskPriority } from "../types";
 
 export interface TaskListViewProps {
@@ -42,6 +43,7 @@ export interface TaskListViewProps {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   onSortChange?: (field: string, direction: "asc" | "desc") => void;
+  density?: TaskViewDensity;
   className?: string;
 }
 
@@ -60,9 +62,16 @@ export function TaskListView({
   sortBy = "priority",
   sortOrder = "desc",
   onSortChange,
+  density: propDensity,
   className,
 }: TaskListViewProps): React.JSX.Element {
   const { openTask } = useTaskPeekDrawer();
+  const densityContext = useTaskViewDensity();
+  const effectiveDensity = propDensity ?? densityContext.density;
+  const isCompact = effectiveDensity === "compact";
+  const headerCellPadding = isCompact ? "py-1.5 px-3" : "py-2.5 px-3";
+  const bodyCellPadding = isCompact ? "py-1 px-3" : "py-2.5 px-3";
+
   const [internalBacklogOpen, setInternalBacklogOpen] = useState(false);
   const [pendingTask, setPendingTask] = useState<PendingTaskItem | null>(null);
   const isTrayOpen = propIsBacklogOpen ?? internalBacklogOpen;
@@ -294,9 +303,9 @@ export function TaskListView({
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse text-xs" aria-label="Tasks table">
           <thead>
-            <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-muted)] text-[var(--text-muted)] font-semibold select-none">
+            <tr className={cn(isCompact ? "h-9" : "h-10", "border-b border-[var(--border-subtle)] bg-[var(--surface-muted)] text-[var(--text-muted)] font-semibold select-none")}>
               {/* Multi-Select Header Checkbox */}
-              <th scope="col" className="py-2.5 px-3 w-10 text-center">
+              <th scope="col" className={cn(headerCellPadding, "w-10 text-center")}>
                 <input
                   type="checkbox"
                   aria-label="Select all tasks"
@@ -318,7 +327,7 @@ export function TaskListView({
                       : "ascending"
                     : "none"
                 }
-                className="py-2.5 px-3 w-28 font-mono"
+                className={cn(headerCellPadding, "w-28 font-mono")}
               >
                 <button
                   type="button"
@@ -347,17 +356,17 @@ export function TaskListView({
               </th>
 
               {/* Non-sortable: Title */}
-              <th scope="col" className="py-2.5 px-3 min-w-[200px]">
+              <th scope="col" className={cn(headerCellPadding, "min-w-[200px]")}>
                 Title
               </th>
 
               {/* Non-sortable: Status */}
-              <th scope="col" className="py-2.5 px-3 w-32">
+              <th scope="col" className={cn(headerCellPadding, "w-32")}>
                 Status
               </th>
 
               {/* Non-sortable: Assignee */}
-              <th scope="col" className="py-2.5 px-3 w-32">
+              <th scope="col" className={cn(headerCellPadding, "w-32")}>
                 Assignee
               </th>
 
@@ -371,7 +380,7 @@ export function TaskListView({
                       : "ascending"
                     : "none"
                 }
-                className="py-2.5 px-3 w-28"
+                className={cn(headerCellPadding, "w-28")}
               >
                 <button
                   type="button"
@@ -409,7 +418,7 @@ export function TaskListView({
                       : "ascending"
                     : "none"
                 }
-                className="py-2.5 px-3 w-32"
+                className={cn(headerCellPadding, "w-32")}
               >
                 <button
                   type="button"
@@ -438,12 +447,12 @@ export function TaskListView({
               </th>
 
               {/* Non-sortable: Subtasks */}
-              <th scope="col" className="py-2.5 px-3 w-24 text-center">
+              <th scope="col" className={cn(headerCellPadding, "w-24 text-center")}>
                 Subtasks
               </th>
 
               {/* Actions */}
-              <th scope="col" className="py-2.5 px-3 w-10 text-right">
+              <th scope="col" className={cn(headerCellPadding, "w-10 text-right")}>
                 <span className="sr-only">Actions</span>
               </th>
             </tr>
@@ -465,17 +474,20 @@ export function TaskListView({
                 <tr
                   key={task.id}
                   data-testid={`task-list-row-${task.taskKey}`}
+                  data-density={effectiveDensity}
                   tabIndex={0}
                   onClick={handleRowClick}
                   onKeyDown={handleKeyDown}
+                  style={{ height: isCompact ? "38px" : "44px" }}
                   className={cn(
+                    isCompact ? "h-[38px]" : "h-11",
                     "hover:bg-[var(--surface-muted)] transition-colors cursor-pointer focus:bg-[var(--surface-muted)] focus:outline-none focus:ring-1 focus:ring-inset focus:ring-[var(--border-focus)] group",
                     selectedTaskIds.has(task.id) && "bg-[var(--surface-muted)]"
                   )}
                 >
                   {/* Selection Checkbox */}
                   <td
-                    className="py-2.5 px-3 w-10 text-center"
+                    className={cn(bodyCellPadding, "w-10 text-center")}
                     onClick={(e) => e.stopPropagation()}
                     onKeyDown={(e) => e.stopPropagation()}
                   >
@@ -490,21 +502,24 @@ export function TaskListView({
                   </td>
 
                   {/* Task Key */}
-                  <td className="py-2.5 px-3 font-mono font-bold text-[var(--brand-accent-text)] tabular-nums">
+                  <td className={cn(bodyCellPadding, "font-mono font-bold text-[var(--brand-accent-text)] tabular-nums")}>
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleRowClick();
                       }}
-                      className="hover:underline focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] rounded"
+                      className={cn(
+                        "hover:underline focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] rounded inline-flex items-center",
+                        isCompact ? "min-h-[24px] min-w-[24px] py-0.5 px-1" : "min-h-[32px] py-1 px-1"
+                      )}
                     >
                       {task.taskKey}
                     </button>
                   </td>
 
                   {/* Title & Hierarchy parent badge */}
-                  <td className="py-2.5 px-3 min-w-[200px]">
+                  <td className={cn(bodyCellPadding, "min-w-[200px]")}>
                     <div className="flex items-center gap-2">
                       <TaskArchetypeBadge archetype={task.itemType} size="sm" showLabel={false} />
                       {task.parentTaskId && (
@@ -525,16 +540,17 @@ export function TaskListView({
                   </td>
 
                   {/* Status Category */}
-                  <td className="py-2.5 px-3 w-32">
+                  <td className={cn(bodyCellPadding, "w-32")}>
                     <InlineStatusCell
                       task={task}
                       communityId={communityId}
                       workspaceId={workspaceId}
+                      density={effectiveDensity}
                     />
                   </td>
 
                   {/* Assignee */}
-                  <td className="py-2.5 px-3 w-32" data-testid={`task-list-assignee-${task.taskKey}`}>
+                  <td className={cn(bodyCellPadding, "w-32")} data-testid={`task-list-assignee-${task.taskKey}`}>
                     <InlineAssigneeCell
                       task={task}
                       communityId={communityId}
@@ -543,16 +559,17 @@ export function TaskListView({
                   </td>
 
                   {/* Priority */}
-                  <td className="py-2.5 px-3 w-28">
+                  <td className={cn(bodyCellPadding, "w-28")}>
                     <InlinePriorityCell
                       task={task}
                       communityId={communityId}
                       workspaceId={workspaceId}
+                      density={effectiveDensity}
                     />
                   </td>
 
                   {/* Due Date */}
-                  <td className="py-2.5 px-3 w-32">
+                  <td className={cn(bodyCellPadding, "w-32")}>
                     <InlineDueDateCell
                       task={task}
                       communityId={communityId}
@@ -561,7 +578,7 @@ export function TaskListView({
                   </td>
 
                   {/* Subtask indicator */}
-                  <td className="py-2.5 px-3 text-center text-[var(--text-muted)]">
+                  <td className={cn(bodyCellPadding, "w-24 text-center text-[var(--text-muted)]")}>
                     {task.parentTaskId ? (
                       <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-[var(--surface-muted)]">
                         child
@@ -573,7 +590,7 @@ export function TaskListView({
 
                   {/* Actions Menu */}
                   <td
-                    className="py-2.5 px-3 text-right"
+                    className={cn(bodyCellPadding, "w-10 text-right")}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <TaskActionsMenu
@@ -588,7 +605,7 @@ export function TaskListView({
 
             {/* Transient Pending-Task Row (WP-A4) */}
             {pendingTask && (
-              <PendingTaskRow pendingTask={pendingTask} />
+              <PendingTaskRow pendingTask={pendingTask} density={effectiveDensity} />
             )}
 
             {/* Persistent Inline Task Creation Row (WP-A3) */}
@@ -598,6 +615,7 @@ export function TaskListView({
               variant="list"
               colSpan={9}
               onPendingChange={setPendingTask}
+              density={effectiveDensity}
             />
           </tbody>
         </table>
