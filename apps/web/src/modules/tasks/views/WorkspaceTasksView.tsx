@@ -571,6 +571,9 @@ function WorkspaceTasksViewInner({
           sortBy={sortBy}
           sortOrder={sortOrder}
           onSortChange={handleColumnSortChange}
+          maxSubtaskDepth={currentWorkspaceInfo?.maxSubtaskDepth ?? 1}
+          enableTreeHierarchy={import.meta.env.DEV && searchParams.get("tree") === "true"}
+          searchQuery={searchQuery}
         />
       ) : activeView === "board" ? (
         <TaskBoardView

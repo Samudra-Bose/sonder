@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   RefreshCw,
-  GitFork,
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
@@ -13,18 +13,15 @@ import { Feedback } from "@/components/ui/Feedback";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { useTaskPeekDrawer } from "../useTaskPeekDrawer";
-import { TaskActionsMenu } from "../TaskActionsMenu.js";
-import { TaskArchetypeBadge } from "../TaskArchetypeBadge.js";
 import { BulkActionBar } from "./BulkActionBar.js";
 import { BacklogTaskTray } from "./BacklogTaskTray.js";
 import { useBulkMutateTasks } from "../useBulkMutateTasks.js";
-import { InlineTitleCell } from "../cells/InlineTitleCell.js";
-import { InlineStatusCell } from "../cells/InlineStatusCell.js";
-import { InlinePriorityCell } from "../cells/InlinePriorityCell.js";
-import { InlineAssigneeCell } from "../cells/InlineAssigneeCell.js";
-import { InlineDueDateCell } from "../cells/InlineDueDateCell.js";
+import { taskQueryKey } from "../useTask.js";
 import { InlineCreationRow, type PendingTaskItem } from "../InlineCreationRow.js";
 import { PendingTaskRow } from "./PendingTaskRow.js";
+import { TaskListRow } from "./TaskListRow.js";
+import { TaskListTreeRow } from "./TaskListTreeRow.js";
+import { buildTaskTree, useTaskTreeExpansion } from "../hierarchy/index.js";
 import { useTaskViewDensity, type TaskViewDensity } from "../density/index.js";
 import type { TaskDto, TaskStatusCategory, TaskPriority } from "../types";
 
@@ -44,6 +41,9 @@ export interface TaskListViewProps {
   sortOrder?: "asc" | "desc";
   onSortChange?: (field: string, direction: "asc" | "desc") => void;
   density?: TaskViewDensity;
+  maxSubtaskDepth?: number;
+  enableTreeHierarchy?: boolean;
+  searchQuery?: string;
   className?: string;
 }
 
@@ -63,6 +63,9 @@ export function TaskListView({
   sortOrder = "desc",
   onSortChange,
   density: propDensity,
+  maxSubtaskDepth,
+  enableTreeHierarchy = false,
+  searchQuery = "",
   className,
 }: TaskListViewProps): React.JSX.Element {
   const { openTask } = useTaskPeekDrawer();
@@ -80,22 +83,262 @@ export function TaskListView({
   const effectiveBacklogCount = backlogCount ?? (backlogTasks ? backlogTasks.length : 0);
   const effectiveBacklogTasks = backlogTasks ?? [];
 
+  const queryClient = useQueryClient();
+
+  // Ancestor lookup from authorized same-workspace cache
+  const getAncestorTask = useCallback(
+    (parentTaskId: string): TaskDto | undefined => {
+      // 1. Direct query lookup for this single task
+      const single = queryClient.getQueryData<TaskDto>(
+        taskQueryKey(communityId, workspaceId, parentTaskId)
+      );
+      if (single && single.workspaceId === workspaceId) {
+        return single;
+      }
+
+      // 2. Check all loaded queries for this community and workspace
+      const allQueries = queryClient.getQueriesData<{
+        items?: TaskDto[];
+        backlogPreview?: TaskDto[];
+        groups?: Array<{ items?: TaskDto[] }>;
+      }>({
+        queryKey: ["communities", communityId, "workspaces", workspaceId, "tasks"],
+      });
+
+      for (const [, data] of allQueries) {
+        if (data?.items) {
+          const found = data.items.find(
+            (t) => t.id === parentTaskId && t.workspaceId === workspaceId
+          );
+          if (found) return found;
+        }
+        if (data?.backlogPreview) {
+          const found = data.backlogPreview.find(
+            (t) => t.id === parentTaskId && t.workspaceId === workspaceId
+          );
+          if (found) return found;
+        }
+        if (data?.groups) {
+          for (const group of data.groups) {
+            if (group.items) {
+              const found = group.items.find(
+                (t) => t.id === parentTaskId && t.workspaceId === workspaceId
+              );
+              if (found) return found;
+            }
+          }
+        }
+      }
+
+      // 3. Check backlog tasks if available
+      if (backlogTasks) {
+        const foundBacklog = backlogTasks.find(
+          (t) => t.id === parentTaskId && t.workspaceId === workspaceId
+        );
+        if (foundBacklog) return foundBacklog;
+      }
+
+      return undefined;
+    },
+    [queryClient, communityId, workspaceId, backlogTasks]
+  );
+
+  const matchingTaskIds = useMemo(() => new Set(tasks.map((t) => t.id)), [tasks]);
+
+  const treeResult = useMemo(() => {
+    if (!enableTreeHierarchy) return null;
+    return buildTaskTree(tasks, {
+      maxSubtaskDepth,
+      getAncestorTask,
+      matchingTaskIds,
+    });
+  }, [tasks, enableTreeHierarchy, maxSubtaskDepth, getAncestorTask, matchingTaskIds]);
+
+  const {
+    visibleNodes,
+    isExpanded,
+    toggleExpanded,
+  } = useTaskTreeExpansion({
+    workspaceId,
+    treeResult,
+    searchQuery,
+  });
+
+  // Loaded matching tasks (excludes context-only ancestors)
+  const matchingTasks = useMemo(() => {
+    if (enableTreeHierarchy && treeResult) {
+      return treeResult.flatNodes.filter((n) => !n.isContextOnly).map((n) => n.task);
+    }
+    return tasks;
+  }, [enableTreeHierarchy, treeResult, tasks]);
+
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
   const headerCheckboxRef = useRef<HTMLInputElement>(null);
   const bulkMutate = useBulkMutateTasks();
 
-  const maxSelectable = Math.min(tasks.length, 100);
+  // Reset selection when active workspace changes
+  useEffect(() => {
+    setSelectedTaskIds(new Set());
+  }, [workspaceId]);
+
+  // Context-only ancestors actually present in the current hierarchy
+  const contextAncestorIds = useMemo(() => {
+    if (!enableTreeHierarchy || !treeResult) return new Set<string>();
+    const ids = new Set<string>();
+    for (const node of treeResult.flatNodes) {
+      if (node.isContextOnly) {
+        ids.add(node.task.id);
+      }
+    }
+    return ids;
+  }, [enableTreeHierarchy, treeResult]);
+
+  // 1. Matching selected count (selected tasks matching the active query/filter)
+  const matchingSelectedCount = useMemo(() => {
+    let count = 0;
+    for (const id of selectedTaskIds) {
+      if (matchingTaskIds.has(id)) count++;
+    }
+    return count;
+  }, [selectedTaskIds, matchingTaskIds]);
+
+  // 2. Context selected count (selected context ancestors present in current hierarchy)
+  const contextSelectedCount = useMemo(() => {
+    let count = 0;
+    for (const id of selectedTaskIds) {
+      if (contextAncestorIds.has(id)) count++;
+    }
+    return count;
+  }, [selectedTaskIds, contextAncestorIds]);
+
+  // 3. Previously selected tasks retained from earlier filters outside the current result
+  const outsideFilterSelectedCount = useMemo(() => {
+    return Math.max(0, selectedTaskIds.size - matchingSelectedCount - contextSelectedCount);
+  }, [selectedTaskIds.size, matchingSelectedCount, contextSelectedCount]);
+
+  // Maximum selectable matching tasks (established API cap = 100)
+  const maxSelectable = Math.min(matchingTasks.length, 100);
+  const eligibleMatchingTasks = useMemo(
+    () => matchingTasks.slice(0, maxSelectable),
+    [matchingTasks, maxSelectable]
+  );
+  const eligibleMatchingIds = useMemo(
+    () => new Set(eligibleMatchingTasks.map((t) => t.id)),
+    [eligibleMatchingTasks]
+  );
+
+  // Eligible matching selections count (strictly first 100 matching tasks)
+  const eligibleSelectedCount = useMemo(() => {
+    let count = 0;
+    for (const id of selectedTaskIds) {
+      if (eligibleMatchingIds.has(id)) count++;
+    }
+    return count;
+  }, [selectedTaskIds, eligibleMatchingIds]);
+
+  // Select All is checked ONLY when every eligible ID is selected
   const isAllSelected =
-    tasks.length > 0 &&
-    selectedTaskIds.size >= maxSelectable &&
-    tasks.slice(0, 100).every((t) => selectedTaskIds.has(t.id));
-  const isIndeterminate = selectedTaskIds.size > 0 && !isAllSelected;
+    eligibleMatchingTasks.length > 0 &&
+    eligibleSelectedCount === eligibleMatchingTasks.length;
+
+  // Indeterminate when some, but not all, eligible IDs are selected
+  // (Tasks 101-200, context ancestors, or outside-filter selections do NOT trigger indeterminate)
+  const isIndeterminate = eligibleSelectedCount > 0 && !isAllSelected;
 
   useEffect(() => {
     if (headerCheckboxRef.current) {
       headerCheckboxRef.current.indeterminate = isIndeterminate;
     }
   }, [isIndeterminate]);
+
+  const canAddMoreEligible =
+    selectedTaskIds.size < 100 &&
+    eligibleSelectedCount < eligibleMatchingTasks.length;
+
+  const isSelectionLimitReached = selectedTaskIds.size >= 100;
+  const isSelectAllDisabled = isSelectionLimitReached && eligibleSelectedCount === 0;
+
+  let selectAllAriaLabel = "";
+  let selectAllTitle: string | undefined = undefined;
+
+  if (matchingTasks.length === 0) {
+    selectAllAriaLabel = "No matching tasks to select";
+    selectAllTitle = "No matching tasks";
+  } else if (isAllSelected) {
+    selectAllAriaLabel =
+      matchingTasks.length > 100
+        ? "Deselect first 100 matching tasks"
+        : "Deselect all tasks";
+    selectAllTitle = "Deselect matching tasks";
+  } else if (isSelectionLimitReached && eligibleSelectedCount > 0) {
+    const blockerInfo =
+      outsideFilterSelectedCount > 0
+        ? `${outsideFilterSelectedCount} selection outside current filter is consuming capacity`
+        : `${contextSelectedCount} context selection is consuming capacity`;
+    selectAllAriaLabel = `Deselect ${eligibleSelectedCount} matching tasks (selection cap of 100 reached; ${blockerInfo})`;
+    selectAllTitle = `Selection cap of 100 reached (${blockerInfo}). Click to deselect matching tasks and free capacity.`;
+  } else if (isSelectionLimitReached && eligibleSelectedCount === 0) {
+    const blockerInfo =
+      outsideFilterSelectedCount > 0
+        ? `${outsideFilterSelectedCount} selection outside current filter is consuming capacity`
+        : `${contextSelectedCount} context selection is consuming capacity`;
+    selectAllAriaLabel = `Select matching tasks disabled: selection cap of 100 reached (${blockerInfo})`;
+    selectAllTitle = `Selection cap of 100 reached (${blockerInfo}). Deselect tasks or clear selection to free capacity.`;
+  } else if (matchingTasks.length > 100) {
+    const remainingEligible = Math.min(100 - selectedTaskIds.size, eligibleMatchingTasks.length);
+    if ((outsideFilterSelectedCount > 0 || contextSelectedCount > 0) && remainingEligible < 100) {
+      const blockerInfo =
+        outsideFilterSelectedCount > 0
+          ? `${outsideFilterSelectedCount} outside filter`
+          : `${contextSelectedCount} context`;
+      selectAllAriaLabel = `Select ${remainingEligible} of ${matchingTasks.length} matching tasks (100 cap, ${blockerInfo} consuming capacity)`;
+      selectAllTitle = `Select up to ${remainingEligible} matching tasks (100 cap reached with ${blockerInfo})`;
+    } else {
+      selectAllAriaLabel = `Select first 100 of ${matchingTasks.length} matching tasks (100 cap)`;
+      selectAllTitle = `Select first 100 of ${matchingTasks.length} matching tasks (100 cap)`;
+    }
+  } else {
+    const remainingEligible = Math.min(100 - selectedTaskIds.size, eligibleMatchingTasks.length);
+    if ((outsideFilterSelectedCount > 0 || contextSelectedCount > 0) && remainingEligible < matchingTasks.length) {
+      selectAllAriaLabel = `Select ${remainingEligible} of ${matchingTasks.length} matching tasks (100 cap)`;
+      selectAllTitle = `Select up to ${remainingEligible} matching tasks (100 cap)`;
+    } else {
+      selectAllAriaLabel = "Select all tasks";
+      selectAllTitle = "Select all tasks";
+    }
+  }
+
+  // Reconcile selection only when a task's removal is established (e.g. archived)
+  useEffect(() => {
+    setSelectedTaskIds((prev) => {
+      if (prev.size === 0) return prev;
+      let needsPruning = false;
+      const toRemove = new Set<string>();
+
+      // Remove any task observed as archived
+      for (const t of tasks) {
+        if (t.archivedAt && prev.has(t.id)) {
+          toRemove.add(t.id);
+          needsPruning = true;
+        }
+      }
+      if (treeResult) {
+        for (const node of treeResult.flatNodes) {
+          if (node.task.archivedAt && prev.has(node.task.id)) {
+            toRemove.add(node.task.id);
+            needsPruning = true;
+          }
+        }
+      }
+
+      if (!needsPruning) return prev;
+      const next = new Set(prev);
+      for (const id of toRemove) {
+        next.delete(id);
+      }
+      return next;
+    });
+  }, [tasks, treeResult]);
 
   const handleToggleSelectTask = (taskId: string) => {
     setSelectedTaskIds((prev) => {
@@ -112,11 +355,25 @@ export function TaskListView({
   };
 
   const handleToggleSelectAll = () => {
-    if (isAllSelected) {
-      setSelectedTaskIds(new Set());
+    if (isAllSelected || !canAddMoreEligible) {
+      // Clear matching selections while preserving any individual context selections
+      setSelectedTaskIds((prev) => {
+        const next = new Set(prev);
+        for (const t of eligibleMatchingTasks) {
+          next.delete(t.id);
+        }
+        return next;
+      });
     } else {
-      const toSelect = tasks.slice(0, 100).map((t) => t.id);
-      setSelectedTaskIds(new Set(toSelect));
+      setSelectedTaskIds((prev) => {
+        const next = new Set(prev);
+        for (const t of eligibleMatchingTasks) {
+          if (next.size < 100) {
+            next.add(t.id);
+          }
+        }
+        return next;
+      });
     }
   };
 
@@ -312,12 +569,14 @@ export function TaskListView({
                 )}>
                   <input
                     type="checkbox"
-                    aria-label="Select all tasks"
+                    aria-label={selectAllAriaLabel}
+                    title={selectAllTitle}
+                    disabled={isSelectAllDisabled}
                     data-testid="bulk-select-all"
                     ref={headerCheckboxRef}
                     checked={isAllSelected}
                     onChange={handleToggleSelectAll}
-                    className="h-4 w-4 rounded border-[var(--border-subtle)] text-[var(--brand-accent-btn-bg)] focus:ring-[var(--border-focus)] cursor-pointer"
+                    className="h-4 w-4 rounded border-[var(--border-subtle)] text-[var(--brand-accent-btn-bg)] focus:ring-[var(--border-focus)] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   />
                 </label>
               </th>
@@ -452,7 +711,7 @@ export function TaskListView({
               </th>
 
               {/* Non-sortable: Subtasks */}
-              <th scope="col" className={cn(headerCellPadding, "w-24 text-center")}>
+              <th scope="col" className={cn(headerCellPadding, "w-28 text-center")}>
                 Subtasks
               </th>
 
@@ -463,159 +722,39 @@ export function TaskListView({
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--border-subtle)]">
-            {tasks.map((task) => {
-              const handleRowClick = () => {
-                openTask(task.taskKey, { workspaceId });
-              };
-
-              const handleKeyDown = (e: React.KeyboardEvent<HTMLTableRowElement>) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  handleRowClick();
-                }
-              };
-
-              return (
-                <tr
-                  key={task.id}
-                  data-testid={`task-list-row-${task.taskKey}`}
-                  data-density={effectiveDensity}
-                  tabIndex={0}
-                  onClick={handleRowClick}
-                  onKeyDown={handleKeyDown}
-                  style={{ height: isCompact ? "38px" : "44px" }}
-                  className={cn(
-                    isCompact ? "h-[38px]" : "h-11",
-                    "hover:bg-[var(--surface-muted)] transition-colors cursor-pointer focus:bg-[var(--surface-muted)] focus:outline-none focus:ring-1 focus:ring-inset focus:ring-[var(--border-focus)] group shadow-[inset_0_-1px_0_var(--border-subtle)]",
-                    selectedTaskIds.has(task.id) && "bg-[var(--surface-muted)]"
-                  )}
-                >
-                  {/* Selection Checkbox */}
-                  <td
-                    className={cn(bodyCellPadding, "w-10 text-center")}
-                    onClick={(e) => e.stopPropagation()}
-                    onKeyDown={(e) => e.stopPropagation()}
-                  >
-                    <label className={cn(
-                      "inline-flex items-center justify-center cursor-pointer rounded select-none",
-                      isCompact ? "min-h-[24px] min-w-[24px]" : "min-h-[44px] min-w-[44px] h-11 w-11"
-                    )}>
-                      <input
-                        type="checkbox"
-                        aria-label={`Select task ${task.taskKey}`}
-                        data-testid={`bulk-select-task-${task.taskKey}`}
-                        checked={selectedTaskIds.has(task.id)}
-                        onChange={() => handleToggleSelectTask(task.id)}
-                        className="h-4 w-4 rounded border-[var(--border-subtle)] text-[var(--brand-accent-btn-bg)] focus:ring-[var(--border-focus)] cursor-pointer"
-                      />
-                    </label>
-                  </td>
-
-                  {/* Task Key */}
-                  <td className={cn(bodyCellPadding, "font-mono font-bold text-[var(--brand-accent-text)] tabular-nums")}>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRowClick();
-                      }}
-                      className={cn(
-                        "hover:underline focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] rounded inline-flex items-center",
-                        isCompact ? "min-h-[24px] min-w-[24px] py-0.5 px-1" : "min-h-[44px] min-w-[44px] px-1"
-                      )}
-                    >
-                      {task.taskKey}
-                    </button>
-                  </td>
-
-                  {/* Title & Hierarchy parent badge */}
-                  <td className={cn(bodyCellPadding, "min-w-[200px]")}>
-                    <div className="flex items-center gap-2">
-                      <TaskArchetypeBadge archetype={task.itemType} size="sm" showLabel={false} />
-                      {task.parentTaskId && (
-                        <span
-                          title="Subtask"
-                          className="inline-flex items-center text-[var(--text-muted)] shrink-0"
-                        >
-                          <GitFork className="h-3 w-3 rotate-180" />
-                        </span>
-                      )}
-                      <InlineTitleCell
-                        task={task}
-                        communityId={communityId}
-                        workspaceId={workspaceId}
-                        density={effectiveDensity}
-                        className="flex-1 min-w-0"
-                      />
-                    </div>
-                  </td>
-
-                  {/* Status Category */}
-                  <td className={cn(bodyCellPadding, "w-32")}>
-                    <InlineStatusCell
-                      task={task}
-                      communityId={communityId}
-                      workspaceId={workspaceId}
-                      density={effectiveDensity}
-                    />
-                  </td>
-
-                  {/* Assignee */}
-                  <td className={cn(bodyCellPadding, "w-32")} data-testid={`task-list-assignee-${task.taskKey}`}>
-                    <InlineAssigneeCell
-                      task={task}
-                      communityId={communityId}
-                      workspaceId={workspaceId}
-                      density={effectiveDensity}
-                    />
-                  </td>
-
-                  {/* Priority */}
-                  <td className={cn(bodyCellPadding, "w-28")}>
-                    <InlinePriorityCell
-                      task={task}
-                      communityId={communityId}
-                      workspaceId={workspaceId}
-                      density={effectiveDensity}
-                    />
-                  </td>
-
-                  {/* Due Date */}
-                  <td className={cn(bodyCellPadding, "w-32")}>
-                    <InlineDueDateCell
-                      task={task}
-                      communityId={communityId}
-                      workspaceId={workspaceId}
-                      density={effectiveDensity}
-                    />
-                  </td>
-
-                  {/* Subtask indicator */}
-                  <td className={cn(bodyCellPadding, "w-24 text-center text-[var(--text-muted)]")}>
-                    {task.parentTaskId ? (
-                      <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-[var(--surface-muted)]">
-                        child
-                      </span>
-                    ) : (
-                      <span className="text-[var(--text-muted)] text-[11px]">—</span>
-                    )}
-                  </td>
-
-                  {/* Actions Menu */}
-                  <td
-                    className={cn(bodyCellPadding, "w-10 text-right")}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <TaskActionsMenu
-                      task={task}
-                      workspaceId={workspaceId}
-                      communityId={communityId}
-                      density={effectiveDensity}
-                    />
-                  </td>
-                </tr>
-              );
-            })}
+            {enableTreeHierarchy && treeResult
+              ? visibleNodes.map((node) => (
+                  <TaskListTreeRow
+                    key={node.task.id}
+                    node={node}
+                    workspaceId={workspaceId}
+                    communityId={communityId}
+                    density={effectiveDensity}
+                    isSelected={selectedTaskIds.has(node.task.id)}
+                    isSelectionDisabled={isSelectionLimitReached}
+                    onToggleSelect={handleToggleSelectTask}
+                    onOpenTask={(taskKey) => openTask(taskKey, { workspaceId })}
+                    bodyCellPadding={bodyCellPadding}
+                    isCompact={isCompact}
+                    isExpanded={isExpanded(node.task.id)}
+                    onToggleExpand={toggleExpanded}
+                  />
+                ))
+              : tasks.map((task) => (
+                  <TaskListRow
+                    key={task.id}
+                    task={task}
+                    workspaceId={workspaceId}
+                    communityId={communityId}
+                    density={effectiveDensity}
+                    isSelected={selectedTaskIds.has(task.id)}
+                    isSelectionDisabled={isSelectionLimitReached}
+                    onToggleSelect={handleToggleSelectTask}
+                    onOpenTask={(taskKey) => openTask(taskKey, { workspaceId })}
+                    bodyCellPadding={bodyCellPadding}
+                    isCompact={isCompact}
+                  />
+                ))}
 
             {/* Transient Pending-Task Row (WP-A4) */}
             {pendingTask && (
@@ -652,7 +791,10 @@ export function TaskListView({
       {/* Floating Bulk Action Bar */}
       <BulkActionBar
         selectedCount={selectedTaskIds.size}
-        totalCount={tasks.length}
+        totalCount={matchingTasks.length}
+        matchingCount={matchingSelectedCount}
+        contextCount={contextSelectedCount}
+        outsideCount={outsideFilterSelectedCount}
         maxLimit={100}
         onClearSelection={() => setSelectedTaskIds(new Set())}
         onArchive={handleBulkArchive}

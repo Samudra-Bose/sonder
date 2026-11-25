@@ -19,6 +19,9 @@ import type { TaskStatusCategory, TaskPriority } from "../types.js";
 export interface BulkActionBarProps {
   selectedCount: number;
   totalCount?: number;
+  matchingCount?: number;
+  contextCount?: number;
+  outsideCount?: number;
   maxLimit?: number;
   onClearSelection: () => void;
   onArchive: () => void;
@@ -47,6 +50,9 @@ const PRIORITY_OPTIONS: Array<{ value: TaskPriority; label: string }> = [
 export function BulkActionBar({
   selectedCount,
   totalCount,
+  matchingCount,
+  contextCount,
+  outsideCount,
   maxLimit = 100,
   onClearSelection,
   onArchive,
@@ -60,6 +66,30 @@ export function BulkActionBar({
   }
 
   const isAtLimit = selectedCount >= maxLimit;
+
+  // Build breakdown text if there are context or outside-filter selections
+  const hasBreakdown =
+    (contextCount !== undefined && contextCount > 0) ||
+    (outsideCount !== undefined && outsideCount > 0);
+
+  let selectionDetails = "";
+  if (hasBreakdown) {
+    const parts: string[] = [];
+    parts.push(
+      `${matchingCount ?? (selectedCount - (contextCount ?? 0) - (outsideCount ?? 0))} matching`
+    );
+    if (contextCount !== undefined && contextCount > 0) {
+      parts.push(`${contextCount} context`);
+    }
+    if (outsideCount !== undefined && outsideCount > 0) {
+      parts.push(`${outsideCount} outside filter`);
+    }
+    selectionDetails = ` (${parts.join(", ")})`;
+  } else if (totalCount !== undefined && totalCount > maxLimit && selectedCount >= maxLimit) {
+    selectionDetails = ` of ${totalCount} (capped at ${maxLimit})`;
+  } else if (totalCount !== undefined) {
+    selectionDetails = ` of ${totalCount}`;
+  }
 
   return (
     <div
@@ -80,15 +110,42 @@ export function BulkActionBar({
           data-testid="bulk-selected-count"
           className="text-xs font-semibold text-[var(--text-primary)] whitespace-nowrap"
         >
-          {selectedCount} selected
-          {totalCount !== undefined ? ` of ${totalCount}` : ""}
+          {selectedCount} selected{selectionDetails}
         </span>
+        {contextCount !== undefined && contextCount > 0 && (
+          <span
+            data-testid="bulk-context-count-badge"
+            className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-[var(--surface-muted)] text-[var(--text-muted)] border border-[var(--border-subtle)] whitespace-nowrap"
+          >
+            {contextCount} context
+          </span>
+        )}
+        {outsideCount !== undefined && outsideCount > 0 && (
+          <span
+            data-testid="bulk-outside-count-badge"
+            className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-[var(--surface-muted)] text-[var(--text-muted)] border border-[var(--border-subtle)] whitespace-nowrap"
+          >
+            {outsideCount} outside filter
+          </span>
+        )}
         {isAtLimit && (
           <span
             data-testid="bulk-limit-badge"
-            className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 whitespace-nowrap"
+            title={
+              outsideCount !== undefined && outsideCount > 0
+                ? `Selection cap of ${maxLimit} reached (${outsideCount} selection outside current filter is consuming capacity). Clear selection or deselect tasks to free capacity.`
+                : contextCount !== undefined && contextCount > 0
+                ? `Selection cap of ${maxLimit} reached (${contextCount} context ancestor selection is consuming capacity). Clear selection or deselect tasks to free capacity.`
+                : `Selection cap of ${maxLimit} reached. Clear selection or deselect tasks to select others.`
+            }
+            className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 whitespace-nowrap cursor-help"
           >
             Max {maxLimit}
+          </span>
+        )}
+        {isAtLimit && ((outsideCount !== undefined && outsideCount > 0) || (contextCount !== undefined && contextCount > 0)) && (
+          <span data-testid="bulk-capacity-hint" className="sr-only">
+            Selection cap of {maxLimit} reached ({outsideCount ? `${outsideCount} outside filter` : `${contextCount} context`} selection consuming capacity). Deselect tasks or clear selection to free capacity.
           </span>
         )}
       </div>

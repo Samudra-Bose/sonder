@@ -123,7 +123,7 @@ export function InlineDueDateCell({
             }
           }}
           className={cn(
-            "inline-flex items-center gap-1.5 px-1.5 rounded text-[11px] font-mono tabular-nums transition-colors cursor-pointer select-none",
+            "inline-flex items-center gap-1.5 px-1.5 rounded text-[11px] font-mono tabular-nums whitespace-nowrap transition-colors cursor-pointer select-none",
             "focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)]",
             density === "compact" ? "min-h-[24px] min-w-[24px] py-0.5" : "min-h-[44px] min-w-[44px]",
             task.dueDate
@@ -137,7 +137,7 @@ export function InlineDueDateCell({
           title={error ?? undefined}
         >
           <Calendar className="h-3 w-3 text-[var(--text-muted)] shrink-0" />
-          <span>{task.dueDate ?? "Set date"}</span>
+          <span className="whitespace-nowrap">{task.dueDate ?? "Set date"}</span>
           {error && (
             <AlertCircle className="h-3 w-3 text-[var(--status-danger-text)] shrink-0 ml-0.5" />
           )}
